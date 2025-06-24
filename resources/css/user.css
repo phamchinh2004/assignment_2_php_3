@@ -1,0 +1,98 @@
+* {
+    font-family: Arial;
+}
+
+body {
+    width: 70%;
+    background-color: rgb(246, 247, 249);
+}
+
+.container-1 {
+    background-color: #131921;
+    width: 100%;
+    height: auto;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
+    z-index: -2;
+}
+
+footer {
+    z-index: 99;
+    width: 70%;
+}
+
+.footer {
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
+    z-index: 99;
+    height: 100px;
+    width: 70% !important;
+    background-color: white;
+    position: fixed;
+    bottom: 0px;
+}
+
+.text-footer {
+    font-size: 15px;
+}
+
+.footer-item {
+    width: 20%;
+}
+
+.cspt {
+    cursor: pointer;
+}
+
+.amazon_btn {
+    width: 100px;
+    height: 80px;
+    background-color: black;
+    border-radius: 50%;
+}
+
+.footer-logo {
+    width: 40px;
+}
+
+
+.around-content {
+    padding-bottom: 120px;
+}
+
+
+@keyframes lds-spinner {
+    0% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .text-footer {
+        font-size: 11px;
+    }
+
+    .footer-logo {
+        width: 30px;
+    }
+
+    .footer-item {
+        width: 20%;
+    }
+
+    .amazon_btn {
+        width: 60px;
+        height: 60px;
+    }
+
+    body {
+        width: 100%;
+    }
+
+    .footer {
+        width: 100% !important;
+        bottom: -2px;
+    }
+}

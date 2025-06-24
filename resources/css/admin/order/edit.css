@@ -1,0 +1,24 @@
+.div_image_old {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px 0;
+}
+
+.div_image_old>img {
+    max-width: 150px;
+    transition: 0.4s ease-in-out;
+}
+
+.div_image_old>img:hover {
+    transform: scale(2.5);
+}
+
+label {
+    font-weight: bold;
+    color: gray;
+}
+
+#tittle {
+    font-size: 20px;
+}

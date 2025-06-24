@@ -1,0 +1,16 @@
+@media screen and (max-width: 768px) {
+    th {
+        font-size: 7px;
+        white-space: nowrap;
+    }
+}
+
+.csdf {
+    cursor: default !important;
+}
+
+.index_image {
+    width: 100px;
+    height: 100px;
+    border-radius: 10px;
+}

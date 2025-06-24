@@ -1,0 +1,206 @@
+.mainbox {
+    position: relative;
+    width: 500px !important;
+    height: 500px !important;
+}
+
+.mainbox:after {
+    position: absolute;
+    content: "";
+    width: 100%;
+    height: 100%;
+    background: url('../../../images/user_wheel/arrow-bottom.png') no-repeat;
+    background-size: 5%;
+    left: 5%;
+    top: 48%;
+    transform: rotate(90deg);
+}
+
+.box {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    border-radius: 50%;
+    border: 10px solid #949090;
+    overflow: hidden;
+    transition: all ease-in-out 5s;
+    transform: rotate(90deg);
+}
+
+.font {
+    width: 100%;
+    height: 100%;
+    display: inline-block;
+    position: absolute;
+}
+
+.span1 {
+    clip-path: polygon(0 17%, 0 50%, 50% 50%);
+    background-color: green;
+}
+
+.span2 {
+    clip-path: polygon(0 17%, 30% 0, 50% 50%);
+    background-color: red;
+}
+
+.span3 {
+    clip-path: polygon(30% 0, 71% 0, 50% 50%);
+    background-color: blue;
+}
+
+.span4 {
+    clip-path: polygon(71% 0, 100% 18%, 50% 50%);
+    background-color: salmon;
+}
+
+.span5 {
+    clip-path: polygon(100% 18%, 100% 50%, 50% 50%);
+    background: #ff8300;
+}
+
+.box2 .span3 {
+    background-color: #00ff04;
+}
+
+.box2 {
+    width: 100%;
+    height: 100%;
+    transform: rotate(180deg);
+}
+
+.font {
+    color: white;
+    font-size: 20px;
+}
+
+.box1 .span1 b {
+    position: absolute;
+    top: 38.5%;
+    right: 64%;
+    transform: rotate(196deg);
+    text-align: center;
+}
+
+.box1 .span2 b {
+    position: absolute;
+    top: 26%;
+    right: 55%;
+    transform: rotate(-130deg);
+}
+
+.box1 .span3 b {
+    position: absolute;
+    top: 20%;
+    right: 38%;
+    transform: rotate(-90deg);
+}
+
+.box1 .span4 b {
+    position: absolute;
+    top: 26%;
+    right: 21%;
+    transform: rotate(-50deg);
+}
+
+.box1 .span5 b {
+    position: absolute;
+    top: 39%;
+    right: 13%;
+    transform: rotate(-17deg);
+    text-align: center;
+}
+
+.box2 .span1 b {
+    position: absolute;
+    top: 39%;
+    right: 64%;
+    transform: rotate(197deg);
+}
+
+.box2 .span2 b {
+    position: absolute;
+    top: 26%;
+    right: 55%;
+    transform: rotate(-130deg);
+    text-align: center;
+}
+
+.box2 .span3 b {
+    position: absolute;
+    top: 18.5%;
+    right: 37%;
+    transform: rotate(270deg);
+}
+
+.box2 .span4 b {
+    position: absolute;
+    top: 25%;
+    right: 19%;
+    transform: rotate(308deg);
+}
+
+.box2 .span5 b {
+    position: absolute;
+    top: 38.5%;
+    right: 10%;
+    transform: rotate(-15deg);
+    text-align: center;
+}
+
+.spin {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 75px;
+    height: 75px;
+    border-radius: 50%;
+    border: 4px solid white;
+    background-color: #ff5722;
+    color: #fff;
+    box-shadow: 0 5px 20px #000;
+    font-weight: bold;
+    font-size: 22px;
+    cursor: pointer;
+    z-index: 10;
+}
+
+.spin:active {
+    width: 70px;
+    height: 70px;
+    font-size: 20px;
+}
+
+.mainbox.animate:after {
+    animation: animateArrow 0.7s ease infinite;
+}
+
+audio {
+    display: none;
+}
+
+@keyframes animateArrow {
+    50% {
+        right: -50px;
+    }
+}
+
+@media (max-width: 768px) {
+    .mainbox {
+        position: relative;
+        width: 250px !important;
+        height: 250px !important;
+    }
+
+    .font>b {
+        color: white;
+        font-size: 10px;
+    }
+
+    .spin {
+        width: 40px;
+        height: 40px;
+        font-size: 8px;
+    }
+}

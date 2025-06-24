@@ -1,0 +1,115 @@
+.title {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.around-content {
+    padding-bottom: 0px;
+}
+
+.box_content_withdraw_money {
+    background-color: #faebd7;
+    padding-top: 10px;
+}
+
+.box_content {
+    background: #ffffff;
+    width: 50%;
+    margin: auto;
+    padding: 10px 20px 10px 20px;
+    border-radius: 10px;
+}
+
+
+.tittle_so_tien_rut {
+    font-weight: bold;
+    font-size: 12px;
+}
+
+.input_nhap_tien {
+    border: none;
+    outline-style: none;
+    width: 100%;
+    margin: 15px 0px;
+    font-size: 20px;
+    padding-right: 30px;
+}
+
+.currency {
+    position: absolute;
+    font-size: 20px;
+    top: 50%;
+    right: 0px;
+    transform: translate(-50%, -50%);
+}
+
+.so_du_tai_khoan,
+.btn_rut_toan_bo {
+    color: #999;
+    font-size: 13px;
+}
+
+table {
+    border-collapse: separate;
+    border-spacing: 0 10px;
+}
+
+th {
+    font-size: 13px;
+    color: #999;
+    font-weight: 300;
+    white-space: nowrap;
+    padding-right: 15px !important;
+}
+
+td {
+    text-align: end;
+    font-weight: 600;
+}
+
+tr {
+    margin-top: 10px;
+}
+
+.bank_infor_input {
+    width: 100%;
+    text-align: end;
+    border: none;
+    border-bottom: 1px solid black;
+    outline-style: none;
+}
+
+.luu_y_tittle,
+.luu_y_content {
+    font-size: 10px;
+}
+
+.box_btn_rut_tien_ngay {
+    width: 50%;
+}
+
+body {
+    background-color: #faebd7;
+}
+
+.container-1 {
+    box-shadow: none;
+    background-color: unset !important;
+}
+
+@media screen and (max-width: 768px) {
+    .tittle_so_tien_rut {
+        font-weight: bold;
+        font-size: 10px;
+    }
+
+    .btn-back {
+        font-size: 13px;
+    }
+
+    .box_content,
+    .box_btn_rut_tien_ngay {
+        width: 90%;
+    }
+}

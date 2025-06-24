@@ -1,0 +1,132 @@
+.title {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.banner {
+    width: 90%;
+}
+
+.banner-image {
+    width: 100%;
+}
+
+.btn-import {
+    display: inline-block;
+    min-width: 350px;
+    padding: 20px 60px;
+    font-size: 20px;
+    font-weight: bold;
+    color: white;
+    border: none;
+    border-radius: 50px;
+    background: linear-gradient(to bottom, #555, #111);
+    box-shadow: inset 0 2px 8px rgba(255, 255, 255, 0.2), 0 4px 12px rgba(0, 0, 0, 0.5);
+    position: relative;
+    text-transform: uppercase;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.btn-import::before {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    right: 2px;
+    height: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50px 50px 0 0;
+}
+
+.tong-phan-phoi {
+    font-size: 20px;
+}
+
+.report {
+    background-color: #8f8d8d61;
+    width: 80%;
+    margin: auto;
+    border-radius: 20px;
+    margin-top: 10px;
+    padding: 10px 10px 10px 10px !important;
+    border: 1px solid white;
+}
+
+.report-item {
+    background-color: #dcebfa;
+    border-radius: 10px;
+    height: 100px;
+    padding: 10px;
+}
+
+
+.image-logo {
+    width: 50px;
+}
+
+.report-item-title {
+    font-size: 14px;
+}
+
+.report-item-value {
+    position: absolute;
+    top: 45%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 20px;
+}
+
+.mo-ta {
+    padding: 40px 30px 0 30px;
+}
+
+.mo-ta-title {
+    position: absolute;
+    border-radius: 3px;
+    font-size: 13px;
+    top: -13px;
+    left: 10px;
+    background: linear-gradient(209deg, #ffcc2c, #ff9a2c) !important;
+    padding: 5px 20px 5px 20px !important;
+}
+
+.mo-ta-box-content {
+    border-radius: 10px;
+    padding: 20px 20px 10px 20px;
+}
+
+@media screen and (max-width: 768px) {
+    .image-logo {
+        width: 30px;
+    }
+
+    .report-item-value {
+        font-size: 14px;
+    }
+
+    .report-item-title {
+        font-size: 11px;
+    }
+
+    .title {
+        font-size: 17px;
+    }
+
+    .btn-back {
+        font-size: 13px;
+    }
+
+    .vip-level-banner {
+        font-size: 20px;
+    }
+
+    .detail-vip-level-banner {
+        font-size: 14px;
+    }
+
+    .tong-phan-phoi {
+        font-size: 15px;
+    }
+}

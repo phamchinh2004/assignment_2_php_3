@@ -1,0 +1,148 @@
+.container-1 {
+    background: linear-gradient(0deg, #fcfdfe, #0000009e) !important;
+    box-shadow: none;
+}
+
+.history-top {
+    padding: 20px;
+}
+
+.tittle_order {
+    font-size: 25px;
+    margin-bottom: 10px;
+    font-weight: bold;
+    color: white;
+}
+
+.so_du {
+    font-size: 17px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #ee9705;
+}
+
+.history-top-text-3 {
+    font-size: 13px;
+    color: rgb(228, 225, 225);
+}
+
+.status_btns {
+    background: #000;
+}
+
+.btn_status {
+    width: 23%;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn_status_text.active-tab {
+    font-weight: bold;
+    color: #de8d05 !important;
+}
+
+.btn_status_text {
+    text-align: center;
+    padding: 10px;
+    color: white;
+    font-size: 13px;
+}
+
+.list_orders {
+    padding: 20px;
+}
+
+.order_item {
+    /* background-size: 100% 100% !important; */
+    background: url('../../images/order/vien.png');
+    padding: 40px 20px 20px 20px;
+    position: relative;
+    background-size: cover;
+    margin-bottom: 10px;
+}
+
+.order_time,
+.order_code {
+    font-size: 12px;
+    color: #6e6e6e9e;
+}
+
+.order_info {
+    background-color: #f2f2f2;
+}
+
+.order_image {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+}
+
+.order_name {
+    font-size: 14px;
+    font-family: PingFangSC-Regular, PingFang SC;
+}
+
+.order_info_text {
+    justify-content: space-between;
+}
+
+.order_status {
+    position: absolute;
+    top: 15px;
+    right: 10px;
+}
+
+.order_status_image {
+    width: 80px;
+}
+
+table {
+    width: 100%;
+    margin-top: 10px;
+    border-collapse: separate;
+    border-spacing: 0 10px;
+}
+
+td {
+    font-size: 13px;
+}
+
+th {
+    text-align: right;
+}
+
+.total {
+    color: #ee9705;
+}
+
+.btn_phan_phoi {
+    background-color: #ee9705;
+    color: white;
+    border: none;
+
+}
+
+@media screen and (max-width: 768px) {
+    .order_status {
+        position: absolute;
+        top: 3px;
+        right: 0px;
+    }
+
+    .order_status_image {
+        width: 50px;
+    }
+
+    .order_item {
+        padding: 20px;
+    }
+
+    .order_name {
+        font-size: 12px;
+    }
+    .btn_status_text{
+        font-size: 11px;
+    }
+}

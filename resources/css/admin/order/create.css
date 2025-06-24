@@ -1,0 +1,126 @@
+#tittle {
+    font-size: 20px;
+    white-space: nowrap;
+}
+
+select {
+    font-size: 12px !important;
+}
+
+.section_1_content {
+    max-height: 500px;
+    overflow: hidden;
+    transition: max-height 0.5s ease-in-out;
+}
+
+.inactive {
+    max-height: 0;
+    padding: 0px !important;
+}
+
+.order_item {
+    width: 30%;
+    margin-bottom: 25px !important;
+    padding: 20px 20px 20px 20px;
+    box-shadow: 0 5px 10px #000;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 0px 20px;
+}
+
+.div_img {
+    overflow: hidden;
+    border-radius: 6px;
+}
+
+.div_img>img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+}
+
+.div_name {
+    width: 70%;
+}
+
+.div_name>input {
+    font-size: 13px;
+}
+
+.index {
+    position: absolute;
+    top: 0%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 10px;
+}
+
+.price {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    color: red;
+    font-weight: bold;
+}
+
+#submit {
+    position: fixed;
+    bottom: 0%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 999;
+}
+
+#btn_submit {
+    padding-left: 30px !important;
+    padding-right: 30px !important;
+}
+
+@media screen and (max-width: 768px) {
+    .price {
+        bottom: 0px;
+        right: 5px;
+        font-size: 8px;
+    }
+
+    .index {
+        font-size: 7px;
+    }
+
+    .div_name>label {
+        top: -9px !important;
+    }
+
+    .form-control {
+        min-height: 0px !important;
+    }
+
+    .div_name>input {
+        height: 30px !important;
+    }
+
+    .div_img>img {
+        width: 40px;
+        height: 40px;
+    }
+
+    .label_name {
+        font-size: 10px;
+    }
+
+    .order_item {
+        width: 49%;
+        padding: 5px 10px 10px 10px;
+        margin-bottom: 10px;
+    }
+
+    #tittle {
+        font-size: 12px;
+    }
+
+    select {
+        font-size: 9px !important;
+    }
+}

@@ -1,0 +1,32 @@
+.container-1 {
+    background: white !important;
+    box-shadow: none;
+}
+
+.image_avt_temp {
+    width: 40px;
+    margin-right: 10px;
+}
+
+.images {
+    width: 30px;
+    margin-right: 10px;
+}
+
+@media screen and (max-width: 768px) {
+    .images {
+        width: 20px;
+    }
+
+    .image_avt_temp {
+        width: 30px;
+    }
+
+    .title {
+        font-size: 20px;
+    }
+
+    .btn-back {
+        font-size: 14px;
+    }
+}
