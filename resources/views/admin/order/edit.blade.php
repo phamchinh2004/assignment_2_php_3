@@ -16,6 +16,9 @@ Chỉnh sửa đơn hàng
 @vite('resources/js/admin/order/edit.js')
 <!-- Page level custom scripts -->
 <script src="{{ asset('theme/admin/js/demo/datatables-demo.js') }}"></script>
+<script>
+    window.currentPermissionCode = "quan_ly_don_hang";
+</script>
 @endsection
 
 @section('content')

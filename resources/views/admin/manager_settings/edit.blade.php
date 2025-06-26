@@ -1,12 +1,12 @@
 @extends('admin.layouts.master')
 @section('title')
-Thêm mới cấp độ
+Chỉnh sửa chức năng hệ thống
 @endsection
 
 @section('style-libs')
 <!-- Custom styles for this page -->
 <link href="{{ asset('theme/admin/vendor/datatables/dataTables.bootstrap4.min.css') }}" rel="stylesheet">
-@vite('resources/css/admin/manager_setting/edit.css')
+<!-- @vite('resources/css/admin/manager_setting/edit.css') -->
 @endsection
 
 @section('script-libs')
@@ -33,20 +33,13 @@ Thêm mới cấp độ
         </div>
     </div>
     <section class="container-fluid">
-        <form action="{{ route('manager_setting.update',['manager_setting'=>$manager_setting->id]) }}" method="post" enctype="multipart/form-data" id="form">
+        <form action="{{ route('manager_setting.update',['manager_setting'=>$manager_setting->id]) }}" method="post" id="form">
             @csrf
             @method('PUT')
             <div class="mt-2 fw-bold">
                 <label for="">Tên chức năng</label>
                 <input type="text" name="manager_name" value="{{ old('manager_name',$manager_setting->manager_name) }}" class="form-control" placeholder="Nhập tên chức năng quản lý">
                 @error('manager_name')
-                <small class="text-danger">{{ $message }}</small>
-                @enderror
-            </div>
-            <div class="mt-2 fw-bold">
-                <label for="">Mã chức năng</label>
-                <input type="text" name="manager_code" value="{{ old('manager_code',$manager_setting->manager_code) }}" class="form-control" placeholder="Nhập mã chức năng quản lý">
-                @error('manager_code')
                 <small class="text-danger">{{ $message }}</small>
                 @enderror
             </div>

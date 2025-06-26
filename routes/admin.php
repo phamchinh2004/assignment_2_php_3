@@ -21,7 +21,9 @@ Route::middleware(['role:staff|admin', 'checkBanned'])->group(function () {
         Route::get('/order/change-status-order/{order}', [OrderController::class, 'changeStatusOrder'])->name('order.change.status');
         Route::resource('order', OrderController::class);
     });
-    Route::resource('rank', RankController::class);
+    Route::middleware(['checkPermission:quan_ly_cap_do'])->group(function () {
+        Route::resource('rank', RankController::class);
+    });
     Route::resource('user', UserController::class);
     Route::get('/user/change-status-user/{user}', [UserController::class, 'changeStatusUser'])->name('user.change.status');
     Route::get('/user/frozen-order/{user}', [UserController::class, 'frozenOrderInterface'])->name('user.frozen.order.interface');

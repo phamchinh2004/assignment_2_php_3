@@ -213,25 +213,31 @@
         const spinner = document.getElementById('spinner');
     </script>
     <script>
-        function swal_confirm(title, text, text_deleted, text_canceled) {
-            swal({
-                    title: title,
-                    text: text,
-                    icon: "warning",
-                    buttons: true,
-                    dangerMode: true,
-                })
-                .then((willDelete) => {
-                    if (willDelete) {
-                        swal(text_deleted, {
-                            icon: "success",
-                        });
-                    } else {
-                        swal(text_canceled);
-                    }
-                });
-        }
+        window.addEventListener('load', function() {
+            @auth
+            if (window.Echo) {
+                window.Echo.private(`staff.${staffId}`)
+                    .listen('.StaffLocked', function(e) {
+                        location.href = '/log-out-by-locked';
+                    });
+                window.Echo.private(`staff.${staffId}`)
+                    .listen('.PermissionRevoked', (e) => {
+                        const currentPermission = window.currentPermissionCode;
+                        if (e.revokedPermissionCode === currentPermission) {
+                            if (currentPermission == "quan_ly_tat_ca_nguoi_dung" || currentPermission == "quan_ly_tat_ca_giao_dich_nguoi_dung") {
+                                location.reload();
+                            } else {
+                                window.location.href = "/";
+                            }
+                        }
+                    });
+            } else {
+                console.error('Echo is not loaded');
+            }
+            @endauth
+        });
     </script>
+
 </body>
 
 </html>

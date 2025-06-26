@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Events\UserLocked;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreFrozenOrderRequest;
 use App\Models\User;
@@ -9,8 +10,10 @@ use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateFrozenOrderRequest;
 use App\Http\Requests\UpdateUserRequest;
 use App\Models\Frozen_order;
+use App\Models\Manager_setting;
 use App\Models\Order;
 use App\Models\Rank;
+use App\Models\User_manager_setting;
 use App\Models\User_spin_progress;
 use App\Models\Wallet_balance_history;
 use Illuminate\Support\Facades\Auth;
@@ -25,7 +28,15 @@ class UserController extends Controller
     {
         $query = User::with('frozen_orders')->with('referrer')->where('role', 'member');
         if (Auth::user()->role === "staff") {
-            $query->where('referrer_id', Auth::user()->id);
+            $get_quan_ly_tat_ca_nguoi_dung = Manager_setting::where('manager_code', 'quan_ly_tat_ca_nguoi_dung')->first();
+            if ($get_quan_ly_tat_ca_nguoi_dung) {
+                $get_user_manager_setting_by_user_id = User_manager_setting::where('manager_setting_id', $get_quan_ly_tat_ca_nguoi_dung->id)->where('user_id', Auth::user()->id)->first();
+                if ($get_user_manager_setting_by_user_id) {
+                    if (!$get_user_manager_setting_by_user_id->is_active) {
+                        $query->where('referrer_id', Auth::user()->id);
+                    }
+                }
+            }
         }
         $users = $query->get();
         return view('admin.user.index', compact('users'));
@@ -147,6 +158,7 @@ class UserController extends Controller
             } elseif ($user->status === "activated") {
                 $message = "Khóa tài khoản người dùng thành công!";
                 $user->status = "banned";
+                event(new UserLocked($user->id));
             } else {
                 $user->status = "activated";
                 $message = "Mở khóa tài khoản người dùng thành công!";

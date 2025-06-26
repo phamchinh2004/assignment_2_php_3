@@ -1,6 +1,6 @@
 @extends('admin.layouts.master')
 @section('title')
-Thêm mới nhân viên
+Chỉnh sửa nhân viên
 @endsection
 
 @section('style-libs')

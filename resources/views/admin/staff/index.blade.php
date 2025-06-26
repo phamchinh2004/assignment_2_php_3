@@ -1,6 +1,6 @@
 @extends('admin.layouts.master')
 @section('title')
-Danh sách người dùng
+Danh sách nhân viên
 @endsection
 
 @section('style-libs')
@@ -16,7 +16,7 @@ Danh sách người dùng
 
 <!-- Page level custom scripts -->
 <script src="{{ asset('theme/admin/js/demo/datatables-demo.js') }}"></script>
-@vite('resources/js/admin/staff/index.js')
+<!-- @vite('resources/js/admin/staff/index.js') -->
 @endsection
 
 @section('content')

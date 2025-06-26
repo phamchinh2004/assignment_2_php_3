@@ -131,4 +131,11 @@ class LoginController extends Controller
         $request->session()->regenerateToken();
         return redirect()->route('login')->with('success', 'Đăng xuất thành công!');
     }
+    public function log_out_by_locked(Request $request)
+    {
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+        return redirect()->route('login')->with('warning', 'Bạn đã bị khóa tài khoản!');
+    }
 }

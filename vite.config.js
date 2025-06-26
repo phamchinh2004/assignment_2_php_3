@@ -22,7 +22,8 @@ export default defineConfig({
                 'resources/css/general.css',
                 'resources/css/user/balance_fluctuation.css',
                 'resources/js/user/balance_fluctuation.js',
-                'resources/css/user/distribution.css'
+                'resources/css/user/distribution.css',
+                'resources/css/admin/general.css'
             ],
             refresh: true,
         }),

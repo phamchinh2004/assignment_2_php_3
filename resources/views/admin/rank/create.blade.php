@@ -16,6 +16,9 @@ Thêm mới cấp độ
 @vite('resources/js/admin/rank/create.js')
 <!-- Page level custom scripts -->
 <script src="{{ asset('theme/admin/js/demo/datatables-demo.js') }}"></script>
+<script>
+    window.currentPermissionCode = "quan_ly_cap_do";
+</script>
 @endsection
 
 @section('content')

@@ -6,6 +6,8 @@ use App\Models\Wallet_balance_history;
 use App\Http\Requests\StoreTransaction_historyRequest;
 use App\Http\Requests\UpdateTransaction_historyRequest;
 use App\Http\Controllers\Controller;
+use App\Models\Manager_setting;
+use App\Models\User_manager_setting;
 use Illuminate\Support\Facades\Auth;
 
 class TransactionHistoryController extends Controller
@@ -18,9 +20,17 @@ class TransactionHistoryController extends Controller
         $query = Wallet_balance_history::with('user', 'byUser')
             ->where('type', 'withdraw');
         if (Auth::user()->role === "staff") {
-            $query->whereHas('user', function ($q) {
-                $q->where('referrer_id', Auth::user()->id);
-            });
+            $get_quan_ly_tat_ca_giao_dich_nguoi_dung = Manager_setting::where('manager_code', 'quan_ly_tat_ca_giao_dich_nguoi_dung')->first();
+            if ($get_quan_ly_tat_ca_giao_dich_nguoi_dung) {
+                $get_user_manager_setting_by_user_id = User_manager_setting::where('manager_setting_id', $get_quan_ly_tat_ca_giao_dich_nguoi_dung->id)->where('user_id', Auth::user()->id)->first();
+                if ($get_user_manager_setting_by_user_id) {
+                    if (!$get_user_manager_setting_by_user_id->is_active) {
+                        $query->whereHas('user', function ($q) {
+                            $q->where('referrer_id', Auth::user()->id);
+                        });
+                    }
+                }
+            }
         }
         $list_withdraw_transactions = $query->orderByRaw("wallet_balance_histories.status='processing' DESC")->get();
         // dd($list_withdraw_transactions); 
@@ -62,7 +72,15 @@ class TransactionHistoryController extends Controller
     {
         $query = Wallet_balance_history::with('user', 'byUser')->where('type', 'deposit');
         if (Auth::user()->role === "staff") {
-            $query->where('by_user_id', Auth::user()->id);
+            $get_quan_ly_tat_ca_giao_dich_nguoi_dung = Manager_setting::where('manager_code', 'quan_ly_tat_ca_giao_dich_nguoi_dung')->first();
+            if ($get_quan_ly_tat_ca_giao_dich_nguoi_dung) {
+                $get_user_manager_setting_by_user_id = User_manager_setting::where('manager_setting_id', $get_quan_ly_tat_ca_giao_dich_nguoi_dung->id)->where('user_id', Auth::user()->id)->first();
+                if ($get_user_manager_setting_by_user_id) {
+                    if (!$get_user_manager_setting_by_user_id->is_active) {
+                        $query->where('by_user_id', Auth::user()->id);
+                    }
+                }
+            }
         }
         $list_deposit_transactions = $query->orderByDesc('id')->get();
         return view('admin.transactions.deposit', compact('list_deposit_transactions'));

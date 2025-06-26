@@ -71,13 +71,7 @@ class ManagerSettingController extends Controller
             return back()->with('error', 'Chức năng này không tồn tại!');
         }
         $new_manager_name = $request->manager_name;
-        $new_manager_code = Str::slug($request->manager_code, '_');
-        $check_existed = Manager_setting::where('manager_code', $new_manager_code)->where('manager_code', '!=', $manager_setting->manager_code)->first();
-        if ($check_existed) {
-            return back()->with('error', 'Mã chức năng này đã tồn tại!');
-        }
         $manager_setting->manager_name = $new_manager_name;
-        $manager_setting->manager_code = $new_manager_code;
         $manager_setting->save();
         return redirect()->route('manager_setting.index')->with('success', 'Cập nhật chức năng thành công!');
     }

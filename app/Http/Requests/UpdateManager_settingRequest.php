@@ -23,7 +23,6 @@ class UpdateManager_settingRequest extends FormRequest
     {
         return [
             'manager_name' => 'required|string|max:255',
-            'manager_code' => 'required|string|max:255',
         ];
     }
 }

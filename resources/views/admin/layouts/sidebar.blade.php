@@ -44,41 +44,12 @@
         </div>
     </li>
     @endif
-    <!-- Quản lý đơn hàng -->
-    <li class="nav-item">
-        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseUtilities" aria-expanded="true" aria-controls="collapseUtilities">
-            <img src="{{ asset('images/admin/icons/product.svg') }}" alt="img">
-            <span>Quản lý đơn hàng</span>
-        </a>
-        <div id="collapseUtilities" class="collapse" aria-labelledby="headingUtilities" data-parent="#accordionSidebar">
-            <div class="bg-white py-2 collapse-inner rounded">
-                <h6 class="collapse-header">Danh sách chức năng</h6>
-                <a class="collapse-item" href="{{ route('order.index') }}">Danh sách</a>
-                <a class="collapse-item" href="{{ route('order.create') }}">Thêm</a>
-            </div>
-        </div>
-    </li>
-    <!-- Quản lý danh mục -->
-    <li class="nav-item">
-        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="true" aria-controls="collapseTwo">
-            <img src="{{ asset('images/admin/icons/category.svg') }}" alt="img">
-            <span>Quản lý cấp độ</span>
-        </a>
-        <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
-            <div class="bg-white py-2 collapse-inner rounded">
-                <h6 class="collapse-header">Danh sách chức năng:</h6>
-                <a class="collapse-item" href="{{ route('rank.index') }}">Danh sách</a>
-                <a class="collapse-item" href="{{ route('rank.create') }}">Thêm</a>
-            </div>
-        </div>
-    </li>
-
 
     {{-- Quản lý vouchers --}}
     <li class="nav-item">
         <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseVouchers" aria-expanded="true" aria-controls="collapseVouchers">
             <img src="{{ asset('images/admin/icons/users1.svg') }}" alt="img">
-            <span>Quản lý người dùng</span>
+            <span>Quản lý khách hàng</span>
         </a>
         <div id="collapseVouchers" class="collapse" aria-labelledby="headingPages" data-parent="#accordionSidebar">
             <div class="bg-white py-2 collapse-inner rounded">
@@ -93,7 +64,7 @@
     <li class="nav-item">
         <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseOrder" aria-expanded="true" aria-controls="collapseOrder">
             <img src="{{ asset('images/admin/icons/sales1.svg') }}" alt="img">
-            <span>Quản lý giao dịch người dùng</span>
+            <span>Quản lý giao dịch khách hàng</span>
         </a>
         <div id="collapseOrder" class="collapse" aria-labelledby="headingPages" data-parent="#accordionSidebar">
             <div class="bg-white py-2 collapse-inner rounded">
@@ -107,7 +78,8 @@
     {{-- Quản lý đánh giá --}}
     <li class="nav-item">
         <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseRatings" aria-expanded="true" aria-controls="collapseRatings">
-            <i class="fa-regular fa-comment-dots text-light fa-5xl"></i>
+            <!-- <i class="fa-regular fa-comment-dots text-light fa-5xl"></i> -->
+            <img src="{{ asset('images/admin/icons/users1.svg') }}" alt="img">
             <span>Quản lý nhân viên</span>
         </a>
         <div id="collapseRatings" class="collapse" aria-labelledby="headingPages" data-parent="#accordionSidebar">
@@ -117,7 +89,34 @@
             </div>
         </div>
     </li>
-
+    <!-- Quản lý đơn hàng -->
+    <li class="nav-item">
+        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseUtilities" aria-expanded="true" aria-controls="collapseUtilities">
+            <img src="{{ asset('images/admin/icons/product.svg') }}" alt="img">
+            <span>Quản lý đơn hàng</span>
+        </a>
+        <div id="collapseUtilities" class="collapse" aria-labelledby="headingUtilities" data-parent="#accordionSidebar">
+            <div class="bg-white py-2 collapse-inner rounded">
+                <h6 class="collapse-header">Danh sách chức năng</h6>
+                <a class="collapse-item" href="{{ route('order.index') }}">Danh sách</a>
+                <a class="collapse-item" href="{{ route('order.create') }}">Thêm</a>
+            </div>
+        </div>
+    </li>
+    <!-- Quản lý cấp độ -->
+    <li class="nav-item">
+        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="true" aria-controls="collapseTwo">
+            <img src="{{ asset('images/admin/icons/category.svg') }}" alt="img">
+            <span>Quản lý cấp độ</span>
+        </a>
+        <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
+            <div class="bg-white py-2 collapse-inner rounded">
+                <h6 class="collapse-header">Danh sách chức năng:</h6>
+                <a class="collapse-item" href="{{ route('rank.index') }}">Danh sách</a>
+                <a class="collapse-item" href="{{ route('rank.create') }}">Thêm</a>
+            </div>
+        </div>
+    </li>
     {{-- Liên hệ --}}
     <li class="nav-item">
         <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseContacts" aria-expanded="true" aria-controls="collapseContacts">
@@ -302,3 +301,10 @@
     </div> --}}
 
 </ul>
+<script>
+    const staffId = {
+        {
+            auth() - > id()
+        }
+    };
+</script>

@@ -10,5 +10,5 @@ Dashboard
 @endsection
 
 @section('script-libs')
-<script src="{{ asset('js/admin/charts/getRevenueShop.js') }}"></script>
+<!-- <script src="{{ asset('js/admin/charts/getRevenueShop.js') }}"></script> -->
 @endsection

@@ -17,6 +17,9 @@ Danh sách cấp độ
 <!-- Page level custom scripts -->
 <script src="{{ asset('theme/admin/js/demo/datatables-demo.js') }}"></script>
 @vite('resources/js/admin/transaction/withdraw.js')
+<script>
+    window.currentPermissionCode = "quan_ly_tat_ca_giao_dich_nguoi_dung";
+</script>
 @endsection
 
 @section('content')

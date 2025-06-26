@@ -16,6 +16,9 @@ Thêm mới người dùng
 @vite('resources/js/admin/user/frozen_order.js')
 <!-- Page level custom scripts -->
 <script src="{{ asset('theme/admin/js/demo/datatables-demo.js') }}"></script>
+<script>
+    window.currentPermissionCode = "quan_ly_tat_ca_nguoi_dung";
+</script>
 @endsection
 
 @section('content')

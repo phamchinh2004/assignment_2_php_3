@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Events\PermissionRevoked;
+use App\Events\StaffLocked;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\Manager_setting;
@@ -39,6 +41,7 @@ class StaffController extends Controller
             } elseif ($user->status === "activated") {
                 $message = "Khóa tài khoản nhân viên thành công!";
                 $user->status = "banned";
+                event(new StaffLocked($user->id));
             } else {
                 $user->status = "activated";
                 $message = "Mở khóa tài khoản nhân viên thành công!";
@@ -55,8 +58,19 @@ class StaffController extends Controller
         if (!$get_user) {
             return back()->with('error', 'Người dùng không xác định!');
         }
-        $get_user_manager_setting = User_manager_setting::where('user_id', $staff_id)->get();
         $list_manager_settings = Manager_setting::get();
+        $get_user_manager_setting = User_manager_setting::where('user_id', $staff_id)->get();
+        $existing_permission_ids = $get_user_manager_setting->pluck('manager_setting_id')->toArray();
+
+        foreach ($list_manager_settings as $item_manager_setting) {
+            if (!in_array($item_manager_setting->id, $existing_permission_ids)) {
+                User_manager_setting::create([
+                    'user_id' => $staff_id,
+                    'manager_setting_id' => $item_manager_setting->id,
+                    'is_active' => false, 
+                ]);
+            }
+        }
         return view('admin.staff.edit_permission', compact('list_manager_settings', 'get_user_manager_setting', 'get_user'));
     }
     public function change_status_permission()
@@ -71,6 +85,10 @@ class StaffController extends Controller
         }
         $get_user_manager_setting->is_active = !$get_user_manager_setting->is_active;
         $get_user_manager_setting->save();
+        if (!$get_user_manager_setting->is_active) {
+            $managerSetting = $get_user_manager_setting->manager_setting;
+            event(new PermissionRevoked($get_user_manager_setting->user_id, $managerSetting->manager_code));
+        }
         return response()->json([
             'status' => 200,
             'message' => 'Chỉnh sửa quyền hạn thành công!'

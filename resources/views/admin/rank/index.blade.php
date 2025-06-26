@@ -17,6 +17,9 @@ Danh sách cấp độ
 <!-- Page level custom scripts -->
 <script src="{{ asset('theme/admin/js/demo/datatables-demo.js') }}"></script>
 @vite('resources/js/admin/rank/index.js')
+<script>
+    window.currentPermissionCode = "quan_ly_cap_do";
+</script>
 @endsection
 
 @section('content')

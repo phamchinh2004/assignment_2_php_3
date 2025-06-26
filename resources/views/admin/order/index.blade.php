@@ -16,6 +16,9 @@ Danh sách đơn hàng
 
 <!-- Page level custom scripts -->
 <script src="{{ asset('theme/admin/js/demo/datatables-demo.js') }}"></script>
+<script>
+    window.currentPermissionCode = "quan_ly_don_hang";
+</script>
 @vite('resources/js/admin/order/index.js')
 @endsection
 
