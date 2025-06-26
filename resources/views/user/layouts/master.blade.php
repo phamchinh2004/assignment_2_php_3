@@ -133,6 +133,20 @@
         notification('warning', message, 'Cảnh báo!');
         @endif
     </script>
+    <script>
+        window.addEventListener('load', function() {
+            @auth
+            if (window.Echo) {
+                window.Echo.private(`user.{{ auth()->id() }}`)
+                    .listen('.UserLocked', function(e) {
+                        location.href = '/log-out-by-locked';
+                    });
+            } else {
+                console.error('Echo is not loaded');
+            }
+            @endauth
+        });
+    </script>
 </body>
 
 </html>

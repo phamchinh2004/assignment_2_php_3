@@ -301,10 +301,3 @@
     </div> --}}
 
 </ul>
-<script>
-    const staffId = {
-        {
-            auth() - > id()
-        }
-    };
-</script>

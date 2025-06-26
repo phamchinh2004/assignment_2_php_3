@@ -216,11 +216,11 @@
         window.addEventListener('load', function() {
             @auth
             if (window.Echo) {
-                window.Echo.private(`staff.${staffId}`)
+                window.Echo.private(`staff.{{ auth()->id() }}`)
                     .listen('.StaffLocked', function(e) {
                         location.href = '/log-out-by-locked';
                     });
-                window.Echo.private(`staff.${staffId}`)
+                window.Echo.private(`staff.{{ auth()->id() }}`)
                     .listen('.PermissionRevoked', (e) => {
                         const currentPermission = window.currentPermissionCode;
                         if (e.revokedPermissionCode === currentPermission) {
