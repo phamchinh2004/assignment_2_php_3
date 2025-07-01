@@ -158,7 +158,7 @@
         <div class="bg-white border-top p-3">
             <form wire:submit.prevent="sendMessage" class="d-flex align-items-center">
                 <input type="text"
-                    wire:model.live="messageText"
+                    wire:model="messageText"
                     placeholder="Nhập tin nhắn..."
                     class="form-control me-2"
                     wire:keydown.enter.prevent="sendMessage">
@@ -223,16 +223,13 @@
         });
     });
 
-    // Auto-focus on message input
-    // document.addEventListener('DOMContentLoaded', function() {
-    //     const messageInput = document.querySelector('input[wire\\:model="messageText"]');
-    //     if (messageInput) {
-    //         messageInput.addEventListener('keydown', function(e) {
-    //             if (e.key === 'Enter' && !e.shiftKey) {
-    //                 e.preventDefault();
-    //                 @this.sendMessage();
-    //             }
-    //         });
-    //     }
-    // });
+    document.addEventListener('DOMContentLoaded', function() {
+        Livewire.on('reset-message-input', () => {
+            const input = document.querySelector('input[wire\\:model*="messageText"]');
+            if (input) {
+                input.value = '';
+                input.focus();
+            }
+        });
+    });
 </script>

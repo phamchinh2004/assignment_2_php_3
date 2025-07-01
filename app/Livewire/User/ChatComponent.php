@@ -60,7 +60,8 @@ class ChatComponent extends Component
             'sender_id' => Auth::user()->id,
             'message' => trim($this->newMessage),
         ]);
-
+        $this->newMessage = '';
+        $this->dispatch('reset-message-input');
         // Load sender relationship
         $message->load('sender');
 
@@ -85,7 +86,7 @@ class ChatComponent extends Component
         $this->messages->push($messageArray);
 
         // Reset message
-        $this->newMessage = '';
+
 
         logger('Gửi message từ user realtime: ' . $message->id);
 

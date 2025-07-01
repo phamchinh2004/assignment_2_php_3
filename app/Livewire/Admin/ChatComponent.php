@@ -136,6 +136,7 @@ class ChatComponent extends Component
             'message' => trim($this->messageText)
         ]);
         $this->messageText = '';
+        $this->dispatch('reset-message-input');
         // Load sender relationship
         $message->load('sender');
 

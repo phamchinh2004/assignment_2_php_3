@@ -169,11 +169,14 @@
         }
 
         // Handle Enter key
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' && e.target.id === 'chat-input-field') {
-                e.preventDefault();
-                @this.sendMessage();
-            }
+        document.addEventListener('DOMContentLoaded', function() {
+            Livewire.on('reset-message-input', () => {
+                const input = document.querySelector('input[wire\\:model*="newMessage"]');
+                if (input) {
+                    input.value = '';
+                    input.focus();
+                }
+            });
         });
     });
 </script>
