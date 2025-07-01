@@ -11,7 +11,9 @@ use Laravel\Sanctum\HasApiTokens;
 class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
-
+    const ROLE_ADMIN = 'admin';
+    const ROLE_STAFF = 'staff';
+    const ROLE_MEMBER = 'member';
     /**
      * The attributes that are mass assignable.
      *
@@ -68,6 +70,10 @@ class User extends Authenticatable
     public function referrer()
     {
         return $this->belongsTo(User::class, 'referrer_id');
+    }
+    public function invitedUsers()
+    {
+        return $this->hasMany(User::class, 'referrer_id');
     }
     public function rank()
     {

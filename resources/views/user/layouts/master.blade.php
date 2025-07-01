@@ -7,12 +7,18 @@
     <title>Amazon</title>
     <link rel="icon" href="{{ asset('images/logo.png') }}" type="image/x-icon">
     <link rel="shortcut icon" href="{{ asset('images/logo.png') }}" type="image/x-icon">
+    <script>
+        window.Laravel = {
+            userId: @json(Auth::id())
+        };
+    </script>
     @vite(['resources/js/app.js', 'resources/css/app.css'])
     <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.css" rel="stylesheet" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet" />
     @vite('resources/css/user.css')
     @vite('resources/css/general.css')
     @yield('css-libs')
+    @livewireStyles
 </head>
 
 <body class="m-auto">
@@ -37,10 +43,11 @@
                         <img class="footer-logo" src="{{ asset('images/logo_2_white.webp') }}" alt="">
                     </div>
                 </a>
-                <a class="cspt footer-item text-dark text-decoration-none">
-                    <i class="fa fa-solid fa-headset"></i>
-                    <div class="fw-bold text-footer">CSKH</div>
-                </a>
+
+
+                <!-- Hộp thoại -->
+                @livewire('user.chat-component')
+                <!-- End hộp thoại -->
                 <a class="cspt footer-item text-dark text-decoration-none" href="{{ route('me') }}">
                     <i class="fa fa-regular fa-user"></i>
                     <div class="fw-bold text-footer">Tôi</div>
@@ -76,6 +83,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.js.map"></script>
     @vite('resources/js/general.js')
     @yield('script-libs')
+    @stack('scripts')
     <script>
         const spinner = document.getElementById('spinner');
 
@@ -141,12 +149,14 @@
                     .listen('.UserLocked', function(e) {
                         location.href = '/log-out-by-locked';
                     });
+                
             } else {
                 console.error('Echo is not loaded');
             }
             @endauth
         });
     </script>
+    @livewireScripts
 </body>
 
 </html>

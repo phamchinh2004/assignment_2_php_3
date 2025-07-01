@@ -25,17 +25,22 @@
     <!-- Slimselect -->
     <link href="https://unpkg.com/slim-select@latest/dist/slimselect.css" rel="stylesheet">
     </link>
-
+    <script>
+        window.Laravel = {
+            userId: @json(Auth::id()),
+        };
+    </script>
     <!-- RateYo -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/rateYo/2.3.2/jquery.rateyo.min.css">
     @vite(['resources/js/app.js', 'resources/css/app.css'])
     @vite('resources/css/general.css')
     @vite('resources/css/admin/general.css')
     @yield('style-libs')
+    @stack('css')
+    @livewireStyles
 </head>
 
 <body id="page-top">
-
     <!-- Page Wrapper -->
     <div id="wrapper">
 
@@ -49,6 +54,7 @@
                 @include('admin.layouts.header')
                 <!-- End of Topbar -->
                 @yield('content')
+                
             </div>
             <!-- Footer -->
             @include('admin.layouts.footer')
@@ -213,6 +219,7 @@
         const spinner = document.getElementById('spinner');
     </script>
     <script>
+        
         window.addEventListener('load', function() {
             @auth
             if (window.Echo) {
@@ -237,7 +244,8 @@
             @endauth
         });
     </script>
-
+    @livewireScripts
+    @stack('scripts')
 </body>
 
 </html>

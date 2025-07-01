@@ -44,7 +44,20 @@
         </div>
     </li>
     @endif
-
+    {{-- Quản lý tin nhắn --}}
+    <li class="nav-item">
+        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseChatbox" aria-expanded="true" aria-controls="collapseChatbox">
+            <!-- <i class="fa-regular fa-comment-dots text-light fa-5xl"></i> -->
+            <img src="{{ asset('images/admin/icons/users1.svg') }}" alt="img">
+            <span>Quản lý tin nhắn</span>
+        </a>
+        <div id="collapseChatbox" class="collapse" aria-labelledby="headingPages" data-parent="#accordionSidebar">
+            <div class="bg-white py-2 collapse-inner rounded">
+                <h6 class="collapse-header">Danh sách chức năng</h6>
+                <a class="collapse-item" href="{{ route('chat-panel') }}">Danh sách</a>
+            </div>
+        </div>
+    </li>
     {{-- Quản lý vouchers --}}
     <li class="nav-item">
         <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseVouchers" aria-expanded="true" aria-controls="collapseVouchers">

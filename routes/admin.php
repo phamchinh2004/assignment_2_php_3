@@ -7,13 +7,13 @@ use App\Http\Controllers\Admin\RankController;
 use App\Http\Controllers\Admin\StaffController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\TransactionHistoryController;
-use App\Models\Manager_setting;
+use App\Http\Controllers\ConversationController;
+use App\Livewire\AdminChatPanel;
+use App\Models\Conversation;
+use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['role:admin'])->group(function () {
-    Route::resource('staffs', StaffController::class);
-});
-Route::middleware(['role:staff|admin', 'checkBanned'])->group(function () {
+Route::middleware(['role:staff|admin', 'checkBanned', 'auth'])->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('admin.dashboard');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
     Route::middleware(['checkPermission:quan_ly_don_hang'])->group(function () {
@@ -36,8 +36,12 @@ Route::middleware(['role:staff|admin', 'checkBanned'])->group(function () {
     Route::get('/confirm-withdraw/{transaction}', [TransactionHistoryController::class, 'confirm_withdraw'])->name('confirm.withdraw');
     Route::get('/cancel-withdraw/{transaction}', [TransactionHistoryController::class, 'cancel_withdraw'])->name('cancel.withdraw');
     Route::get('/deposit-transaction', [TransactionHistoryController::class, 'index_deposit'])->name('deposit_transaction');
+
+    Route::get('/chat-panel', [ConversationController::class, 'index'])->name('chat-panel');
 });
+Broadcast::routes(['middleware' => ['auth']]);
 Route::middleware(['role:admin'])->group(function () {
+    Route::resource('staffs', StaffController::class);
     Route::resource('manager_setting', ManagerSettingController::class);
     Route::resource('staff', StaffController::class);
     Route::get('/staff/change-status/{id}', [StaffController::class, 'change_status_staff'])->name('staff.change.status');
