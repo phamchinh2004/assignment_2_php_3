@@ -30,15 +30,35 @@
         </div>
 
         <!-- Danh sách tin nhắn -->
-        <div class="p-3" style="height: 300px; overflow-y: auto; background: #f8f9fa;" id="chat-messages-container">
-            @if($messages->count() == 0)
+        <div class="p-3 position-relative" style="height: 300px; overflow-y: auto; background: #f8f9fa;" id="chat-messages-container">
+            <!-- Loading indicator cho load more -->
+            @if($isLoading)
+            <div class="text-center py-2" id="loading-indicator">
+                <div class="spinner-border spinner-border-sm text-primary" role="status">
+                    <span class="visually-hidden">Đang tải...</span>
+                </div>
+                <small class="text-muted ms-2">Đang tải tin nhắn cũ...</small>
+            </div>
+            @endif
+
+            <!-- Nút load more messages -->
+            @if($hasMoreMessages && !$isLoading)
+            <div class="text-center py-2">
+                <button wire:click="loadMoreMessages" class="btn btn-sm btn-outline-primary rounded-pill">
+                    <i class="fa fa-chevron-up me-1"></i>
+                    Tải tin nhắn cũ hơn
+                </button>
+            </div>
+            @endif
+
+            @if($chatMessages->count() == 0)
             <div class="text-center text-muted py-3">
                 <i class="fa fa-comments fa-2x mb-2"></i>
                 <div>Chào bạn! Chúng tôi có thể giúp gì cho bạn?</div>
             </div>
             @endif
 
-            @foreach ($messages as $msg)
+            @foreach ($chatMessages as $msg)
             @php
                 $isCurrentUser = (is_array($msg) ? $msg['sender_id'] : $msg->sender_id) === auth()->id();
                 $message = is_array($msg) ? $msg['message'] : $msg->message;
@@ -54,7 +74,7 @@
                 <div class="d-flex align-items-end" style="max-width: 80%;">
                     <div class="me-2">
                         <div class="px-3 py-2 rounded-pill"
-                            style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-size: 14px; line-height: 1.4;">
+                            style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-size: 14px; line-height: 1.4; word-wrap: break-word;">
                             {{ $message }}
                         </div>
                         <div class="text-end mt-1" style="font-size: 10px; color: #6c757d;">
@@ -73,7 +93,7 @@
                         alt="Support" class="rounded-circle flex-shrink-0" width="28" height="28">
                     <div class="ms-2">
                         <div class="px-3 py-2 rounded-pill"
-                            style="background: white; color: #333; font-size: 14px; line-height: 1.4; border: 1px solid #e9ecef;">
+                            style="background: white; color: #333; font-size: 14px; line-height: 1.4; border: 1px solid #e9ecef; word-wrap: break-word;">
                             {{ $message }}
                         </div>
                         <div class="mt-1 ps-2" style="font-size: 10px; color: #6c757d;text-align:left;">
@@ -90,21 +110,37 @@
         <form wire:submit.prevent="sendMessage" class="p-3" style="background: white; border-top: 1px solid #e9ecef;">
             <div class="d-flex align-items-center" style="background: #f8f9fa; border-radius: 25px; padding: 8px 16px;">
                 <input type="text"
-                    wire:model="newMessage"
+                    wire:model.live="newMessage"
                     class="form-control border-0 bg-transparent"
                     placeholder="Nhập tin nhắn của bạn..."
                     id="chat-input-field"
                     autocomplete="off"
+                    maxlength="{{ $maxMessageLength }}"
                     style="font-size: 14px;">
                 <button type="submit"
                     class="btn btn-link p-0 ms-2"
-                    style="color: #667eea; font-size: 18px;">
+                    style="color: #667eea; font-size: 18px;"
+                    @if(strlen(trim($newMessage)) == 0 || strlen(trim($newMessage)) > $maxMessageLength) disabled @endif>
                     <i class="fa fa-paper-plane"></i>
                 </button>
             </div>
-            <div class="mt-2 text-center" style="font-size: 11px; color: #6c757d;">
-                Nhấn Enter để gửi tin nhắn
+            
+            <!-- Hiển thị số ký tự còn lại và lỗi -->
+            <div class="d-flex justify-content-between align-items-center mt-2">
+                <div style="font-size: 11px; color: #6c757d;">
+                    Nhấn Enter để gửi tin nhắn
+                </div>
+                <div style="font-size: 11px;" 
+                     class="{{ $this->getRemainingCharacters() < 20 ? 'text-warning' : 'text-muted' }}">
+                    {{ $this->getRemainingCharacters() }}/{{ $maxMessageLength }}
+                </div>
             </div>
+            
+            @error('newMessage')
+                <div class="text-danger mt-1" style="font-size: 11px;">
+                    {{ $message }}
+                </div>
+            @enderror
         </form>
     </div>
     @endif
@@ -114,6 +150,8 @@
     document.addEventListener('livewire:initialized', () => {
         let conversationId = @json($conversation->id ?? null);
         let currentUserId = @json(auth()->id());
+        let isLoadingMore = false;
+        let previousScrollHeight = 0;
 
         function scrollToBottom(behavior = 'smooth') {
             const container = document.getElementById('chat-messages-container');
@@ -127,15 +165,53 @@
             }
         }
 
+        function autoResizeTextarea() {
+            // Không cần thiết cho input
+        }
+
         // Listen for Livewire events
         Livewire.on('message-sent', () => {
-            document.getElementById('chat-input-field')?.focus();
+            const input = document.getElementById('chat-input-field');
+            if (input) {
+                input.focus();
+            }
             scrollToBottom();
         });
 
         Livewire.on('scroll-to-bottom', () => {
             scrollToBottom();
         });
+
+        Livewire.on('messages-loaded', () => {
+            const container = document.getElementById('chat-messages-container');
+            if (container) {
+                // Giữ vị trí scroll sau khi load tin nhắn cũ
+                const newScrollHeight = container.scrollHeight;
+                const scrollDiff = newScrollHeight - previousScrollHeight;
+                container.scrollTop = container.scrollTop + scrollDiff;
+            }
+            isLoadingMore = false;
+        });
+
+        // Xử lý scroll để load tin nhắn cũ
+        const container = document.getElementById('chat-messages-container');
+        if (container) {
+            container.addEventListener('scroll', function() {
+                // Nếu scroll lên đầu và có tin nhắn cũ hơn
+                if (this.scrollTop <= 50 && !isLoadingMore) {
+                    const hasMoreMessages = @json($hasMoreMessages);
+                    if (hasMoreMessages) {
+                        isLoadingMore = true;
+                        previousScrollHeight = this.scrollHeight;
+                        
+                        // Gọi Livewire method để load tin nhắn cũ
+                        const root = document.getElementById('chat-root');
+                        const component = Livewire.find(root.getAttribute('wire:id'));
+                        component.call('loadMoreMessages');
+                    }
+                }
+            });
+        }
 
         // Listen for WebSocket messages
         if (conversationId && window.Echo) {
@@ -166,13 +242,26 @@
         const input = document.getElementById('chat-input-field');
         if (input) {
             input.focus();
+            
+            // Handle Enter key
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const form = this.closest('form');
+                    if (form && this.value.trim().length > 0 && this.value.trim().length <= {{ $maxMessageLength }}) {
+                        form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+                    }
+                }
+            });
         }
 
         // Handle Enter key
         document.addEventListener('DOMContentLoaded', function() {
             Livewire.on('reset-message-input', () => {
-                const input = document.querySelector('input[wire\\:model*="newMessage"]');
+                const input = document.querySelector('input[wire\\:model\\.live="newMessage"]');
                 if (input) {
+                    console.log(123);
+                    
                     input.value = '';
                     input.focus();
                 }
@@ -180,3 +269,4 @@
         });
     });
 </script>
+

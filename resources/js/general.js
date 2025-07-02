@@ -46,60 +46,71 @@ document.addEventListener('DOMContentLoaded', function () {
     const register_btn = document.getElementById('register');
     if (register_btn) {
         register_btn.addEventListener('click', async function () {
-            let valid = true;
-            let full_name_register = document.getElementById('full_name_register');
-            let username_register = document.getElementById('username_register');
-            let phone_register = document.getElementById('phone_register');
-            let password_register = document.getElementById('password_register');
-            let repassword_register = document.getElementById('repassword_register');
-            let referral_code_register = document.getElementById('referral_code_register');
-            let accept_terms = document.getElementById('accept_terms');
-            if (!accept_terms.checked) {
-                notification('warning', 'Vui lòng chấp nhận điều khoản của chúng tôi!', 'Cảnh báo!');
-                valid = false;
-                return;
-            }
-            if (username_register.value && phone_register.value && password_register.value && repassword_register.value) {
-                if (referral_code_register.value) {
-                    let check_user_existed = await check_referral_code(referral_code_register.value);
-                    if (!check_user_existed) {
-                        notification('warning', 'Mã mời không hợp lệ, vui lòng thử lại!', 'Cảnh báo!');
-                        valid = false;
-                        return;
-                    }
-                }
-                if (username_register.value.length < 6) {
-                    notification('warning', 'Tên đăng nhập phải từ 6 ký tự trở lên!', 'Cảnh báo!');
-                    valid = false;
-                    return;
-                }
-                if (phone_register.value.length < 10) {
-                    notification('warning', 'Số điện thoại phải từ 10 số trở lên!', 'Cảnh báo!');
-                    valid = false;
-                    return;
-                }
-                if (!phone_register.value.trim() || isNaN(phone_register.value)) {
-                    notification('warning', 'Số điện thoại phải là số!', 'Cảnh báo!');
-                    valid = false;
-                    return;
-                }
-                if (password_register.value.length < 6) {
-                    notification('warning', 'Mật khẩu phải từ 6 ký tự trở lên!', 'Cảnh báo!');
-                    valid = false;
-                    return;
-                }
-                if (password_register.value !== repassword_register.value) {
-                    notification('warning', 'Mật khẩu không khớp!', 'Cảnh báo!');
-                    valid = false;
-                    return;
-                }
-                form_register.submit();
-            } else {
-                notification('warning', 'Vui lòng điền đầy đủ thông tin!', 'Cảnh báo!');
+            check_and_submit_register();
+        })
+    }
+    if (repassword_register) {
+        repassword_register.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                spinner.hidden = false;
+                e.preventDefault();
+                check_and_submit_register();
+                spinner.hidden = true;
             }
         })
     }
-
+    async function check_and_submit_register() {
+        let valid = true;
+        let username_register = document.getElementById('username_register');
+        let phone_register = document.getElementById('phone_register');
+        let password_register = document.getElementById('password_register');
+        let repassword_register = document.getElementById('repassword_register');
+        let referral_code_register = document.getElementById('referral_code_register');
+        let accept_terms = document.getElementById('accept_terms');
+        if (!accept_terms.checked) {
+            notification('warning', 'Vui lòng chấp nhận điều khoản của chúng tôi!', 'Cảnh báo!');
+            valid = false;
+            return;
+        }
+        if (username_register.value && phone_register.value && password_register.value && repassword_register.value) {
+            if (referral_code_register.value) {
+                let check_user_existed = await check_referral_code(referral_code_register.value);
+                if (!check_user_existed) {
+                    notification('warning', 'Mã mời không hợp lệ, vui lòng thử lại!', 'Cảnh báo!');
+                    valid = false;
+                    return;
+                }
+            }
+            if (username_register.value.length < 6) {
+                notification('warning', 'Tên đăng nhập phải từ 6 ký tự trở lên!', 'Cảnh báo!');
+                valid = false;
+                return;
+            }
+            if (phone_register.value.length < 10) {
+                notification('warning', 'Số điện thoại phải từ 10 số trở lên!', 'Cảnh báo!');
+                valid = false;
+                return;
+            }
+            if (!phone_register.value.trim() || isNaN(phone_register.value)) {
+                notification('warning', 'Số điện thoại phải là số!', 'Cảnh báo!');
+                valid = false;
+                return;
+            }
+            if (password_register.value.length < 6) {
+                notification('warning', 'Mật khẩu phải từ 6 ký tự trở lên!', 'Cảnh báo!');
+                valid = false;
+                return;
+            }
+            if (password_register.value !== repassword_register.value) {
+                notification('warning', 'Mật khẩu không khớp!', 'Cảnh báo!');
+                valid = false;
+                return;
+            }
+            form_register.submit();
+        } else {
+            notification('warning', 'Vui lòng điền đầy đủ thông tin!', 'Cảnh báo!');
+        }
+    }
     function check_referral_code(referral_code) {
         return new Promise((resolve, reject) => {
             $.ajax({
@@ -129,35 +140,46 @@ document.addEventListener('DOMContentLoaded', function () {
     const login_btn = document.getElementById('login');
     if (login_btn) {
         login_btn.addEventListener('click', async function () {
-            let valid = true;
-
-            const form_login = document.getElementById('form_login');
-            if (username_login.value && password_login.value) {
-                let check_username_existed = await check_username(username_login.value);
-                if (check_username_existed.refresh) {
-                    localStorage.removeItem("remember_password");
-                    localStorage.removeItem("username");
-                    localStorage.removeItem("password");
-                    notification('warning', check_username_existed.message, 'Cảnh báo!');
-                    valid = false;
-                    return;
-                }
-                if (remember_checkbox.checked) {
-                    localStorage.setItem("remember_password", "true");
-                    localStorage.setItem("username", username_login.value);
-                    localStorage.setItem("password", password_login.value);
-                } else {
-                    localStorage.removeItem("remember_password");
-                    localStorage.removeItem("username");
-                    localStorage.removeItem("password");
-                }
-                form_login.submit();
-            } else {
-                notification('warning', 'Vui lòng điền đầy đủ thông tin!', 'Cảnh báo!');
+            check_and_submit_login();
+        })
+    }
+    if (password_login) {
+        password_login.addEventListener('keydown', async function (e) {
+            if (e.key === 'Enter') {
+                spinner.hidden = false;
+                e.preventDefault();
+                await check_and_submit_login();
+                spinner.hidden = true;
             }
         })
     }
-
+    async function check_and_submit_login() {
+        let valid = true;
+        const form_login = document.getElementById('form_login');
+        if (username_login.value && password_login.value) {
+            let check_username_existed = await check_username(username_login.value);
+            if (check_username_existed.refresh) {
+                localStorage.removeItem("remember_password");
+                localStorage.removeItem("username");
+                localStorage.removeItem("password");
+                notification('warning', check_username_existed.message, 'Cảnh báo!');
+                valid = false;
+                return;
+            }
+            if (remember_checkbox.checked) {
+                localStorage.setItem("remember_password", "true");
+                localStorage.setItem("username", username_login.value);
+                localStorage.setItem("password", password_login.value);
+            } else {
+                localStorage.removeItem("remember_password");
+                localStorage.removeItem("username");
+                localStorage.removeItem("password");
+            }
+            form_login.submit();
+        } else {
+            notification('warning', 'Vui lòng điền đầy đủ thông tin!', 'Cảnh báo!');
+        }
+    }
     function check_username(username) {
         return new Promise((resolve, reject) => {
             $.ajax({

@@ -79,6 +79,7 @@ Danh sách người dùng
                             <td>{{$index+1}}</td>
                             <td>
                                 <div class="d-flex flex-column">
+                                    <span>ID: {{ $item->id }}</span>
                                     <span>Họ và tên: <b><a class="cspt" href="{{ route('user.edit',['user'=>$item->id]) }}">{{Str::limit( $item->full_name ,30,'...')}}</a></b></span>
                                     <span>Tên đăng nhập: <b>{{ $item->username }}</b></span>
                                     <span>Số điện thoại: <b>{{ $item->phone }}</b></span>
