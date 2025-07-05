@@ -22,7 +22,3 @@ function activeTab(btnId) {
         loadDanhSachTheoTab(btnId);
     }
 }
-
-function loadDanhSachTheoTab(tabId) {
-    console.log("Đang hiển thị danh sách cho: " + tabId);
-}

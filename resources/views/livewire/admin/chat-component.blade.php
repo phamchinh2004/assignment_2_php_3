@@ -48,7 +48,7 @@
                                 @endif
                             </div>
                         </div>
-                        <div class="text-muted" style="font-size: 11px;">
+                        <div class="text-center" style="font-size: 11px;">
                             @if($conversation->messages->last())
                             {{ $conversation->messages->last()->created_at->diffForHumans() }}
                             @endif
@@ -134,7 +134,7 @@
                             @endif
                         </div>
                     </div>
-                    <div class="text-muted" style="font-size: 11px;">
+                    <div class="text-center" style="font-size: 11px;">
                         @if($conversation && $conversation->messages->last())
                         {{ $conversation->messages->last()->created_at->diffForHumans() }}
                         @endif
@@ -159,7 +159,7 @@
                 <div class="flex-grow-1">
                     <div class="fw-semibold text-dark mb-1">{{ $this->selectedConversation->user->full_name }}</div>
                     <div class="text-muted small d-flex align-items-center">
-                        <i class="fas fa-circle text-success me-1" style="font-size: 8px;"></i>
+                        <!-- <i class="fas fa-circle text-success me-1" style="font-size: 8px;"></i> -->
                         @if(auth()->user()->role === 'admin' || auth()->user()->role === 'staff')
                         Được quản lý bởi: {{ $this->selectedConversation->staff->full_name }}
                         @else
@@ -239,17 +239,17 @@
 
                     <!-- Hiển thị tên người gửi và role (chỉ với tin nhắn của người khác) -->
                     @if(!$isCurrentUser)
-                    <div class="d-flex align-items-center mb-1">
+                    <div class="d-flex align-items-center justify-content-between mb-1">
                         <small class="fw-bold opacity-90">
                             {{ $message['sender']['full_name'] ?? 'Unknown User' }}
                         </small>
-                        <span class="role-badge ms-2" style="font-size: 9px; padding: 2px 6px; border-radius: 10px; 
+                        <span class="role-badge ms-2 text-right" style="font-size: 9px; padding: 2px 6px; border-radius: 10px; 
                     @if($senderRole === 'admin') 
-                        background-color: rgba(220, 53, 69, 0.2); color: #dc3545; border: 1px solid #dc3545;
+                        background-color: rgba(220, 53, 69, 0.2); color: rgb(149, 188, 247); border: 1px solid #dc3545;
                     @elseif($senderRole === 'staff')
-                        background-color: rgba(25, 135, 84, 0.2); color: #198754; border: 1px solid #198754;
+                        background-color: rgba(25, 135, 84, 0.2); color: rgb(149, 188, 247); border: 1px solid #198754;
                     @else
-                        background-color: rgba(13, 110, 253, 0.2); color: #0d6efd; border: 1px solid #0d6efd;
+                        background-color: rgba(13, 110, 253, 0.2); color:rgb(149, 188, 247); border: 1px solid #0d6efd;
                     @endif
                 ">
                             @if($senderRole === 'admin') Admin
@@ -373,21 +373,17 @@
 
         // Join conversation channel
         Livewire.on('join-conversation-channel', (data) => {
-            console.log('Joining channel for conversation:', data.conversationId);
 
             // Leave previous channel if exists
             if (currentChannel) {
                 window.Echo.leave(currentChannel);
-                console.log('Left previous channel:', currentChannel);
             }
 
             // Join new channel
             currentChannel = `chat.conversation.${data.conversationId}`;
-            console.log('Joining new channel:', currentChannel);
 
             window.Echo.private(currentChannel)
                 .listen('.MessageSent', (e) => {
-                    console.log('Received message:', e);
                     const root = document.getElementById('chat-root');
                     const component = Livewire.find(root.getAttribute('wire:id'));
                     component.dispatch('message-received', e);

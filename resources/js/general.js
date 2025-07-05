@@ -52,14 +52,13 @@ document.addEventListener('DOMContentLoaded', function () {
     if (repassword_register) {
         repassword_register.addEventListener('keydown', function (e) {
             if (e.key === 'Enter') {
-                spinner.hidden = false;
                 e.preventDefault();
                 check_and_submit_register();
-                spinner.hidden = true;
             }
         })
     }
     async function check_and_submit_register() {
+        spinner.hidden = false;
         let valid = true;
         let username_register = document.getElementById('username_register');
         let phone_register = document.getElementById('phone_register');
@@ -110,6 +109,7 @@ document.addEventListener('DOMContentLoaded', function () {
         } else {
             notification('warning', 'Vui lòng điền đầy đủ thông tin!', 'Cảnh báo!');
         }
+        spinner.hidden = true;
     }
     function check_referral_code(referral_code) {
         return new Promise((resolve, reject) => {
@@ -146,14 +146,13 @@ document.addEventListener('DOMContentLoaded', function () {
     if (password_login) {
         password_login.addEventListener('keydown', async function (e) {
             if (e.key === 'Enter') {
-                spinner.hidden = false;
                 e.preventDefault();
                 await check_and_submit_login();
-                spinner.hidden = true;
             }
         })
     }
     async function check_and_submit_login() {
+        spinner.hidden = false;
         let valid = true;
         const form_login = document.getElementById('form_login');
         if (username_login.value && password_login.value) {
@@ -179,6 +178,7 @@ document.addEventListener('DOMContentLoaded', function () {
         } else {
             notification('warning', 'Vui lòng điền đầy đủ thông tin!', 'Cảnh báo!');
         }
+        spinner.hidden = true;
     }
     function check_username(username) {
         return new Promise((resolve, reject) => {

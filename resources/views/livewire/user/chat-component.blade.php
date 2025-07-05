@@ -2,7 +2,7 @@
     <!-- Nút CSKH trong footer -->
     <a wire:click="toggleBox" class="cspt text-dark text-decoration-none" style="cursor: pointer">
         <i class="fa fa-solid fa-headset"></i>
-        <div class="fw-bold text-footer">CSKH</div>
+        <div class="fw-bold text-footer">{{__('layout.CSKH')}}</div>
     </a>
 
     <!-- Hộp thoại chat -->
@@ -20,8 +20,8 @@
                         style="width: 10px; height: 10px; border: 2px solid white;"></span>
                 </div>
                 <div class="ms-2">
-                    <div class="fw-bold" style="font-size: 14px;">Hỗ trợ khách hàng</div>
-                    <div class="text-start" style="font-size: 11px; opacity: 0.9;">Đang trực tuyến</div>
+                    <div class="fw-bold" style="font-size: 14px;">{{__('home.HoTroKhachHang')}}</div>
+                    <div class="text-start" style="font-size: 11px; opacity: 0.9;">{{__('home.DangTrucTuyen')}}</div>
                 </div>
             </div>
             <button wire:click="closeBox" class="btn btn-sm p-1" style="color: white; opacity: 0.8;">
@@ -35,9 +35,9 @@
             @if($isLoading)
             <div class="text-center py-2" id="loading-indicator">
                 <div class="spinner-border spinner-border-sm text-primary" role="status">
-                    <span class="visually-hidden">Đang tải...</span>
+                    <span class="visually-hidden">{{__('home.DangTai')}}</span>
                 </div>
-                <small class="text-muted ms-2">Đang tải tin nhắn cũ...</small>
+                <small class="text-muted ms-2">{{__('home.DangTaiTinNhanCu')}}</small>
             </div>
             @endif
 
@@ -46,7 +46,7 @@
             <div class="text-center py-2">
                 <button wire:click="loadMoreMessages" class="btn btn-sm btn-outline-primary rounded-pill">
                     <i class="fa fa-chevron-up me-1"></i>
-                    Tải tin nhắn cũ hơn
+                    {{__('home.TaiTinNhanCuHon')}}
                 </button>
             </div>
             @endif
@@ -54,7 +54,7 @@
             @if($chatMessages->count() == 0)
             <div class="text-center text-muted py-3">
                 <i class="fa fa-comments fa-2x mb-2"></i>
-                <div>Chào bạn! Chúng tôi có thể giúp gì cho bạn?</div>
+                <div>{{__('home.ChaoBanChungToiCoTheGiupGiChoBan')}}</div>
             </div>
             @endif
 
@@ -97,7 +97,7 @@
                             {{ $message }}
                         </div>
                         <div class="mt-1 ps-2" style="font-size: 10px; color: #6c757d;text-align:left;">
-                            Hỗ trợ • {{ \Carbon\Carbon::parse($createdAt)->format('H:i') }}
+                             {{__('home.HoTro'). \Carbon\Carbon::parse($createdAt)->format('H:i') }}
                         </div>
                     </div>
                 </div>
@@ -112,7 +112,7 @@
                 <input type="text"
                     wire:model.live="newMessage"
                     class="form-control border-0 bg-transparent"
-                    placeholder="Nhập tin nhắn của bạn..."
+                    placeholder={{__('home.NhapTinNhanCuaBan')}}
                     id="chat-input-field"
                     autocomplete="off"
                     maxlength="{{ $maxMessageLength }}"
@@ -128,7 +128,7 @@
             <!-- Hiển thị số ký tự còn lại và lỗi -->
             <div class="d-flex justify-content-between align-items-center mt-2">
                 <div style="font-size: 11px; color: #6c757d;">
-                    Nhấn Enter để gửi tin nhắn
+                    {{__('home.NhanEnterDeGuiTinNhan')}}
                 </div>
                 <div style="font-size: 11px;" 
                      class="{{ $this->getRemainingCharacters() < 20 ? 'text-warning' : 'text-muted' }}">
@@ -215,17 +215,14 @@
 
         // Listen for WebSocket messages
         if (conversationId && window.Echo) {
-            console.log('Setting up Echo listener for conversation:', conversationId);
             
             window.Echo.private(`chat.conversation.${conversationId}`)
                 .listen('.MessageSent', (e) => {
-                    console.log('Received WebSocket message:', e);
 
                     const message = e.message;
 
                     // Only process if not from current user
                     if (message.sender_id !== currentUserId) {
-                        console.log('Processing received message from another user');
                         const root = document.getElementById('chat-root');
                         const component = Livewire.find(root.getAttribute('wire:id'));
                         component.dispatch('message-received', e);
@@ -259,9 +256,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             Livewire.on('reset-message-input', () => {
                 const input = document.querySelector('input[wire\\:model\\.live="newMessage"]');
-                if (input) {
-                    console.log(123);
-                    
+                if (input) {                    
                     input.value = '';
                     input.focus();
                 }

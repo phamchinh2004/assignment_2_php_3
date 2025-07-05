@@ -1,0 +1,30 @@
+<?php
+return [
+    "LichSuPhanPhoi" => "Lịch sử phân phối",
+    "SoDuHienTai" => "Số dư hiện tại: ",
+    "DuLieuNayDuocCungCap" => "Dữ liệu này được cung cấp chính thức bởi Mercado Libre",
+    "TatCa" => "Tất cả",
+    "ChoXuLy" => "Chờ xử lý",
+    "HoanThanh" => "Hoàn Thành",
+    "DongBang" => "Đóng băng",
+
+    "ThoiGianDatPhanPhoi" => "Thời gian đặt phân phối:",
+    "MaDonHang" => "Mã đơn hàng:",
+    "TongTienPhanPhoi" => "Tổng tiền phân phối",
+    "ChietKhau" => "Chiết khấu",
+    "SoTienHoanNhap" => "Số tiền hoàn nhập",
+    "PhanPhoiNgay" => "Phân phối ngay",
+    "CanhBao" => "Cảnh báo!",
+    "Loi" => "Lỗi!",
+    "ChoXuLy2" => "Chờ xử lý...",
+    "DangPhanPhoi" => "Đang phân phối...",
+    "ThanhCong" => "Thành công!",
+    "PhanPhoiThanhCong" => "Phân phối thành công!",
+    "KhongTimThayDuLieuDonHang" => "Không tìm thấy dữ liệu đơn hàng!",
+    "KhongCoDuLieu" => "Không có dữ liệu!",
+
+    "SoDuKhongDu" => "Số dư không đủ, vui lòng liên hệ CSKH!",
+    "KhongTimThayLichSuDatHang" => "Không tìm thấy lịch sử đặt hàng, vui lòng thử lại!",
+    "DonHangDaHoanThanh" => "Đơn hàng đã hoàn thành!",
+    "KhongTimThayDonHang" => "Không tìm thấy đơn hàng!",
+];

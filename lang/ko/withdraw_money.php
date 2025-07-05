@@ -1,0 +1,26 @@
+<?php
+return [
+     "QuayLai" => "뒤로가기",
+    "RutTien" => "출금",
+    "Con" => "남음",
+    "LanRutTien" => "출금 횟수",
+    "MoiLanRutToiDa" => "회당 최대:",
+    "SoTienRut" => "출금 금액",
+    "NhapSoTienRut" => "출금 금액 입력",
+    "SoDuTaiKhoan" => "계좌 잔액:",
+    "RutToanBo" => "전액 출금",
+    "TenChuTaiKhoan" => "예금주 이름",
+    "TenNganHang" => "은행 이름",
+    "SoTaiKhoan" => "계좌 번호",
+    "MatKhauGiaoDich" => "거래 비밀번호",
+    "XacNhanLaiMatKhau" => "비밀번호 확인",
+    "LuuY" => "* 참고:",
+    "VuiLongKiemTra" => "결제 정보를 다시 확인해주세요. 이 출금은 수수료 0%입니다",
+    "RutTienNgayLapTuc" => "즉시 출금",
+
+    "VuiLongNhapSoTienRut" => "출금 금액을 입력해주세요!",
+    "CanhBao" => "경고!",
+    "VuiLongNhapDayDuThongTinNganHang" => "은행 정보를 모두 입력해주세요!",
+    "XacNhanMatKhauGiaoDichKhongKhop" => "거래 비밀번호 확인이 일치하지 않습니다. 다시 시도해주세요!",
+    "ThanhCong" => "성공!",
+];

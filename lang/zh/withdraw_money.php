@@ -1,0 +1,26 @@
+<?php
+return [
+    "QuayLai" => "返回",
+    "RutTien" => "提现",
+    "Con" => "剩余",
+    "LanRutTien" => "提现次数",
+    "MoiLanRutToiDa" => "每次最大提现：",
+    "SoTienRut" => "提现金额",
+    "NhapSoTienRut" => "请输入提现金额",
+    "SoDuTaiKhoan" => "账户余额：",
+    "RutToanBo" => "全部提现",
+    "TenChuTaiKhoan" => "账户持有人名称",
+    "TenNganHang" => "银行名称",
+    "SoTaiKhoan" => "账户号码",
+    "MatKhauGiaoDich" => "交易密码",
+    "XacNhanLaiMatKhau" => "确认密码",
+    "LuuY" => "* 注意：",
+    "VuiLongKiemTra" => "请仔细检查您的支付信息。本次提现处理费为 0%",
+    "RutTienNgayLapTuc" => "立即提现",
+
+    "VuiLongNhapSoTienRut" => "请输入提现金额！",
+    "CanhBao" => "警告！",
+    "VuiLongNhapDayDuThongTinNganHang" => "请填写完整的银行信息！",
+    "XacNhanMatKhauGiaoDichKhongKhop" => "交易密码确认不匹配，请重试！",
+    "ThanhCong" => "成功！",
+];

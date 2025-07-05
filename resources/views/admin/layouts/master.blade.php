@@ -54,7 +54,7 @@
                 @include('admin.layouts.header')
                 <!-- End of Topbar -->
                 @yield('content')
-                
+
             </div>
             <!-- Footer -->
             @include('admin.layouts.footer')
@@ -166,6 +166,12 @@
         const route_check_phone = "{{ route('check_phone') }}";
         const route_plus_money = "{{ route('plus_money') }}";
         const route_change_status_permission = "{{ route('staff.change.status.permission') }}";
+        const route_api_statistical_revenue = "{{ route('api.statistical.revenue') }}";
+
+        const route_api_staff_list = "{{ route('api.staff.list') }}";
+        const route_api_revenue_by_staff = "{{ route('api.revenue.by.staff') }}";
+        const route_api_revenue_detail = "{{ route('api.revenue.detail') }}";
+        
     </script>
 
     <!-- Slim Select -->
@@ -180,7 +186,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/7.0.0/tinymce.min.js"></script>
     <script>
         tinymce.init({
-            selector: '#productDescription',
+            selector: '#sectionContent',
             plugins: 'anchor autolink charmap codesample emoticons link lists media searchreplace table visualblocks wordcount',
             automatic_uploads: true,
             license_key: 'gpl'
@@ -219,7 +225,6 @@
         const spinner = document.getElementById('spinner');
     </script>
     <script>
-        
         window.addEventListener('load', function() {
             @auth
             if (window.Echo) {

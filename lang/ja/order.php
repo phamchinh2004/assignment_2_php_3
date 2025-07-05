@@ -1,0 +1,30 @@
+<?php
+return [
+    "LichSuPhanPhoi" => "配布履歴",
+    "SoDuHienTai" => "現在の残高：",
+    "DuLieuNayDuocCungCap" => "このデータはMercado Libreによって正式に提供されています",
+    "TatCa" => "すべて",
+    "ChoXuLy" => "処理待ち",
+    "HoanThanh" => "完了",
+    "DongBang" => "凍結",
+
+    "ThoiGianDatPhanPhoi" => "配布時間：",
+    "MaDonHang" => "注文番号：",
+    "TongTienPhanPhoi" => "配布合計金額",
+    "ChietKhau" => "手数料",
+    "SoTienHoanNhap" => "返金額",
+    "PhanPhoiNgay" => "今すぐ配布",
+    "CanhBao" => "警告！",
+    "Loi" => "エラー！",
+    "ChoXuLy2" => "処理中...",
+    "DangPhanPhoi" => "配布中...",
+    "ThanhCong" => "成功！",
+    "PhanPhoiThanhCong" => "配布成功！",
+    "KhongTimThayDuLieuDonHang" => "注文データが見つかりません！",
+    "KhongCoDuLieu" => "データなし！",
+
+    "SoDuKhongDu" => "残高が不足しています。カスタマーサポートにご連絡ください！",
+    "KhongTimThayLichSuDatHang" => "注文履歴が見つかりません。もう一度お試しください！",
+    "DonHangDaHoanThanh" => "注文が完了しました！",
+    "KhongTimThayDonHang" => "注文が見つかりません！",
+];

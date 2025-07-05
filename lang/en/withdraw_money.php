@@ -1,0 +1,26 @@
+<?php
+return [
+     "QuayLai" => "Go back",
+    "RutTien" => "Withdraw",
+    "Con" => "Remaining",
+    "LanRutTien" => "withdrawals",
+    "MoiLanRutToiDa" => "Max per withdrawal:",
+    "SoTienRut" => "Withdrawal amount",
+    "NhapSoTienRut" => "Enter withdrawal amount",
+    "SoDuTaiKhoan" => "Account balance:",
+    "RutToanBo" => "Withdraw all",
+    "TenChuTaiKhoan" => "Account holder name",
+    "TenNganHang" => "Bank name",
+    "SoTaiKhoan" => "Account number",
+    "MatKhauGiaoDich" => "Transaction password",
+    "XacNhanLaiMatKhau" => "Confirm password",
+    "LuuY" => "* Note:",
+    "VuiLongKiemTra" => "Please double-check your payment details. This withdrawal incurs 0% processing fee",
+    "RutTienNgayLapTuc" => "Withdraw immediately",
+
+    "VuiLongNhapSoTienRut" => "Please enter a withdrawal amount!",
+    "CanhBao" => "Warning!",
+    "VuiLongNhapDayDuThongTinNganHang" => "Please enter complete bank information!",
+    "XacNhanMatKhauGiaoDichKhongKhop" => "Transaction password confirmation does not match, please try again!",
+    "ThanhCong" => "Success!",
+];

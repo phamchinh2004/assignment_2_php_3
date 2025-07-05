@@ -3,6 +3,12 @@
 @vite('resources/css/user/me.css')
 @endsection
 @section('script-libs')
+<script>
+    const trans = {
+        VuiLongLienHeCskh: @json(__('me.VuiLongLienHeCskh')),
+        ThongBao: @json(__('me.ThongBao')),
+    }
+</script>
 @vite('resources/js/user/me.js')
 @endsection
 @section('content')
@@ -15,15 +21,15 @@
     </div>
     <div class="me_top_2 d-flex flex-column pt-2 align-items-center">
         <span class="fw-bold">{{$user->full_name}}</span>
-        <span class="ma_moi">Mã mời: {{$user->referral_code}}</span>
+        <span class="ma_moi">{{__('me.MaMoi').$user->referral_code}}</span>
     </div>
 </div>
 <div class="so_du">
-    <span>Số dư tài khoản</span>
+    <span>{{__('me.SoDuTaiKhoan')}}</span>
     <h3 class="number_so_du text-center">{{format_money($user->balance)}}$</h3>
     <div class="d-flex justify-content-center">
-        <a href="{{ route('withdraw_money') }}" class="btn btn-success btn-sm">&nbsp;&nbsp;&nbsp;Rút&nbsp;&nbsp;&nbsp;</a>
-        <a onclick="thong_bao_lien_he_cskh()" class="btn btn-primary btn-sm ms-2">&nbsp;&nbsp;&nbsp;Nạp&nbsp;&nbsp;&nbsp;</a>
+        <a href="{{ route('withdraw_money') }}" class="btn btn-success btn-sm">&nbsp;&nbsp;&nbsp;{{__('me.Rut')}}&nbsp;&nbsp;&nbsp;</a>
+        <a onclick="thong_bao_lien_he_cskh()" class="btn btn-primary btn-sm ms-2">&nbsp;&nbsp;&nbsp;{{__('me.Nap')}}&nbsp;&nbsp;&nbsp;</a>
     </div>
 </div>
 <div class="row blocks g-0">
@@ -32,7 +38,7 @@
             <div>
                 <img class="image_block_item" src="{{ asset('images/me/image_1.png') }}" alt="">
             </div>
-            <span class="tittle_block_item">Thông tin</span>
+            <span class="tittle_block_item">{{__('me.ThongTin')}}</span>
         </a>
     </div>
     <div class="div_block_item p-1">
@@ -40,7 +46,7 @@
             <div>
                 <img class="image_block_item" width="50px" src="{{ asset('images/me/image_2.png') }}" alt="">
             </div>
-            <span class="tittle_block_item">VIP</span>
+            <span class="tittle_block_item">{{__('me.Vip')}}</span>
         </a>
     </div>
     <div class="div_block_item p-1">
@@ -48,7 +54,7 @@
             <div>
                 <img class="image_block_item" width="50px" src="{{ asset('images/me/image_3.png') }}" alt="">
             </div>
-            <span class="tittle_block_item">Địa chỉ kho</span>
+            <span class="tittle_block_item">{{__('me.DiaChiKho')}}</span>
         </a>
     </div>
     <div class="div_block_item p-1">
@@ -56,7 +62,7 @@
             <div>
                 <img class="image_block_item" width="50px" src="{{ asset('images/me/image_4.png') }}" alt="">
             </div>
-            <span class="tittle_block_item">Phân phối</span>
+            <span class="tittle_block_item">{{__('me.PhanPhoi')}}</span>
         </a>
     </div>
     <div class="div_block_item p-1">
@@ -64,7 +70,7 @@
             <div>
                 <img class="image_block_item" width="50px" src="{{ asset('images/me/image_5.png') }}" alt="">
             </div>
-            <span class="tittle_block_item">Biến động</span>
+            <span class="tittle_block_item">{{__('me.BienDong')}}</span>
         </a>
     </div>
     <div class="div_block_item p-1">
@@ -72,7 +78,7 @@
             <div>
                 <img class="image_block_item" width="50px" src="{{ asset('images/me/image_6.png') }}" alt="">
             </div>
-            <span class="tittle_block_item">Lịch sử nạp</span>
+            <span class="tittle_block_item">{{__('me.LichSuNap')}}</span>
         </a>
     </div>
     <div class="div_block_item p-1">
@@ -80,7 +86,7 @@
             <div>
                 <img class="image_block_item" width="50px" src="{{ asset('images/me/image_7.png') }}" alt="">
             </div>
-            <span class="tittle_block_item">Lịch sử rút</span>
+            <span class="tittle_block_item">{{__('me.LichSuRut')}}</span>
         </a>
     </div>
     <div class="div_block_item p-1">
@@ -88,11 +94,36 @@
             <div>
                 <img class="image_block_item" width="50px" src="{{ asset('images/me/image_8.png') }}" alt="">
             </div>
-            <span class="tittle_block_item">Báo cáo nhóm</span>
+            <span class="tittle_block_item">{{__('me.BaoCaoNhom')}}</span>
         </a>
     </div>
+    <div class="dropdown div_block_item p-1">
+        <a href="javascript:void(0)" class="block_item border dropdown-toggle" onclick="toggleLanguageDropdown()" id="languageDropdownButton" role="button">
+            <img src="{{ asset('images/me/image_9.png') }}" width="40">
+            <span class="tittle_block_item">{{__('me.NgonNgu')}}</span>
+        </a>
+
+        <div id="languageDropdown" class="dropdown-menu" aria-labelledby="languageDropdownButton">
+            <form action="{{ route('language.change') }}" method="POST">
+                @csrf
+                @foreach (\App\Models\Language::all() as $lang)
+                <button type="submit"
+                    name="locale"
+                    value="{{ $lang->code }}"
+                    class="dropdown-item d-flex align-items-center gap-2
+               {{ App::getLocale() === $lang->code ? 'active fw-bold bg-light text-primary' : '' }}">
+                    <img src="{{ asset('uploads/language/images/' . $lang->image) }}" width="20">
+                    {{ $lang->name }}
+                </button>
+                @endforeach
+
+            </form>
+        </div>
+    </div>
+
+
 </div>
 <div class="mt-3 mb-3 d-flex justify-content-center">
-    <a onclick="log_out()" class="btn btn-dark">Đăng xuất</a>
+    <a onclick="log_out()" class="btn btn-dark">{{__('me.DangXuat')}}</a>
 </div>
 @endsection

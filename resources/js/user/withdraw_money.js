@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', function () {
     btn_withdraw_now.addEventListener('click', async function () {
         spinner.hidden = false;
         if (amount_input_field.value == "") {
-            notification('warning', 'Vui lòng nhập số tiền rút!', "Cảnh báo!");
+            notification('warning', trans.VuiLongNhapSoTienRut, trans.CanhBao);
             spinner.hidden = true;
             return;
         }
@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const transaction_password = document.getElementById('transaction_password');
         const confirm_transaction_password = document.getElementById('confirm_transaction_password');
         if (username_bank.value == "" || bank_name.value == "" || account_number.value == "" || transaction_password.value == "") {
-            notification('warning', 'Vui lòng nhập đầy đủ thông tin ngân hàng!', "Cảnh báo!");
+            notification('warning', trans.VuiLongNhapDayDuThongTinNganHang, trans.CanhBao);
             spinner.hidden = true;
             return;
         }
@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const has_password = document.getElementById('has_password');
         if (has_password.value === false) {
             if (confirm_transaction_password.value != "" && confirm_transaction_password.value != transaction_password.value) {
-                notification('warning', 'Xác nhận mật khẩu giao dịch không khớp, vui lòng thử lại!', "Cảnh báo!");
+                notification('warning', trans.XacNhanMatKhauGiaoDichKhongKhop, trans.CanhBao);
                 spinner.hidden = true;
                 return;
             }
@@ -61,16 +61,14 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         let numeric_value = parseFloat(unformatted_value) || 0;
-        console.log(numeric_value);
 
         let result = await handle_withdraw(numeric_value, username_bank.value, bank_name.value, account_number.value, transaction_password.value, confirm_transaction_password.value);
         if (result.status == 400) {
-            notification('warning', result.message, "Cảnh báo!");
-            console.log(result.data);
+            notification('warning', result.message, trans.CanhBao);
 
         } else if (result.status == 200) {
             swal({
-                title: "Thành công!",
+                title: trans.ThanhCong,
                 text: result.message,
                 icon: "success",
                 button: "OK",

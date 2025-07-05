@@ -1,3 +1,10 @@
 window.thong_bao_lien_he_cskh = function () {
-    notification('warning', 'Vui lòng liên hệ CSKH!', 'Thông báo', 5000);
+    notification('warning', trans.VuiLongLienHeCskh, trans.ThongBao, 5000);
+};
+
+window.toggleLanguageDropdown = function () {
+    const dropdown = document.getElementById('languageDropdown');
+    if (!dropdown) return;
+
+    dropdown.classList.toggle('show'); // Bootstrap hiển thị dropdown bằng class .show
 };

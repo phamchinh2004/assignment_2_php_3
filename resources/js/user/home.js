@@ -62,10 +62,10 @@ document.addEventListener('DOMContentLoaded', function () {
     const btn_nap_tien = document.getElementById('btn_nap_tien');
     btn_nap_tien.addEventListener('click', function () {
         swal({
-            title: "Hệ thống đang quá tải!",
-            text: "Vui lòng liên hệ CSKH để nạp tiền!",
+            title: trans.heThongDangQuaTai,
+            text: trans.vuiLongLienHeCskhDeNapTien,
             icon: "warning",
-            button: "OK",
+            button: trans.ok,
             dangerMode: true,
         })
     })
@@ -88,12 +88,10 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(response => response.json())
             .then(data => {
                 if (data.status === 404) {
-                    notification('error', 'Có lỗi xảy ra, vui lòng thử lại!', 'Lỗi không tìm thấy dữ liệu!');
+                    notification('error', trans.coLoiXayRa);
                 } else if (data.status === 200) {
                     orders = data.orders;
                     currentIndex = data.order_next;
-                    console.log(currentIndex);
-                    console.log(orders);
 
                     const spans = document.querySelectorAll('#box .font');
 
@@ -127,7 +125,7 @@ document.addEventListener('DOMContentLoaded', function () {
         let can_spin = false;
         if (check_frozen.status == 200 && check_frozen.is_frozen == true && check_frozen.is_order_special == false && check_frozen.is_new_order == false) {
             swal({
-                title: "Đơn hàng chưa xử lý!",
+                title: trans.donHangChuaXuLy,
                 text: check_frozen.message,
                 icon: "warning",
                 button: "OK",
@@ -136,7 +134,7 @@ document.addEventListener('DOMContentLoaded', function () {
             spinner.hidden = true;
         } else if (check_frozen.status == 200 && check_frozen.is_frozen == true && check_frozen.is_order_special == true && check_frozen.is_new_order == false) {
             swal({
-                title: "Đơn hàng đang bị đóng băng!",
+                title: trans.DonHangDangBiDongBang,
                 text: check_frozen.message,
                 icon: "warning",
                 button: "OK",
@@ -151,7 +149,7 @@ document.addEventListener('DOMContentLoaded', function () {
             frozen_id = check_frozen.frozen_id;
         } else if (check_frozen.status == 400) {
             swal({
-                title: "Hết lượt quay!",
+                title: trans.HetLuotQuay,
                 text: check_frozen.message,
                 icon: "warning",
                 button: "OK",
@@ -207,7 +205,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             if (selectedOrder === null) {
                 loadOrders();
-                notification('error', 'Quay lại nha bạn!', 'Lỗi danh sách đơn hàng!');
+                notification('error', trans.QuayLaiNhaBan, trans.LoiDanhSachDonHang);
             }
             spinner.hidden = true;
             // Âm thanh kết thúc và alert kết quả
@@ -223,7 +221,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     const randomTime = getRandomTimeYesterday();
                     const formattedTime = randomTime.toLocaleString();
 
-                    order_details_time.innerText = "Thời gian đặt phân phối: " + formattedTime;
+                    order_details_time.innerText = trans.ThoiGianDatPhanPhoi + formattedTime;
                     order_details_img.src = `/uploads/orders/images/${selectedOrder.image}`;
                     order_details_name.innerText = selectedOrder.name;
                     order_details_price.innerText = order_details_price_formatted;
@@ -240,7 +238,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     const randomTime = getRandomTimeYesterday();
                     const formattedTime = randomTime.toLocaleString();
 
-                    order_details_time.innerText = "Thời gian đặt phân phối:" + formattedTime;
+                    order_details_time.innerText = trans.ThoiGianDatPhanPhoi + formattedTime;
                     order_details_img.src = `/uploads/orders/images/${selectedOrder.image}`;
                     order_details_name.innerText = selectedOrder.name;
                     order_details_price.innerText = order_details_price_formatted;
@@ -315,13 +313,13 @@ document.addEventListener('DOMContentLoaded', function () {
         if (result.status === 200) {
             const profit = result.profit;
             setTimeout(() => {
-                notification('warning', "", 'Chờ xử lý...');
+                notification('warning', "", trans.ChoXuLy);
                 setTimeout(() => {
-                    notification('warning', "", 'Đang phân phối...');
+                    notification('warning', "", trans.DangPhanPhoi);
                     setTimeout(() => {
-                        notification('success', result.message, 'Thành công!');
+                        notification('success', result.message, trans.ThanhCong);
                         swal({
-                            title: "Phân phối thành công!",
+                            title: trans.PhanPhoiThanhCong2,
                             content: {
                                 element: "span",
                                 attributes: {
@@ -343,9 +341,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 }, 1000);
             }, 0);
         } else if (result.status === 409) {
-            notification('warning', result.message, 'Cảnh báo!');
+            notification('warning', result.message, trans.CanhBao);
         } else {
-            notification('error', result.message, 'Lỗi!');
+            notification('error', result.message, trans.Loi);
         }
         setTimeout(() => {
             order_award.hidden = true;
@@ -386,11 +384,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const getRandomTimeAgo = () => {
         const n = Math.floor(Math.random() * 60);
-        if (n < 1) return 'Vừa xong';
-        if (n < 2) return '1 giây trước';
-        if (n < 60) return `${n} giây trước`;
+        if (n < 1) return trans.justNow;
+        if (n < 2) return `1 ${trans.secondsAgo}`;
+        if (n < 60) return `${n} ${trans.secondsAgo}`;
         const minutes = Math.floor(n / 60);
-        return `${minutes} phút trước`;
+        return `${minutes} ${trans.minutesAgo}`;
     };
 
     const generateItem = () => {
@@ -399,7 +397,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const time = getRandomTimeAgo();
         return `
         <div class="border-bottom py-2 d-flex flex-row justify-content-between mt-3 w-100">
-            <div class="section-7-content"><strong>${phone}</strong> - Phân phối thành công</div>
+            <div class="section-7-content"><strong>${phone}</strong> - ${trans.successText}</div>
             <div class="text-success section-7-content">${amount}</div>
             <div class="section-7-content">${time}</div>
         </div>
@@ -414,7 +412,7 @@ document.addEventListener('DOMContentLoaded', function () {
             items.push(generateItem());
         }
         listContainer.innerHTML = items.join('');
-    }, 1000);
+    }, 5000);
 
     //==================================================Xem nội dung chi tiết==================================================
     const view_amazon = document.getElementById('view_amazon');

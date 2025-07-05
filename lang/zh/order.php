@@ -1,0 +1,30 @@
+<?php
+return [
+    "LichSuPhanPhoi" => "分发记录",
+    "SoDuHienTai" => "当前余额：",
+    "DuLieuNayDuocCungCap" => "该数据由 Mercado Libre 官方提供",
+    "TatCa" => "全部",
+    "ChoXuLy" => "待处理",
+    "HoanThanh" => "已完成",
+    "DongBang" => "冻结",
+
+    "ThoiGianDatPhanPhoi" => "分发时间：",
+    "MaDonHang" => "订单编号：",
+    "TongTienPhanPhoi" => "分发总金额",
+    "ChietKhau" => "折扣",
+    "SoTienHoanNhap" => "退款金额",
+    "PhanPhoiNgay" => "立即分发",
+    "CanhBao" => "警告！",
+    "Loi" => "错误！",
+    "ChoXuLy2" => "处理中...",
+    "DangPhanPhoi" => "分发中...",
+    "ThanhCong" => "成功！",
+    "PhanPhoiThanhCong" => "分发成功！",
+    "KhongTimThayDuLieuDonHang" => "未找到订单数据！",
+    "KhongCoDuLieu" => "没有数据！",
+
+    "SoDuKhongDu" => "余额不足，请联系客服！",
+    "KhongTimThayLichSuDatHang" => "未找到订单历史，请重试！",
+    "DonHangDaHoanThanh" => "订单已完成！",
+    "KhongTimThayDonHang" => "未找到订单！",
+];

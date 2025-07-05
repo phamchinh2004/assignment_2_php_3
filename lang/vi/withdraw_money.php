@@ -1,0 +1,26 @@
+<?php
+return [
+    "QuayLai" => "Quay lại",
+    "RutTien" => "Rút tiền",
+    "Con" => "Còn",
+    "LanRutTien" => "lần rút tiền",
+    "MoiLanRutToiDa" => "Mỗi lần rút tối đa:",
+    "SoTienRut" => "Số tiền rút",
+    "NhapSoTienRut" => "Nhập số tiền rút",
+    "SoDuTaiKhoan" => "Số dư tài khoản:",
+    "RutToanBo" => "Rút toàn bộ",
+    "TenChuTaiKhoan" => "Tên chủ tài khoản",
+    "TenNganHang" => "Tên ngân hàng",
+    "SoTaiKhoan" => "Số tài khoản",
+    "MatKhauGiaoDich" => "Mật khẩu giao dịch",
+    "XacNhanLaiMatKhau" => "Xác nhận lại mật khẩu",
+    "LuuY" => "* Lưu ý:",
+    "VuiLongKiemTra" => "Vui lòng kiểm tra kỹ thông tin thanh toán của bạn. Việc rút tiền này chịu phí xử lý 0%",
+    "RutTienNgayLapTuc" => "Rút tiền ngay lập tức",
+
+    "VuiLongNhapSoTienRut" => "Vui lòng nhập số tiền rút!",
+    "CanhBao" => "Cảnh báo!",
+    "VuiLongNhapDayDuThongTinNganHang" => "Vui lòng nhập đầy đủ thông tin ngân hàng!",
+    "XacNhanMatKhauGiaoDichKhongKhop" => "Xác nhận mật khẩu giao dịch không khớp, vui lòng thử lại!",
+    "ThanhCong" => "Thành công!",
+];

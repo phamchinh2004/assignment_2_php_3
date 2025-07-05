@@ -172,13 +172,6 @@ document.addEventListener('DOMContentLoaded', function () {
             notification('warning', `Đơn hàng ${invalid_item_ids.join(', ')} không hợp lệ!`, 'Cảnh báo!');
             return;
         }
-        for (let [key, value] of formData.entries()) {
-            if (value instanceof File) {
-                console.log(`${key}:`, value.name, value.type, value.size + ' bytes');
-            } else {
-                console.log(`${key}:`, value);
-            }
-        }
         if (check) {
             const result_store_order = await storeOrder(formData);
             if (result_store_order.status == 200) {

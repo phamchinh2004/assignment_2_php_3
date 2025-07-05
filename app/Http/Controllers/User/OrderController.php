@@ -50,11 +50,17 @@ class OrderController extends Controller
             ->with('order') // eager load thông tin đơn hàng
             ->get();
 
-        return response()->json([
-            'status' => 200,
-            'message' => 'Lấy danh sách đơn hàng theo tab thành công!',
-            'list_orders' => $list_orders
-        ]);
+        if (!$list_orders) {
+            return response()->json([
+                'status' => 400,
+            ]);
+        } else {
+            return response()->json([
+                'status' => 200,
+                'message' => 'Lấy danh sách đơn hàng theo tab thành công!',
+                'list_orders' => $list_orders
+            ]);
+        }
     }
     public function handle_so_du($order_id, $total_price, $frozen_id)
     {
@@ -65,7 +71,7 @@ class OrderController extends Controller
         if (!$order) {
             return response()->json([
                 'status' => 404,
-                'message' => 'Không tìm thấy đơn hàng!',
+                'message' => __('order.KhongTimThayDonHang'),
             ]);
         }
         $frozen_order->is_frozen = 0;
@@ -89,7 +95,7 @@ class OrderController extends Controller
 
         return response()->json([
             'status' => 200,
-            'message' => 'Phân phối thành công!',
+            'message' => __('order.PhanPhoiThanhCong'),
             'balance' => $user->balance,
             'profit' => $rose
         ]);
@@ -104,7 +110,7 @@ class OrderController extends Controller
             if ($get_frozen_order->is_frozen == 0) {
                 return response()->json([
                     'status' => 409,
-                    'message' => 'Đơn hàng đã hoàn thành!',
+                    'message' => __('order.DonHangDaHoanThanh'),
                 ]);
             }
             $total_price = $get_frozen_order->custom_price ? $get_frozen_order->custom_price : $get_frozen_order->order->price * $get_frozen_order->order->quantity;
@@ -113,13 +119,13 @@ class OrderController extends Controller
             } else {
                 return response()->json([
                     'status' => 400,
-                    'message' => 'Số dư không đủ, vui lòng liên hệ CSKH!',
+                    'message' => __('order.SoDuKhongDu'),
                 ]);
             }
         } else {
             return response()->json([
                 'status' => 400,
-                'message' => 'Không tìm thấy lịch sử đặt hàng, vui lòng thử lại!',
+                'message' => __('order.KhongTimThayLichSuDatHang'),
             ]);
         }
     }

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\LanguageController;
 use App\Http\Controllers\User\OrderController;
 use App\Http\Controllers\User\HomeController;
 use App\Http\Controllers\LoginController;
@@ -51,6 +52,4 @@ Route::middleware(['role:member', 'checkBanned'])->group(function () {
 });
 Route::get('/log-out', [LoginController::class, 'log_out'])->name('logout')->middleware('auth');
 Route::get('/log-out-by-locked', [LoginController::class, 'log_out_by_locked'])->name('log_out_by_locked')->middleware('auth');
-// Route::post('/broadcasting/auth', function () {
-//     return Auth::user();
-// });
+Route::post('/change-language', [LanguageController::class, 'change'])->name('language.change');

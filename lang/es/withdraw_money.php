@@ -1,0 +1,26 @@
+<?php
+return [
+    "QuayLai" => "Regresar",
+    "RutTien" => "Retirar",
+    "Con" => "Restante",
+    "LanRutTien" => "retiros",
+    "MoiLanRutToiDa" => "Máximo por retiro:",
+    "SoTienRut" => "Cantidad a retirar",
+    "NhapSoTienRut" => "Ingresa la cantidad a retirar",
+    "SoDuTaiKhoan" => "Saldo en cuenta:",
+    "RutToanBo" => "Retirar todo",
+    "TenChuTaiKhoan" => "Nombre del titular",
+    "TenNganHang" => "Nombre del banco",
+    "SoTaiKhoan" => "Número de cuenta",
+    "MatKhauGiaoDich" => "Contraseña de transacción",
+    "XacNhanLaiMatKhau" => "Confirmar contraseña",
+    "LuuY" => "* Nota:",
+    "VuiLongKiemTra" => "Por favor revisa tus datos de pago. Este retiro tiene 0 % de comisión",
+    "RutTienNgayLapTuc" => "Retirar inmediatamente",
+
+    "VuiLongNhapSoTienRut" => "Por favor ingresa una cantidad a retirar!",
+    "CanhBao" => "¡Advertencia!",
+    "VuiLongNhapDayDuThongTinNganHang" => "Por favor ingresa toda la información bancaria!",
+    "XacNhanMatKhauGiaoDichKhongKhop" => "Confirmación de contraseña incorrecta, ¡intenta de nuevo!",
+    "ThanhCong" => "¡Éxito!",
+];

@@ -1,0 +1,30 @@
+<?php
+return [
+    "LichSuPhanPhoi" => "Historial de distribución",
+    "SoDuHienTai" => "Saldo actual: ",
+    "DuLieuNayDuocCungCap" => "Estos datos son proporcionados oficialmente por Mercado Libre",
+    "TatCa" => "Todo",
+    "ChoXuLy" => "Pendiente",
+    "HoanThanh" => "Completado",
+    "DongBang" => "Congelado",
+
+    "ThoiGianDatPhanPhoi" => "Hora de distribución:",
+    "MaDonHang" => "Código de pedido:",
+    "TongTienPhanPhoi" => "Monto total distribuido",
+    "ChietKhau" => "Descuento",
+    "SoTienHoanNhap" => "Monto reembolsado",
+    "PhanPhoiNgay" => "Distribuir ahora",
+    "CanhBao" => "¡Advertencia!",
+    "Loi" => "¡Error!",
+    "ChoXuLy2" => "Procesando...",
+    "DangPhanPhoi" => "Distribuyendo...",
+    "ThanhCong" => "¡Éxito!",
+    "PhanPhoiThanhCong" => "¡Distribución exitosa!",
+    "KhongTimThayDuLieuDonHang" => "¡No se encontraron datos del pedido!",
+    "KhongCoDuLieu" => "¡Sin datos!",
+
+     "SoDuKhongDu" => "Saldo insuficiente, ¡por favor contacte al servicio al cliente!",
+    "KhongTimThayLichSuDatHang" => "No se encontró el historial de pedidos, ¡inténtelo de nuevo!",
+    "DonHangDaHoanThanh" => "¡El pedido ha sido completado!",
+    "KhongTimThayDonHang" => "¡No se encontró el pedido!",
+];

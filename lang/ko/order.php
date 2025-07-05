@@ -1,0 +1,30 @@
+<?php
+return [
+    "LichSuPhanPhoi" => "배포 내역",
+    "SoDuHienTai" => "현재 잔액: ",
+    "DuLieuNayDuocCungCap" => "이 데이터는 Mercado Libre에서 공식적으로 제공됩니다",
+    "TatCa" => "전체",
+    "ChoXuLy" => "처리 대기 중",
+    "HoanThanh" => "완료됨",
+    "DongBang" => "동결됨",
+
+    "ThoiGianDatPhanPhoi" => "배포 시간:",
+    "MaDonHang" => "주문 번호:",
+    "TongTienPhanPhoi" => "총 배포 금액",
+    "ChietKhau" => "수수료",
+    "SoTienHoanNhap" => "환급 금액",
+    "PhanPhoiNgay" => "지금 배포",
+    "CanhBao" => "경고!",
+    "Loi" => "오류!",
+    "ChoXuLy2" => "처리 중...",
+    "DangPhanPhoi" => "배포 중...",
+    "ThanhCong" => "성공!",
+    "PhanPhoiThanhCong" => "배포 완료!",
+    "KhongTimThayDuLieuDonHang" => "주문 데이터를 찾을 수 없습니다!",
+    "KhongCoDuLieu" => "데이터 없음!",
+    
+    "SoDuKhongDu" => "잔액이 부족합니다. 고객센터에 문의해주세요!",
+    "KhongTimThayLichSuDatHang" => "주문 내역을 찾을 수 없습니다. 다시 시도해주세요!",
+    "DonHangDaHoanThanh" => "주문이 완료되었습니다!",
+    "KhongTimThayDonHang" => "주문을 찾을 수 없습니다!",
+];

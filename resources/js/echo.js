@@ -1,4 +1,3 @@
-console.log('Echo initialized');
 import Echo from 'laravel-echo';
 import { Livewire } from '../../vendor/livewire/livewire/dist/livewire.esm';
 import Pusher from 'pusher-js';
@@ -16,8 +15,5 @@ window.Echo = new Echo({
     enabledTransports: ['ws', 'wss'],
     withCredentials: true, // QUAN TRỌNG!
     authEndpoint: '/broadcasting/auth',
-});
-window.Echo.connector.pusher.connection.bind('state_change', (states) => {
-    console.log('WebSocket state:', states);
 });
 Livewire.start();

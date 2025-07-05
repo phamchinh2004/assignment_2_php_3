@@ -42,10 +42,9 @@ window.addEventListener('DOMContentLoaded', function () {
         spinner.hidden = false;
         const response = await load_orders(tabId);
         if (response.status === 404) {
-            notification('warning', response.message, 'Không có dữ liệu!');
+            notification('warning', trans.KhongTimThayDuLieuDonHang, trans.KhongCoDuLieu);
         } else if (response.status === 200) {
             let list_orders = response.list_orders;
-            // console.log(list_orders);
 
             let div_list_orders = document.getElementById('list_orders');
             div_list_orders.innerHTML = "";
@@ -68,8 +67,8 @@ window.addEventListener('DOMContentLoaded', function () {
 
                     order_item.innerHTML = `
                         <div class="d-flex flex-column">
-                            <span class="order_time">Thời gian đặt phân phối: ${frozen_order.order.created_at}</span>
-                            <span class="order_code">Mã đơn hàng: ${frozen_order.order.order_code}</span>
+                            <span class="order_time">${trans.ThoiGianDatPhanPhoi} ${frozen_order.order.created_at}</span>
+                            <span class="order_code">${trans.MaDonHang} ${frozen_order.order.order_code}</span>
                             <div class="order_status">
                                 <img class="order_status_image" src="${image_status}" alt="">
                             </div>
@@ -89,21 +88,21 @@ window.addEventListener('DOMContentLoaded', function () {
                         <table>
                             <tbody>
                                 <tr>
-                                    <td>Tổng tiền phân phối</td>
+                                    <td>${trans.TongTienPhanPhoi}</td>
                                     <th>${order_details_end_value_total_price_formatted}</th>
                                 </tr>
                                 <tr>
-                                    <td>Chiết khấu</td>
+                                    <td>${trans.ChietKhau}</td>
                                     <th>${order_details_end_value_price_rose_formatted}</th>
                                 </tr>
                                 <tr>
-                                    <td>Số tiền hoàn nhập</td>
+                                    <td>${trans.SoTienHoanNhap}</td>
                                     <th class="total">${order_details_end_value_total_formatted}</th>
                                 </tr>
                             </tbody>
                         </table>
                         ${frozen_order.is_frozen == 1 ? `<div class="mt-2 d-flex justify-content-center">
-                            <button class="btn btn-outline-dark btn-sm btn_phan_phoi w-50">Phân phối ngay</button>
+                            <button class="btn btn-outline-dark btn-sm btn_phan_phoi w-50">${trans.PhanPhoiNgay}</button>
                         </div>`: ``}
                     `;
                     div_list_orders.appendChild(order_item);
@@ -111,7 +110,7 @@ window.addEventListener('DOMContentLoaded', function () {
             } else {
                 div_list_orders.innerHTML = `
                 <div class="d-flex justify-content-center">
-                    <span class="text-center">Không có dữ liệu!</span>
+                    <span class="text-center">${trans.KhongCoDuLieu}</span>
                 </div>
                 `;
             }
@@ -150,13 +149,13 @@ window.addEventListener('DOMContentLoaded', function () {
             let result = await handle_distribution(frozen_id);
             if (result.status === 200) {
                 const profit = result.profit;
-                await notification('warning', "", 'Chờ xử lý...');
+                await notification('warning', "", trans.ChoXuLy2);
                 await sleep(1000);
-                await notification('warning', "", 'Đang phân phối...');
+                await notification('warning', "", trans.DangPhanPhoi);
                 await sleep(1000);
-                await notification('success', result.message, 'Thành công!');
+                await notification('success', result.message, trans.ThanhCong);
                 swal({
-                    title: "Phân phối thành công!",
+                    title: trans.PhanPhoiThanhCong,
                     content: {
                         element: "span",
                         attributes: {
@@ -184,7 +183,7 @@ window.addEventListener('DOMContentLoaded', function () {
                     activeTab('btn_dong_bang');
                 }
                 const so_du_user = document.getElementById('so_du_user');
-                so_du_user.innerHTML = "Số dư hiện tại: " + format_currency(result.balance);
+                so_du_user.innerHTML = trans.SoDuHienTai + format_currency(result.balance);
             } else if (result.status === 409) {
                 if (tab === 'tat-ca') {
                     activeTab('btn_tat_ca');
@@ -195,10 +194,10 @@ window.addEventListener('DOMContentLoaded', function () {
                 } else if (tab === 'dong-bang') {
                     activeTab('btn_dong_bang');
                 }
-                notification('warning', result.message, 'Cảnh báo!');
+                notification('warning', result.message, trans.CanhBao);
                 // spinner.hidden = true;
             } else {
-                notification('warning', result.message, 'Lỗi!');
+                notification('warning', result.message, trans.Loi);
             }
             spinner.hidden = true;
         }

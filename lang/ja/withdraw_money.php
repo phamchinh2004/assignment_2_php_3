@@ -1,0 +1,26 @@
+<?php
+return [
+    "QuayLai" => "戻る",
+    "RutTien" => "出金",
+    "Con" => "残高",
+    "LanRutTien" => "出金回数",
+    "MoiLanRutToiDa" => "1回の最大出金額：",
+    "SoTienRut" => "出金金額",
+    "NhapSoTienRut" => "出金金額を入力してください",
+    "SoDuTaiKhoan" => "口座残高：",
+    "RutToanBo" => "全額出金",
+    "TenChuTaiKhoan" => "口座名義人",
+    "TenNganHang" => "銀行名",
+    "SoTaiKhoan" => "口座番号",
+    "MatKhauGiaoDich" => "取引パスワード",
+    "XacNhanLaiMatKhau" => "パスワード確認",
+    "LuuY" => "* 注意：",
+    "VuiLongKiemTra" => "支払い情報をよくご確認ください。この出金には0％の手数料がかかります",
+    "RutTienNgayLapTuc" => "即時出金",
+
+    "VuiLongNhapSoTienRut" => "出金金額を入力してください！",
+    "CanhBao" => "警告！",
+    "VuiLongNhapDayDuThongTinNganHang" => "銀行情報をすべて入力してください！",
+    "XacNhanMatKhauGiaoDichKhongKhop" => "取引パスワードの確認が一致しません。再試行してください！",
+    "ThanhCong" => "成功！",
+];

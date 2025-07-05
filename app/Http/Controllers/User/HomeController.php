@@ -3,9 +3,12 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
+use App\Models\Banner;
 use App\Models\Frozen_order;
 use App\Models\Order;
+use App\Models\Partner;
 use App\Models\Rank;
+use App\Models\Section;
 use App\Models\User;
 use App\Models\User_spin_progress;
 use App\Models\Wallet_balance_history;
@@ -22,7 +25,10 @@ class HomeController extends Controller
     public function index()
     {
         $list_ranks = Rank::get();
-        return view('user.home', compact('list_ranks'));
+        $list_sections = Section::get();
+        $list_partners = Partner::get();
+        $get_banner = Banner::with('banner_images')->where('status', true)->first();
+        return view('user.home', compact('list_ranks', 'list_sections', 'list_partners', 'get_banner'));
     }
     public function get_10_orders_next()
     {
@@ -87,13 +93,13 @@ class HomeController extends Controller
                     if (!$get_order_special) {
                         return response()->json([
                             'status' => 500,
-                            'message' => 'Không tìm thấy đơn hàng!'
+                            'message' => __('home.KhongTimThayDonHang')
                         ]);
                     }
                     if (!$query_current_spin) {
                         return response()->json([
                             'status' => 500,
-                            'message' => 'Không tìm thấy tiến trình quay!'
+                            'message' => __('home.KhongTimThayTienTrinhQuay')
                         ]);
                     }
                     if ($query_current_spin->current_spin + 1 == $get_order_special->index) {
@@ -109,7 +115,7 @@ class HomeController extends Controller
                             'custom_price' => $check_frozen->custom_price,
                             'order_id' => $get_order_special->id,
                             'frozen_id' => $check_frozen->id,
-                            'message' => 'Chúc mừng! Bạn nhận được đơn hàng đặc biệt!'
+                            'message' => __('home.ChucMungBanNhanDuocDonHangDacBiet')
                         ]);
                     } else if ($query_current_spin->current_spin <= $get_order_special->index && $check_frozen->spun == true) {
                         return response()->json([
@@ -117,14 +123,14 @@ class HomeController extends Controller
                             'is_frozen' => true,
                             'is_order_special' => true,
                             'is_new_order' => false,
-                            'message' => 'Có đơn hàng đang bị đóng băng, vui lòng truy cập trang lịch sử đơn hàng để xử lý!'
+                            'message' => __('home.CoDonHangDangBiDongBang')
                         ]);
                     } else {
                         $order = Order::where('index', $query_current_spin->current_spin + 1)->where('rank_id', $query_current_spin->rank_id)->first();
                         if (!$order) {
                             return response()->json([
                                 'status' => 500,
-                                'message' => 'Không tìm thấy đơn hàng!'
+                                'message' => __('home.KhongTimThayDonHang')
                             ]);
                         }
                         $query_current_spin->current_spin = $query_current_spin->current_spin + 1;
@@ -150,7 +156,7 @@ class HomeController extends Controller
                         'is_frozen' => true,
                         'is_order_special' => false,
                         'is_new_order' => false,
-                        'message' => 'Có đơn hàng chưa xử lý, vui lòng truy cập trang lịch sử đơn hàng để xử lý đơn hàng!'
+                        'message' => __('home.CoDonHangChuaXuLy')
                     ]);
                 }
             } else {
@@ -158,7 +164,7 @@ class HomeController extends Controller
                 if (!$query_current_spin) {
                     return response()->json([
                         'status' => 500,
-                        'message' => 'Không tìm thấy tiến trình quay!'
+                        'message' => __('home.KhongTimThayTienTrinhQuay')
                     ]);
                 }
                 $rank = Rank::find($query_current_spin->rank_id);
@@ -168,14 +174,14 @@ class HomeController extends Controller
                         'is_frozen' => false,
                         'is_order_special' => false,
                         'is_new_order' => false,
-                        'message' => 'Lượt quay đã đạt đến giới hạn tối đa!'
+                        'message' => __('home.LuotQuayDaDatDenGioiHanToiDa')
                     ]);
                 }
                 $order = Order::where('index', $query_current_spin->current_spin + 1)->where('rank_id', $query_current_spin->rank_id)->first();
                 if (!$order) {
                     return response()->json([
                         'status' => 500,
-                        'message' => 'Không tìm thấy đơn hàng!'
+                        'message' => __('home.KhongTimThayDonHang')
                     ]);
                 }
                 $query_current_spin->current_spin = $query_current_spin->current_spin + 1;
@@ -202,7 +208,7 @@ class HomeController extends Controller
             \Log::error($e);
             return response()->json([
                 'status' => 500,
-                'message' => 'Đã xảy ra lỗi khi kiểm tra đơn hàng!',
+                'message' => __('home.DaXayRaLoiKhiKiemTraDonHang'),
                 'error' => $e->getMessage()
             ]);
         }
@@ -210,12 +216,14 @@ class HomeController extends Controller
     public function distribution()
     {
         $user = Auth::user();
+        $section_mo_ta = Section::where('code', 'mo_ta')->first();
         $frozen_price = null;
         $frozen_order = Frozen_order::where('user_id', $user->id)->where('custom_price', '!=', null)->where('is_frozen', true)->where('spun', true)->first();
         if ($frozen_order) {
             $frozen_price = $frozen_order->custom_price;
         }
-        return view('user.distribution', compact('user', 'frozen_price'));
+        $get_first_rank = Rank::first();
+        return view('user.distribution', compact('user', 'frozen_price', 'section_mo_ta', 'get_first_rank'));
     }
     public function withdraw_money()
     {
@@ -235,26 +243,26 @@ class HomeController extends Controller
         if ($check) {
             return response()->json([
                 'status' => 400,
-                'message' => 'Đang có một đơn rút tiền chưa hoàn thành!'
+                'message' => __('home.DangCoMotDonRutTienChuaHoanThanh')
             ]);
         }
         if ($user->count_withdrawals >= $rank->maximum_number_of_withdrawals) {
             return response()->json([
                 'status' => 400,
-                'message' => 'Số lần rút đã đạt tối đa trong ngày!'
+                'message' => __('home.SoLanRutDaDatToiDaTrongNgay')
             ]);
         }
         $amount = floatval(request()->input('amount'));
         if ($user->balance < $amount) {
             return response()->json([
                 'status' => 400,
-                'message' => 'Số dư không đủ!'
+                'message' => __('home.SoDuKhongDu')
             ]);
         }
         if ($amount > $rank->maximum_withdrawal_amount) {
             return response()->json([
                 'status' => 400,
-                'message' => 'Số tiền rút vượt quá giới hạn quy định!'
+                'message' => __('home.SoTienRutVuotQuaGioiHanQuyDinh')
             ]);
         }
         $username_bank = request()->input('username_bank');
@@ -278,7 +286,7 @@ class HomeController extends Controller
             if (!$transaction_password || !$confirm_transaction_password) {
                 return response()->json([
                     'status' => 400,
-                    'message' => 'Vui lòng nhập đầy đủ thông tin!',
+                    'message' => __('home.VuiLongNhapDayDuThongTin')
                 ]);
             }
 
@@ -286,7 +294,7 @@ class HomeController extends Controller
             if ($transaction_password !== $confirm_transaction_password) {
                 return response()->json([
                     'status' => 400,
-                    'message' => 'Mật khẩu xác nhận không khớp!',
+                    'message' => __('home.MatKhauXacNhanKhongKhop')
                 ]);
             }
 
@@ -297,7 +305,7 @@ class HomeController extends Controller
             if (!password_verify($transaction_password, $user->transaction_password)) {
                 return response()->json([
                     'status' => 400,
-                    'message' => 'Mật khẩu giao dịch không chính xác!',
+                    'message' => __('home.MatKhauGiaoDichKhongChinhXac')
                 ]);
             }
         }
@@ -319,7 +327,7 @@ class HomeController extends Controller
         ]);
         return response()->json([
             'status' => 200,
-            'message' => 'Tạo đơn rút tiền thành công, vui lòng chờ xử lý!',
+            'message' => __('home.TaoDonRutTienThanhCong')
         ]);
     }
     /**

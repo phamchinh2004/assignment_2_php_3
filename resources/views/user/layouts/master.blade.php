@@ -32,11 +32,11 @@
             <div class="footer text-center w-100 m-0 d-flex align-items-center">
                 <a class="cspt footer-item text-dark text-decoration-none" href="{{ route('home') }}">
                     <img width="16.5px" src="{{ asset('images/footer/home.png') }}" alt="">
-                    <div class="fw-bold text-footer">Trang chủ</div>
+                    <div class="fw-bold text-footer">{{__('layout.TrangChu')}}</div>
                 </a>
                 <a class="cspt footer-item text-dark text-decoration-none" href="{{ route('order') }}?tab=tat-ca">
                     <i class="fa-solid fa-clock-rotate-left"></i>
-                    <div class="fw-bold text-footer">Lịch sử</div>
+                    <div class="fw-bold text-footer">{{__('layout.LichSu')}}</div>
                 </a>
                 <a href="{{ route('distribution') }}" class="d-flex footer-item justify-content-center align-items-center p-0 cspt text-dark text-decoration-none">
                     <div class="amazon_btn d-flex justify-content-center align-items-center">
@@ -50,7 +50,7 @@
                 <!-- End hộp thoại -->
                 <a class="cspt footer-item text-dark text-decoration-none" href="{{ route('me') }}">
                     <i class="fa fa-regular fa-user"></i>
-                    <div class="fw-bold text-footer">Tôi</div>
+                    <div class="fw-bold text-footer">{{__('layout.Toi')}}</div>
                 </a>
             </div>
         </footer>
@@ -149,7 +149,7 @@
                     .listen('.UserLocked', function(e) {
                         location.href = '/log-out-by-locked';
                     });
-                
+
             } else {
                 console.error('Echo is not loaded');
             }

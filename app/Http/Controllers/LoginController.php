@@ -49,7 +49,7 @@ class LoginController extends Controller
                     if ($get_user_from_username->role == "member") {
                         return redirect()->route('home')->with('success', 'Đăng nhập thành công!');
                     } else {
-                        return redirect()->route('admin.dashboard')->with('success', 'Đăng nhập thành công!');
+                        return redirect()->route('chat-panel')->with('success', 'Đăng nhập thành công!');
                     }
                 } elseif ($get_user_from_username->status == "inactivated") {
                     Auth::logout();

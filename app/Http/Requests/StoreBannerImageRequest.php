@@ -22,7 +22,7 @@ class StoreBannerImageRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'path' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg'
         ];
     }
 }
