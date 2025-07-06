@@ -69,6 +69,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!accept_terms.checked) {
             notification('warning', 'Vui lòng chấp nhận điều khoản của chúng tôi!', 'Cảnh báo!');
             valid = false;
+            spinner.hidden = true;
             return;
         }
         if (username_register.value && phone_register.value && password_register.value && repassword_register.value) {
@@ -77,32 +78,38 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (!check_user_existed) {
                     notification('warning', 'Mã mời không hợp lệ, vui lòng thử lại!', 'Cảnh báo!');
                     valid = false;
+                    spinner.hidden = true;
                     return;
                 }
             }
             if (username_register.value.length < 6) {
                 notification('warning', 'Tên đăng nhập phải từ 6 ký tự trở lên!', 'Cảnh báo!');
                 valid = false;
+                spinner.hidden = true;
                 return;
             }
             if (phone_register.value.length < 10) {
                 notification('warning', 'Số điện thoại phải từ 10 số trở lên!', 'Cảnh báo!');
                 valid = false;
+                spinner.hidden = true;
                 return;
             }
             if (!phone_register.value.trim() || isNaN(phone_register.value)) {
                 notification('warning', 'Số điện thoại phải là số!', 'Cảnh báo!');
                 valid = false;
+                spinner.hidden = true;
                 return;
             }
             if (password_register.value.length < 6) {
                 notification('warning', 'Mật khẩu phải từ 6 ký tự trở lên!', 'Cảnh báo!');
                 valid = false;
+                spinner.hidden = true;
                 return;
             }
             if (password_register.value !== repassword_register.value) {
                 notification('warning', 'Mật khẩu không khớp!', 'Cảnh báo!');
                 valid = false;
+                spinner.hidden = true;
                 return;
             }
             form_register.submit();
@@ -163,6 +170,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 localStorage.removeItem("password");
                 notification('warning', check_username_existed.message, 'Cảnh báo!');
                 valid = false;
+                spinner.hidden = true;
                 return;
             }
             if (remember_checkbox.checked) {

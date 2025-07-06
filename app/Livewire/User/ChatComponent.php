@@ -13,7 +13,7 @@ class ChatComponent extends Component
 {
     public $newMessage = '';
     public $chatMessages;
-    public $showBox = false;
+    public $showBox = true;
     public $conversation;
     public $currentChannel = null;
     public $messagesPerLoad = 5; // Số tin nhắn load mỗi lần
