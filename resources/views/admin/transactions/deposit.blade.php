@@ -6,7 +6,6 @@ Danh sách cấp độ
 @section('style-libs')
 <!-- Custom styles for this page -->
 <link href="{{ asset('theme/admin/vendor/datatables/dataTables.bootstrap4.min.css') }}" rel="stylesheet">
-@vite('resources/css/admin/transaction/withdraw.css')
 @endsection
 
 @section('script-libs')
@@ -16,7 +15,6 @@ Danh sách cấp độ
 
 <!-- Page level custom scripts -->
 <script src="{{ asset('theme/admin/js/demo/datatables-demo.js') }}"></script>
-@vite('resources/js/admin/transaction/withdraw.js')
 <script>
     window.currentPermissionCode = "quan_ly_tat_ca_giao_dich_nguoi_dung";
 </script>
