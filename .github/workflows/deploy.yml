@@ -45,4 +45,5 @@ jobs:
             php artisan view:cache
 
             chown -R nginx:nginx storage bootstrap/cache
+            chmod -R ug+rw storage bootstrap/cache
           EOF
