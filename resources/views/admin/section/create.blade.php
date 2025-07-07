@@ -6,7 +6,6 @@ Thêm mới section
 @section('style-libs')
 <!-- Custom styles for this page -->
 <link href="{{ asset('theme/admin/vendor/datatables/dataTables.bootstrap4.min.css') }}" rel="stylesheet">
-@vite('resources/css/admin/section/create.css')
 @endsection
 
 @section('script-libs')

@@ -6,14 +6,12 @@ Cập nhật section
 @section('style-libs')
 <!-- Custom styles for this page -->
 <link href="{{ asset('theme/admin/vendor/datatables/dataTables.bootstrap4.min.css') }}" rel="stylesheet">
-@vite('resources/css/admin/section/show.css')
 @endsection
 
 @section('script-libs')
 <!-- Page level plugins -->
 <script src="{{ asset('theme/admin/vendor/datatables/jquery.dataTables.min.js') }}"></script>
 <script src="{{ asset('theme/admin/vendor/datatables/dataTables.bootstrap4.min.js') }}"></script>
-@vite('resources/js/admin/section/edit.js')
 <!-- Page level custom scripts -->
 <script src="{{ asset('theme/admin/js/demo/datatables-demo.js') }}"></script>
 <script>

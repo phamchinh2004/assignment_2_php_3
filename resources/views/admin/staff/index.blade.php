@@ -6,7 +6,6 @@ Danh sách nhân viên
 @section('style-libs')
 <!-- Custom styles for this page -->
 <link href="{{ asset('theme/admin/vendor/datatables/dataTables.bootstrap4.min.css') }}" rel="stylesheet">
-<!-- @vite('resources/css/admin/staff/index.css') -->
 @endsection
 
 @section('script-libs')
@@ -16,7 +15,6 @@ Danh sách nhân viên
 
 <!-- Page level custom scripts -->
 <script src="{{ asset('theme/admin/js/demo/datatables-demo.js') }}"></script>
-<!-- @vite('resources/js/admin/staff/index.js') -->
 @endsection
 
 @section('content')
