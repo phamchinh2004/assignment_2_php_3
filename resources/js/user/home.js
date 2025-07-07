@@ -92,6 +92,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 } else if (data.status === 200) {
                     orders = data.orders;
                     currentIndex = data.order_next;
+                    console.log(currentIndex);
+                    console.log(orders);
 
                     const spans = document.querySelectorAll('#box .font');
 
@@ -160,6 +162,15 @@ document.addEventListener('DOMContentLoaded', function () {
             can_spin = true;
             order_id = check_frozen.order_id;
             frozen_id = check_frozen.frozen_id;
+        } else if (check_frozen.status == 500) {
+            swal({
+                title: check_frozen.message,
+                text: check_frozen.message,
+                icon: "warning",
+                button: "OK",
+                dangerMode: true,
+            })
+            spinner.hidden = true;
         }
         if (can_spin) {
             const btn_phan_phoi_ngay = document.getElementById('btn_phan_phoi_ngay');
@@ -262,6 +273,8 @@ document.addEventListener('DOMContentLoaded', function () {
             }, 2000);
             // Cập nhật index
             currentIndex += 1;
+        } else {
+            spinner.hidden = true;
         }
     }
     window.spin = spin;

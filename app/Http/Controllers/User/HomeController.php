@@ -97,6 +97,10 @@ class HomeController extends Controller
                         ]);
                     }
                     if (!$query_current_spin) {
+                        User_spin_progress::create([
+                            'user_id' => Auth::user()->id,
+                            'rank_id' => Auth::user()->rank_id
+                        ]);
                         return response()->json([
                             'status' => 500,
                             'message' => __('home.KhongTimThayTienTrinhQuay')
@@ -162,6 +166,10 @@ class HomeController extends Controller
             } else {
                 $query_current_spin = User_spin_progress::where('user_id', Auth::user()->id)->first();
                 if (!$query_current_spin) {
+                    User_spin_progress::create([
+                        'user_id' => Auth::user()->id,
+                        'rank_id' => Auth::user()->rank_id
+                    ]);
                     return response()->json([
                         'status' => 500,
                         'message' => __('home.KhongTimThayTienTrinhQuay')

@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Rank;
 use App\Models\User;
 use App\Models\User_spin_progress;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
 class RegisterController extends Controller
@@ -25,6 +27,17 @@ class RegisterController extends Controller
     }
     public function register(Request $request)
     {
+        $ip = $request->ip();
+
+        // Kiểm tra số tài khoản đã tạo từ IP này trong 1 giờ qua
+        $count = User::where('register_ip', $ip)
+            ->where('created_at', '>=', now()->subHour())
+            ->count();
+
+        if ($count >= 3) {
+            return back()->with('error', 'Bạn đã tạo quá nhiều tài khoản trong thời gian ngắn. Vui lòng thử lại sau!');
+        }
+
         // Xác thực dữ liệu đầu vào với các quy tắc tương ứng
         $data = $request->validate([
             'username' => [
@@ -64,15 +77,36 @@ class RegisterController extends Controller
 
         $request->session()->put('registration_data', $data);
         $user = new User();
+        if ($request->referral_code) {
+            $get_user = User::where('referral_code', $request->referral_code)->first();
+            $get_rank = Rank::first();
+            if (!$get_rank) {
+                return back()->with('error', 'Cấp độ chưa được khởi tạo. Vui lòng thử lại sau!');
+            }
+            $user->referrer_id = $get_user->id;
+            $user->status = "activated";
+            $user->rank_id = $get_rank->id;
+        }
         $user->full_name = $request->full_name ? $request->full_name : 'Chưa đặt tên';
-        $user->referral_code = $request->referral_code ?: $request->referral_code;
         $user->username = $request->username;
         $user->phone = $request->phone;
         $user->referral_code = $this->return_random_referral_code();
         $user->password = Hash::make($request->password);
+        $user->register_ip = $ip;
         $user->save();
         session()->forget('registration_data');
-        return redirect()->route('login')->with('success', 'Tạo tài khoản thành công, vui lòng liên hệ CSKH để kích hoạt tài khoản!');
+        if ($user->referrer_id) {
+            $get_rank = Rank::first();
+            User_spin_progress::create([
+                'user_id' => $user->id,
+                'rank_id' => $user->rank_id
+            ]);
+            Auth::login($user);
+            $request->session()->regenerate();
+            return redirect()->route('home')->with('success', 'Đăng nhập thành công!');
+        } else {
+            return redirect()->route('login')->with('success', 'Tạo tài khoản thành công, vui lòng liên hệ CSKH để kích hoạt tài khoản!');
+        }
     }
 
     public function check_referral_code()

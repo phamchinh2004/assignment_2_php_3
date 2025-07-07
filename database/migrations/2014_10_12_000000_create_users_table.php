@@ -24,7 +24,7 @@ return new class extends Migration
             $table->string('username_bank')->nullable()->comment('Tên tài khoản ngân hàng');
             $table->string('bank_name')->nullable()->comment('Tên ngân hàng');
             $table->string('account_number')->nullable()->comment('Số tài khoản');
-            $table->double('balance')->nullable()->comment('Số dư tài khoản');
+            $table->double('balance')->default(0)->comment('Số dư tài khoản');
             $table->string('transaction_password')->nullable()->comment('Mật khẩu giao dịch');
             $table->integer('distribution_today')->nullable()->default(0)->comment('Phân phối hôm nay');
             $table->double('todays_discount')->nullable()->default(0)->comment('Chiếu khấu hôm nay');
@@ -35,6 +35,7 @@ return new class extends Migration
             $table->foreignIdFor(User::class, 'referrer_id')->nullable()->comment('Được giới thiệu bởi ai');
             $table->foreignIdFor(Rank::class)->nullable()->comment('Cấp độ người dùng');
             $table->timestamp('email_verified_at')->nullable()->comment('Email đã được xác minh lúc nào');
+            $table->string('register_ip', 100)->nullable()->comment('Lưu địa chỉ ip');
             $table->rememberToken();
             $table->timestamps();
         });

@@ -16,4 +16,5 @@ window.Echo = new Echo({
     withCredentials: true, // QUAN TRỌNG!
     authEndpoint: '/broadcasting/auth',
 });
+
 Livewire.start();
