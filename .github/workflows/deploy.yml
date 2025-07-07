@@ -26,8 +26,10 @@ jobs:
             # Fix "dubious ownership" error
             git config --global --add safe.directory /var/www/web-for-quyet
 
-          # Pull latest code
-          git pull --rebase origin main
+            # Pull latest code
+            git fetch origin main
+            git reset --hard origin/main
+            git clean -fd
 
             # Install backend dependencies
             composer install --no-dev --optimize-autoloader
