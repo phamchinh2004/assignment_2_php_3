@@ -6,7 +6,7 @@
           git config --global --add safe.directory /var/www/web-for-quyet
 
           # Pull latest code
-          git pull origin main
+          git pull --rebase origin main
 
           # Install backend dependencies
           composer install --no-dev --optimize-autoloader
