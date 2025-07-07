@@ -1,0 +1,52 @@
+name: Deploy Laravel App
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v3
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.5.4
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Deploy to AlmaLinux server
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.USERNAME }}@${{ secrets.HOST }} -p ${{ secrets.PORT }} << 'EOF'
+            cd /var/www/web-for-quyet
+
+            # Fix "dubious ownership" error
+            git config --global --add safe.directory /var/www/web-for-quyet
+
+            # Pull latest code
+            git fetch origin main
+            git reset --hard origin/main
+            git clean -fd
+
+            # Install backend dependencies
+            sudo composer update
+            composer install --no-dev --optimize-autoloader
+
+            # Install frontend assets
+            npm install
+            npm run build
+
+            # Laravel specific setup
+            php artisan migrate --force
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+
+            chown -R nginx:nginx storage bootstrap/cache
+            chmod -R ug+rw storage bootstrap/cache
+            chmod -R guo+w storage
+
+          EOF
