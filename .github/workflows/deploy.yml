@@ -32,6 +32,7 @@ jobs:
             git clean -fd
 
             # Install backend dependencies
+            sudo composer update
             composer install --no-dev --optimize-autoloader
 
             # Install frontend assets
@@ -46,4 +47,6 @@ jobs:
 
             chown -R nginx:nginx storage bootstrap/cache
             chmod -R ug+rw storage bootstrap/cache
+            chmod -R guo+w storage
+
           EOF
