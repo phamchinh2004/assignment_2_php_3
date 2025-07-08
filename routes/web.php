@@ -53,3 +53,10 @@ Route::middleware(['role:member', 'checkBanned'])->group(function () {
 Route::get('/log-out', [LoginController::class, 'log_out'])->name('logout')->middleware('auth');
 Route::get('/log-out-by-locked', [LoginController::class, 'log_out_by_locked'])->name('log_out_by_locked')->middleware('auth');
 Route::post('/change-language', [LanguageController::class, 'change'])->name('language.change');
+Route::get('/debug-broadcast', function () {
+    return [
+        'broadcast_driver' => config('broadcasting.default'),
+        'reverb_host' => config('broadcasting.connections.reverb.options.host'),
+        'reverb_port' => config('broadcasting.connections.reverb.options.port'),
+    ];
+});
