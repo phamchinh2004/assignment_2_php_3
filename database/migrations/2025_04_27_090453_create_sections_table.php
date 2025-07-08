@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('name')->nullable()->comment('Tên section!');
             $table->string('code')->nullable()->comment('Mã section!');
-            $table->string('content')->nullable()->comment('Nội dung section');
+            $table->text('content')->nullable()->comment('Nội dung section');
             $table->boolean(column: 'status')->default(1)->comment('Trạng thái kích hoạt, mặc định là 1 (đã được kích hoạt), 0 là bị khóa');
             $table->timestamps();
         });

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Conversation;
 use App\Models\Rank;
 use App\Models\User;
 use App\Models\User_spin_progress;
@@ -100,6 +101,11 @@ class RegisterController extends Controller
             User_spin_progress::create([
                 'user_id' => $user->id,
                 'rank_id' => $user->rank_id
+            ]);
+            $get_user = User::where('referral_code', $request->referral_code)->first();
+            Conversation::create([
+                'staff_id' => $get_user->id,
+                'user_id' => $user->id
             ]);
             Auth::login($user);
             $request->session()->regenerate();

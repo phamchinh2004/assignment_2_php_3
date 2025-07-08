@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateFrozenOrderRequest;
 use App\Http\Requests\UpdateUserRequest;
+use App\Models\Conversation;
 use App\Models\Frozen_order;
 use App\Models\Manager_setting;
 use App\Models\Order;
@@ -154,6 +155,11 @@ class UserController extends Controller
                     'user_id' => $user->id,
                     'rank_id' => $get_rank->id
                 ]);
+                Conversation::create([
+                    'staff_id' => Auth::user()->id,
+                    'user_id' => $user->id
+                ]);
+                $user->rank_id = $get_rank->id;
                 $user->status = "activated";
             } elseif ($user->status === "activated") {
                 $message = "Khóa tài khoản người dùng thành công!";

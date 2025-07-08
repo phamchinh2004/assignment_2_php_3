@@ -242,6 +242,11 @@
     animation-delay: 0s;
 }
 
+#label_remember_password,
+#label_forgot_password {
+    font-size: 14px;
+}
+
 @keyframes lds-spinner {
     0% {
         opacity: 1;
@@ -276,7 +281,26 @@
     /* Chuẩn W3C */
 }
 
+#box_arround {
+    position: fixed;
+    bottom: 90px;
+    right: 20px;
+    width: 350px;
+    background: #fff;
+    border: none;
+    border-radius: 16px;
+    z-index: 9999;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    overflow: hidden;
+}
+
 @media screen and (max-width: 768px) {
+
+    #label_remember_password,
+    #label_forgot_password {
+        font-size: 10px;
+    }
+
     .around_logo_lr {
         margin: auto;
         margin-top: 80px;
@@ -324,6 +348,11 @@
         border-radius: 20%;
         background: currentColor;
     }
+
+    #box_arround {
+        right: 50%;
+        transform: translate(50%, 0%);
+    }
 }
 
 
@@ -344,6 +373,8 @@
 #chat-messages-container::-webkit-scrollbar-thumb:hover {
     background: #adb5bd;
 }
+
+
 
 /* Hover effects */
 .btn:hover {

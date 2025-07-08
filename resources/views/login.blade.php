@@ -58,11 +58,11 @@
             <div class="mt-3 d-flex justify-content-between align-items-center">
                 <div class="form-check">
                     <input class="form-check-input p-2" name="remember_password" {{ old('remember_password') ? 'checked' : '' }} type="checkbox" value="" id="remember_password">
-                    <label class="form-check-label text-white" style="font-size: 14px;" for="remember_password">
+                    <label class="form-check-label text-white" id="label_remember_password" for="remember_password">
                         Nhớ mật khẩu
                     </label>
                 </div>
-                <span class="text-white text-decoration-underline cspt" style="font-size: 14px;">Quên mật khẩu?</span>
+                <span class="text-white text-decoration-underline cspt" id="label_forgot_password">Quên mật khẩu?</span>
             </div>
             <div class="mt-3 d-flex justify-content-center">
                 <button class="btn btn-warning fw-bold text-white w-100" id="login" type="button">Đăng nhập</button>

@@ -7,8 +7,7 @@
 
     <!-- Hộp thoại chat -->
     @if ($showBox)
-    <div wire:init="scrollToBottom"
-        style="position: fixed; bottom: 90px; right: 20px; width: 350px; background: #fff; border: none; border-radius: 16px; z-index: 9999; box-shadow: 0 8px 32px rgba(0,0,0,0.12); overflow: hidden;">
+    <div wire:init="scrollToBottom" id="box_arround">
 
         <!-- Header với gradient -->
         <div class="p-3 d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
@@ -244,12 +243,18 @@
             input.addEventListener('keydown', function(e) {
                 if (e.key === 'Enter') {
                     e.preventDefault();
-                    const form = this.closest('form');
-                    if (form && this.value.trim().length > 0 && this.value.trim().length <= {{ $maxMessageLength }}) {
-                        form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+                    const root = document.getElementById('chat-root');
+                    const component = Livewire.find(root.getAttribute('wire:id'));
+
+                    if (this.value.trim().length > 0 && this.value.trim().length <= {{ $maxMessageLength }}) {
+                        component.set('newMessage', this.value); // cập nhật thủ công
+                        setTimeout(() => {
+                            component.call('sendMessage');
+                        }, 50); // nhỏ delay để đảm bảo set xong
                     }
                 }
             });
+
         }
 
         // Handle Enter key

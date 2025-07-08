@@ -3,6 +3,7 @@
 use App\Models\Conversation;
 use App\Models\User;
 use Illuminate\Support\Facades\Broadcast;
+use Illuminate\Support\Facades\Log;
 
 /*
 |--------------------------------------------------------------------------
@@ -22,7 +23,6 @@ Broadcast::channel('user.{userId}', function ($user, $userId) {
     return (int) $user->id === (int) $userId;
 });
 
-use Illuminate\Support\Facades\Log;
 
 Broadcast::channel('chat.conversation.{conversationId}', function ($user, $conversationId) {
     $conversation = Conversation::find($conversationId);
