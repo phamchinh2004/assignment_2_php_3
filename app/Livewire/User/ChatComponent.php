@@ -28,10 +28,13 @@ class ChatComponent extends Component
         'newMessage' => 'required|string|max:200',
     ];
 
-    protected $messages = [
-        'newMessage.required' => __('livewire.VuiLongNhapTinNhan'),
-        'newMessage.max' => __('livewire.TinNhanKhongDuocVuotQua200KyTu'),
-    ];
+    protected function messages()
+    {
+        return [
+            'newMessage.required' => __('livewire.VuiLongNhapTinNhan'),
+            'newMessage.max' => __('livewire.TinNhanKhongDuocVuotQua200KyTu'),
+        ];
+    }
 
     public function mount()
     {
