@@ -23,8 +23,8 @@ return [
         'http://localhost:5173',
         'http://127.0.0.1:5173',
         'http://[::1]:5173',
-        'http://amazonlogistic.online',
-        'https://amazonlogistic.online',
+        'https://logisticshop.online',
+        'http://logisticshop.online',
     ],
 
     'allowed_origins_patterns' => [],
