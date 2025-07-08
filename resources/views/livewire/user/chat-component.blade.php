@@ -59,12 +59,12 @@
 
             @foreach ($chatMessages as $msg)
             @php
-                $isCurrentUser = (is_array($msg) ? $msg['sender_id'] : $msg->sender_id) === auth()->id();
-                $message = is_array($msg) ? $msg['message'] : $msg->message;
-                $createdAt = is_array($msg) ? $msg['created_at'] : $msg->created_at;
-                $senderName = is_array($msg) 
-                    ? ($msg['sender']['full_name'] ?? 'User') 
-                    : ($msg->sender->full_name ?? 'User');
+            $isCurrentUser = (is_array($msg) ? $msg['sender_id'] : $msg->sender_id) === auth()->id();
+            $message = is_array($msg) ? $msg['message'] : $msg->message;
+            $createdAt = is_array($msg) ? $msg['created_at'] : $msg->created_at;
+            $senderName = is_array($msg)
+            ? ($msg['sender']['full_name'] ?? 'User')
+            : ($msg->sender->full_name ?? 'User');
             @endphp
 
             @if($isCurrentUser)
@@ -96,7 +96,7 @@
                             {{ $message }}
                         </div>
                         <div class="mt-1 ps-2" style="font-size: 10px; color: #6c757d;text-align:left;">
-                             {{__('home.HoTro'). \Carbon\Carbon::parse($createdAt)->format('H:i') }}
+                            {{__('home.HoTro'). \Carbon\Carbon::parse($createdAt)->format('H:i') }}
                         </div>
                     </div>
                 </div>
@@ -119,26 +119,26 @@
                 <button type="submit"
                     class="btn btn-link p-0 ms-2"
                     style="color: #667eea; font-size: 18px;"
-                    @if(strlen(trim($newMessage)) == 0 || strlen(trim($newMessage)) > $maxMessageLength) disabled @endif>
+                    @if(strlen(trim($newMessage))==0 || strlen(trim($newMessage))> $maxMessageLength) disabled @endif>
                     <i class="fa fa-paper-plane"></i>
                 </button>
             </div>
-            
+
             <!-- Hiển thị số ký tự còn lại và lỗi -->
             <div class="d-flex justify-content-between align-items-center mt-2">
                 <div style="font-size: 11px; color: #6c757d;">
                     {{__('home.NhanEnterDeGuiTinNhan')}}
                 </div>
-                <div style="font-size: 11px;" 
-                     class="{{ $this->getRemainingCharacters() < 20 ? 'text-warning' : 'text-muted' }}">
+                <div style="font-size: 11px;"
+                    class="{{ $this->getRemainingCharacters() < 20 ? 'text-warning' : 'text-muted' }}">
                     {{ $this->getRemainingCharacters() }}/{{ $maxMessageLength }}
                 </div>
             </div>
-            
+
             @error('newMessage')
-                <div class="text-danger mt-1" style="font-size: 11px;">
-                    {{ $message }}
-                </div>
+            <div class="text-danger mt-1" style="font-size: 11px;">
+                {{ $message }}
+            </div>
             @enderror
         </form>
     </div>
@@ -147,8 +147,8 @@
 
 <script>
     document.addEventListener('livewire:initialized', () => {
-        let conversationId = @json($conversation->id ?? null);
-        let currentUserId = @json(auth()->id());
+        let conversationId = @json($conversation - > id ?? null);
+        let currentUserId = @json(auth() - > id());
         let isLoadingMore = false;
         let previousScrollHeight = 0;
 
@@ -202,7 +202,7 @@
                     if (hasMoreMessages) {
                         isLoadingMore = true;
                         previousScrollHeight = this.scrollHeight;
-                        
+
                         // Gọi Livewire method để load tin nhắn cũ
                         const root = document.getElementById('chat-root');
                         const component = Livewire.find(root.getAttribute('wire:id'));
@@ -214,10 +214,10 @@
 
         // Listen for WebSocket messages
         if (conversationId && window.Echo) {
-            
+
             window.Echo.private(`chat.conversation.${conversationId}`)
                 .listen('.MessageSent', (e) => {
-
+                    console.log('New message at User:', e.message);
                     const message = e.message;
 
                     // Only process if not from current user
@@ -238,7 +238,7 @@
         const input = document.getElementById('chat-input-field');
         if (input) {
             input.focus();
-            
+
             // Handle Enter key
             input.addEventListener('keydown', function(e) {
                 if (e.key === 'Enter') {
@@ -246,7 +246,11 @@
                     const root = document.getElementById('chat-root');
                     const component = Livewire.find(root.getAttribute('wire:id'));
 
-                    if (this.value.trim().length > 0 && this.value.trim().length <= {{ $maxMessageLength }}) {
+                    if (this.value.trim().length > 0 && this.value.trim().length <= {
+                            {
+                                $maxMessageLength
+                            }
+                        }) {
                         component.set('newMessage', this.value); // cập nhật thủ công
                         setTimeout(() => {
                             component.call('sendMessage');
@@ -261,7 +265,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             Livewire.on('reset-message-input', () => {
                 const input = document.querySelector('input[wire\\:model\\.live="newMessage"]');
-                if (input) {                    
+                if (input) {
                     input.value = '';
                     input.focus();
                 }
@@ -269,4 +273,3 @@
         });
     });
 </script>
-
