@@ -29,8 +29,8 @@ class ChatComponent extends Component
     ];
 
     protected $messages = [
-        'newMessage.required' => 'Vui lòng nhập tin nhắn.',
-        'newMessage.max' => 'Tin nhắn không được vượt quá 200 ký tự.',
+        'newMessage.required' => __('livewire.VuiLongNhapTinNhan'),
+        'newMessage.max' => __('livewire.TinNhanKhongDuocVuotQua200KyTu'),
     ];
 
     public function mount()
@@ -128,7 +128,7 @@ class ChatComponent extends Component
 
         // Kiểm tra độ dài tin nhắn
         if (strlen(trim($this->newMessage)) > $this->maxMessageLength) {
-            $this->addError('newMessage', 'Tin nhắn không được vượt quá ' . $this->maxMessageLength . ' ký tự.');
+            $this->addError('newMessage', __('livewire.TinNhanKhongDuocVuotQua') . $this->maxMessageLength . __('livewire.KyTu'));
             return;
         }
 

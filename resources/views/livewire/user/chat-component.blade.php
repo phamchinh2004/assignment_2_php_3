@@ -72,7 +72,7 @@
             <div class="d-flex justify-content-end mb-3" wire:key="msg-{{ is_array($msg) ? $msg['id'] : $msg->id }}">
                 <div class="d-flex align-items-end" style="max-width: 80%;">
                     <div class="me-2">
-                        <div class="px-3 py-2 rounded-pill"
+                        <div class="message-bubble px-3 py-2 rounded-pill"
                             style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-size: 14px; line-height: 1.4; word-wrap: break-word;">
                             {{ $message }}
                         </div>
@@ -91,8 +91,8 @@
                     <img src="https://ui-avatars.com/api/?name=Support&background=28a745&color=ffffff&size=28&rounded=true&bold=true"
                         alt="Support" class="rounded-circle flex-shrink-0" width="28" height="28">
                     <div class="ms-2">
-                        <div class="px-3 py-2 rounded-pill"
-                            style="background: white; color: #333; font-size: 14px; line-height: 1.4; border: 1px solid #e9ecef; word-wrap: break-word;">
+                        <div class="message-bubble rounded-4 px-3 py-2 position-relative member-message"
+                            style="transition: all 0.2s ease; border: 1px solid #e9ecef;">
                             {{ $message }}
                         </div>
                         <div class="mt-1 ps-2" style="font-size: 10px; color: #6c757d;text-align:left;">

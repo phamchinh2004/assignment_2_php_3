@@ -161,6 +161,7 @@ class UserController extends Controller
                 ]);
                 $user->rank_id = $get_rank->id;
                 $user->status = "activated";
+                $user->referrer = $user->referrer ?? Auth::user()->id;
             } elseif ($user->status === "activated") {
                 $message = "Khóa tài khoản người dùng thành công!";
                 $user->status = "banned";
