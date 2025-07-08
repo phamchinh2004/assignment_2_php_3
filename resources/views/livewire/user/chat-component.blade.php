@@ -217,7 +217,7 @@
             
             window.Echo.private(`chat.conversation.${conversationId}`)
                 .listen('.MessageSent', (e) => {
-                    console.log('New message:', e.message);
+                    console.log('New message at User:', e.message);
                     const message = e.message;
 
                     // Only process if not from current user
