@@ -7,6 +7,7 @@ use App\Http\Requests\StoreTransaction_historyRequest;
 use App\Http\Requests\UpdateTransaction_historyRequest;
 use App\Http\Controllers\Controller;
 use App\Models\Manager_setting;
+use App\Models\User;
 use App\Models\User_manager_setting;
 use Illuminate\Support\Facades\Auth;
 
@@ -60,6 +61,9 @@ class TransactionHistoryController extends Controller
             } else if ($transaction->status === "cancelled") {
                 return back()->with('error', 'Giao dịch đã bị từ chối!');
             } else {
+                $get_user = User::find($transaction->user_id);
+                $get_user->balance += $transaction->value;
+                $get_user->save();
                 $transaction->status = "cancelled";
                 $transaction->by_user_id = Auth::user()->id;
                 $transaction->save();

@@ -80,13 +80,13 @@ class RegisterController extends Controller
         $user = new User();
         if ($request->referral_code) {
             $get_user = User::where('referral_code', $request->referral_code)->first();
-            $get_rank = Rank::first();
-            if (!$get_rank) {
-                return back()->with('error', 'Cấp độ chưa được khởi tạo. Vui lòng thử lại sau!');
-            }
+            // $get_rank = Rank::first();
+            // if (!$get_rank) {
+            //     return back()->with('error', 'Cấp độ chưa được khởi tạo. Vui lòng thử lại sau!');
+            // }
             $user->referrer_id = $get_user->id;
             $user->status = "activated";
-            $user->rank_id = $get_rank->id;
+            // $user->rank_id = $get_rank->id;
         }
         $user->full_name = $request->full_name ? $request->full_name : 'Chưa đặt tên';
         $user->username = $request->username;
@@ -97,11 +97,11 @@ class RegisterController extends Controller
         $user->save();
         session()->forget('registration_data');
         if ($user->referrer_id) {
-            $get_rank = Rank::first();
-            User_spin_progress::create([
-                'user_id' => $user->id,
-                'rank_id' => $user->rank_id
-            ]);
+            // $get_rank = Rank::first();
+            // User_spin_progress::create([
+            //     'user_id' => $user->id,
+            //     'rank_id' => $user->rank_id
+            // ]);
             $get_user = User::where('referral_code', $request->referral_code)->first();
             Conversation::create([
                 'staff_id' => $get_user->id,

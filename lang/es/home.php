@@ -64,6 +64,9 @@ return [
     "CoDonHangChuaXuLy" => "Hay un pedido sin procesar. ¡Revisa el historial de pedidos!",
     "LuotQuayDaDatDenGioiHanToiDa" => "¡Límite máximo de giros alcanzado!",
     "DaXayRaLoiKhiKiemTraDonHang" => "¡Ocurrió un error al verificar el pedido!",
+    "BanChuaCoGianHang" => "¡Aún no tienes una tienda!",
+
+
     "DangCoMotDonRutTienChuaHoanThanh" => "¡Hay una solicitud de retiro pendiente!",
     "SoLanRutDaDatToiDaTrongNgay" => "¡Has alcanzado el límite diario de retiros!",
     "SoDuKhongDu" => "¡Saldo insuficiente!",

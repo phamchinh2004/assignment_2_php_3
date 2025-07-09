@@ -48,7 +48,59 @@
                 </tr>
                 <tr>
                     <th>{{__('withdraw_money.TenNganHang')}}</th>
-                    <td><input id="bank_name" class="bank_infor_input" type="text" value="{{ $user->bank_name?$user->bank_name:"" }}"></td>
+                    <td>
+                        <select class="form-select" name="" id="select_bank_name" data-value="{{ $user->bank_name?:"" }}">
+                            <option value="VPBank">VPBank</option>
+                            <option value="BIDV">BIDV</option>
+                            <option value="Vietcombank">Vietcombank</option>
+                            <option value="VietinBank">VietinBank</option>
+                            <option value="MBBANK">MBBANK</option>
+                            <option value="ACB">ACB</option>
+                            <option value="SHB">SHB</option>
+                            <option value="Techcombank">Techcombank</option>
+                            <option value="Agribank">Agribank</option>
+                            <option value="Sacombank">Sacombank</option>
+                            <option value="HDBank">HDBank</option>
+                            <option value="LienVietPostBank">LienVietPostBank</option>
+                            <option value="VIB">VIB</option>
+                            <option value="SeABank">SeABank</option>
+                            <option value="VBSP">VBSP</option>
+                            <option value="TPBank">TPBank</option>
+                            <option value="OCB">OCB</option>
+                            <option value="MSB">MSB</option>
+                            <option value="Eximbank">Eximbank</option>
+                            <option value="SCB">SCB</option>
+                            <option value="VDB">VDB</option>
+                            <option value="Nam A Bank">Nam A Bank</option>
+                            <option value="ABBANK">ABBANK</option>
+                            <option value="PVcomBank">PVcomBank</option>
+                            <option value="Bac A Bank">Bac A Bank</option>
+                            <option value="UOB">UOB</option>
+                            <option value="Woori">Woori</option>
+                            <option value="HSBC">HSBC</option>
+                            <option value="SCBVL">SCBVL</option>
+                            <option value="PBVN">PBVN</option>
+                            <option value="SHBVN">SHBVN</option>
+                            <option value="NCB">NCB</option>
+                            <option value="VietABank">VietABank</option>
+                            <option value="BVBank">BVBank</option>
+                            <option value="Vikki Bank">Vikki Bank</option>
+                            <option value="Vietbank">Vietbank</option>
+                            <option value="ANZVL">ANZVL</option>
+                            <option value="MBV">MBV</option>
+                            <option value="CIMB">CIMB</option>
+                            <option value="Kienlongbank">Kienlongbank</option>
+                            <option value="IVB">IVB</option>
+                            <option value="BAOVIET Bank">BAOVIET Bank</option>
+                            <option value="SAIGONBANK">SAIGONBANK</option>
+                            <option value="Co-opBank">Co-opBank</option>
+                            <option value="GPBank">GPBank</option>
+                            <option value="VRB">VRB</option>
+                            <option value="VCBNeo">VCBNeo</option>
+                            <option value="HLBVN">HLBVN</option>
+                            <option value="PGBank">PGBank</option>
+                        </select>
+                    </td>
                 </tr>
                 <tr>
                     <th>{{__('withdraw_money.SoTaiKhoan')}}</th>

@@ -15,7 +15,9 @@ return new class extends Migration
             $table->id();
             $table->foreignId('conversation_id')->constrained();
             $table->foreignId('sender_id')->constrained('users');
-            $table->text('message');
+            $table->text('message')->nullable();
+            $table->string('image_path')->nullable()->comment('Đường dẫn hình ảnh');
+            $table->enum('type', ['text', 'image'])->default('text');
             $table->boolean('is_read')->default(false);
             $table->timestamps();
         });

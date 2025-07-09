@@ -1,4 +1,11 @@
 document.addEventListener('DOMContentLoaded', function () {
+    const bankSelect = document.getElementById('select_bank_name');
+    const currentValue = bankSelect.getAttribute('value') || bankSelect.dataset.value;
+
+    if (currentValue) {
+        bankSelect.value = currentValue;
+    }
+
     const withdraw_all = document.getElementById('withdraw_all');
     const set_up_amount_input_field = new AutoNumeric('#amount_input_field', {
         currencySymbol: '$',
@@ -36,11 +43,11 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
         const username_bank = document.getElementById('username_bank');
-        const bank_name = document.getElementById('bank_name');
+        // const bank_name = document.getElementById('bank_name');
         const account_number = document.getElementById('account_number');
         const transaction_password = document.getElementById('transaction_password');
         const confirm_transaction_password = document.getElementById('confirm_transaction_password');
-        if (username_bank.value == "" || bank_name.value == "" || account_number.value == "" || transaction_password.value == "") {
+        if (username_bank.value == "" || bankSelect.value == "" || account_number.value == "" || transaction_password.value == "") {
             notification('warning', trans.VuiLongNhapDayDuThongTinNganHang, trans.CanhBao);
             spinner.hidden = true;
             return;
@@ -62,7 +69,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         let numeric_value = parseFloat(unformatted_value) || 0;
 
-        let result = await handle_withdraw(numeric_value, username_bank.value, bank_name.value, account_number.value, transaction_password.value, confirm_transaction_password.value);
+        let result = await handle_withdraw(numeric_value, username_bank.value, bankSelect.value, account_number.value, transaction_password.value, confirm_transaction_password.value);
         if (result.status == 400) {
             notification('warning', result.message, trans.CanhBao);
 
@@ -81,7 +88,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         spinner.hidden = true;
     })
-    function handle_withdraw(amount, username_bank, bank_name, account_number, transaction_password, confirm_transaction_password) {
+    function handle_withdraw(amount, username_bank, bankSelect, account_number, transaction_password, confirm_transaction_password) {
         return new Promise((resolve, reject) => {
             fetch(route_handle_withdraw, {
                 method: "POST",
@@ -92,7 +99,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 body: JSON.stringify({
                     amount: amount,
                     username_bank: username_bank,
-                    bank_name: bank_name,
+                    bank_name: bankSelect,
                     account_number: account_number,
                     transaction_password: transaction_password,
                     confirm_transaction_password: confirm_transaction_password,

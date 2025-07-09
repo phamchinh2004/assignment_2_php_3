@@ -70,8 +70,11 @@ class UserController extends Controller
         if (User::where('username', $data['username'])->exists()) {
             return back()->withErrors(['username' => 'Tên đăng nhập đã tồn tại!'])->withInput();
         }
+        if (User::where('phone', $data['phone'])->exists()) {
+            return back()->withErrors(['phone' => 'Số điện thoại đã tồn tại!'])->withInput();
+        }
         if ($request->password != "") {
-            if ($request->password >= 6) {
+            if (strlen($request->password) >= 6) {
                 $data['password'] = $request->password;
             } else {
                 return back()->withErrors(['password' => 'Mật khẩu phải lớn hơn hoặc bằng 6 ký tự!'])->withInput();
@@ -85,10 +88,12 @@ class UserController extends Controller
         $data['status'] = "activated";
         $data['referral_code'] = $this->return_random_referral_code();
         $new_user = User::create($data);
-        User_spin_progress::create([
-            'user_id' => $new_user->id,
-            'rank_id' => $data['rank_id']
-        ]);
+        if ($request->rank) {
+            User_spin_progress::create([
+                'user_id' => $new_user->id,
+                'rank_id' => $data['rank_id']
+            ]);
+        }
         return redirect()->route('user.index')->with('success', 'Tạo tài khoản người dùng thành công!');
     }
 
@@ -118,26 +123,33 @@ class UserController extends Controller
         $data = $request->only(['full_name', 'username', 'phone']);
         $data['rank_id'] = $request->rank;
         $reset_progress = $request->has('reset_progress');
-        if ($reset_progress) {
-            $progress_of_user = User_spin_progress::where('user_id', $user->id)->first();
-            if ($progress_of_user) {
-                $progress_of_user->current_spin = 0;
-                $progress_of_user->save();
+        $progress = User_spin_progress::where('user_id', $user->id)->first();
+        if ($reset_progress && $progress) {
+            $progress->current_spin = 0;
+            $progress->save();
+        }
+
+        if ($request->rank) {
+            if ($progress) {
+                $progress->rank_id = $request->rank;
+                $progress->save();
             } else {
-                return back()->with('error', 'Không tìm thấy tiến trình của người dùng!');
+                User_spin_progress::create([
+                    'user_id' => $user->id,
+                    'rank_id' => $request->rank
+                ]);
             }
+        } else if ($user->rank_id && !$progress) {
+            User_spin_progress::create([
+                'user_id' => $user->id,
+                'rank_id' => $user->rank_id
+            ]);
         }
         $user->update($data);
         if ($request->rank != $oldRankId) {
-            $frozen_orders = Frozen_order::where('user_id', $user->id)->get();
-            if ($frozen_orders) {
-                foreach ($frozen_orders as $item) {
-                    if ($item->is_frozen == true) {
-                        $item->is_frozen = false;
-                        $item->save();
-                    }
-                }
-            }
+            Frozen_order::where('user_id', $user->id)
+                ->where('is_frozen', true)
+                ->update(['is_frozen' => false]);
         }
         return redirect()->route('user.index')->with('success', 'Cập nhật tài khoản người dùng thành công!');
     }

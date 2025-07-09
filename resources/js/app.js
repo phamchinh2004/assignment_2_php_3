@@ -1,4 +1,6 @@
-import './bootstrap';
+import * as bootstrap from './bootstrap';
+window.bootstrap = bootstrap;
+
 import swal from 'sweetalert';
 window.swal = swal;
 import Fireworks from 'fireworks-js';

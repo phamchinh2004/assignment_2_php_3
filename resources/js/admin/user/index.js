@@ -35,6 +35,8 @@ document.addEventListener('DOMContentLoaded', function () {
                             location.reload();
                         });
                 }
+                swal("Có lỗi không mong muốn xảy ra, vui lòng thử lại");
+                spinner.hidden = true;
             }
         }
     });

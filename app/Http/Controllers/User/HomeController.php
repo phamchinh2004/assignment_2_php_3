@@ -78,6 +78,13 @@ class HomeController extends Controller
     public function check_frozen_order()
     {
         try {
+            $user = Auth::user();
+            if (!$user->rank_id) {
+                return response()->json([
+                    'status' => 500,
+                    'message' => __('home.BanChuaCoGianHang')
+                ]);
+            }
             $check_frozen = Frozen_order::join('orders', 'frozen_orders.order_id', '=', 'orders.id')
                 ->where('frozen_orders.user_id', Auth::id())
                 ->where('frozen_orders.is_frozen', 1)

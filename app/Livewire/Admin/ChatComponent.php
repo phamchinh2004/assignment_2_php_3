@@ -10,9 +10,14 @@ use App\Models\Conversation;
 use App\Models\Message;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\On;
+use Livewire\WithFileUploads;
+
 
 class ChatComponent extends Component
 {
+    use WithFileUploads;
+    public $image; // Hình ảnh được chọn
+    public $imagePreviewUrl; // URL preview ảnh
     public $selectedConversationId = null;
     public $selectedStaffId = null;
     public $messageText = '';
@@ -199,6 +204,8 @@ class ChatComponent extends Component
                 return [
                     'id' => $message->id,
                     'message' => $message->message,
+                    'image_path' => $message->image_path,
+                    'type' => $message->type,
                     'sender_id' => $message->sender_id,
                     'conversation_id' => $message->conversation_id,
                     'created_at' => $message->created_at,
@@ -281,22 +288,32 @@ class ChatComponent extends Component
 
     public function sendMessage()
     {
-        if (empty(trim($this->messageText)) || !$this->selectedConversation) return;
+        if (!$this->selectedConversation || (empty(trim($this->messageText)) && !$this->image)) return;
 
         try {
+            $imagePath = null;
+
+            // Nếu có ảnh
+            if ($this->image) {
+                $imagePath = $this->image->store('chat-images', 'public');
+            }
+
             $message = Message::create([
                 'conversation_id' => $this->selectedConversation->id,
                 'sender_id' => Auth::id(),
-                'message' => trim($this->messageText)
+                'message' => trim($this->messageText),
+                'image_path' => $imagePath,
+                'type' => $imagePath ? 'image' : 'text'
             ]);
 
             $message->load('sender');
-
             $this->selectedConversation->touch();
 
             $messageArray = [
                 'id' => $message->id,
                 'message' => $message->message,
+                'image_path' => $message->image_path,
+                'type' => $message->type,
                 'sender_id' => $message->sender_id,
                 'conversation_id' => $message->conversation_id,
                 'created_at' => $message->created_at,
@@ -308,10 +325,11 @@ class ChatComponent extends Component
             ];
 
             $this->messages[] = $messageArray;
-
             broadcast(new MessageSent($message))->toOthers();
 
+            // Reset
             $this->messageText = '';
+            $this->image = null;
             $this->dispatch('reset-message-input');
             $this->dispatch('scroll-to-bottom');
             $this->loadConversations();
@@ -321,6 +339,7 @@ class ChatComponent extends Component
             session()->flash('error', 'Không thể gửi tin nhắn. Vui lòng thử lại.');
         }
     }
+
 
     public function messageReceived($message)
     {

@@ -5,48 +5,55 @@ namespace App\Livewire\User;
 use App\Events\MessageSent;
 use App\Models\Conversation;
 use App\Models\Message;
+use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 
 class ChatComponent extends Component
 {
+    use WithFileUploads;
+
     public $newMessage = '';
+    public $selectedImage;
     public $chatMessages;
     public $showBox = false;
     public $conversation;
     public $currentChannel = null;
-    public $messagesPerLoad = 5; // Số tin nhắn load mỗi lần
-    public $offset = 0; // Offset để phân trang
-    public $hasMoreMessages = true; // Còn tin nhắn để load không
-    public $isLoading = false; // Trạng thái loading
-    public $maxMessageLength = 200; // Giới hạn độ dài tin nhắn
+    public $messagesPerLoad = 5;
+    public $offset = 0;
+    public $hasMoreMessages = true;
+    public $isLoading = false;
+    public $maxMessageLength = 200;
 
     protected $listeners = ['message-received' => 'messageReceived', 'toggleChatBox'];
 
     protected $rules = [
-        'newMessage' => 'required|string|max:200',
+        'newMessage' => 'nullable|string|max:200',
+        'selectedImage' => 'nullable|image|max:5120', // 5MB
     ];
 
     protected function messages()
     {
         return [
-            'newMessage.required' => __('livewire.VuiLongNhapTinNhan'),
             'newMessage.max' => __('livewire.TinNhanKhongDuocVuotQua200KyTu'),
+            'selectedImage.image' => __('livewire.ChiChapNhanTepHinhAnh'),
+            'selectedImage.max' => __('livewire.HinhAnhKhongDuocVuotQua5MB'),
         ];
     }
 
     public function mount()
     {
         $referrerId = Auth::user()->referrer_id;
+        $admin = User::where('role', 'admin')->first();
         $this->conversation = Conversation::firstOrCreate(
             ['user_id' => Auth::user()->id],
-            ['staff_id' => $referrerId]
+            ['staff_id' => $referrerId ?: $admin->id]
         );
 
-        // Load tin nhắn mới nhất
         $this->loadLatestMessages();
-
         $this->dispatch('join-conversation-channel', conversationId: $this->conversation->id);
     }
 
@@ -57,7 +64,7 @@ class ChatComponent extends Component
             ->orderBy('created_at', 'desc')
             ->limit($this->messagesPerLoad)
             ->get()
-            ->reverse() // Đảo ngược để tin nhắn mới nhất ở dưới
+            ->reverse()
             ->map(function ($message) {
                 return $this->formatMessage($message);
             });
@@ -65,7 +72,6 @@ class ChatComponent extends Component
         $this->chatMessages = collect($messages);
         $this->offset = $messages->count();
 
-        // Kiểm tra còn tin nhắn cũ hơn không
         $totalMessages = Message::where('conversation_id', $this->conversation->id)->count();
         $this->hasMoreMessages = $totalMessages > $this->offset;
     }
@@ -90,11 +96,9 @@ class ChatComponent extends Component
             });
 
         if ($olderMessages->count() > 0) {
-            // Thêm tin nhắn cũ vào đầu danh sách
             $this->chatMessages = $olderMessages->concat($this->chatMessages);
             $this->offset += $olderMessages->count();
 
-            // Kiểm tra còn tin nhắn cũ hơn không
             $totalMessages = Message::where('conversation_id', $this->conversation->id)->count();
             $this->hasMoreMessages = $totalMessages > $this->offset;
         } else {
@@ -102,8 +106,6 @@ class ChatComponent extends Component
         }
 
         $this->isLoading = false;
-
-        // Dispatch event để giữ vị trí scroll
         $this->dispatch('messages-loaded');
     }
 
@@ -112,6 +114,8 @@ class ChatComponent extends Component
         return [
             'id' => $message->id,
             'message' => $message->message,
+            'type' => $message->type,
+            'image_path' => $message->image_path,
             'sender_id' => $message->sender_id,
             'conversation_id' => $message->conversation_id,
             'created_at' => $message->created_at,
@@ -123,55 +127,91 @@ class ChatComponent extends Component
         ];
     }
 
+    public function updatedSelectedImage()
+    {
+        $this->validate([
+            'selectedImage' => 'image|max:5120'
+        ]);
+    }
+
+    public function removeImage()
+    {
+        $this->selectedImage = null;
+        $this->resetErrorBag('selectedImage');
+    }
+
     public function sendMessage()
     {
-        $this->validate();
-
-        if (trim($this->newMessage) === '') return;
-
-        // Kiểm tra độ dài tin nhắn
-        if (strlen(trim($this->newMessage)) > $this->maxMessageLength) {
-            $this->addError('newMessage', __('livewire.TinNhanKhongDuocVuotQua') . $this->maxMessageLength . __('livewire.KyTu'));
+        // Kiểm tra có tin nhắn hoặc ảnh không
+        if (!$this->selectedImage && (!$this->newMessage || trim($this->newMessage) === '')) {
+            $this->addError('newMessage', __('livewire.VuiLongNhapTinNhanHoacChonAnh'));
             return;
         }
 
-        $message = Message::create([
-            'conversation_id' => $this->conversation->id,
-            'sender_id' => Auth::user()->id,
-            'message' => trim($this->newMessage),
-        ]);
+        $this->validate();
 
+        $messages = [];
+
+        // Gửi ảnh trước nếu có
+        if ($this->selectedImage) {
+            $imagePath = $this->selectedImage->store('chat-images', 'public');
+
+            $imageMessage = Message::create([
+                'conversation_id' => $this->conversation->id,
+                'sender_id' => Auth::user()->id,
+                'message' => null,
+                'type' => 'image',
+                'image_path' => $imagePath,
+            ]);
+
+            $imageMessage->load('sender');
+            $messages[] = $this->formatMessage($imageMessage);
+
+            // Broadcast image message
+            broadcast(new MessageSent($imageMessage))->toOthers();
+        }
+
+        // Gửi tin nhắn sau nếu có
+        if ($this->newMessage && trim($this->newMessage) !== '') {
+            $textMessage = Message::create([
+                'conversation_id' => $this->conversation->id,
+                'sender_id' => Auth::user()->id,
+                'message' => trim($this->newMessage),
+                'type' => 'text',
+                'image_path' => null,
+            ]);
+
+            $textMessage->load('sender');
+            $messages[] = $this->formatMessage($textMessage);
+
+            // Broadcast text message
+            broadcast(new MessageSent($textMessage))->toOthers();
+        }
+
+        // Reset form
         $this->newMessage = '';
+        $this->selectedImage = null;
         $this->resetErrorBag();
         $this->dispatch('reset-message-input');
 
-        // Load sender relationship
-        $message->load('sender');
-
-        // Add to messages collection with consistent format
-        $messageArray = $this->formatMessage($message);
-
+        // Add messages to collection
         if (!$this->chatMessages instanceof Collection) {
             $this->chatMessages = collect($this->chatMessages);
         }
 
-        $this->chatMessages->push($messageArray);
-
-        logger('Gửi message từ user realtime: ' . $message->id);
+        foreach ($messages as $message) {
+            $this->chatMessages->push($message);
+        }
 
         // Dispatch events
         $this->dispatch('message-sent');
         $this->dispatch('scroll-to-bottom');
-
-        // Broadcast to others
-        broadcast(new MessageSent($message))->toOthers();
     }
 
     public function messageReceived($message)
     {
         logger('User nhận được message:', ['message' => $message]);
 
-        // Đảm bảo dữ liệu là mảng và có các key cần thiết
         if (
             !is_array($message) ||
             !isset($message['id'], $message['conversation_id'], $message['sender_id'])
@@ -180,17 +220,14 @@ class ChatComponent extends Component
             return;
         }
 
-        // Chỉ xử lý nếu đúng conversation và không phải tin nhắn của chính mình
         if (
             (int) $message['conversation_id'] === (int) $this->conversation->id &&
             (int) $message['sender_id'] !== Auth::id()
         ) {
-            // Chuyển về collection nếu chưa có
             if (!$this->chatMessages instanceof Collection) {
                 $this->chatMessages = collect($this->chatMessages);
             }
 
-            // Kiểm tra trùng ID
             if (!$this->chatMessages->contains('id', $message['id'])) {
                 $this->chatMessages->push($message);
                 $this->dispatch('scroll-to-bottom');
@@ -207,7 +244,6 @@ class ChatComponent extends Component
     {
         $this->showBox = !$this->showBox;
 
-        // Auto scroll when opening chat
         if ($this->showBox) {
             $this->dispatch('scroll-to-bottom');
         }

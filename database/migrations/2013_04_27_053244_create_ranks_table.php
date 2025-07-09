@@ -18,9 +18,9 @@ return new class extends Migration
             $table->double('commission_percentage')->comment('Phần trăm hoa hồng');
             $table->double('upgrade_fee')->default(0)->comment('Phí nâng cấp');
             $table->integer('spin_count')->comment('Số lượt quay');
-            $table->integer('value')->comment('Giá trị cấp độ');
+            $table->double('value')->comment('Giá trị cấp độ');
             $table->integer('maximum_number_of_withdrawals')->default(1)->comment('Số lần rút tối đa');
-            $table->integer('maximum_withdrawal_amount')->default(100)->comment('Số tiền rút tối đa');
+            $table->double('maximum_withdrawal_amount')->default(100)->comment('Số tiền rút tối đa');
             $table->timestamps();
         });
     }

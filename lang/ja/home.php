@@ -64,6 +64,8 @@ return [
     "CoDonHangChuaXuLy" => "未処理の注文があります。注文履歴ページをご確認ください！",
     "LuotQuayDaDatDenGioiHanToiDa" => "スピン制限に達しました！",
     "DaXayRaLoiKhiKiemTraDonHang" => "注文確認中にエラーが発生しました！",
+    "BanChuaCoGianHang" => "まだ店舗がありません！",
+
     "DangCoMotDonRutTienChuaHoanThanh" => "未完了の出金申請があります！",
     "SoLanRutDaDatToiDaTrongNgay" => "1日の出金回数上限に達しました！",
     "SoDuKhongDu" => "残高不足です！",

@@ -64,6 +64,9 @@ return [
     "CoDonHangChuaXuLy" => "有订单未处理，请前往订单历史页面处理！",
     "LuotQuayDaDatDenGioiHanToiDa" => "抽奖次数已达到最大限制！",
     "DaXayRaLoiKhiKiemTraDonHang" => "检查订单时发生错误！",
+    "BanChuaCoGianHang" => "你还没有店铺！",
+
+
     "DangCoMotDonRutTienChuaHoanThanh" => "有一个提现申请尚未完成！",
     "SoLanRutDaDatToiDaTrongNgay" => "今天的提现次数已达上限！",
     "SoDuKhongDu" => "余额不足！",

@@ -261,7 +261,13 @@
                     @endif
 
                     <!-- Nội dung tin nhắn -->
+                    @if(isset($message['image_path']) && $message['image_path'])
+                    <div class="mb-2">
+                        <img src="{{ asset('storage/' . $message['image_path']) }}" alt="Ảnh" class="img-fluid rounded" style="max-height: 200px;">
+                    </div>
+                    @elseif($message['message'])
                     <div class="mb-1">{{ $message['message'] }}</div>
+                    @endif
 
                     <!-- Thời gian và trạng thái -->
                     <div class="d-flex align-items-center justify-content-between">
@@ -294,7 +300,20 @@
 
         <!-- Input tin nhắn -->
         <div class="bg-white border-top p-3 shadow-sm message-input" style="transition: all 0.3s ease;">
+            @if ($image)
+            <div class="mb-2 d-flex align-items-center">
+                <div class="position-relative me-2">
+                    <img src="{{ $image->temporaryUrl() }}" alt="Preview" class="rounded" style="height: 60px; object-fit: cover;">
+                    <button type="button" class="btn-close position-absolute top-0 end-0 bg-white rounded-circle" style="transform: scale(0.7);"
+                        wire:click="$set('image', null)" aria-label="Xóa ảnh xem trước"></button>
+                </div>
+            </div>
+            @endif
             <form wire:submit.prevent="sendMessage" class="d-flex align-items-center">
+                <input type="file" wire:model="image" accept="image/*" class="d-none" id="upload-image-admin">
+                <label for="upload-image-admin" class="btn btn-outline-secondary btn-sm rounded-circle d-flex align-items-center justify-content-center m-0 me-2" style="width: 40px; height: 40px;" title="Gửi ảnh">
+                    <i class="fas fa-image"></i>
+                </label>
                 <div class="flex-grow-1 position-relative">
                     <input type="text"
                         wire:model="messageText"

@@ -7,6 +7,7 @@
     <title>Amazon</title>
     <link rel="icon" href="{{ asset('images/logo.png') }}" type="image/x-icon">
     <link rel="shortcut icon" href="{{ asset('images/logo.png') }}" type="image/x-icon">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <script>
         window.Laravel = {
             userId: @json(Auth::id())

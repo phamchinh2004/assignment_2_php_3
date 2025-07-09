@@ -66,6 +66,8 @@ return [
     "CoDonHangChuaXuLy" => "Có đơn hàng chưa xử lý, vui lòng truy cập trang lịch sử đơn hàng để xử lý đơn hàng!",
     "LuotQuayDaDatDenGioiHanToiDa" => "Lượt quay đã đạt đến giới hạn tối đa!",
     "DaXayRaLoiKhiKiemTraDonHang" => "Đã xảy ra lỗi khi kiểm tra đơn hàng!",
+    "BanChuaCoGianHang" => "Bạn chưa có gian hàng!",
+
     // Rút tiền (controller)
     "DangCoMotDonRutTienChuaHoanThanh" => "Đang có một đơn rút tiền chưa hoàn thành!",
     "SoLanRutDaDatToiDaTrongNgay" => "Số lần rút đã đạt tối đa trong ngày!",

@@ -1,8 +1,8 @@
 import Echo from 'laravel-echo';
 import { Livewire } from '../../vendor/livewire/livewire/dist/livewire.esm';
 import Pusher from 'pusher-js';
-import axios from 'axios';
-axios.defaults.withCredentials = true;
+
+
 window.Pusher = Pusher;
 
 window.Echo = new Echo({

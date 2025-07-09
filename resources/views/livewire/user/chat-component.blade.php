@@ -61,6 +61,8 @@
             @php
                 $isCurrentUser = (is_array($msg) ? $msg['sender_id'] : $msg->sender_id) === auth()->id();
                 $message = is_array($msg) ? $msg['message'] : $msg->message;
+                $type = is_array($msg) ? $msg['type'] : $msg->type;
+                $imagePath = is_array($msg) ? $msg['image_path'] : $msg->image_path;
                 $createdAt = is_array($msg) ? $msg['created_at'] : $msg->created_at;
                 $senderName = is_array($msg) 
                     ? ($msg['sender']['full_name'] ?? 'User') 
@@ -70,11 +72,15 @@
             @if($isCurrentUser)
             <!-- Tin nhắn của user -->
             <div class="d-flex justify-content-end mb-3" wire:key="msg-{{ is_array($msg) ? $msg['id'] : $msg->id }}">
-                <div class="d-flex align-items-end" style="max-width: 80%;">
+                <div class="d-flex align-items-end" style="max-width: 100%;">
                     <div class="me-2">
-                        <div class="message-bubble px-3 py-2 rounded-pill"
-                            style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-size: 14px; line-height: 1.4; word-wrap: break-word;">
-                            {{ $message }}
+                        <div class="message-bubble px-3 py-2 text-start"
+                            style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-size: 14px; line-height: 1.4; word-wrap: break-word; {{ $type === 'text' ? 'border-radius: 25px;' : 'border-radius: 15px;' }}">
+                            @if($type === 'image')
+                                <img src="{{ Storage::url($imagePath) }}" alt="Sent image" class="img-fluid rounded" style="max-width: 200px; max-height: 200px; cursor: pointer;" onclick="openImageModal(this.src)">
+                            @else
+                                {{ $message }}
+                            @endif
                         </div>
                         <div class="text-end mt-1" style="font-size: 10px; color: #6c757d;">
                             {{ \Carbon\Carbon::parse($createdAt)->format('H:i') }}
@@ -87,13 +93,17 @@
             @else
             <!-- Tin nhắn của support -->
             <div class="d-flex justify-content-start mb-3" wire:key="msg-{{ is_array($msg) ? $msg['id'] : $msg->id }}">
-                <div class="d-flex align-items-end" style="max-width: 80%;">
+                <div class="d-flex align-items-end" style="max-width: 100%;">
                     <img src="https://ui-avatars.com/api/?name=Support&background=28a745&color=ffffff&size=28&rounded=true&bold=true"
                         alt="Support" class="rounded-circle flex-shrink-0" width="28" height="28">
                     <div class="ms-2">
-                        <div class="message-bubble rounded-4 px-3 py-2 position-relative member-message"
+                        <div class="message-bubble rounded-4 px-3 py-2 position-relative member-message text-start"
                             style="transition: all 0.2s ease; border: 1px solid #e9ecef;">
-                            {{ $message }}
+                            @if($type === 'image')
+                                <img src="{{ Storage::url($imagePath) }}" alt="Received image" class="img-fluid rounded" style="max-width: 200px; max-height: 200px; cursor: pointer;" onclick="openImageModal(this.src)">
+                            @else
+                                {{ $message }}
+                            @endif
                         </div>
                         <div class="mt-1 ps-2" style="font-size: 10px; color: #6c757d;text-align:left;">
                              {{__('home.HoTro'). \Carbon\Carbon::parse($createdAt)->format('H:i') }}
@@ -107,19 +117,44 @@
 
         <!-- Form nhập với design hiện đại -->
         <form wire:submit.prevent="sendMessage" class="p-3" style="background: white; border-top: 1px solid #e9ecef;">
+            
+            <!-- Preview ảnh đã chọn -->
+            @if($selectedImage)
+            <div class="mb-3 p-2 border rounded" style="background: #f8f9fa;">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <small class="text-muted">Ảnh được chọn</small>
+                    <button type="button" wire:click="removeImage" class="btn btn-sm btn-outline-danger">
+                        <i class="fa fa-times"></i>
+                    </button>
+                </div>
+                <img src="{{ $selectedImage->temporaryUrl() }}" alt="Preview" class="img-fluid rounded" style="max-width: 150px; max-height: 150px;">
+            </div>
+            @endif
+
             <div class="d-flex align-items-center" style="background: #f8f9fa; border-radius: 25px; padding: 8px 16px;">
+                <!-- Nút chọn ảnh -->
+                <label for="image-upload" class="btn btn-link p-0 me-2" style="color: #667eea; font-size: 18px; cursor: pointer;">
+                    <i class="fa fa-image"></i>
+                </label>
+                <input type="file" 
+                       wire:model="selectedImage" 
+                       id="image-upload" 
+                       accept="image/*" 
+                       style="display: none;">
+                
                 <input type="text"
                     wire:model.live="newMessage"
                     class="form-control border-0 bg-transparent"
-                    placeholder={{__('home.NhapTinNhanCuaBan')}}
+                    placeholder="{{__('home.NhapTinNhanCuaBan')}}"
                     id="chat-input-field"
                     autocomplete="off"
                     maxlength="{{ $maxMessageLength }}"
                     style="font-size: 14px;">
+                
                 <button type="submit"
                     class="btn btn-link p-0 ms-2"
                     style="color: #667eea; font-size: 18px;"
-                    @if(strlen(trim($newMessage)) == 0 || strlen(trim($newMessage)) > $maxMessageLength) disabled @endif>
+                    @if(!$selectedImage && (strlen(trim($newMessage)) == 0 || strlen(trim($newMessage)) > $maxMessageLength)) disabled @endif>
                     <i class="fa fa-paper-plane"></i>
                 </button>
             </div>
@@ -140,12 +175,40 @@
                     {{ $message }}
                 </div>
             @enderror
+            
+            @error('selectedImage')
+                <div class="text-danger mt-1" style="font-size: 11px;">
+                    {{ $message }}
+                </div>
+            @enderror
         </form>
     </div>
     @endif
+    <!-- Modal để xem ảnh phóng to -->
+    <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="imageModalLabel">Xem ảnh</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <img id="modalImage" src="" alt="Full size image" class="img-fluid">
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
+
 <script>
+    // Function to open image modal
+    function openImageModal(imageSrc) {
+        document.getElementById('modalImage').src = imageSrc;
+        var imageModal = new bootstrap.Modal(document.getElementById('imageModal'));
+        imageModal.show();
+    }
+
     document.addEventListener('livewire:initialized', () => {
         let conversationId = @json($conversation->id ?? null);
         let currentUserId = @json(auth()->id());
@@ -164,10 +227,6 @@
             }
         }
 
-        function autoResizeTextarea() {
-            // Không cần thiết cho input
-        }
-
         // Listen for Livewire events
         Livewire.on('message-sent', () => {
             const input = document.getElementById('chat-input-field');
@@ -184,7 +243,6 @@
         Livewire.on('messages-loaded', () => {
             const container = document.getElementById('chat-messages-container');
             if (container) {
-                // Giữ vị trí scroll sau khi load tin nhắn cũ
                 const newScrollHeight = container.scrollHeight;
                 const scrollDiff = newScrollHeight - previousScrollHeight;
                 container.scrollTop = container.scrollTop + scrollDiff;
@@ -196,14 +254,12 @@
         const container = document.getElementById('chat-messages-container');
         if (container) {
             container.addEventListener('scroll', function() {
-                // Nếu scroll lên đầu và có tin nhắn cũ hơn
                 if (this.scrollTop <= 50 && !isLoadingMore) {
                     const hasMoreMessages = @json($hasMoreMessages);
                     if (hasMoreMessages) {
                         isLoadingMore = true;
                         previousScrollHeight = this.scrollHeight;
                         
-                        // Gọi Livewire method để load tin nhắn cũ
                         const root = document.getElementById('chat-root');
                         const component = Livewire.find(root.getAttribute('wire:id'));
                         component.call('loadMoreMessages');
@@ -214,13 +270,11 @@
 
         // Listen for WebSocket messages
         if (conversationId && window.Echo) {
-            
             window.Echo.private(`chat.conversation.${conversationId}`)
                 .listen('.MessageSent', (e) => {
                     console.log('New message at User:', e.message);
                     const message = e.message;
 
-                    // Only process if not from current user
                     if (message.sender_id !== currentUserId) {
                         const root = document.getElementById('chat-root');
                         const component = Livewire.find(root.getAttribute('wire:id'));
@@ -246,15 +300,18 @@
                     const root = document.getElementById('chat-root');
                     const component = Livewire.find(root.getAttribute('wire:id'));
 
-                    if (this.value.trim().length > 0 && this.value.trim().length <= {{ $maxMessageLength }}) {
-                        component.set('newMessage', this.value); // cập nhật thủ công
+                    // Kiểm tra có ảnh hoặc tin nhắn không rỗng
+                    const hasImage = component.get('selectedImage') !== null;
+                    const hasText = this.value.trim().length > 0 && this.value.trim().length <= {{ $maxMessageLength }};
+                    
+                    if (hasImage || hasText) {
+                        component.set('newMessage', this.value);
                         setTimeout(() => {
                             component.call('sendMessage');
-                        }, 50); // nhỏ delay để đảm bảo set xong
+                        }, 50);
                     }
                 }
             });
-
         }
 
         // Handle Enter key
@@ -269,4 +326,3 @@
         });
     });
 </script>
-

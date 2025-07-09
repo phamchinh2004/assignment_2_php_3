@@ -65,7 +65,7 @@ return [
     "CoDonHangChuaXuLy" => "You have an unprocessed order, please check your order history!",
     "LuotQuayDaDatDenGioiHanToiDa" => "Spin limit reached!",
     "DaXayRaLoiKhiKiemTraDonHang" => "An error occurred while checking the order!",
-
+    "BanChuaCoGianHang" => "You don't have a store yet!",
     // Withdrawal
     "DangCoMotDonRutTienChuaHoanThanh" => "You have an incomplete withdrawal!",
     "SoLanRutDaDatToiDaTrongNgay" => "Maximum number of withdrawals reached today!",

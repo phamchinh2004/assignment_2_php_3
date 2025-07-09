@@ -65,6 +65,7 @@ return [
     "CoDonHangChuaXuLy" => "처리되지 않은 주문이 있습니다. 주문 내역에서 처리해 주세요!",
     "LuotQuayDaDatDenGioiHanToiDa" => "최대 회전 수에 도달했습니다!",
     "DaXayRaLoiKhiKiemTraDonHang" => "주문 확인 중 오류가 발생했습니다!",
+    "BanChuaCoGianHang" => "아직 상점이 없습니다!",
 
     // 출금
     "DangCoMotDonRutTienChuaHoanThanh" => "미완료된 출금 요청이 있습니다!",
