@@ -1,4 +1,6 @@
 import Echo from 'laravel-echo';
+import * as bootstrap from 'bootstrap'; // lấy đúng đối tượng bootstrap
+window.bootstrap = bootstrap;
 import { Livewire } from '../../vendor/livewire/livewire/dist/livewire.esm';
 import Pusher from 'pusher-js';
 
