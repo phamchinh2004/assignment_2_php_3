@@ -404,6 +404,8 @@
             window.Echo.private(currentChannel)
                 .listen('.MessageSent', (e) => {
                     console.log('New message at Admin:', e.message);
+
+                    playNotificationSound(1);
                     const root = document.getElementById('chat-root');
                     const component = Livewire.find(root.getAttribute('wire:id'));
                     component.dispatch('message-received', e);

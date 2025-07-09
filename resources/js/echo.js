@@ -4,6 +4,33 @@ window.bootstrap = bootstrap;
 import { Livewire } from '../../vendor/livewire/livewire/dist/livewire.esm';
 import Pusher from 'pusher-js';
 
+document.addEventListener('click', () => {
+    if (!window.audioContext) {
+        window.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        console.log('AudioContext initialized!');
+    } else if (window.audioContext.state === 'suspended') {
+        window.audioContext.resume();
+    }
+}, { once: true });
+window.playNotificationSound = function (volumn = 0.3) {
+    const audioContext = window.audioContext;
+    if (!audioContext) return;
+
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    oscillator.frequency.value = 880;
+    oscillator.type = 'sine';
+
+    gainNode.gain.setValueAtTime(volumn, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.5);
+}
 
 window.Pusher = Pusher;
 

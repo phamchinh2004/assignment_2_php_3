@@ -77,4 +77,7 @@ return [
     "MatKhauXacNhanKhongKhop" => "Mật khẩu xác nhận không khớp!",
     "MatKhauGiaoDichKhongChinhXac" => "Mật khẩu giao dịch không chính xác!",
     "TaoDonRutTienThanhCong" => "Tạo đơn rút tiền thành công, vui lòng chờ xử lý!",
+
+    "ThongBao"=>"THÔNG BÁO",
+    ""
 ];

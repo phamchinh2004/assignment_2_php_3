@@ -458,4 +458,105 @@ document.addEventListener('DOMContentLoaded', function () {
     close_content('close_xmark_mo_ta', 'mo_ta_content');
     close_content('close_xmark_tai_chinh', 'tai_chinh_content');
     close_content('close_xmark_quy_dinh', 'quy_dinh_content');
+
+    // Thong bao
+    let notificationShown = false;
+
+    // Hiển thị thông báo khi người dùng đăng nhập
+    function showNotification() {
+        const overlay = document.getElementById('notificationOverlay');
+        overlay.classList.add('show');
+        notificationShown = true;
+
+        // Thêm hiệu ứng âm thanh (tùy chọn)
+        playNotificationSound();
+    }
+
+    // Đóng thông báo
+    window.closeNotification = function () {
+        const overlay = document.getElementById('notificationOverlay');
+        overlay.classList.remove('show');
+        notificationShown = false;
+    }
+
+    // Xử lý sự kiện tham gia
+    window.participateEvent=function () {
+        closeNotification();
+    }
+
+    // Phát âm thanh thông báo (tùy chọn)
+    function playNotificationSound() {
+        // Tạo âm thanh thông báo đơn giản
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        oscillator.frequency.value = 800;
+        oscillator.type = 'sine';
+
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.5);
+    }
+
+    // Đóng thông báo khi nhấn ESC
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape' && notificationShown) {
+            closeNotification();
+        }
+    });
+
+    // Đóng thông báo khi click vào overlay
+    document.getElementById('notificationOverlay').addEventListener('click', function (event) {
+        if (event.target === this) {
+            closeNotification();
+        }
+    });
+
+    // Tự động hiển thị thông báo khi trang được tải (giả lập đăng nhập)
+    window.addEventListener('load', function () {
+        // Giả lập việc kiểm tra trạng thái đăng nhập
+        setTimeout(function () {
+            // Trong thực tế, bạn sẽ kiểm tra từ server hoặc session
+            const isLoggedIn = true; // Giả lập đã đăng nhập
+
+            if (isLoggedIn && !notificationShown) {
+                showNotification();
+            }
+        }, 1000); // Delay 1 giây để tạo hiệu ứng
+    });
+
+    // Hiệu ứng parallax cho header
+    document.addEventListener('mousemove', function (e) {
+        const header = document.querySelector('.notification-header');
+        if (header) {
+            const x = e.clientX / window.innerWidth;
+            const y = e.clientY / window.innerHeight;
+
+            header.style.transform = `translate(${x * 10}px, ${y * 10}px)`;
+        }
+    });
+
+    // Animation cho số thưởng
+    function animateReward() {
+        const rewardElements = document.querySelectorAll('.reward-amount');
+        rewardElements.forEach(element => {
+            element.style.animation = 'none';
+            setTimeout(() => {
+                element.style.animation = 'glow 2s infinite alternate';
+            }, 100);
+        });
+    }
+
+    // Khởi tạo animation khi hiển thị
+    document.getElementById('notificationOverlay').addEventListener('transitionend', function () {
+        if (this.classList.contains('show')) {
+            animateReward();
+        }
+    });
 })

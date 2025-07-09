@@ -59,14 +59,14 @@
 
             @foreach ($chatMessages as $msg)
             @php
-                $isCurrentUser = (is_array($msg) ? $msg['sender_id'] : $msg->sender_id) === auth()->id();
-                $message = is_array($msg) ? $msg['message'] : $msg->message;
-                $type = is_array($msg) ? $msg['type'] : $msg->type;
-                $imagePath = is_array($msg) ? $msg['image_path'] : $msg->image_path;
-                $createdAt = is_array($msg) ? $msg['created_at'] : $msg->created_at;
-                $senderName = is_array($msg) 
-                    ? ($msg['sender']['full_name'] ?? 'User') 
-                    : ($msg->sender->full_name ?? 'User');
+            $isCurrentUser = (is_array($msg) ? $msg['sender_id'] : $msg->sender_id) === auth()->id();
+            $message = is_array($msg) ? $msg['message'] : $msg->message;
+            $type = is_array($msg) ? $msg['type'] : $msg->type;
+            $imagePath = is_array($msg) ? $msg['image_path'] : $msg->image_path;
+            $createdAt = is_array($msg) ? $msg['created_at'] : $msg->created_at;
+            $senderName = is_array($msg)
+            ? ($msg['sender']['full_name'] ?? 'User')
+            : ($msg->sender->full_name ?? 'User');
             @endphp
 
             @if($isCurrentUser)
@@ -77,9 +77,9 @@
                         <div class="message-bubble px-3 py-2 text-start"
                             style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-size: 14px; line-height: 1.4; word-wrap: break-word; {{ $type === 'text' ? 'border-radius: 25px;' : 'border-radius: 15px;' }}">
                             @if($type === 'image')
-                                <img src="{{ Storage::url($imagePath) }}" alt="Sent image" class="img-fluid rounded" style="max-width: 200px; max-height: 200px; cursor: pointer;" onclick="openImageModal(this.src)">
+                            <img src="{{ Storage::url($imagePath) }}" alt="Sent image" class="img-fluid rounded" style="max-width: 200px; max-height: 200px; cursor: pointer;" onclick="openImageModal(this.src)">
                             @else
-                                {{ $message }}
+                            {{ $message }}
                             @endif
                         </div>
                         <div class="text-end mt-1" style="font-size: 10px; color: #6c757d;">
@@ -100,13 +100,13 @@
                         <div class="message-bubble rounded-4 px-3 py-2 position-relative member-message text-start"
                             style="transition: all 0.2s ease; border: 1px solid #e9ecef;">
                             @if($type === 'image')
-                                <img src="{{ Storage::url($imagePath) }}" alt="Received image" class="img-fluid rounded" style="max-width: 200px; max-height: 200px; cursor: pointer;" onclick="openImageModal(this.src)">
+                            <img src="{{ Storage::url($imagePath) }}" alt="Received image" class="img-fluid rounded" style="max-width: 200px; max-height: 200px; cursor: pointer;" onclick="openImageModal(this.src)">
                             @else
-                                {{ $message }}
+                            {{ $message }}
                             @endif
                         </div>
                         <div class="mt-1 ps-2" style="font-size: 10px; color: #6c757d;text-align:left;">
-                             {{__('home.HoTro'). \Carbon\Carbon::parse($createdAt)->format('H:i') }}
+                            {{__('home.HoTro'). \Carbon\Carbon::parse($createdAt)->format('H:i') }}
                         </div>
                     </div>
                 </div>
@@ -117,7 +117,7 @@
 
         <!-- Form nhập với design hiện đại -->
         <form wire:submit.prevent="sendMessage" class="p-3" style="background: white; border-top: 1px solid #e9ecef;">
-            
+
             <!-- Preview ảnh đã chọn -->
             @if($selectedImage)
             <div class="mb-3 p-2 border rounded" style="background: #f8f9fa;">
@@ -136,12 +136,12 @@
                 <label for="image-upload" class="btn btn-link p-0 me-2" style="color: #667eea; font-size: 18px; cursor: pointer;">
                     <i class="fa fa-image"></i>
                 </label>
-                <input type="file" 
-                       wire:model="selectedImage" 
-                       id="image-upload" 
-                       accept="image/*" 
-                       style="display: none;">
-                
+                <input type="file"
+                    wire:model="selectedImage"
+                    id="image-upload"
+                    accept="image/*"
+                    style="display: none;">
+
                 <input type="text"
                     wire:model.live="newMessage"
                     class="form-control border-0 bg-transparent"
@@ -150,36 +150,36 @@
                     autocomplete="off"
                     maxlength="{{ $maxMessageLength }}"
                     style="font-size: 14px;">
-                
+
                 <button type="submit"
                     class="btn btn-link p-0 ms-2"
                     style="color: #667eea; font-size: 18px;"
-                    @if(!$selectedImage && (strlen(trim($newMessage)) == 0 || strlen(trim($newMessage)) > $maxMessageLength)) disabled @endif>
+                    @if(!$selectedImage && (strlen(trim($newMessage))==0 || strlen(trim($newMessage))> $maxMessageLength)) disabled @endif>
                     <i class="fa fa-paper-plane"></i>
                 </button>
             </div>
-            
+
             <!-- Hiển thị số ký tự còn lại và lỗi -->
             <div class="d-flex justify-content-between align-items-center mt-2">
                 <div style="font-size: 11px; color: #6c757d;">
                     {{__('home.NhanEnterDeGuiTinNhan')}}
                 </div>
-                <div style="font-size: 11px;" 
-                     class="{{ $this->getRemainingCharacters() < 20 ? 'text-warning' : 'text-muted' }}">
+                <div style="font-size: 11px;"
+                    class="{{ $this->getRemainingCharacters() < 20 ? 'text-warning' : 'text-muted' }}">
                     {{ $this->getRemainingCharacters() }}/{{ $maxMessageLength }}
                 </div>
             </div>
-            
+
             @error('newMessage')
-                <div class="text-danger mt-1" style="font-size: 11px;">
-                    {{ $message }}
-                </div>
+            <div class="text-danger mt-1" style="font-size: 11px;">
+                {{ $message }}
+            </div>
             @enderror
-            
+
             @error('selectedImage')
-                <div class="text-danger mt-1" style="font-size: 11px;">
-                    {{ $message }}
-                </div>
+            <div class="text-danger mt-1" style="font-size: 11px;">
+                {{ $message }}
+            </div>
             @enderror
         </form>
     </div>
@@ -210,7 +210,7 @@
     }
 
     document.addEventListener('livewire:initialized', () => {
-        let conversationId = @json($conversation->id ?? null);
+        let conversationId = @json($conversation-> id ?? null);
         let currentUserId = @json(auth()->id());
         let isLoadingMore = false;
         let previousScrollHeight = 0;
@@ -259,7 +259,7 @@
                     if (hasMoreMessages) {
                         isLoadingMore = true;
                         previousScrollHeight = this.scrollHeight;
-                        
+
                         const root = document.getElementById('chat-root');
                         const component = Livewire.find(root.getAttribute('wire:id'));
                         component.call('loadMoreMessages');
@@ -274,8 +274,8 @@
                 .listen('.MessageSent', (e) => {
                     console.log('New message at User:', e.message);
                     const message = e.message;
-
                     if (message.sender_id !== currentUserId) {
+                        playNotificationSound();
                         const root = document.getElementById('chat-root');
                         const component = Livewire.find(root.getAttribute('wire:id'));
                         component.dispatch('message-received', e);
@@ -292,7 +292,7 @@
         const input = document.getElementById('chat-input-field');
         if (input) {
             input.focus();
-            
+
             // Handle Enter key
             input.addEventListener('keydown', function(e) {
                 if (e.key === 'Enter') {
@@ -302,8 +302,12 @@
 
                     // Kiểm tra có ảnh hoặc tin nhắn không rỗng
                     const hasImage = component.get('selectedImage') !== null;
-                    const hasText = this.value.trim().length > 0 && this.value.trim().length <= {{ $maxMessageLength }};
-                    
+                    const hasText = this.value.trim().length > 0 && this.value.trim().length <= {
+                        {
+                            $maxMessageLength
+                        }
+                    };
+
                     if (hasImage || hasText) {
                         component.set('newMessage', this.value);
                         setTimeout(() => {
@@ -318,7 +322,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             Livewire.on('reset-message-input', () => {
                 const input = document.querySelector('input[wire\\:model\\.live="newMessage"]');
-                if (input) {                    
+                if (input) {
                     input.value = '';
                     input.focus();
                 }

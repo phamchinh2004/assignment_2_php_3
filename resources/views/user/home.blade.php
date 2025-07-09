@@ -440,5 +440,46 @@
         </tbody>
     </table>
 </div>
+<!-- Notification Overlay -->
+<div class="arround_notification">
+    <div class="notification-overlay" id="notificationOverlay">
+        <div class="notification-board">
+            <button class="close-btn" onclick="closeNotification()">
+                <i class="fas fa-times"></i>
+            </button>
+
+            <div class="notification-header">
+                <h1 class="notification-title">
+                    <i class="fas fa-bullhorn"></i> THÔNG BÁO
+                </h1>
+                <p class="notification-subtitle">Chương trình ưu đãi đặc biệt từ Amazon</p>
+            </div>
+
+            <div class="notification-body">
+                <div class="notification-item">
+                    <div class="notification-number">1</div>
+                    <p>Hệ thống Amazon đang tri ân khách hàng mới thưởng lớn cho các khách hàng đăng ký tài khoản tham gia gian hàng lần đầu.</p>
+                </div>
+
+                <div class="notification-item">
+                    <div class="notification-number">2</div>
+                    <div class="special-event">
+                        <div class="special-title">>>> Thông Báo Đặc Biệt <<< </div>
+                                <p><strong>Sự kiện cặp đôi Tình nhân</strong></p>
+                                <p>Khi khách hàng tham gia sự kiện cặp đôi mỗi tài khoản sẽ được thưởng <span class="reward-amount">52$</span> và còn nhiều giải thưởng khác!</p>
+                                <p>Nhanh tay tham gia sự kiện chỉ tri ân tháng 7 này, chúc bạn may mắn khi tham gia.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="notification-footer">
+                    <button class="cta-button" onclick="participateEvent()">
+                        <i class="fas fa-gift"></i> Tham gia ngay
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
 @endsection
