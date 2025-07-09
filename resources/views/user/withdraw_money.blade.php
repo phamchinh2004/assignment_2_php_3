@@ -49,7 +49,7 @@
                 <tr>
                     <th>{{__('withdraw_money.TenNganHang')}}</th>
                     <td>
-                        <select class="form-select" name="" id="select_bank_name" data-value="{{ $user->bank_name?:"" }}">
+                        <select class="form-select" name="" id="" data-value="{{ $user->bank_name?:"" }}">
                             <option value="VPBank">VPBank</option>
                             <option value="BIDV">BIDV</option>
                             <option value="Vietcombank">Vietcombank</option>
