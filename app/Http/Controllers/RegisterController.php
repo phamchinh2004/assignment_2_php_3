@@ -79,11 +79,17 @@ class RegisterController extends Controller
         $request->session()->put('registration_data', $data);
         $user = new User();
         if ($request->referral_code) {
-            $get_user = User::where('referral_code', $request->referral_code)->first();
+            $get_user = User::where('referral_code', $request->referral_code)
+                ->whereIn('role', ['admin', 'staff'])
+                ->first();
+
             // $get_rank = Rank::first();
             // if (!$get_rank) {
             //     return back()->with('error', 'Cấp độ chưa được khởi tạo. Vui lòng thử lại sau!');
             // }
+            if (!$get_user) {
+                return back()->with('error', 'Mã mời không hợp lệ, vui lòng thử lại!');
+            }
             $user->referrer_id = $get_user->id;
             $user->status = "activated";
             // $user->rank_id = $get_rank->id;
@@ -119,7 +125,7 @@ class RegisterController extends Controller
     {
         $referral_code = request()->input('referral_code');
         if ($referral_code) {
-            $get_user_by_referral_code = User::where('referral_code', $referral_code)->first();
+            $get_user_by_referral_code = User::where('referral_code', $referral_code)->whereIn('admin', 'staff')->first();
             if ($get_user_by_referral_code) {
                 $response = [
                     'success' => true,
