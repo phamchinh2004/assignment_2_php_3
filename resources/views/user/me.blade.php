@@ -15,7 +15,7 @@
 <div class="me_top d-flex flex-column pt-4 ps-3 pe-3 justify-content-center align-items-center">
     <div class="me_top_1 d-flex flex-column align-items-center">
         <img class="me_image" src="{{asset('images/me/head.png')}}" alt="">
-        @if ($rank->name)
+        @if ($rank && $rank->name)
         <div>
             <span class="badge fs-6 bg-warning">{{$rank->name}}</span>
         </div>
