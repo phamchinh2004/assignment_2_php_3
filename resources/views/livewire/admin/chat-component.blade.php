@@ -41,7 +41,7 @@
                             <div class="text-muted small text-truncate d-flex align-items-center">
                                 @if($conversation->messages->last())
                                 <i class="fas fa-comment-dots me-1" style="font-size: 10px;"></i>
-                                {{ Str::limit($conversation->messages->last()->message, 30) }}
+                                {{ Str::limit($conversation->messages->last()->message?:"Hình ảnh", 30) }}
                                 @else
                                 <i class="fas fa-clock me-1" style="font-size: 10px;"></i>
                                 Chưa có tin nhắn

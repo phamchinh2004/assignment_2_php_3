@@ -182,9 +182,11 @@ class OrderController extends Controller
     {
         $data = $request->only(['name', 'order_code', 'price', 'quantity']);
         if ($request->hasFile('image') && $request->file('image')->isValid()) {
-            if ($order->image && public_path('uploads/orders/images/' . $order->image)) {
-                unlink(public_path('uploads/orders/images/' . $order->image));
+            $filePath = public_path('uploads/orders/images/' . $order->image);
+            if ($order->image && file_exists($filePath)) {
+                unlink($filePath);
             }
+
             $file = $request->file('image');
             $file_name = $file->hashName();
             $file->move(public_path('uploads/orders/images/'), $file_name);

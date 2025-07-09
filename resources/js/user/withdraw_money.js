@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const account_number = document.getElementById('account_number');
         const transaction_password = document.getElementById('transaction_password');
         const confirm_transaction_password = document.getElementById('confirm_transaction_password');
-        if (username_bank.value == "" || bankSelect.value == "" || account_number.value == "" || transaction_password.value == "") {
+        if (username_bank.value == "" ||  account_number.value == "" || transaction_password.value == "") {
             notification('warning', trans.VuiLongNhapDayDuThongTinNganHang, trans.CanhBao);
             spinner.hidden = true;
             return;
