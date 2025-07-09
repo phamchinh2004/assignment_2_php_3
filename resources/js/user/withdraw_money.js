@@ -43,7 +43,6 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
         const username_bank = document.getElementById('username_bank');
-        // const bank_name = document.getElementById('bank_name');
         const account_number = document.getElementById('account_number');
         const transaction_password = document.getElementById('transaction_password');
         const confirm_transaction_password = document.getElementById('confirm_transaction_password');
