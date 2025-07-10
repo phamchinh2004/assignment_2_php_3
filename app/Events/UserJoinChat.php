@@ -14,26 +14,21 @@ class UserJoinChat implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    /**
-     * Create a new event instance.
-     */
+
     public $conversationId;
+
     public function __construct($conversationId)
     {
         $this->conversationId = $conversationId;
     }
 
-    /**
-     * Get the channels the event should broadcast on.
-     *
-     * @return array<int, \Illuminate\Broadcasting\Channel>
-     */
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel("admin.global"),
+            new PrivateChannel("join.conversation"),
         ];
     }
+
     public function broadcastAs()
     {
         return 'UserJoinChat';

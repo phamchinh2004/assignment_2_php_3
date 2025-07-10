@@ -125,7 +125,7 @@ class RegisterController extends Controller
     {
         $referral_code = request()->input('referral_code');
         if ($referral_code) {
-            $get_user_by_referral_code = User::where('referral_code', $referral_code)->whereIn('admin', 'staff')->first();
+            $get_user_by_referral_code = User::where('referral_code', $referral_code)->whereIn('role', ['admin', 'staff'])->first();
             if ($get_user_by_referral_code) {
                 $response = [
                     'success' => true,
@@ -137,6 +137,12 @@ class RegisterController extends Controller
                     'message' => 'Không lấy được dữ liệu người dùng!',
                 ];
             }
+            return response()->json($response);
+        } else {
+            $response = [
+                'success' => false,
+                'message' => 'Không lấy được dữ liệu người dùng!',
+            ];
             return response()->json($response);
         }
     }

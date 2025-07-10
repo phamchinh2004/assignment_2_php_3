@@ -7,6 +7,7 @@ use App\Http\Requests\StoreTransaction_historyRequest;
 use App\Http\Requests\UpdateTransaction_historyRequest;
 use App\Http\Controllers\Controller;
 use App\Models\Manager_setting;
+use App\Models\Transaction_history;
 use App\Models\User;
 use App\Models\User_manager_setting;
 use Illuminate\Support\Facades\Auth;
@@ -89,7 +90,21 @@ class TransactionHistoryController extends Controller
         $list_deposit_transactions = $query->orderByDesc('id')->get();
         return view('admin.transactions.deposit', compact('list_deposit_transactions'));
     }
+    public function destroy_deposit(Wallet_balance_history $transaction)
+    {
+        if (!$transaction) {
+            return back()->with('error', 'Giao dịch không xác định!');
+        }
 
+        if ($transaction->type !== 'deposit') {
+            return back()->with('error', 'Chỉ có thể xóa giao dịch nạp tiền!');
+        }
+        $user = User::find($transaction->user_id);
+        $user->balance -= $transaction->value;
+        $user->save();
+        $transaction->delete();
+        return back()->with('success', 'Xóa giao dịch thành công!');
+    }
     /**
      * Show the form for creating a new resource.
      */

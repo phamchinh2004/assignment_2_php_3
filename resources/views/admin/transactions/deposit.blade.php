@@ -12,7 +12,7 @@ Danh sách cấp độ
 <!-- Page level plugins -->
 <script src="{{ asset('theme/admin/vendor/datatables/jquery.dataTables.min.js') }}"></script>
 <script src="{{ asset('theme/admin/vendor/datatables/dataTables.bootstrap4.min.js') }}"></script>
-
+@vite('resources/js/admin/transaction/deposit.js')
 <!-- Page level custom scripts -->
 <script src="{{ asset('theme/admin/js/demo/datatables-demo.js') }}"></script>
 <script>
@@ -83,13 +83,15 @@ Danh sách cấp độ
                                 <span class="text-primary fw-bold">{{format_money($item->user->balance)}}$</span>
                             </td>
                             <td>{{$item->created_at}}</td>
-                            <!-- <td>
-                                <div class="d-flex flex-column">
-                                    <div class="d-flex flex-row justify-content-center mt-1">
-                                        <a href="{{ route('rank.edit',['rank'=>$item->id]) }}" class="btn btn-warning btn-sm d-flex align-items-center mr-1"><i class="fas fa-pen-to-square fa-sm p-2"></i></a>
-                                    </div>
+                            <td>
+                                <div class="d-flex flex-row justify-content-center mt-2">
+                                    <form id="form" action="{{ route('destroy.deposit',['transaction'=>$item->id]) }}" method="post">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button id="btn_submit" type="button" class="btn btn-danger btn-sm d-flex align-items-center mr-1"><i class="fas fa-trash fa-sm p-2"></i></button>
+                                    </form>
                                 </div>
-                            </td> -->
+                            </td>
                         </tr>
                         @endforeach
                         @else

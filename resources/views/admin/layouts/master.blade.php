@@ -228,16 +228,10 @@
         window.addEventListener('load', function() {
             @auth
             if (window.Echo) {
-                window.Echo.private(`admin.global`)
+                window.Echo.private(`join.conversation`)
                     .listen('.UserJoinChat', function(e) {
-                        console.log('User joined chat:', e.conversationId);
-
-                        // Bây giờ bạn có conversationId → join đúng channel cụ thể
-                        window.Echo.private(`join.conversation.${e.conversationId}`)
-                            .listen('.UserJoinChat', function(event) {
-                                playNotificationSound(1);
-                                console.log('User joined actual conversation channel:', event);
-                            });
+                        notification('warning', 'User joined chat: ' + e.conversationId, 'Tham gia hội thoại!');
+                        playNotificationSound(1);
                     });
                 window.Echo.private(`staff.{{ auth()->id() }}`)
                     .listen('.StaffLocked', function(e) {

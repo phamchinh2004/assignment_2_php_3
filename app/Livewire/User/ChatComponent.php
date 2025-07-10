@@ -56,7 +56,7 @@ class ChatComponent extends Component
 
         $this->loadLatestMessages();
         event(new UserJoinChat($this->conversation->id));
-        // $this->dispatch('join-conversation-channel', conversationId: $this->conversation->id);
+        $this->dispatch('join-conversation-channel', conversationId: $this->conversation->id);
     }
 
     public function loadLatestMessages()
