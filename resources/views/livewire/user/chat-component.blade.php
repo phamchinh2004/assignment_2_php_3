@@ -272,7 +272,7 @@
         if (conversationId && window.Echo) {
             window.Echo.private(`chat.conversation.${conversationId}`)
                 .listen('.MessageSent', (e) => {
-                    console.log('New message at User:', e.message);
+                    // console.log('New message at User:', e.message);
                     const message = e.message;
                     playNotificationSound();
                     if (message.sender_id !== currentUserId) {

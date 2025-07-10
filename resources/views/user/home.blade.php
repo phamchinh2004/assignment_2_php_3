@@ -28,6 +28,9 @@
         DangPhanPhoi: @json(__('home.DangPhanPhoi')),
         ThanhCong: @json(__('home.ThanhCong')),
         PhanPhoiThanhCong2: @json(__('home.PhanPhoiThanhCong2')),
+
+        MatKhauXacNhanKhongKhop: @json(__('home.MatKhauXacNhanKhongKhop')),
+        SoTaiKhoanPhaiLaSo: @json(__('home.SoTaiKhoanPhaiLaSo')),
     };
 </script>
 @vite('resources/js/user/home.js')
@@ -481,5 +484,124 @@
         </div>
     </div>
 </div>
+<!-- Liên kết ngân hàng -->
+<input type="text" hidden value="{{ Auth::user()->username_bank?:"" }}" id="username_bank_input">
+<div class="modal fade" id="bankLinkModal" tabindex="-1" aria-labelledby="bankLinkModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="bankLinkModalLabel">
+                    <i class="fas fa-university me-2"></i>{{__('home.LienKetTaiKhoanNganHang')}}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="bankLinkForm">
+                    <div class="form-group">
+                        <label for="accountName" class="form-label required">{{__('withdraw_money.TenChuTaiKhoan')}}</label>
+                        <input type="text" class="form-control" id="accountName" name="accountName"
+                            placeholder="Nhập tên chủ tài khoản" required>
+                    </div>
 
+                    <div class="form-group">
+                        <label for="bankName" class="form-label required">{{ __('withdraw_money.TenNganHang') }}</label>
+                        <select class="form-select" id="bankName" name="bankName" required>
+                            <option value="">{{__('home.ChonNganHang')}}</option>
+                            <option value="VPBank">VPBank</option>
+                            <option value="BIDV">BIDV</option>
+                            <option value="Vietcombank">Vietcombank</option>
+                            <option value="VietinBank">VietinBank</option>
+                            <option value="MBBANK">MBBANK</option>
+                            <option value="ACB">ACB</option>
+                            <option value="SHB">SHB</option>
+                            <option value="Techcombank">Techcombank</option>
+                            <option value="Agribank">Agribank</option>
+                            <option value="Sacombank">Sacombank</option>
+                            <option value="HDBank">HDBank</option>
+                            <option value="LienVietPostBank">LienVietPostBank</option>
+                            <option value="VIB">VIB</option>
+                            <option value="SeABank">SeABank</option>
+                            <option value="VBSP">VBSP</option>
+                            <option value="TPBank">TPBank</option>
+                            <option value="OCB">OCB</option>
+                            <option value="MSB">MSB</option>
+                            <option value="Eximbank">Eximbank</option>
+                            <option value="SCB">SCB</option>
+                            <option value="VDB">VDB</option>
+                            <option value="Nam A Bank">Nam A Bank</option>
+                            <option value="ABBANK">ABBANK</option>
+                            <option value="PVcomBank">PVcomBank</option>
+                            <option value="Bac A Bank">Bac A Bank</option>
+                            <option value="UOB">UOB</option>
+                            <option value="Woori">Woori</option>
+                            <option value="HSBC">HSBC</option>
+                            <option value="SCBVL">SCBVL</option>
+                            <option value="PBVN">PBVN</option>
+                            <option value="SHBVN">SHBVN</option>
+                            <option value="NCB">NCB</option>
+                            <option value="VietABank">VietABank</option>
+                            <option value="BVBank">BVBank</option>
+                            <option value="Vikki Bank">Vikki Bank</option>
+                            <option value="Vietbank">Vietbank</option>
+                            <option value="ANZVL">ANZVL</option>
+                            <option value="MBV">MBV</option>
+                            <option value="CIMB">CIMB</option>
+                            <option value="Kienlongbank">Kienlongbank</option>
+                            <option value="IVB">IVB</option>
+                            <option value="BAOVIET Bank">BAOVIET Bank</option>
+                            <option value="SAIGONBANK">SAIGONBANK</option>
+                            <option value="Co-opBank">Co-opBank</option>
+                            <option value="GPBank">GPBank</option>
+                            <option value="VRB">VRB</option>
+                            <option value="VCBNeo">VCBNeo</option>
+                            <option value="HLBVN">HLBVN</option>
+                            <option value="PGBank">PGBank</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="accountNumber" class="form-label required">{{__('withdraw_money.SoTaiKhoan')}}</label>
+                        <input type="text" class="form-control" id="accountNumber" name="accountNumber"
+                            placeholder="Nhập số tài khoản" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="transactionPassword" class="form-label required">{{__('withdraw_money.MatKhauGiaoDich')}}</label>
+                        <div class="input-group-password">
+                            <input type="password" class="form-control" id="transactionPassword"
+                                name="transactionPassword" placeholder="Nhập mật khẩu giao dịch" required>
+                            <button type="button" class="password-toggle" onclick="togglePassword('transactionPassword')">
+                                <i class="fas fa-eye" id="transactionPasswordIcon"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirmPassword" class="form-label required">{{__('home.XacNhanMatKhauGiaoDich')}}</label>
+                        <div class="input-group-password">
+                            <input type="password" class="form-control" id="confirmPassword"
+                                name="confirmPassword" placeholder="Nhập lại mật khẩu giao dịch" required>
+                            <button type="button" class="password-toggle" onclick="togglePassword('confirmPassword')">
+                                <i class="fas fa-eye" id="confirmPasswordIcon"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>{{__('home.LuuY')}}</strong> {{__('home.ThongTinTaiKhoanNganHangCuaBan')}}
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>{{__('home.Huy')}}
+                </button>
+                <button type="button" class="btn btn-primary" onclick="submitForm()">
+                    <i class="fas fa-check me-2"></i>{{__('home.XacNhanLienKet')}}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection

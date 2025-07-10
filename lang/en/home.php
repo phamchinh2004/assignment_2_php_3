@@ -44,7 +44,7 @@ return [
     "VuiLongLienHeCskhDeNapTien" => "Please contact customer support to deposit!",
     "Ok" => "OK",
     // Order
-    "CoLoiXayRa" => "An error occurred, please try again!",
+    "CoLoiXayRa" => "You don't have a booth or a spin process yet!",
     "LoiKhongTimThayDuLieu" => "Data not found",
     "DonHangChuaXuLy" => "The order has not been processed!",
     "DonHangDangBiDongBang" => "The order is frozen!",

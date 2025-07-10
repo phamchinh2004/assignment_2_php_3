@@ -29,7 +29,7 @@ class StoreRankRequest extends FormRequest
             'spin_count' => 'required|integer|min:1',
             'value' => 'required|numeric|min:0',
             'maximum_number_of_withdrawals' => 'required|integer|min:1',
-            'maximum_withdrawal_amount' => 'required|integer|min:100',
+            'maximum_withdrawal_amount' => 'required|numeric|min:1',
         ];
     }
 }

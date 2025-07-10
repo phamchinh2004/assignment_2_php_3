@@ -97,6 +97,7 @@
         const route_get_list_orders_by_tab = "{{ route('get_list_orders_by_tab') }}";
         const route_handle_distribution = "{{ route('handle_distribution') }}";
         const route_handle_withdraw = "{{ route('handle_withdraw') }}";
+        const route_bank_link = "{{ route('bank_link') }}";
 
         function notification(type, data, title, timeOut = "10000") {
             $(document).ready();

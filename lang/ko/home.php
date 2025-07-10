@@ -44,7 +44,7 @@ return [
     "VuiLongLienHeCskhDeNapTien" => "입금을 위해 고객센터에 문의하세요!",
     "Ok" => "확인",
     // 주문
-    "CoLoiXayRa" => "오류가 발생했습니다. 다시 시도해 주세요!",
+    "CoLoiXayRa" => "아직 부스나 회전 과정이 없습니다!",
     "LoiKhongTimThayDuLieu" => "데이터를 찾을 수 없습니다",
     "DonHangChuaXuLy" => "주문이 아직 처리되지 않았습니다!",
     "DonHangDangBiDongBang" => "주문이 동결되었습니다!",

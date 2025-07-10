@@ -43,8 +43,16 @@ return [
     "HeThongDangQuaTai" => "Hệ thống đang quá tải!",
     "VuiLongLienHeCskhDeNapTien" => "Vui lòng liên hệ CSKH để nạp tiền!",
     "Ok" => "Hiểu",
+    "LienKetTaiKhoanNganHang" => "Liên Kết Tài Khoản Ngân Hàng",
+    "ChonNganHang" => "Chọn ngân hàng",
+    "XacNhanMatKhauGiaoDich" => "Xác Nhận Mật Khẩu Giao Dịch",
+    "LuuY" => "Lưu ý:",
+    "ThongTinTaiKhoanNganHangCuaBan" => "Thông tin tài khoản ngân hàng của bạn sẽ được mã hóa và bảo mật tuyệt đối.",
+    "Huy" => "Hủy",
+    "XacNhanLienKet" => "Xác Nhận Liên Kết",
+    "SoTaiKhoanPhaiLaSo"=>"Số tài khoản phải là số và có độ dài từ 6-20 ký tự.",
     // Đơn hàng
-    "CoLoiXayRa" => "Có lỗi xảy ra, vui lòng thử lại!",
+    "CoLoiXayRa" => "Bạn chưa có gian hàng hoặc tiến trình quay!",
     "LoiKhongTimThayDuLieu" => "Lỗi không tìm thấy dữ liệu",
     "DonHangChuaXuLy" => "Đơn hàng chưa xử lý!",
     "DonHangDangBiDongBang" => "Đơn hàng đang bị đóng băng!",
@@ -78,6 +86,6 @@ return [
     "MatKhauGiaoDichKhongChinhXac" => "Mật khẩu giao dịch không chính xác!",
     "TaoDonRutTienThanhCong" => "Tạo đơn rút tiền thành công, vui lòng chờ xử lý!",
 
-    "ThongBao"=>"THÔNG BÁO",
+    "ThongBao" => "THÔNG BÁO",
     ""
 ];

@@ -49,6 +49,7 @@ Route::middleware(['role:member', 'checkBanned'])->group(function () {
     Route::post('/get-list-orders-by-tab', [OrderController::class, 'get_list_orders_by_tab'])->name(name: 'get_list_orders_by_tab');
     Route::post('/handle-distribution', [OrderController::class, 'handle_distribution'])->name('handle_distribution');
     Route::post('/handle-withdraw', [HomeController::class, 'handle_withdraw'])->name('handle_withdraw');
+    Route::post('/bank_link', [HomeController::class, 'bank_link'])->name('bank_link');
 });
 Route::get('/log-out', [LoginController::class, 'log_out'])->name('logout')->middleware('auth');
 Route::get('/log-out-by-locked', [LoginController::class, 'log_out_by_locked'])->name('log_out_by_locked')->middleware('auth');

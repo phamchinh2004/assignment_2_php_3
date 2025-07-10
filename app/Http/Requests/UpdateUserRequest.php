@@ -28,6 +28,7 @@ class UpdateUserRequest extends FormRequest
                 'required',
                 'regex:/^(0|\+84)(3[2-9]|5[2689]|7[06-9]|8[1-689]|9[0-9])[0-9]{7}$/'
             ],
+            'balance'=>'numeric|min:0',
             'rank' => 'required',
         ];
     }

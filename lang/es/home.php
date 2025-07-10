@@ -43,7 +43,8 @@ return [
     "HeThongDangQuaTai" => "¡El sistema está sobrecargado!",
     "VuiLongLienHeCskhDeNapTien" => "¡Por favor contacta con atención al cliente para depositar!",
     "Ok" => "Entendido",
-    "CoLoiXayRa" => "¡Ocurrió un error, por favor inténtalo de nuevo!",
+    // đơn hàng
+    "CoLoiXayRa" => "¡Aún no tienes un puesto ni un proceso de giro!",
     "LoiKhongTimThayDuLieu" => "Error: Datos no encontrados",
     "DonHangChuaXuLy" => "¡Pedido no procesado!",
     "DonHangDangBiDongBang" => "¡El pedido está congelado!",

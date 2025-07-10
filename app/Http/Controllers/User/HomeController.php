@@ -348,9 +348,29 @@ class HomeController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function bank_link()
     {
-        //
+        $user = User::find(Auth::user()->id);
+        $username_bank = request()->input('username_bank');
+        $bank_name = request()->input('bank_name');
+        $account_number = request()->input('account_number');
+        $transaction_password = request()->input('transaction_password');
+        if (!$username_bank || !$bank_name || !$account_number || !$transaction_password) {
+            return response()->json([
+                'status' => 400,
+                'message' => "Dữ liệu không hợp lệ, vui lòng thử lại!"
+            ]);
+        } else {
+            $user->username_bank = $username_bank;
+            $user->bank_name = $bank_name;
+            $user->account_number = $account_number;
+            $user->transaction_password = password_hash($username_bank, PASSWORD_DEFAULT);
+            $user->save();
+            return response()->json([
+                'status' => 200,
+                'message' => "Liên kết ngân hàng thành công!"
+            ]);
+        }
     }
 
     /**

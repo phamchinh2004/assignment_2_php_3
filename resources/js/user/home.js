@@ -480,7 +480,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Xử lý sự kiện tham gia
-    window.participateEvent=function () {
+    window.participateEvent = function () {
         closeNotification();
     }
 
@@ -557,6 +557,124 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('notificationOverlay').addEventListener('transitionend', function () {
         if (this.classList.contains('show')) {
             animateReward();
+        }
+    });
+    // ==========================================Liên kết ngân hàng============================================
+    window.togglePassword = function (fieldId) {
+        const passwordField = document.getElementById(fieldId);
+        const passwordIcon = document.getElementById(fieldId + 'Icon');
+
+        if (passwordField.type === 'password') {
+            passwordField.type = 'text';
+            passwordIcon.classList.remove('fa-eye');
+            passwordIcon.classList.add('fa-eye-slash');
+        } else {
+            passwordField.type = 'password';
+            passwordIcon.classList.remove('fa-eye-slash');
+            passwordIcon.classList.add('fa-eye');
+        }
+    }
+
+    window.submitForm = async function () {
+        const form = document.getElementById('bankLinkForm');
+        const formData = new FormData(form);
+
+        // Kiểm tra form hợp lệ
+        if (!form.checkValidity()) {
+            form.classList.add('was-validated');
+            return;
+        }
+
+        // Kiểm tra mật khẩu khớp
+        const password = formData.get('transactionPassword');
+        const confirmPassword = formData.get('confirmPassword');
+
+        if (password !== confirmPassword) {
+            notification('error', trans.MatKhauXacNhanKhongKhop, trans.Loi);
+            return;
+        }
+
+        // Kiểm tra số tài khoản
+        const accountNumber = formData.get('accountNumber');
+        if (!/^\d{6,20}$/.test(accountNumber)) {
+            notification('error', trans.SoTaiKhoanPhaiLaSo, trans.Loi)
+            return;
+        }
+
+        // Simulate API call
+        const submitBtn = document.querySelector('.btn-primary[onclick="submitForm()"]');
+        const originalText = submitBtn.innerHTML;
+
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Đang xử lý...';
+        submitBtn.disabled = true;
+        let result = await bank_link(formData.get("accountName"), formData.get("bankName"), formData.get("accountNumber"), formData.get("transactionPassword"));
+        if (result.status == 200) {
+            notification('success', result.message, trans.ThanhCong);
+            form.reset();
+            form.classList.remove('was-validated');
+
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('bankLinkModal'));
+            modal.hide();
+
+            // Reset button
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        } else if (result.status == 400) {
+            notification('warning', result.message, trans.Loi);
+        } else {
+            notification('warning', trans.coLoiXayRa, trans.Loi);
+        }
+    }
+    function bank_link(username_bank, bank_name, account_number, transaction_password) {
+        return new Promise((resolve, reject) => {
+            fetch(route_bank_link, {
+                method: "POST",
+                headers: {
+                    'Content-Type': "application/json",
+                    'X-CSRF-TOKEN': csrf
+                },
+                body: JSON.stringify({
+                    username_bank: username_bank,
+                    bank_name: bank_name,
+                    account_number: account_number,
+                    transaction_password: transaction_password,
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    return resolve(data);
+                })
+                .catch(error => {
+                    console.log(error);
+                    reject(error);
+                });
+        })
+    }
+    // Tự động hiển thị modal khi tải trang (để demo)
+    window.addEventListener('load', function () {
+        const modal = new bootstrap.Modal(document.getElementById('bankLinkModal'));
+        const username_bank_input = document.getElementById('username_bank_input');
+        if (!username_bank_input) {
+            modal.show();
+        }
+    });
+
+    // Validation realtime cho số tài khoản
+    document.getElementById('accountNumber').addEventListener('input', function (e) {
+        const value = e.target.value;
+        e.target.value = value.replace(/\D/g, ''); // Chỉ cho phép số
+    });
+
+    // Validation realtime cho mật khẩu
+    document.getElementById('confirmPassword').addEventListener('input', function (e) {
+        const password = document.getElementById('transactionPassword').value;
+        const confirmPassword = e.target.value;
+
+        if (confirmPassword && password !== confirmPassword) {
+            e.target.setCustomValidity('Mật khẩu không khớp');
+        } else {
+            e.target.setCustomValidity('');
         }
     });
 })

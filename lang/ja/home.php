@@ -43,7 +43,8 @@ return [
     "HeThongDangQuaTai" => "システムが過負荷状態です！",
     "VuiLongLienHeCskhDeNapTien" => "入金するにはカスタマーサポートに連絡してください！",
     "Ok" => "了解",
-    "CoLoiXayRa" => "エラーが発生しました。もう一度お試しください！",
+    // Đơn hàng
+    "CoLoiXayRa" => "まだブースやスピンの進行がありません！",
     "LoiKhongTimThayDuLieu" => "データが見つかりません",
     "DonHangChuaXuLy" => "注文が未処理です！",
     "DonHangDangBiDongBang" => "注文が凍結されています！",

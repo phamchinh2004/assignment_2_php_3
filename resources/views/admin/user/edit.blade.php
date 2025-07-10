@@ -61,6 +61,13 @@ Chỉnh sửa người dùng
                 @enderror
             </div>
             <div class="mt-2 fw-bold">
+                <label for="">Số dư</label>
+                <input type="number" name="balance" id="balance" value="{{ old('balance',$user->balance?:0) }}" class="form-control" placeholder="Nhập số dư">
+                @error('balance')
+                <small class="text-danger">{{ $message }}</small>
+                @enderror
+            </div>
+            <div class="mt-2 fw-bold">
                 <label for="">Chọn cấp độ</label>
                 <select name="rank" id="" class="form-select">
                     <option value="">--- Chọn cấp độ ---</option>

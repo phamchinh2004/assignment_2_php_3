@@ -83,10 +83,6 @@ class RegisterController extends Controller
                 ->whereIn('role', ['admin', 'staff'])
                 ->first();
 
-            // $get_rank = Rank::first();
-            // if (!$get_rank) {
-            //     return back()->with('error', 'Cấp độ chưa được khởi tạo. Vui lòng thử lại sau!');
-            // }
             if (!$get_user) {
                 return back()->with('error', 'Mã mời không hợp lệ, vui lòng thử lại!');
             }

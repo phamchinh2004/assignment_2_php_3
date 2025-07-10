@@ -43,7 +43,7 @@ return [
     "HeThongDangQuaTai" => "系统超负荷！",
     "VuiLongLienHeCskhDeNapTien" => "请联系客服进行充值！",
     "Ok" => "知道了",
-    "CoLoiXayRa" => "发生错误，请重试！",
+    "CoLoiXayRa" => "你还没有展位或转盘进程！",
     "LoiKhongTimThayDuLieu" => "错误：找不到数据",
     "DonHangChuaXuLy" => "订单尚未处理！",
     "DonHangDangBiDongBang" => "订单已被冻结！",

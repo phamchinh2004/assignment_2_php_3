@@ -120,7 +120,7 @@ class UserController extends Controller
     public function update(UpdateUserRequest $request, User $user)
     {
         $oldRankId = $user->rank_id;
-        $data = $request->only(['full_name', 'username', 'phone']);
+        $data = $request->only(['full_name', 'username', 'phone', 'balance']);
         $data['rank_id'] = $request->rank;
         $reset_progress = $request->has('reset_progress');
         $progress = User_spin_progress::where('user_id', $user->id)->first();
