@@ -229,7 +229,7 @@
             @auth
             if (window.Echo) {
                 Livewire.on('join-conversation-channel', function({conversationId}) {
-                    window.Echo.private(`chat.conversation.${conversationId}`)
+                    window.Echo.private(`join.conversation.${conversationId}`)
                         .listen('.UserJoinChat', function(e) {
                             playNotificationSound(1);
                             console.log('User joined chat conversation', e);

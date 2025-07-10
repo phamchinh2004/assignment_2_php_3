@@ -22,7 +22,7 @@ Broadcast::channel('staff.{staffId}', function ($user, $staffId) {
 Broadcast::channel('user.{userId}', function ($user, $userId) {
     return (int) $user->id === (int) $userId;
 });
-Broadcast::channel('chat.conversation.{conversationId}', function ($user, $conversationId) {
+Broadcast::channel('join.conversation.{conversationId}', function ($user, $conversationId) {
     $conversation = Conversation::with(['user', 'staff'])->find($conversationId);
     if (!$conversation) {
         Log::warning('Conversation not found', ['conversation_id' => $conversationId]);

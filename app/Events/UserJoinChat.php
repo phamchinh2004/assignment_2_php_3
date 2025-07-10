@@ -31,7 +31,7 @@ class UserJoinChat implements ShouldBroadcast
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel("chat.conversation.{$this->conversationId}"),
+            new PrivateChannel("join.conversation.{$this->conversationId}"),
         ];
     }
     public function broadcastAs()
