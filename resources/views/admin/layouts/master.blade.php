@@ -228,13 +228,17 @@
         window.addEventListener('load', function() {
             @auth
             if (window.Echo) {
-                Livewire.on('join-conversation-channel', function({conversationId}) {
-                    window.Echo.private(`join.conversation.${conversationId}`)
-                        .listen('.UserJoinChat', function(e) {
-                            playNotificationSound(1);
-                            console.log('User joined chat conversation', e);
-                        });
-                });
+                window.Echo.private(`admin.global`)
+                    .listen('.UserJoinChat', function(e) {
+                        console.log('User joined chat:', e.conversationId);
+
+                        // Bây giờ bạn có conversationId → join đúng channel cụ thể
+                        window.Echo.private(`join.conversation.${e.conversationId}`)
+                            .listen('.UserJoinChat', function(event) {
+                                playNotificationSound(1);
+                                console.log('User joined actual conversation channel:', event);
+                            });
+                    });
                 window.Echo.private(`staff.{{ auth()->id() }}`)
                     .listen('.StaffLocked', function(e) {
                         location.href = '/log-out-by-locked';

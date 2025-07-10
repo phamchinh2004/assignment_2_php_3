@@ -40,7 +40,9 @@ Broadcast::channel('join.conversation.{conversationId}', function ($user, $conve
     if ($conversation->user_id === $user->id) return true;
     return false;
 });
-
+Broadcast::channel('admin.global', function ($user) {
+    return $user->role === User::ROLE_ADMIN;
+});
 Broadcast::channel('chat.conversation.{conversationId}', function ($user, $conversationId) {
     $conversation = Conversation::with(['user', 'staff'])->find($conversationId);
 
