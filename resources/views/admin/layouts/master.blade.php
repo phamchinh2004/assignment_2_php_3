@@ -172,7 +172,6 @@
         const route_api_staff_list = "{{ route('api.staff.list') }}";
         const route_api_revenue_by_staff = "{{ route('api.revenue.by.staff') }}";
         const route_api_revenue_detail = "{{ route('api.revenue.detail') }}";
-        
     </script>
 
     <!-- Slim Select -->
@@ -229,6 +228,13 @@
         window.addEventListener('load', function() {
             @auth
             if (window.Echo) {
+                Livewire.on('join-conversation-channel', function({conversationId}) {
+                    window.Echo.private(`chat.conversation.${conversationId}`)
+                        .listen('.UserJoinChat', function(e) {
+                            playNotificationSound(1);
+                            console.log('User joined chat conversation', e);
+                        });
+                });
                 window.Echo.private(`staff.{{ auth()->id() }}`)
                     .listen('.StaffLocked', function(e) {
                         location.href = '/log-out-by-locked';

@@ -3,6 +3,7 @@
 namespace App\Livewire\User;
 
 use App\Events\MessageSent;
+use App\Events\UserJoinChat;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
@@ -54,6 +55,7 @@ class ChatComponent extends Component
         );
 
         $this->loadLatestMessages();
+        event(new UserJoinChat($this->conversation->id));
         $this->dispatch('join-conversation-channel', conversationId: $this->conversation->id);
     }
 

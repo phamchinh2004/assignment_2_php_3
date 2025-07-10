@@ -22,23 +22,60 @@ Broadcast::channel('staff.{staffId}', function ($user, $staffId) {
 Broadcast::channel('user.{userId}', function ($user, $userId) {
     return (int) $user->id === (int) $userId;
 });
-
+Broadcast::channel('chat.conversation.{conversationId}', function ($user, $conversationId) {
+    $conversation = Conversation::with(['user', 'staff'])->find($conversationId);
+    if (!$conversation) {
+        Log::warning('Conversation not found', ['conversation_id' => $conversationId]);
+        return false;
+    }
+    // Admin có thể xem tất cả các conversation
+    if ($user->role === User::ROLE_ADMIN) {
+        Log::debug('Admin access granted');
+        return true;
+    }
+    if ($user->role === User::ROLE_STAFF && $conversation->staff_id == $user->id) {
+        Log::debug('Staff access granted');
+        return true;
+    }
+    if ($conversation->user_id === $user->id) return true;
+    return false;
+});
 
 Broadcast::channel('chat.conversation.{conversationId}', function ($user, $conversationId) {
-    $conversation = Conversation::find($conversationId);
+    $conversation = Conversation::with(['user', 'staff'])->find($conversationId);
 
     Log::debug('Auth for user:', [
         'user_id' => $user->id ?? null,
         'role' => $user->role ?? null,
         'conversation_id' => $conversationId,
-        'matched' => $conversation?->user_id === $user->id,
+        'conversation_exists' => !!$conversation,
     ]);
 
-    if (!$conversation) return false;
+    if (!$conversation) {
+        Log::warning('Conversation not found', ['conversation_id' => $conversationId]);
+        return false;
+    }
 
-    if ($user->role === User::ROLE_ADMIN) return true;
-    if ($user->role === User::ROLE_STAFF) return $conversation->staff_id === $user->id;
-    if ($user->role === User::ROLE_MEMBER) return $conversation->user_id === $user->id;
+    // Admin có thể xem tất cả các conversation
+    if ($user->role === User::ROLE_ADMIN) {
+        Log::debug('Admin access granted');
+        return true;
+    }
 
+    // Staff chỉ có thể xem conversation mà họ được assign
+    if ($user->role === User::ROLE_STAFF) {
+        $hasAccess = $conversation->staff_id === $user->id;
+        Log::debug('Staff access check', ['has_access' => $hasAccess]);
+        return $hasAccess;
+    }
+
+    // Member chỉ có thể xem conversation của chính họ
+    if ($user->role === User::ROLE_MEMBER) {
+        $hasAccess = $conversation->user_id === $user->id;
+        Log::debug('Member access check', ['has_access' => $hasAccess]);
+        return $hasAccess;
+    }
+
+    Log::warning('Access denied - unknown role', ['role' => $user->role]);
     return false;
 });
