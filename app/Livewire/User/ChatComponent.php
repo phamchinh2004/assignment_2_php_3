@@ -245,7 +245,7 @@ class ChatComponent extends Component
     {
         $this->showBox = !$this->showBox;
         if ($this->showBox) {
-            event(new UserJoinChat());
+            event(new UserJoinChat(Auth::user()->username,Auth::user()->full_name));
         }
         if ($this->showBox) {
             $this->dispatch('scroll-to-bottom');

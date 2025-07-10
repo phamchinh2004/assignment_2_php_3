@@ -12,25 +12,39 @@ document.addEventListener('click', () => {
         window.audioContext.resume();
     }
 }, { once: true });
-window.playNotificationSound = function (volumn = 0.3) {
+window.playNotificationSound = function (volumn = 0.3, repeat = 1, interval = 800) {
     const audioContext = window.audioContext;
     if (!audioContext) return;
 
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
+    let count = 0;
 
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
+    function beep() {
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
 
-    oscillator.frequency.value = 880;
-    oscillator.type = 'sine';
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
 
-    gainNode.gain.setValueAtTime(volumn, audioContext.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+        oscillator.frequency.value = 880;
+        oscillator.type = 'sine';
 
-    oscillator.start(audioContext.currentTime);
-    oscillator.stop(audioContext.currentTime + 0.5);
-}
+        gainNode.gain.setValueAtTime(volumn, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.5);
+    }
+
+    function loop() {
+        if (count >= repeat) return;
+        beep();
+        count++;
+        setTimeout(loop, interval);
+    }
+
+    loop();
+};
+
 
 window.Pusher = Pusher;
 
