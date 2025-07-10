@@ -54,7 +54,7 @@ Cập nhật section
                 <label>
                     <div class="d-flex flex-row align-items-center">
                         <span class="me-2">{{ $language->name }}</span>
-                        <img width="20px" src="{{ asset('uploads/language/images/'.$language->image) }}" alt="">
+                        <img width="20px" src="{{ Storage::url($language->image) }}" alt="">
                     </div>
                 </label>
                 <textarea

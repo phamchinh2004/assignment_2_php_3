@@ -104,7 +104,8 @@ document.addEventListener('DOMContentLoaded', async function () {
                 if (list_orders.length > 0) {
                     list_orders.forEach((item) => {
                         let nameShort = item.name.length > 30 ? item.name.slice(0, 30) + '...' : item.name;
-                        let imageUrl = `/uploads/orders/images/${item.image}`;
+                        let imageUrl = `/storage/${item.image}`;
+                        
                         let statusBadge = item.status == 1
                             ? `<span class="text-white badge badge-success">Đang hoạt động</span>`
                             : `<span class="text-white badge badge-danger">Ngừng hoạt động</span>`;

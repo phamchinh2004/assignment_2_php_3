@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Language;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class LanguageController extends Controller
 {
@@ -41,8 +42,7 @@ class LanguageController extends Controller
             $data = $request->only(['name', 'code']);
             if ($request->hasFile('image')) {
                 $file = $request->image;
-                $file_name = $file->hashName();
-                $file->move(public_path('uploads/language/images/'), $file_name);
+                $file_name = $file->store("uploads/images/languages", "public");
                 $data['image'] = $file_name;
             }
             Language::create($data);
@@ -81,15 +81,12 @@ class LanguageController extends Controller
             // Nếu có ảnh mới
             if ($request->hasFile('image') && $request->file('image')->isValid()) {
                 $file = $request->file('image');
-                $file_name = $file->hashName();
-                $file->move(public_path('uploads/language/images/'), $file_name);
+                $file_name = $file->store("uploads/images/languages", "public");
 
                 // Xoá ảnh cũ nếu tồn tại
-                $oldImagePath = public_path('uploads/language/images/' . $language->image);
-                if (file_exists($oldImagePath)) {
-                    @unlink($oldImagePath);
+                if (Storage::exists($language->image)) {
+                    Storage::delete($language->image);
                 }
-
                 $data['image'] = $file_name;
             }
 

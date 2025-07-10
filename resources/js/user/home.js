@@ -233,7 +233,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     const formattedTime = randomTime.toLocaleString();
 
                     order_details_time.innerText = trans.ThoiGianDatPhanPhoi + formattedTime;
-                    order_details_img.src = `/uploads/orders/images/${selectedOrder.image}`;
+                    order_details_img.src = `/storage/${selectedOrder.image}`;
                     order_details_name.innerText = selectedOrder.name;
                     order_details_price.innerText = order_details_price_formatted;
                     order_details_quantity.innerText = "x" + selectedOrder.quantity;
@@ -250,7 +250,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     const formattedTime = randomTime.toLocaleString();
 
                     order_details_time.innerText = trans.ThoiGianDatPhanPhoi + formattedTime;
-                    order_details_img.src = `/uploads/orders/images/${selectedOrder.image}`;
+                    order_details_img.src = `/storage/${selectedOrder.image}`;
                     order_details_name.innerText = selectedOrder.name;
                     order_details_price.innerText = order_details_price_formatted;
                     order_details_quantity.innerText = "x" + selectedOrder.quantity;

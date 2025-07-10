@@ -34,8 +34,8 @@ return new class extends Migration
             $table->enum('status', ['inactivated', 'activated', 'banned'])->default('inactivated')->comment('Trạng thái của tài khoản');
             $table->foreignIdFor(User::class, 'referrer_id')->nullable()->comment('Được giới thiệu bởi ai');
             $table->foreignIdFor(Rank::class)->nullable()->comment('Cấp độ người dùng');
-            $table->timestamp('email_verified_at')->nullable()->comment('Email đã được xác minh lúc nào');
             $table->string('register_ip', 100)->nullable()->comment('Lưu địa chỉ ip');
+            $table->timestamp('email_verified_at')->nullable()->comment('Email đã được xác minh lúc nào');
             $table->rememberToken();
             $table->timestamps();
         });

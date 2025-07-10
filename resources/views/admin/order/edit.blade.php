@@ -57,7 +57,7 @@ Chỉnh sửa đơn hàng
                 <div class="mt-2 mr-3 w-50">
                     <label for="">Hình ảnh cũ</label>
                     <div class="div_image_old">
-                        <img src="{{ asset('uploads/orders/images/'.$order->image) }}" alt="">
+                        <img src="{{ Storage::url($order->image) }}" alt="">
                     </div>
                 </div>
                 <div class="mt-2 w-50">

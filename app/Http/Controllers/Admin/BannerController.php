@@ -40,8 +40,7 @@ class BannerController extends Controller
             if ($request->hasFile(key: 'images')) {
                 foreach ((array)$request->file('images') as $file) {
                     if ($file->isValid()) {
-                        $file_name = $file->hashName();
-                        $file->move(public_path('uploads/banner/images/'), $file_name);
+                        $file_name = $file->store('uploads/images/banners', 'public');
                         $data['images'][] = $file_name;
                     }
                 }

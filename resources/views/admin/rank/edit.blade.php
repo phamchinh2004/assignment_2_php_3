@@ -50,7 +50,7 @@ Chỉnh sửa cấp độ
                 <div class="mt-2 mr-3 w-50">
                     <label for="">Hình ảnh cũ</label>
                     <div class="div_image_old">
-                        <img src="{{ asset('uploads/orders/images/'.$rank->image) }}" alt="">
+                        <img src="{{ Storage::url($rank->image) }}" alt="">
                     </div>
                 </div>
                 <div class="mt-2 fw-bold w-50">

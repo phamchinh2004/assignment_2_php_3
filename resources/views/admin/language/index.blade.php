@@ -74,7 +74,7 @@ Danh sách language
                             </td>
                             <td>
                                 <div class="d-flex justify-content-center align-items-center">
-                                    <img class="index_image" src="{{ asset('uploads/language/images/'.$item->image) }}" alt="">
+                                    <img class="index_image" src="{{ Storage::url($item->image) }}" alt="">
                                 </div>
                             </td>
                             <td>{{$item->created_at}}</td>

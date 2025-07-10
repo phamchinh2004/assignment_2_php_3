@@ -114,7 +114,7 @@
                     value="{{ $lang->code }}"
                     class="dropdown-item d-flex align-items-center gap-2
                {{ App::getLocale() === $lang->code ? 'active fw-bold bg-light text-primary' : '' }}">
-                    <img src="{{ asset('uploads/language/images/' . $lang->image) }}" width="20">
+                    <img src="{{ Storage::url($lang->image) }}" width="20">
                     {{ $lang->name }}
                 </button>
                 @endforeach

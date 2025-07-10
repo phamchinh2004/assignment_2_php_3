@@ -73,7 +73,7 @@ Danh sách banner
                                 <div class="d-flex flex-wrap gap-2">
                                     @foreach ($item->banner_images as $banner_image)
                                     <div class="border rounded p-1" style="width: 100px; height: 100px;">
-                                        <img src="{{ asset('uploads/banner/images/'.$banner_image->path) }}" alt="" class="img-fluid rounded" style="object-fit: cover; width: 100%; height: 100%;">
+                                        <img src="{{ Storage::url($banner_image->path) }}" alt="" class="img-fluid rounded" style="object-fit: cover; width: 100%; height: 100%;">
                                     </div>
                                     @endforeach
                                 </div>

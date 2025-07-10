@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Http\Requests\StoreOrderRequest;
 use App\Http\Requests\UpdateOrderRequest;
 use App\Models\Rank;
+use Illuminate\Support\Facades\Storage;
 
 class OrderController extends Controller
 {
@@ -116,8 +117,7 @@ class OrderController extends Controller
             $file = $request->file("orders.$index.image");
             $fileName = "";
             if ($file && $file->isValid()) {
-                $fileName = $file->hashName();
-                $file->move(public_path('uploads/orders/images/'), $fileName);
+                $fileName = $file->store('uploads/images/orders', 'public');
             }
             $new_order = Order::create([
                 'order_code' => $this->generateUniqueOrderCode(),
@@ -182,14 +182,12 @@ class OrderController extends Controller
     {
         $data = $request->only(['name', 'order_code', 'price', 'quantity']);
         if ($request->hasFile('image') && $request->file('image')->isValid()) {
-            $filePath = public_path('uploads/orders/images/' . $order->image);
-            if ($order->image && file_exists($filePath)) {
-                unlink($filePath);
+            if ($order->image && Storage::exists($order->image)) {
+                Storage::delete($order->image);
             }
 
             $file = $request->file('image');
-            $file_name = $file->hashName();
-            $file->move(public_path('uploads/orders/images/'), $file_name);
+            $file_name = $file->store('uploads/images/orders', 'public');
             $data['image'] = $file_name;
         }
         $order->update($data);

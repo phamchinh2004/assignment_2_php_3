@@ -47,7 +47,7 @@ Thêm mới partner
             </div>
             <div class="mt-2 p-3 d-flex flex-row justify-content-around">
                 <div>
-                    <img width="200px" class="rounded border border-success border-2 p-2" src="{{ asset('uploads/partner/images/'.$partner->image) }}" alt="">
+                    <img width="200px" class="rounded border border-success border-2 p-2" src="{{ Storage::url($partner->image) }}" alt="">
                 </div>
                 <div class="mt-2 fw-bold">
                     <label for="">Hình ảnh mới</label>

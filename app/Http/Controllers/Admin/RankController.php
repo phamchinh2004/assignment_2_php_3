@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Rank;
 use App\Http\Requests\StoreRankRequest;
 use App\Http\Requests\UpdateRankRequest;
+use Illuminate\Support\Facades\Storage;
 
 class RankController extends Controller
 {
@@ -34,8 +35,7 @@ class RankController extends Controller
         $data = $request->only(['name', 'commission_percentage', 'upgrade_fee', 'spin_count', 'value', 'maximum_number_of_withdrawals', 'maximum_withdrawal_amount']);
         if ($request->hasFile('image') && $request->file('image')->isValid()) {
             $file = $request->file('image');
-            $file_name = $file->hashName();
-            $file->move(public_path('uploads/ranks/images/'), $file_name);
+            $file_name = $file->store("uploads/images/ranks", "public");
             $data['image'] = $file_name;
         }
         Rank::create($data);
@@ -65,12 +65,11 @@ class RankController extends Controller
     {
         $data = $request->only(['name', 'commission_percentage', 'upgrade_fee', 'spin_count', 'value', 'maximum_number_of_withdrawals', 'maximum_withdrawal_amount']);
         if ($request->hasFile('image') && $request->file('image')->isValid()) {
-            if ($rank->image && public_path('uploads/ranks/images/' . $rank->image)) {
-                unlink(public_path('uploads/ranks/images/' . $rank->image));
+            if ($rank->image &&  Storage::exists($rank->image)) {
+                Storage::delete($rank->image);
             }
             $file = $request->file('image');
-            $file_name = $file->hashName();
-            $file->move(public_path('uploads/ranks/images/'), $file_name);
+            $file_name = $file->store('uploads/images/ranks', 'public');
             $data['image'] = $file_name;
         }
         $rank->update($data);

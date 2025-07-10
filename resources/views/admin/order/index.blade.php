@@ -92,7 +92,8 @@ Danh sách đơn hàng
                             <td>{{$item->order_code}}</td>
                             <td>
                                 <div class="d-flex justify-content-center align-items-center">
-                                    <img class="index_image" src="{{ asset('uploads/orders/images/'.$item->image) }}" alt="">
+                                    <img class="order_image" src="{{ Storage::url($item->image) }}" alt="">
+                                   
                                 </div>
                             </td>
                             <td>

@@ -66,7 +66,7 @@ Danh sách cấp độ
                             <td>
                                 @if($item->image)
                                 <div class="d-flex justify-content-center align-items-center">
-                                    <img class="index_image" src="{{ asset('uploads/ranks/images/'.$item->image) }}" alt="">
+                                    <img class="index_image" src="{{ Storage::url($item->image) }}" alt="">
                                 </div>
                                 @else
                                 <span>Chưa có ảnh</span>

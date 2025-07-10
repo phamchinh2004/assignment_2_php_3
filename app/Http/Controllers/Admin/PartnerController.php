@@ -7,6 +7,7 @@ use App\Models\Partner;
 use App\Http\Requests\StorePartnerRequest;
 use App\Http\Requests\UpdatePartnerRequest;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class PartnerController extends Controller
 {
@@ -37,8 +38,7 @@ class PartnerController extends Controller
             $data = $request->only(['name', 'link']);
             if ($request->hasFile('image')) {
                 $file = $request->image;
-                $file_name = $file->hashName();
-                $file->move(public_path('uploads/partner/images/'), $file_name);
+                $file_name = $file->store('uploads/images/partners', 'public');
                 $data['image'] = $file_name;
             }
             Partner::create($data);
@@ -78,13 +78,11 @@ class PartnerController extends Controller
             // Nếu có ảnh mới
             if ($request->hasFile('image') && $request->file('image')->isValid()) {
                 $file = $request->file('image');
-                $file_name = $file->hashName();
-                $file->move(public_path('uploads/partner/images/'), $file_name);
+                $file_name = $file->store("uploads/images/partners", "public");
 
                 // Xoá ảnh cũ nếu tồn tại
-                $oldImagePath = public_path('uploads/partner/images/' . $partner->image);
-                if (file_exists($oldImagePath)) {
-                    @unlink($oldImagePath);
+                if (Storage::exists($partner->image)) {
+                    Storage::delete($partner->image);
                 }
 
                 $data['image'] = $file_name;
@@ -106,9 +104,8 @@ class PartnerController extends Controller
     {
         try {
             // Xoá ảnh nếu tồn tại
-            $imagePath = public_path('uploads/partner/images/' . $partner->image);
-            if (file_exists($imagePath)) {
-                @unlink($imagePath); // dùng @ để tránh lỗi nếu không có quyền
+            if (Storage::exists($partner->image)) {
+                Storage::delete($partner->image);
             }
 
             // Xoá bản ghi

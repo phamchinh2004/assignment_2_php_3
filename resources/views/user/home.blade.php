@@ -109,7 +109,7 @@
             @if (!empty($get_banner))
             @foreach ($get_banner->banner_images as $key=> $item)
             <div class="carousel-item {{$key==0?'active':''}}">
-                <img class="banner-image" src="{{ asset('uploads/banner/images/'.$item->path) }}" class="d-block w-100" alt="...">
+                <img class="banner-image" src="{{ Storage::url($item->path) }}" class="d-block w-100" alt="...">
             </div>
             @endforeach
             @else
@@ -433,7 +433,7 @@
                 <td class="text-center fw-bold">{{$item->name}}</td>
                 <td class="text-center">
                     <div class="p-1 d-flex justify-content-center align-items-center">
-                        <img class="image-doi-tac" width="100px" src="{{ asset('uploads/partner/images/'.$item->image) }}" alt="">
+                        <img class="image-doi-tac" width="100px" src="{{ Storage::url($item->image) }}" alt="">
                     </div>
                 </td>
                 <td class="text-center"><a class="btn btn-sm btn-warning link-doi-tac" href="{{$item->link}}">{{__('home.XemTrangWeb')}}</a></td>

@@ -73,7 +73,7 @@ Danh sách partner
                             </td>
                             <td>
                                 <div class="d-flex justify-content-center align-items-center">
-                                    <img class="index_image" src="{{ asset('uploads/partner/images/'.$item->image) }}" alt="">
+                                    <img class="index_image" src="{{ Storage::url($item->image) }}" alt="">
                                 </div>
                             </td>
                             <td>
