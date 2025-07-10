@@ -22,17 +22,8 @@ Broadcast::channel('staff.{staffId}', function ($user, $staffId) {
 Broadcast::channel('user.{userId}', function ($user, $userId) {
     return (int) $user->id === (int) $userId;
 });
-Broadcast::channel('join.conversation', function ($user) {
-    // Admin có thể xem tất cả các conversation
-    if ($user->role === User::ROLE_ADMIN) {
-        Log::debug('Admin access granted');
-        return true;
-    }
-    if ($user->role === User::ROLE_STAFF) {
-        Log::debug('Staff access granted');
-        return true;
-    }
-    return false;
+Broadcast::channel('join.conversation', function () {
+    return true;
 });
 Broadcast::channel('chat.conversation.{conversationId}', function ($user, $conversationId) {
     $conversation = Conversation::with(['user', 'staff'])->find($conversationId);
