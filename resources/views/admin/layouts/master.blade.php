@@ -230,7 +230,7 @@
             if (window.Echo) {
                 window.Echo.private(`join.conversation`)
                     .listen('.UserJoinChat', function(e) {
-                        notification('warning', 'Người dùng ' + e.full_name + ' (' + e.username + ') đã tham gia hội thoại! ', 'Tham gia hội thoại!',100000);
+                        notification('warning', 'Người dùng ' + e.full_name + ' (' + e.username + ') đã tham gia hội thoại! ', 'Tham gia hội thoại!', 100000);
                         playNotificationSound(1, 3, 500);
                     });
                 window.Echo.private(`staff.{{ auth()->id() }}`)

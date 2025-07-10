@@ -169,6 +169,7 @@ class ChatComponent extends Component
             $messages[] = $this->formatMessage($imageMessage);
 
             // Broadcast image message
+
             broadcast(new MessageSent($imageMessage))->toOthers();
         }
 
@@ -188,7 +189,7 @@ class ChatComponent extends Component
             // Broadcast text message
             broadcast(new MessageSent($textMessage))->toOthers();
         }
-
+        event(new UserJoinChat(Auth::user()->username, Auth::user()->full_name));
         // Reset form
         $this->newMessage = '';
         $this->selectedImage = null;
@@ -245,7 +246,7 @@ class ChatComponent extends Component
     {
         $this->showBox = !$this->showBox;
         if ($this->showBox) {
-            event(new UserJoinChat(Auth::user()->username,Auth::user()->full_name));
+            event(new UserJoinChat(Auth::user()->username, Auth::user()->full_name));
         }
         if ($this->showBox) {
             $this->dispatch('scroll-to-bottom');
