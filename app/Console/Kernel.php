@@ -12,8 +12,7 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        // $schedule->command('app:reset-daily-user-data')->dailyAt('13:41');
-        $schedule->command('app:reset-daily-user-data')->everyMinute();
+        $schedule->command('app:reset-daily-user-data')->dailyAt('00:00');
     }
 
     /**
