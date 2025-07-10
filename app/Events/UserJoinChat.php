@@ -15,11 +15,10 @@ class UserJoinChat implements ShouldBroadcast
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
 
-    public $conversationId;
 
-    public function __construct($conversationId)
+    public function __construct()
     {
-        $this->conversationId = $conversationId;
+        // 
     }
 
     public function broadcastOn(): array

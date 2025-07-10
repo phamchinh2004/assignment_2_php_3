@@ -55,7 +55,6 @@ class ChatComponent extends Component
         );
 
         $this->loadLatestMessages();
-        event(new UserJoinChat($this->conversation->id));
         $this->dispatch('join-conversation-channel', conversationId: $this->conversation->id);
     }
 
@@ -245,7 +244,9 @@ class ChatComponent extends Component
     public function toggleBox()
     {
         $this->showBox = !$this->showBox;
-
+        if ($this->showBox) {
+            event(new UserJoinChat());
+        }
         if ($this->showBox) {
             $this->dispatch('scroll-to-bottom');
         }

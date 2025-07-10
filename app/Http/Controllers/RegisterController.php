@@ -88,7 +88,6 @@ class RegisterController extends Controller
             }
             $user->referrer_id = $get_user->id;
             $user->status = "activated";
-            // $user->rank_id = $get_rank->id;
         }
         $user->full_name = $request->full_name ? $request->full_name : 'Chưa đặt tên';
         $user->username = $request->username;
@@ -99,11 +98,6 @@ class RegisterController extends Controller
         $user->save();
         session()->forget('registration_data');
         if ($user->referrer_id) {
-            // $get_rank = Rank::first();
-            // User_spin_progress::create([
-            //     'user_id' => $user->id,
-            //     'rank_id' => $user->rank_id
-            // ]);
             $get_user = User::where('referral_code', $request->referral_code)->first();
             Conversation::create([
                 'staff_id' => $get_user->id,
@@ -113,6 +107,11 @@ class RegisterController extends Controller
             $request->session()->regenerate();
             return redirect()->route('home')->with('success', 'Đăng nhập thành công!');
         } else {
+            $get_admin = User::where('role', 'admin')->first();
+            Conversation::create([
+                'staff_id' => $get_admin->id,
+                'user_id' => $user->id
+            ]);
             return redirect()->route('login')->with('success', 'Tạo tài khoản thành công, vui lòng liên hệ CSKH để kích hoạt tài khoản!');
         }
     }
