@@ -52,7 +52,9 @@
         <div id="content-wrapper" class="d-flex flex-column">
             <div id="content">
                 <!-- Topbar -->
-                @include('admin.layouts.header')
+                <div class="arround_topbar">
+                    @include('admin.layouts.header')
+                </div>
                 <!-- End of Topbar -->
                 @yield('content')
 
@@ -103,6 +105,42 @@
                 <div class="modal-footer">
                     <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancel</button>
                     <a class="btn btn-primary" onclick="log_out()">Logout</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Change Password Modal-->
+    <div class="modal fade" id="changePasswordModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Đổi mật khẩu</h5>
+                    <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form action="{{ route('change_password') }}" method="POST" id="form_change_password">
+                        @csrf
+                        @method("POST")
+                        <div class="form-group">
+                            <label for="">Mật khẩu hiện tại</label>
+                            <input type="password" name="present_password" id="present_password" class="form-control" placeholder="Nhập mật khẩu hiện tại!" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="">Mật khẩu mới</label>
+                            <input type="password" name="new_password" id="new_password" class="form-control" placeholder="Nhập mật khẩu mới!" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="">Xác nhận mật khẩu mới</label>
+                            <input type="password" name="confirm_new_password" id="confirm_new_password" class="form-control" placeholder="Xác nhận mật khẩu mới!" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" type="button" data-dismiss="modal">Thôi đéo đổi nữa</button>
+                    <a class="btn btn-primary" onclick="change_password()">Xác nhận đổi</a>
                 </div>
             </div>
         </div>
@@ -172,6 +210,8 @@
         const route_api_staff_list = "{{ route('api.staff.list') }}";
         const route_api_revenue_by_staff = "{{ route('api.revenue.by.staff') }}";
         const route_api_revenue_detail = "{{ route('api.revenue.detail') }}";
+
+        const route_change_password = "{{ route('change_password') }}";
     </script>
 
     <!-- Slim Select -->

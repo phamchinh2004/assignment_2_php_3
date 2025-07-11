@@ -223,3 +223,71 @@ window.log_out = function () {
         form_logout.submit();
     }
 }
+window.change_password = async function () {
+    spinner.hidden = false;
+    const form_change_password = document.getElementById("form_change_password");
+    const form = new FormData(form_change_password);
+    if (!form_change_password.checkValidity()) {
+        form_change_password.classList.add('was-validated');
+        spinner.hidden = true;
+        return;
+    }
+    const present_password = form.get('present_password');
+    const password = form.get('new_password');
+    const confirmPassword = form.get('confirm_new_password');
+    if (password.length < 6 || password.length > 255) {
+        notification('error', 'Mật khẩu phải từ 6 ký tự đến 255 ký tự!', 'Sai định dạng!');
+        spinner.hidden = true;
+        return;
+    }
+    if (password !== confirmPassword) {
+        notification('error', 'Mật khẩu mới không khớp, vui lòng thử lại!', 'Không khớp mật khẩu!');
+        spinner.hidden = true;
+        return;
+    }
+    const result = await change_password(present_password, password);
+    if (result.status === 200) {
+        notification('success', result.message, 'Successfully!');
+        // Close modal
+        const modalElement = document.getElementById('changePasswordModal');
+        let modal = bootstrap.Modal.getInstance(modalElement);
+        if (!modal) {
+            modal = new bootstrap.Modal(modalElement);
+        }
+        modal.hide();
+
+        setTimeout(() => {
+            form_change_password.reset();
+            form_change_password.classList.remove('was-validated');
+        }, 300);
+        spinner.hidden = true;
+    } else {
+        notification('error', result.message, 'Error!');
+        spinner.hidden = true;
+    }
+}
+function change_password(present_password, new_password) {
+    return new Promise((resolve, reject) => {
+        $.ajax({
+            url: route_change_password,
+            method: "POST",
+            data: {
+                _token: csrf,
+                present_password: present_password,
+                new_password: new_password,
+            },
+            success: function (response) {
+                if (response.success == false) {
+                    resolve(response);
+                } else {
+                    resolve(response);
+                }
+            },
+            error: function (xhr) {
+                console.error(xhr.responseText);
+                notification('error', 'Không thể kiểm tra dữ liệu!', 'Lỗi');
+                reject();
+            }
+        });
+    })
+}

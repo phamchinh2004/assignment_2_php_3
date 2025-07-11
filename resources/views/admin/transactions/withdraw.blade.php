@@ -69,7 +69,7 @@ Danh sách cấp độ
                         <tr class="small">
                             <td>{{$index+1}}</td>
                             <td>
-                                <div class="d-flex flex-column">
+                                <div class="d-flex flex-column nowrap">
                                     <span>Tên khách hàng: <b>{{ $item->user->full_name }}</b></span>
                                     <span>Tên tài khoản: <b>{{ $item->user->username }}</b></span>
                                     <span>Tên ngân hàng: <b>{{ $item->username_bank }}</b></span>
@@ -80,7 +80,7 @@ Danh sách cấp độ
                             <td>{{$item->user->phone}}</td>
                             <td>{{ optional($item->byUser)->username ?? "Chờ xử lý!" }}</td>
                             <td>
-                                <div class="d-flex flex-column">
+                                <div class="d-flex flex-column nowrap">
                                     <span>Ban đầu: <b class="text-warning">{{ format_money($item->initial_balance) }}$</b></span>
                                     <span>Rút ra: <b class="text-danger">-{{ format_money($item->value) }}$</b></span>
                                 </div>
@@ -102,8 +102,8 @@ Danh sách cấp độ
 
                                 <div class="mt-1">
                                     @if($item->status==="processing")
-                                    <a data-url="{{ route('confirm.withdraw',['transaction'=>$item->id]) }}" class="btn btn-success btn-sm d-flex align-items-center btn_confirm_transaction">Xác nhận <i class="fas fa-check fa-sm p-2"></i></a>
-                                    <a data-url="{{ route('cancel.withdraw',['transaction'=>$item->id]) }}" class="btn btn-danger btn-sm d-flex align-items-center mt-2 btn_cancel_transaction">Từ chối <i class="fas fa-xmark fa-sm p-2"></i></a>
+                                    <a data-url="{{ route('confirm.withdraw',['transaction'=>$item->id]) }}" class="btn btn-success btn-sm d-flex align-items-center btn_confirm_transaction nowrap">Xác nhận <i class="fas fa-check fa-sm p-2"></i></a>
+                                    <a data-url="{{ route('cancel.withdraw',['transaction'=>$item->id]) }}" class="btn btn-danger btn-sm d-flex align-items-center mt-2 btn_cancel_transaction nowrap">Từ chối <i class="fas fa-xmark fa-sm p-2"></i></a>
                                     @else
                                     <span>&nbsp;</span>
                                     @endif

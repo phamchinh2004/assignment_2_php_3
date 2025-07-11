@@ -1,4 +1,4 @@
-.topbar {
+.arround_topbar {
     display: none !important;
 }
 
@@ -156,5 +156,11 @@
     to {
         opacity: 1;
         transform: translateY(0);
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .arround_topbar {
+        display: block !important;
     }
 }

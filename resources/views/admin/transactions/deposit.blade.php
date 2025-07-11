@@ -45,7 +45,7 @@ Danh sách cấp độ
                             <th class="tittle_column">Biến động số dư</th>
                             <th class="tittle_column">Số dư hiện tại</th>
                             <th class="tittle_column">Ngày nạp tiền</th>
-                            <!-- <th class="tittle_column">Thao tác</th> -->
+                            <th class="tittle_column">Thao tác</th>
                         </tr>
                     </thead>
                     <tfoot class="sticky-bottom">
@@ -57,7 +57,7 @@ Danh sách cấp độ
                             <th class="tittle_column">Biến động số dư</th>
                             <th class="tittle_column">Số dư hiện tại</th>
                             <th class="tittle_column">Ngày nạp tiền</th>
-                            <!-- <th class="tittle_column">Thao tác</th> -->
+                            <th class="tittle_column">Thao tác</th>
                         </tr>
                     </tfoot>
                     <tbody id="tbody">
@@ -66,7 +66,7 @@ Danh sách cấp độ
                         <tr class="small">
                             <td>{{$index+1}}</td>
                             <td>
-                                <div class="d-flex flex-column">
+                                <div class="d-flex flex-column nowrap">
                                     <span>Tên khách hàng: <b>{{ $item->user->full_name }}</b></span>
                                     <span>Tên tài khoản: <b>{{ $item->user->username }}</b></span>
                                 </div>
@@ -74,7 +74,7 @@ Danh sách cấp độ
                             <td>{{$item->user->phone}}</td>
                             <td>{{$item->byUser->username}}</td>
                             <td>
-                                <div class="d-flex flex-column">
+                                <div class="d-flex flex-column nowrap">
                                     <span>Ban đầu: <b class="text-warning">{{ format_money($item->initial_balance) }}$</b></span>
                                     <span>Nạp vào: <b class="text-success">+{{ format_money($item->value) }}$</b></span>
                                 </div>

@@ -29,7 +29,16 @@ class CheckRole
 
         // Nếu route yêu cầu guest nhưng đã đăng nhập → chặn
         if (in_array('guest', $roles)) {
-            abort(403, 'Bạn đã đăng nhập rồi!');
+            switch ($user->role) {
+                case 'member':
+                    return redirect()->route('home')->with('warning', 'Bạn đã đăng nhập!');
+                case 'staff':
+                    return redirect()->route('admin.dashboard')->with('warning', 'Bạn đã đăng nhập!');
+                case 'admin':
+                    return redirect()->route('admin.dashboard')->with('warning', 'Bạn đã đăng nhập!');
+                default:
+                    abort(403, 'Bạn đã đăng nhập, vui lòng quay lại trang chủ.');
+            }
         }
 
         // Nếu vai trò hợp lệ
@@ -39,7 +48,7 @@ class CheckRole
         // Nếu không có quyền truy cập
         switch ($user->role) {
             case 'member':
-                return redirect()->route('home')->with('warning', 'Bạn không có quyền truy cập!');
+                abort(403, 'NOT FOUND.');
             case 'staff':
                 return redirect()->route('admin.dashboard')->with('warning', 'Bạn không có quyền truy cập!');
             case 'admin':

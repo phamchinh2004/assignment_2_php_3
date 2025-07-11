@@ -22,9 +22,6 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-// Route::get('/', function () {
-//     return view('welcome');
-// })->name('home');
 Route::middleware(['role:guest'])->group(function () {
     Route::get('register', [RegisterController::class, 'index'])->name('register');
     Route::post('register', [RegisterController::class, 'register'])->name('register');
@@ -61,3 +58,5 @@ Route::get('/debug-broadcast', function () {
         'reverb_port' => config('broadcasting.connections.reverb.options.port'),
     ];
 });
+
+Route::post('change-password', [LoginController::class, 'change_password'])->name('change_password');

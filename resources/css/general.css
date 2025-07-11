@@ -378,9 +378,11 @@
     transform: scale(1.02);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
-.modal-backdrop{
+
+.modal-backdrop {
     z-index: 9 !important;
 }
+
 /* Hover effects */
 .btn:hover {
     transform: scale(1.05);
@@ -402,4 +404,8 @@
 
 .mb-3 {
     animation: fadeInUp 0.3s ease;
+}
+
+.nowrap {
+    white-space: nowrap;
 }

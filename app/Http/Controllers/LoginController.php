@@ -138,4 +138,30 @@ class LoginController extends Controller
         $request->session()->regenerateToken();
         return redirect()->route('login')->with('warning', 'Bạn đã bị khóa tài khoản!');
     }
+    public function change_password()
+    {
+        $present_password = request()->input('present_password');
+        $new_password = request()->input('new_password');
+        if (Hash::check($present_password, Auth::user()->password)) {
+            $user = User::find(Auth::user()->id);
+            if ($user) {
+                $user->password = Hash::make($new_password);
+                $user->save();
+                return response()->json([
+                    'status' => 200,
+                    'message' => "Đổi mật khẩu thành công!"
+                ]);
+            } else {
+                return response()->json([
+                    'status' => 403,
+                    'message' => "Không tìm thấy người dùng!"
+                ]);
+            }
+        } else {
+            return response()->json([
+                'status' => 400,
+                'message' => "Mật khẩu hiện tại không chính xác!"
+            ]);
+        }
+    }
 }

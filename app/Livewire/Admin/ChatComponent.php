@@ -339,7 +339,10 @@ class ChatComponent extends Component
             session()->flash('error', 'Không thể gửi tin nhắn. Vui lòng thử lại.');
         }
     }
-
+    public function scrollToBottom()
+    {
+        $this->dispatch('scroll-to-bottom');
+    }
 
     public function messageReceived($message)
     {

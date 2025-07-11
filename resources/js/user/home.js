@@ -637,7 +637,8 @@ document.addEventListener('DOMContentLoaded', function () {
     window.addEventListener('load', function () {
         const modal = new bootstrap.Modal(document.getElementById('bankLinkModal'));
         const username_bank_input = document.getElementById('username_bank_input');
-        if (!username_bank_input) {
+        console.log(username_bank_input.value);
+        if (!username_bank_input.value) {
             modal.show();
         }
     });
