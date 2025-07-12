@@ -23,7 +23,7 @@ class UpdateRankRequest extends FormRequest
     {
         return [
             'name' => 'required|string|max:255',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
             'commission_percentage' => 'required|numeric|min:0',
             'upgrade_fee' => 'required|numeric|min:0',
             'spin_count' => 'required|integer|min:1',
