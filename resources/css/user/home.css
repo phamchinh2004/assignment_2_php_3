@@ -383,7 +383,7 @@ marquee {
 }
 
 .div_img_cho_xu_ly>img {
-    width: 100px;
+    max-width: 100px;
 }
 
 @media screen and (max-width: 768px) {
@@ -393,7 +393,7 @@ marquee {
     }
 
     .div_img_cho_xu_ly>img {
-        width: 50px;
+        max-width: 50px;
     }
 
     #order {

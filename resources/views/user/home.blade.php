@@ -412,6 +412,7 @@
     </div>
     <div id="distribution-list" class="text-white"></div>
 </div>
+<!-- Đối tác -->
 <div class="section-8">
     <div class="bg-warning p-2">
         <span class="text-white fw-bold fs-3 cac-doi-tac">— {{__('home.CacDoiTac')}} —</span>
@@ -433,7 +434,7 @@
                 <td class="text-center fw-bold">{{$item->name}}</td>
                 <td class="text-center">
                     <div class="p-1 d-flex justify-content-center align-items-center">
-                        <img class="image-doi-tac" width="100px" src="{{ Storage::url($item->image) }}" alt="">
+                        <img class="image-doi-tac" max-width="100px" src="{{ Storage::url($item->image) }}" alt="">
                     </div>
                 </td>
                 <td class="text-center"><a class="btn btn-sm btn-warning link-doi-tac" href="{{$item->link}}">{{__('home.XemTrangWeb')}}</a></td>
