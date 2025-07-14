@@ -222,6 +222,13 @@
             </div>
         </div>
     </div>
+    <div class="mt-3 d-flex justify-content-center align-items-center text-white">
+        @if ($user_spin_progress && $rank)
+        <span>Đã quay được: {{ $user_spin_progress->current_spin."/". $rank->spin_count ." đơn hàng"}}</span>
+        @else
+        <span>Chưa có cấp độ</span>
+        @endif
+    </div>
 </div>
 <!-- Tập đoàn amazon -->
 <div class="section-4">
@@ -434,7 +441,7 @@
                 <td class="text-center fw-bold">{{$item->name}}</td>
                 <td class="text-center">
                     <div class="p-1 d-flex justify-content-center align-items-center">
-                        <img class="image-doi-tac" max-width="100px" src="{{ Storage::url($item->image) }}" alt="">
+                        <img class="image-doi-tac" src="{{ Storage::url($item->image) }}" alt="">
                     </div>
                 </td>
                 <td class="text-center"><a class="btn btn-sm btn-warning link-doi-tac" href="{{$item->link}}">{{__('home.XemTrangWeb')}}</a></td>

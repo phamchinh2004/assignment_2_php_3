@@ -382,7 +382,8 @@ marquee {
     right: 14px;
 }
 
-.div_img_cho_xu_ly>img {
+.div_img_cho_xu_ly>img,
+.image-doi-tac {
     max-width: 100px;
 }
 
@@ -529,7 +530,7 @@ marquee {
     }
 
     .image-doi-tac {
-        width: 60px;
+        max-width: 60px;
     }
 
     .link-doi-tac {

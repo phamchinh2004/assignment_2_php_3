@@ -28,7 +28,10 @@ class HomeController extends Controller
         $list_sections = Section::get();
         $list_partners = Partner::get();
         $get_banner = Banner::with('banner_images')->where('status', true)->first();
-        return view('user.home', compact('list_ranks', 'list_sections', 'list_partners', 'get_banner'));
+        $user_spin_progress = User_spin_progress::where('user_id', Auth::id())->first();
+        $rank = Rank::findOrFail(Auth::user()->rank_id);
+
+        return view('user.home', compact('list_ranks', 'list_sections', 'list_partners', 'get_banner', 'user_spin_progress','rank'));
     }
     public function get_10_orders_next()
     {
