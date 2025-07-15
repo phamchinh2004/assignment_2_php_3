@@ -47,6 +47,7 @@ Route::middleware(['role:member', 'checkBanned'])->group(function () {
     Route::post('/handle-distribution', [OrderController::class, 'handle_distribution'])->name('handle_distribution');
     Route::post('/handle-withdraw', [HomeController::class, 'handle_withdraw'])->name('handle_withdraw');
     Route::post('/bank_link', [HomeController::class, 'bank_link'])->name('bank_link');
+    Route::post('change-password', [LoginController::class, 'change_password'])->name('change_password');
 });
 Route::get('/log-out', [LoginController::class, 'log_out'])->name('logout')->middleware('auth');
 Route::get('/log-out-by-locked', [LoginController::class, 'log_out_by_locked'])->name('log_out_by_locked')->middleware('auth');
@@ -59,4 +60,3 @@ Route::get('/debug-broadcast', function () {
     ];
 });
 
-Route::post('change-password', [LoginController::class, 'change_password'])->name('change_password');
