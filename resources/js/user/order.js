@@ -75,7 +75,7 @@ window.addEventListener('DOMContentLoaded', function () {
                         </div>
                         <div class="order_info d-flex flex-row">
                             <div class="p-2 order_div_image">
-                                <img class="order_image" width="100px" height="100px" src="/storage/${frozen_order.order.image}" alt="">
+                                <img class="order_image" max-width="100px" src="/storage/${frozen_order.order.image}" alt="">
                             </div>
                             <div class="order_info_text p-3 w-100 d-flex flex-column">
                                 <span class="order_name">${frozen_order.order.name}</span>

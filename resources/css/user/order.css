@@ -123,7 +123,10 @@ th {
     border: none;
 
 }
-
+.order_div_image{
+    display: flex;
+    align-items: center;
+}
 @media screen and (max-width: 768px) {
     .order_status {
         position: absolute;

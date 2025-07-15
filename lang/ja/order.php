@@ -12,6 +12,8 @@ return [
     "MaDonHang" => "注文番号：",
     "TongTienPhanPhoi" => "配布合計金額",
     "ChietKhau" => "手数料",
+    "HoaHong" => "コミッション",
+    "DeSau" => "後で保存",
     "SoTienHoanNhap" => "返金額",
     "PhanPhoiNgay" => "今すぐ配布",
     "CanhBao" => "警告！",

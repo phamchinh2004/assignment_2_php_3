@@ -8,10 +8,12 @@ return [
     "HoanThanh" => "Completado",
     "DongBang" => "Congelado",
 
-    "ThoiGianDatPhanPhoi" => "Hora de distribución:",
-    "MaDonHang" => "Código de pedido:",
+    "ThoiGianDatPhanPhoi" => "Hora de distribución: ",
+    "MaDonHang" => "Código de pedido: ",
     "TongTienPhanPhoi" => "Monto total distribuido",
     "ChietKhau" => "Descuento",
+    "HoaHong" => "Comisión",
+    "DeSau" => "Guardar para más tarde",
     "SoTienHoanNhap" => "Monto reembolsado",
     "PhanPhoiNgay" => "Distribuir ahora",
     "CanhBao" => "¡Advertencia!",
@@ -23,7 +25,7 @@ return [
     "KhongTimThayDuLieuDonHang" => "¡No se encontraron datos del pedido!",
     "KhongCoDuLieu" => "¡Sin datos!",
 
-     "SoDuKhongDu" => "Saldo insuficiente, ¡por favor contacte al servicio al cliente!",
+    "SoDuKhongDu" => "Saldo insuficiente, ¡por favor contacte al servicio al cliente!",
     "KhongTimThayLichSuDatHang" => "No se encontró el historial de pedidos, ¡inténtelo de nuevo!",
     "DonHangDaHoanThanh" => "¡El pedido ha sido completado!",
     "KhongTimThayDonHang" => "¡No se encontró el pedido!",

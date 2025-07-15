@@ -12,6 +12,8 @@ return [
     "MaDonHang" => "订单编号：",
     "TongTienPhanPhoi" => "分发总金额",
     "ChietKhau" => "折扣",
+    "HoaHong" => "佣金",
+    "DeSau" => "稍后保存",
     "SoTienHoanNhap" => "退款金额",
     "PhanPhoiNgay" => "立即分发",
     "CanhBao" => "警告！",

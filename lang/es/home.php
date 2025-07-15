@@ -51,7 +51,7 @@ return [
     "HetLuotQuay" => "¡No quedan giros!",
     "QuayLaiNhaBan" => "¡Vuelve atrás!",
     "LoiDanhSachDonHang" => "¡Error en la lista de pedidos!",
-    "ThoiGianDatPhanPhoi" => "Hora del pedido de distribución:",
+    "ThoiGianDatPhanPhoi" => "Hora del pedido de distribución: ",
     "CanhBao" => "¡Advertencia!",
     "Loi" => "¡Error!",
     "ChoXuLy" => "Procesando...",

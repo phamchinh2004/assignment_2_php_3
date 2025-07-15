@@ -46,7 +46,7 @@ return [
     "LienKetTaiKhoanNganHang" => "Liên Kết Tài Khoản Ngân Hàng",
     "ChonNganHang" => "Chọn ngân hàng",
     "XacNhanMatKhauGiaoDich" => "Xác nhận mật khẩu giao dịch",
-    "LuuY" => "Lưu ý:",
+    "LuuY" => "Lưu ý: ",
     "ThongTinTaiKhoanNganHangCuaBan" => "Thông tin tài khoản ngân hàng của bạn sẽ được mã hóa và bảo mật tuyệt đối.",
     "Huy" => "Hủy",
     "XacNhanLienKet" => "Xác Nhận Liên Kết",

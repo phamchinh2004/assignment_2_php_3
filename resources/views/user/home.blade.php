@@ -184,7 +184,7 @@
                         <div class="div_img_cho_xu_ly">
                             <img src="{{ asset('images/nhan_cho_xu_ly.png') }}" alt="">
                         </div>
-                        <span class="order_details_time" id="order_details_time">Thời gian đặt phân phối: </span>
+                        <span class="order_details_time" id="order_details_time">{{__('home.ThoiGianDatPhanPhoi')}}</span>
                         <div class="order_details_info">
                             <div class="order_details_img">
                                 <img id="order_details_img" src="{{ asset('images/orders/syglp5via6r7rxqjc1k8.jpg') }}" alt="">
@@ -200,15 +200,15 @@
                         <table class="order_details_end">
                             <tbody>
                                 <tr>
-                                    <td class="order_details_end_title">Tổng tiền phân phối</td>
+                                    <td class="order_details_end_title">{{__('order.TongTienPhanPhoi')}}</td>
                                     <th class="order_details_end_value" id="order_details_end_value_total_price">10.000$</th>
                                 </tr>
                                 <tr>
-                                    <td class="order_details_end_title">Hoa hồng</td>
+                                    <td class="order_details_end_title">{{__('order.HoaHong')}}</td>
                                     <th class="order_details_end_value" id="order_details_end_value_price_rose">20$</th>
                                 </tr>
                                 <tr>
-                                    <td class="order_details_end_title_total">Số tiền hoàn nhập</td>
+                                    <td class="order_details_end_title_total">{{__('order.SoTienHoanNhap')}}</td>
                                     <th class="order_details_end_value_total" id="order_details_end_value_total">10.020$</th>
                                 </tr>
                             </tbody>
@@ -217,8 +217,8 @@
                 </div>
             </div>
             <div class="order_button">
-                <button class="btn btn-secondary me-5" id="later"><i class="fas fa-arrow-left me-1"></i>Để sau</button>
-                <button class="btn btn-dark" id="btn_phan_phoi_ngay"><i class="fa-solid fa-gears me-2"></i>Phân phối ngay</button>
+                <button class="btn btn-secondary me-5" id="later"><i class="fas fa-arrow-left me-1"></i>{{__('order.DeSau')}}</button>
+                <button class="btn btn-dark" id="btn_phan_phoi_ngay"><i class="fa-solid fa-gears me-2"></i>{{__('order.PhanPhoiNgay')}}</button>
             </div>
         </div>
     </div>

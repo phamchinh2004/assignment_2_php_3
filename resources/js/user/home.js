@@ -5,8 +5,8 @@ document.addEventListener('DOMContentLoaded', function () {
             btn.classList.add('btn-sm');
         });
     }
-    const container = document.getElementById('fireworks-container');
     // ==================================================Pháo hoa===================================================
+    const container = document.getElementById('fireworks-container');
     const fireworks = new Fireworks(container, {
         autoresize: true,
         opacity: 0.5,

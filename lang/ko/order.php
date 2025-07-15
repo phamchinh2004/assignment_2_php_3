@@ -8,10 +8,12 @@ return [
     "HoanThanh" => "완료됨",
     "DongBang" => "동결됨",
 
-    "ThoiGianDatPhanPhoi" => "배포 시간:",
-    "MaDonHang" => "주문 번호:",
+    "ThoiGianDatPhanPhoi" => "배포 시간: ",
+    "MaDonHang" => "주문 번호: ",
     "TongTienPhanPhoi" => "총 배포 금액",
     "ChietKhau" => "수수료",
+    "HoaHong" => "커미션",
+    "DeSau" => "나중에 저장",
     "SoTienHoanNhap" => "환급 금액",
     "PhanPhoiNgay" => "지금 배포",
     "CanhBao" => "경고!",
@@ -22,7 +24,7 @@ return [
     "PhanPhoiThanhCong" => "배포 완료!",
     "KhongTimThayDuLieuDonHang" => "주문 데이터를 찾을 수 없습니다!",
     "KhongCoDuLieu" => "데이터 없음!",
-    
+
     "SoDuKhongDu" => "잔액이 부족합니다. 고객센터에 문의해주세요!",
     "KhongTimThayLichSuDatHang" => "주문 내역을 찾을 수 없습니다. 다시 시도해주세요!",
     "DonHangDaHoanThanh" => "주문이 완료되었습니다!",

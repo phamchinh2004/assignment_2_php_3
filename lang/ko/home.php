@@ -51,7 +51,7 @@ return [
     "HetLuotQuay" => "회전 기회가 없습니다!",
     "QuayLaiNhaBan" => "돌아가세요!",
     "LoiDanhSachDonHang" => "주문 목록 오류!",
-    "ThoiGianDatPhanPhoi" => "분배 시간:",
+    "ThoiGianDatPhanPhoi" => "분배 시간: ",
     "CanhBao" => "경고!",
     "Loi" => "오류!",
     "ChoXuLy" => "처리 대기 중...",

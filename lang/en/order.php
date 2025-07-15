@@ -8,10 +8,12 @@ return [
     "HoanThanh" => "Completed",
     "DongBang" => "Frozen",
 
-    "ThoiGianDatPhanPhoi" => "Distribution time:",
-    "MaDonHang" => "Order code:",
+    "ThoiGianDatPhanPhoi" => "Distribution time: ",
+    "MaDonHang" => "Order code: ",
     "TongTienPhanPhoi" => "Total distribution amount",
     "ChietKhau" => "Commission",
+    "HoaHong" => "Commission",
+    "DeSau" => "Save for later",
     "SoTienHoanNhap" => "Refunded amount",
     "PhanPhoiNgay" => "Distribute now",
     "CanhBao" => "Warning!",
@@ -22,7 +24,7 @@ return [
     "PhanPhoiThanhCong" => "Distribution successful!",
     "KhongTimThayDuLieuDonHang" => "Order data not found!",
     "KhongCoDuLieu" => "No data!",
-    
+
     "SoDuKhongDu" => "Insufficient balance, please contact customer service!",
     "KhongTimThayLichSuDatHang" => "Order history not found, please try again!",
     "DonHangDaHoanThanh" => "Order has been completed!",

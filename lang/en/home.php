@@ -51,7 +51,7 @@ return [
     "HetLuotQuay" => "No spins left!",
     "QuayLaiNhaBan" => "Go back, buddy!",
     "LoiDanhSachDonHang" => "Order list error!",
-    "ThoiGianDatPhanPhoi" => "Distribution time:",
+    "ThoiGianDatPhanPhoi" => "Distribution time: ",
     "CanhBao" => "Warning!",
     "Loi" => "Error!",
     "ChoXuLy" => "Waiting for processing...",
