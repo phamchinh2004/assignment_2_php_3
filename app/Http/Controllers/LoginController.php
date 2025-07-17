@@ -164,4 +164,57 @@ class LoginController extends Controller
             ]);
         }
     }
+    public function change_transaction_password()
+    {
+        $present_transaction_password = request()->input('present_transaction_password');
+        $new_transaction_password = request()->input('new_transaction_password');
+        if (password_verify($present_transaction_password, Auth::user()->transaction_password)) {
+            $user = User::find(Auth::user()->id);
+            if ($user) {
+                $user->transaction_password = password_hash($new_transaction_password, PASSWORD_DEFAULT);
+                $user->save();
+                return response()->json([
+                    'status' => 200,
+                    'message' => "Đổi mật khẩu giao dịch thành công!"
+                ]);
+            } else {
+                return response()->json([
+                    'status' => 403,
+                    'message' => "Không tìm thấy người dùng cần đổi mật khẩu giao dịch!"
+                ]);
+            }
+        } else {
+            return response()->json([
+                'status' => 400,
+                'message' => "Mật khẩu giao dịch hiện tại không chính xác!"
+            ]);
+        }
+    }
+    public function reset_transaction_password()
+    {
+        $login_password = request()->input('present_login_password');
+        if (Hash::check($login_password, Auth::user()->password)) {
+            $user = User::find(Auth::user()->id);
+            if ($user) {
+                $new_transaction_password = random_int(100000, 999999);
+                $user->transaction_password = Hash::make($new_transaction_password);
+                $user->save();
+                return response()->json([
+                    'status' => 200,
+                    'message' => "Đổi mật khẩu giao dịch thành công!",
+                    'data' => $new_transaction_password
+                ]);
+            } else {
+                return response()->json([
+                    'status' => 403,
+                    'message' => "Không tìm thấy người dùng cần đổi mật khẩu giao dịch!"
+                ]);
+            }
+        } else {
+            return response()->json([
+                'status' => 400,
+                'message' => "Mật khẩu đăng nhập không chính xác!"
+            ]);
+        }
+    }
 }

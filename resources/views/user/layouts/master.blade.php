@@ -90,6 +90,66 @@
                 </div>
             </div>
         </div>
+        <!-- Change Transaction Password Modal-->
+        <div class="modal fade" id="changeTransactionPasswordModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">Đổi mật khẩu giao dịch hoặc <a id="resetTransactionPasswordLink" data-bs-toggle="modal" data-bs-target="#resetTransactionPasswordModal" href="#">cấp lại mật khẩu!</a></h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form action="{{ route('change_transaction_password') }}" method="POST" id="form_change_transaction_password">
+                            @csrf
+                            @method("POST")
+                            <div class="form-group">
+                                <label for="">Mật khẩu hiện tại</label>
+                                <input type="password" name="present_transaction_password" id="present_transaction_password" class="form-control" placeholder="Nhập mật khẩu giao dịch hiện tại!" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="">Mật khẩu mới</label>
+                                <input type="password" name="new_transaction_password" id="present_transaction_password" class="form-control" placeholder="Nhập mật khẩu giao dịch mới!" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="">Xác nhận mật khẩu mới</label>
+                                <input type="password" name="confirm_new_transaction_password" id="confirm_new_transaction_password" class="form-control" placeholder="Xác nhận mật khẩu giao dịch mới!" required>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Hủy</button>
+                        <a class="btn btn-primary" onclick="change_transaction_password()">Xác nhận đổi</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Cấp lại mật khẩu giao dịch Modal-->
+        <div class="modal fade" id="resetTransactionPasswordModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">Cấp lại mật khẩu giao dịch!</a></h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form action="{{ route('reset_transaction_password') }}" method="POST" id="form_reset_transaction_password">
+                            @csrf
+                            @method("POST")
+                            <div class="form-group">
+                                <label for="">Mật khẩu đăng nhập hiện tại</label>
+                                <input type="password" name="present_login_password" id="present_login_password" class="form-control" placeholder="Nhập mật khẩu đăng nhập hiện tại!" required>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Hủy</button>
+                        <a class="btn btn-primary" onclick="reset_transaction_password()">Xác nhận cấp lại</a>
+                    </div>
+                </div>
+            </div>
+        </div>
         <!-- Form logout -->
         <form id="form_logout" action="{{ route('logout') }}" method="get">
             @csrf
@@ -135,6 +195,8 @@
         const route_bank_link = "{{ route('bank_link') }}";
 
         const route_change_password = "{{ route('change_password') }}";
+        const route_change_transaction_password = "{{ route('change_transaction_password') }}";
+        const route_reset_transaction_password = "{{ route('reset_transaction_password') }}";
 
         function notification(type, data, title, timeOut = "10000") {
             $(document).ready();

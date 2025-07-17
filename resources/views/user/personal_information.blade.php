@@ -45,7 +45,7 @@
             <i class="fa fa-solid fa-chevron-right"></i>
         </div>
     </a>
-    <a class="d-flex flex-row justify-content-between align-items-center border-bottom pt-3 pb-3 cspt text-decoration-none text-dark">
+    <a class="d-flex flex-row justify-content-between align-items-center border-bottom pt-3 pb-3 cspt text-decoration-none text-dark" href="#" data-bs-toggle="modal" data-bs-target="#changeTransactionPasswordModal">
         <div class="d-flex flex-row align-items-center justify-content-center">
             <img class="images" src="{{ asset('images/personal_information/image_5.png') }}" alt="">
             <span>{{__('personal_information.MatKhauGiaoDich')}}</span>

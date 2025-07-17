@@ -223,6 +223,7 @@ window.log_out = function () {
         form_logout.submit();
     }
 }
+// ========================================================Đổi mật khẩu========================================================
 window.change_password = async function () {
     spinner.hidden = false;
     const form_change_password = document.getElementById("form_change_password");
@@ -275,6 +276,132 @@ function change_password(present_password, new_password) {
                 _token: csrf,
                 present_password: present_password,
                 new_password: new_password,
+            },
+            success: function (response) {
+                if (response.success == false) {
+                    resolve(response);
+                } else {
+                    resolve(response);
+                }
+            },
+            error: function (xhr) {
+                console.error(xhr.responseText);
+                notification('error', 'Không thể kiểm tra dữ liệu!', 'Lỗi');
+                reject();
+            }
+        });
+    })
+}
+// ========================================================Đổi mật khẩu giao dịch========================================================
+window.change_transaction_password = async function () {
+    spinner.hidden = false;
+    const form_change_transaction_password = document.getElementById("form_change_transaction_password");
+    const form = new FormData(form_change_transaction_password);
+    if (!form_change_transaction_password.checkValidity()) {
+        form_change_transaction_password.classList.add('was-validated');
+        spinner.hidden = true;
+        return;
+    }
+    const present_transaction_password = form.get('present_transaction_password');
+    const password = form.get('new_transaction_password');
+    const confirmPassword = form.get('confirm_new_transaction_password');
+    if (password.length < 6 || password.length > 255) {
+        notification('error', 'Mật khẩu phải từ 6 ký tự đến 255 ký tự!', 'Sai định dạng!');
+        spinner.hidden = true;
+        return;
+    }
+    if (password !== confirmPassword) {
+        notification('error', 'Mật khẩu mới không khớp, vui lòng thử lại!', 'Không khớp mật khẩu!');
+        spinner.hidden = true;
+        return;
+    }
+    const result = await change_transaction_password(present_transaction_password, password);
+    if (result.status === 200) {
+        notification('success', result.message, 'Successfully!');
+        // Close modal
+        const modalElement = document.getElementById('changeTransactionPasswordModal');
+        let modal = bootstrap.Modal.getInstance(modalElement);
+        if (!modal) {
+            modal = new bootstrap.Modal(modalElement);
+        }
+        modal.hide();
+
+        setTimeout(() => {
+            form_change_transaction_password.reset();
+            form_change_transaction_password.classList.remove('was-validated');
+        }, 300);
+        spinner.hidden = true;
+    } else {
+        notification('error', result.message, 'Error!');
+        spinner.hidden = true;
+    }
+}
+function change_transaction_password(present_password, new_password) {
+    return new Promise((resolve, reject) => {
+        $.ajax({
+            url: route_change_transaction_password,
+            method: "POST",
+            data: {
+                _token: csrf,
+                present_transaction_password: present_password,
+                new_transaction_password: new_password,
+            },
+            success: function (response) {
+                if (response.success == false) {
+                    resolve(response);
+                } else {
+                    resolve(response);
+                }
+            },
+            error: function (xhr) {
+                console.error(xhr.responseText);
+                notification('error', 'Không thể kiểm tra dữ liệu!', 'Lỗi');
+                reject();
+            }
+        });
+    })
+}
+// ========================================================Cấp lại mật khẩu giao dịch========================================================
+window.reset_transaction_password = async function () {
+    spinner.hidden = false;
+    const form_reset_transaction_password = document.getElementById("form_reset_transaction_password");
+    const form = new FormData(form_reset_transaction_password);
+    if (!form_reset_transaction_password.checkValidity()) {
+        form_reset_transaction_password.classList.add('was-validated');
+        spinner.hidden = true;
+        return;
+    }
+    const present_login_password = form.get('present_login_password');
+
+    const result = await reset_transaction_password(present_login_password);
+    if (result.status === 200) {
+        notification('success', result.message, 'Successfully!');
+        swal("Mật khẩu giao dịch mới là: " + result.data + ", bạn nên đổi nó ngay bây giờ!");
+        const modalElement = document.getElementById('resetTransactionPasswordModal');
+        let modal = bootstrap.Modal.getInstance(modalElement);
+        if (!modal) {
+            modal = new bootstrap.Modal(modalElement);
+        }
+        modal.hide();
+
+        setTimeout(() => {
+            form_reset_transaction_password.reset();
+            form_reset_transaction_password.classList.remove('was-validated');
+        }, 300);
+        spinner.hidden = true;
+    } else {
+        notification('error', result.message, 'Error!');
+        spinner.hidden = true;
+    }
+}
+function reset_transaction_password(present_login_password) {
+    return new Promise((resolve, reject) => {
+        $.ajax({
+            url: route_reset_transaction_password,
+            method: "POST",
+            data: {
+                _token: csrf,
+                present_login_password: present_login_password,
             },
             success: function (response) {
                 if (response.success == false) {
