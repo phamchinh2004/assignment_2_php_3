@@ -82,6 +82,7 @@ Danh sách người dùng
                                     <span>Họ và tên: <b><a class="cspt" href="{{ route('user.edit',['user'=>$item->id]) }}">{{Str::limit( $item->full_name ,30,'...')}}</a></b></span>
                                     <span>Tên đăng nhập: <b>{{ $item->username }}</b></span>
                                     <span>Số điện thoại: <b>{{ $item->phone }}</b></span>
+                                    <span>Email: <b>{{ $item->email?:"Chưa có" }}</b></span>
                                     <span>Số dư: <b>{{ format_money($item->balance) }}$</b></span>
                                     @if (!empty($item->referrer))
                                     <span>Được giới thiệu bởi: <b>{{ $item->referrer->full_name ." (".$item->referrer->username.")" }}</b></span>

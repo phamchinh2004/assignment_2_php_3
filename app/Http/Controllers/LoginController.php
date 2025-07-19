@@ -6,6 +6,9 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\SendMail;
+use Str;
 
 class LoginController extends Controller
 {
@@ -216,5 +219,35 @@ class LoginController extends Controller
                 'message' => "Mật khẩu đăng nhập không chính xác!"
             ]);
         }
+    }
+    public function forgot_password()
+    {
+        return view('forgot_password');
+    }
+    public function send_new_password(Request $request)
+    {
+        $validated = $request->validate([
+            'email' => [
+                'required',
+                'string',
+                'email',
+                'max:100',
+                'exists:users,email', // Kiểm tra email có tồn tại trong bảng users
+            ],
+        ], [
+            'email.required' => 'Vui lòng nhập email.',
+            'email.email' => 'Định dạng email không hợp lệ.',
+            'email.max' => 'Email không được vượt quá 100 ký tự.',
+            'email.exists' => 'Email không tồn tại trong hệ thống.',
+        ]);
+
+        $email = $validated['email'];
+        $newPassword = Str::random(8);
+        $user = User::where('email', $email)->first();
+        $user->password = Hash::make($newPassword);
+        $user->save();
+        Mail::to($user->email)->send(new SendMail($user, $newPassword));
+
+        return redirect()->route('login')->with('success', 'Mật khẩu mới đã được gửi đến email của bạn!');
     }
 }

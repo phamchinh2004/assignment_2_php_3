@@ -54,6 +54,13 @@ class RegisterController extends Controller
                 'numeric',
                 'digits:10', // Kiểm tra độ dài số điện thoại (10 ký tự)
             ],
+            'email' => [
+                'required',
+                'string',
+                'email',
+                'max:100',
+                'unique:users,email',
+            ],
             'password' => [
                 'required',
                 'string',
@@ -74,6 +81,10 @@ class RegisterController extends Controller
             'password.min' => 'Mật khẩu phải từ 6 ký tự trở lên!',
             // 'password.confirmed' => 'Mật khẩu xác nhận không khớp!',
             'password.regex' => 'Mật khẩu không được chứa khoảng trắng!',
+            'email.required' => 'Email không được để trống!',
+            'email.email' => 'Email không đúng định dạng!',
+            'email.max' => 'Email không được vượt quá 100 ký tự!',
+            'email.unique' => 'Email đã tồn tại trong hệ thống!',
         ]);
 
         $request->session()->put('registration_data', $data);
@@ -92,6 +103,7 @@ class RegisterController extends Controller
         $user->full_name = $request->full_name ? $request->full_name : 'Chưa đặt tên';
         $user->username = $request->username;
         $user->phone = $request->phone;
+        $user->email = $request->email;
         $user->referral_code = $this->return_random_referral_code();
         $user->password = Hash::make($request->password);
         $user->register_ip = $ip;
@@ -122,6 +134,31 @@ class RegisterController extends Controller
         if ($referral_code) {
             $get_user_by_referral_code = User::where('referral_code', $referral_code)->whereIn('role', ['admin', 'staff'])->first();
             if ($get_user_by_referral_code) {
+                $response = [
+                    'success' => true,
+                    'message' => 'Lấy được dữ liệu người dùng!',
+                ];
+            } else {
+                $response = [
+                    'success' => false,
+                    'message' => 'Không lấy được dữ liệu người dùng!',
+                ];
+            }
+            return response()->json($response);
+        } else {
+            $response = [
+                'success' => false,
+                'message' => 'Không lấy được dữ liệu người dùng!',
+            ];
+            return response()->json($response);
+        }
+    }
+    public function check_email()
+    {
+        $email = request()->input('email');
+        if ($email) {
+            $get_user_by_email = User::where('email', $email)->first();
+            if ($get_user_by_email) {
                 $response = [
                     'success' => true,
                     'message' => 'Lấy được dữ liệu người dùng!',

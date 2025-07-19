@@ -10,7 +10,7 @@
     <link rel="shortcut icon" href="{{ asset('images/logo.png') }}" type="image/x-icon">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.css" rel="stylesheet" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet" />
-    <title>Login</title>
+    <title>Forgot password</title>
 </head>
 
 <body class="container_login_register">
@@ -22,59 +22,22 @@
         <div class="around_logo_lr">
             <img src="{{ asset('images/login_and_register/logo_2.png') }}" alt="">
         </div>
-        <div class="title_gereral d-flex justify-content-center align-items-center">
-            <a class="fw-bold me-5 text-white cspt title-login">Đăng Nhập</a>
-            <a href="register" class="text-white cspt">Đăng Ký</a>
-        </div>
-        <form class="d-flex flex-column mt-4" id="form_login" method="post">
+        <form action="{{ route('send_new_password') }}" class="mt-2" method="post">
             @csrf
-            @method('POST')
-            <div>
-                <label for="" class="text-white">Tên đăng nhập</label>
-                <div class="position-relative w-auto">
-                    <i class="fa-solid fa-user position-absolute icon-input" style="top: 50%;"></i>
-                    <input class="form-control input-text" id="username_login" value="{{ old('username',"") }}" name="username" type="text" placeholder="Nhập tên tài khoản">
-                </div>
-                @error('username')
+            @method('post')
+            <div class="mt-2">
+                <label for="" class="text-white">Email</label>
+                <input type="email" class="form-control" value="{{ old('email') }}" name="email" placeholder="Nhập email đã dùng để đăng ký tài khoản">
+                @error('email')
                 <span class="invalid-feedback">
                     <strong>{{ $message }}</strong>
                 </span>
                 @enderror
             </div>
-            <div class="mt-3">
-                <label for="" class="text-white">Mật khẩu</label>
-                <div class="position-relative w-auto">
-                    <i class="fa-solid fa-lock position-absolute icon-input"></i>
-                    <input class="form-control input-text" id="password_login" name="password" value="{{ old('password',"") }}" type="password" placeholder="Nhập mật khẩu">
-                    <i class="fa-regular fa-eye position-absolute cspt" id="show_password_login"></i>
-                    <i hidden class="fa-regular fa-eye-slash position-absolute cspt" id="hide_password_login"></i>
-                </div>
-                @error('password')
-                <span class="invalid-feedback">
-                    <strong>{{ $message }}</strong>
-                </span>
-                @enderror
-            </div>
-            <div class="mt-3 d-flex justify-content-between align-items-center">
-                <div class="form-check">
-                    <input class="form-check-input p-2" name="remember_password" {{ old('remember_password') ? 'checked' : '' }} type="checkbox" value="" id="remember_password">
-                    <label class="form-check-label text-white" id="label_remember_password" for="remember_password">
-                        Nhớ mật khẩu
-                    </label>
-                </div>
-                <a href="{{ route('forgot_password') }}" class="text-white text-decoration-underline cspt" id="label_forgot_password">Quên mật khẩu?</a>
-            </div>
-            <div class="mt-3 d-flex justify-content-center">
-                <button class="btn btn-warning fw-bold text-white w-100" id="login" type="button">Đăng nhập</button>
+            <div class="d-flex justify-content-center mt-2">
+                <button type="submit" class="btn btn-warning btn-sm">Gửi mã</button>
             </div>
         </form>
-        <div class="mt-3">
-            <span class="text-white">Bạn chưa có tài khoản? <a href="register" class="fw-bold text-warning cspt text-decoration-underline">Đăng ký</a> ngay!</span>
-        </div>
-        <div class="mt-3 w-auto d-flex flex-row justify-content-center align-items-center">
-            <img width="40px" class="me-3 cspt" src="{{ asset('images/login_and_register/fb-logo.png') }}" alt="">
-            <img width="45px" class="cspt" src="{{ asset('images/login_and_register/gg-logo.png') }}" alt="">
-        </div>
 
     </div>
     <!-- SPINNER -->
@@ -101,7 +64,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.js.map"></script>
     <script>
-        const route_check_username = "{{ route('check_username') }}";
         const csrf = "{{ csrf_token() }}";
         const spinner = document.getElementById('spinner');
 

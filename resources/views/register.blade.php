@@ -52,6 +52,15 @@
                 @enderror
             </div>
             <div class="mt-2">
+                <label for="" class="text-white label-register">Email</label>
+                <input class="form-control" id="email_register" value="{{ old('email') }}" name="email" type="email" placeholder="Nhập email của bạn">
+                @error('email')
+                <span class="invalid-feedback">
+                    <strong>{{ $message }}</strong>
+                </span>
+                @enderror
+            </div>
+            <div class="mt-2">
                 <label for="" class="text-white label-register">Mật khẩu</label>
                 <div class="position-relative w-auto">
                     <input class="form-control input-text-register" value="{{ old('password') }}" id="password_register" name="password" type="password" placeholder="Nhập mật khẩu">
@@ -126,6 +135,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.js.map"></script>
     <script>
         const route_check_referral_code = "{{ route('check_referral_code') }}";
+        const route_check_email = "{{ route('check_email') }}";
         const csrf = "{{ csrf_token() }}";
         const spinner = document.getElementById('spinner');
 

@@ -26,9 +26,12 @@ Route::middleware(['role:guest'])->group(function () {
     Route::get('register', [RegisterController::class, 'index'])->name('register');
     Route::post('register', [RegisterController::class, 'register'])->name('register');
     Route::post('register/check_referral_code', [RegisterController::class, 'check_referral_code'])->name('check_referral_code');
+    Route::post('register/check_email', [RegisterController::class, 'check_email'])->name('check_email');
     Route::post('login', [LoginController::class, 'login'])->name('login');
     Route::get('login', [LoginController::class, 'index'])->name('login');
 });
+Route::get('/forgot-password', [LoginController::class, 'forgot_password'])->name('forgot_password');
+Route::post('/send-new-password', [LoginController::class, 'send_new_password'])->name('send_new_password');
 Route::post('login/check_username', [LoginController::class, 'check_username'])->name('check_username');
 Route::post('login/check_phone', [LoginController::class, 'check_phone'])->name('check_phone');
 
@@ -49,7 +52,7 @@ Route::middleware(['role:member', 'checkBanned'])->group(function () {
     Route::post('/bank_link', [HomeController::class, 'bank_link'])->name('bank_link');
     Route::post('change-password', [LoginController::class, 'change_password'])->name('change_password');
     Route::post('change-transaction-password', [LoginController::class, 'change_transaction_password'])->name('change_transaction_password');
-    Route::post('/reset-transaction-password',[LoginController::class,'reset_transaction_password'])->name('reset_transaction_password');
+    Route::post('/reset-transaction-password', [LoginController::class, 'reset_transaction_password'])->name('reset_transaction_password');
 });
 Route::get('/log-out', [LoginController::class, 'log_out'])->name('logout')->middleware('auth');
 Route::get('/log-out-by-locked', [LoginController::class, 'log_out_by_locked'])->name('log_out_by_locked')->middleware('auth');

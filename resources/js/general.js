@@ -62,6 +62,7 @@ document.addEventListener('DOMContentLoaded', function () {
         let valid = true;
         let username_register = document.getElementById('username_register');
         let phone_register = document.getElementById('phone_register');
+        let email_register = document.getElementById('email_register');
         let password_register = document.getElementById('password_register');
         let repassword_register = document.getElementById('repassword_register');
         let referral_code_register = document.getElementById('referral_code_register');
@@ -72,7 +73,7 @@ document.addEventListener('DOMContentLoaded', function () {
             spinner.hidden = true;
             return;
         }
-        if (username_register.value && phone_register.value && password_register.value && repassword_register.value) {
+        if (username_register.value && phone_register.value && password_register.value && repassword_register.value && email_register.value) {
             if (referral_code_register.value) {
                 let check_user_existed = await check_referral_code(referral_code_register.value);
                 if (!check_user_existed) {
@@ -82,20 +83,36 @@ document.addEventListener('DOMContentLoaded', function () {
                     return;
                 }
             }
-            if (username_register.value.length < 6) {
-                notification('warning', 'Tên đăng nhập phải từ 6 ký tự trở lên!', 'Cảnh báo!');
+            let check_email_existed = await check_email(email_register.value);
+            if (!check_email_existed) {
+                notification('warning', 'Email đã tồn tại, vui lòng thử lại!', 'Cảnh báo!');
                 valid = false;
                 spinner.hidden = true;
                 return;
             }
-            if (phone_register.value.length < 10) {
-                notification('warning', 'Số điện thoại phải từ 10 số trở lên!', 'Cảnh báo!');
+
+            if (username_register.value.length < 6 || username_register.value.length > 255) {
+                notification('warning', 'Tên đăng nhập tối thiểu 6 ký tự và tối đa 255 ký tự!', 'Cảnh báo!');
                 valid = false;
                 spinner.hidden = true;
                 return;
             }
-            if (!phone_register.value.trim() || isNaN(phone_register.value)) {
-                notification('warning', 'Số điện thoại phải là số!', 'Cảnh báo!');
+            function isValidPhone(phone) {
+                const re = /^(0|\+84)[0-9]{9,10}$/;
+                return re.test(phone);
+            }
+            if (!isValidPhone(phone_register.value)) {
+                notification('warning', 'Số điện thoại không hợp lệ', 'Cảnh báo!');
+                valid = false;
+                spinner.hidden = true;
+                return;
+            }
+            function isValidEmail(email) {
+                const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                return re.test(email);
+            }
+            if (!isValidEmail(email_register.value)) {
+                notification('warning', 'Email không hợp lệ', 'Cảnh báo!');
                 valid = false;
                 spinner.hidden = true;
                 return;
@@ -132,6 +149,30 @@ document.addEventListener('DOMContentLoaded', function () {
                         resolve(false);
                     } else {
                         resolve(true);
+                    }
+                },
+                error: function (xhr) {
+                    console.error(xhr.responseText);
+                    notification('error', 'Không thể kiểm tra dữ liệu!', 'Lỗi');
+                    reject();
+                }
+            });
+        })
+    }
+    function check_email(email) {
+        return new Promise((resolve, reject) => {
+            $.ajax({
+                url: route_check_email,
+                method: "POST",
+                data: {
+                    _token: csrf,
+                    email: email
+                },
+                success: function (response) {
+                    if (response.success == false) {
+                        resolve(true);
+                    } else {
+                        resolve(false);
                     }
                 },
                 error: function (xhr) {
