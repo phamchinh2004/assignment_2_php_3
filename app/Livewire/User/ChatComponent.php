@@ -164,6 +164,7 @@ class ChatComponent extends Component
                 'type' => 'image',
                 'image_path' => $imagePath,
             ]);
+            $this->conversation->touch();
 
             $imageMessage->load('sender');
             $messages[] = $this->formatMessage($imageMessage);

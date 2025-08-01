@@ -82,13 +82,13 @@ class LoginController extends Controller
                 if ($get_user_by_username->status === "inactivated") {
                     $response = [
                         'success' => true,
-                        'message' => 'Vui lòng liên hệ CSKH để kích hoạt tài khoản!',
+                        'message' => 'Vui lòng chờ để kích hoạt tài khoản, có thể mất 1-5 phút!',
                         'refresh' => true
                     ];
                 } elseif ($get_user_by_username->status === "banned") {
                     $response = [
                         'success' => true,
-                        'message' => 'Tài khoản bị khóa, vui lòng liên hệ CSKH!',
+                        'message' => 'Tài khoản đã bị khóa!',
                         'refresh' => true
                     ];
                 } else {

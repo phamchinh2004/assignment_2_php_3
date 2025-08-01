@@ -91,4 +91,18 @@ class User extends Authenticatable
     {
         return $this->belongsTo(User_spin_progress::class, 'user_id');
     }
+    public function conversations()
+    {
+        return $this->hasMany(Conversation::class, 'staff_id');
+    }
+    public function conversation()
+    {
+        return $this->hasOne(Conversation::class, 'user_id');
+    }
+
+    public function latestConversation()
+    {
+        return $this->hasOne(Conversation::class, 'user_id')
+            ->latestOfMany('updated_at');
+    }
 }

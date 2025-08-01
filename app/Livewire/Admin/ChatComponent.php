@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Models\Conversation;
 use App\Models\Message;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\On;
 use Livewire\WithFileUploads;
 
@@ -35,10 +36,17 @@ class ChatComponent extends Component
     {
         $this->loadConversations();
         if (Auth::user()->role === 'admin') {
-            $this->loadStaffUsers();
+            $this->loadStaffUsersAlternative();
         }
     }
+    public function refreshChatState()
+    {
+        $this->loadConversations();
 
+        if (Auth::user()->role === 'admin') {
+            $this->loadStaffUsersAlternative();
+        }
+    }
     public function getSelectedConversationProperty()
     {
         return $this->conversations->firstWhere('id', $this->selectedConversationId);
@@ -48,6 +56,7 @@ class ChatComponent extends Component
     {
         $user = Auth::user();
 
+        // Main query
         $query = Conversation::with([
             'user',
             'staff',
@@ -55,7 +64,8 @@ class ChatComponent extends Component
                 $query->latest()->limit(1);
             }
         ])
-            ->whereHas('messages');
+            ->orderByDesc('updated_at')
+            ->select('conversations.*');
 
         if ($user->role === 'staff') {
             $query->where('staff_id', $user->id);
@@ -68,22 +78,84 @@ class ChatComponent extends Component
             });
         }
 
-        $this->conversations = $query->orderBy('updated_at', 'desc')->get();
+        $this->conversations = $query->get();
     }
     public function updatedSearchTerm()
     {
         $this->loadConversations();
+        if (Auth::user()->role === 'admin') {
+            $this->loadStaffUsersAlternative();
+        }
     }
 
-    public function loadStaffUsers()
+    // public function loadStaffUsers()
+    // {
+    //     $this->staffUsers = User::where('role', 'staff')
+    //         ->with([
+    //             'invitedUsers' => function ($query) {
+    //                 $query->where('role', 'member')
+    //                     ->with([
+    //                         'latestConversation' => function ($subQuery) {
+    //                             $subQuery->with([
+    //                                 'messages' => function ($msgQuery) {
+    //                                     $msgQuery->latest('created_at')->limit(1);
+    //                                 }
+    //                             ]);
+    //                         }
+    //                     ]);
+    //             }
+    //         ])
+    //         ->get();
+
+    //     // Sắp xếp các invitedUsers theo thời gian tin nhắn mới nhất
+    //     foreach ($this->staffUsers as $staff) {
+    //         $staff->invitedUsers = $staff->invitedUsers->sortByDesc(function ($user) {
+    //             // Lấy tin nhắn mới nhất từ conversation
+    //             $latestMessage = optional($user->latestConversation)->messages->first();
+    //             return $latestMessage ? $latestMessage->created_at : null;
+    //         })->values(); // reset lại index
+    //     }
+    // }
+
+    // Alternative method nếu bạn muốn dùng updated_at của conversation
+
+    public function loadStaffUsersAlternative()
     {
-        // Lấy danh sách nhân viên và người dùng
-        $this->staffUsers = User::where('role', 'staff')
-            ->with(['invitedUsers' => function ($query) {
-                $query->where('role', 'user');
-            }])
+        $staffData = User::where('role', 'staff')
+            ->with([
+                'invitedUsers' => function ($query) {
+                    $query->where('role', 'member')
+                        ->with([
+                            'latestConversation.messages' // Eager load cả messages luôn
+                        ]);
+                }
+            ])
             ->get();
+
+        // Tạo collection mới để đảm bảo reference được cập nhật đúng
+        $this->staffUsers = collect();
+
+        foreach ($staffData as $staff) {
+            // Sắp xếp invitedUsers
+            $sortedUsers = $staff->invitedUsers
+                ->sortByDesc(function ($user) {
+                    if ($user->latestConversation) {
+                        return $user->latestConversation->updated_at;
+                    }
+                    return '1900-01-01 00:00:00';
+                })
+                ->values();
+
+            // Gán lại sorted users cho staff
+            $staff->setRelation('invitedUsers', $sortedUsers);
+
+            // Thêm vào collection mới
+            $this->staffUsers->push($staff);
+        }
     }
+
+
+
 
     public function selectConversation($conversationId)
     {
@@ -92,6 +164,9 @@ class ChatComponent extends Component
         $this->hasMoreMessages = true;
 
         $this->loadMessages();
+        if (Auth::user()->role === 'admin') {
+            $this->loadStaffUsersAlternative();
+        }
         $this->dispatch('join-conversation-channel', conversationId: $conversationId);
         $this->dispatch('conversation-selected');
     }
@@ -113,6 +188,9 @@ class ChatComponent extends Component
             $this->messages = [];
 
             $this->loadConversations();
+            if (Auth::user()->role === 'admin') {
+                $this->loadStaffUsersAlternative();
+            }
             $this->dispatch('scroll-to-bottom');
 
             $this->dispatch('swal', [
@@ -169,6 +247,9 @@ class ChatComponent extends Component
         }
         $getUser->save();
         $this->loadConversations();
+        if (Auth::user()->role === 'admin') {
+            $this->loadStaffUsersAlternative();
+        }
         $this->loadMessages();
     }
     private function loadMessages($page = 1)
@@ -261,6 +342,7 @@ class ChatComponent extends Component
             // Thêm staffId vào danh sách mở rộng
             $this->expandedStaff[] = $staffId;
         }
+        $this->loadStaffUsersAlternative();
     }
 
     public function selectUserForChat($userId, $staffId = null)
@@ -305,7 +387,6 @@ class ChatComponent extends Component
                 'image_path' => $imagePath,
                 'type' => $imagePath ? 'image' : 'text'
             ]);
-
             $message->load('sender');
             $this->selectedConversation->touch();
 
@@ -333,6 +414,9 @@ class ChatComponent extends Component
             $this->dispatch('reset-message-input');
             $this->dispatch('scroll-to-bottom');
             $this->loadConversations();
+            if (Auth::user()->role === 'admin') {
+                $this->loadStaffUsersAlternative();
+            }
             $this->dispatch('refresh-conversations');
         } catch (\Throwable $e) {
             logger('Send message failed:', ['error' => $e->getMessage()]);
@@ -370,6 +454,9 @@ class ChatComponent extends Component
         }
 
         $this->loadConversations();
+        if (Auth::user()->role === 'admin') {
+            $this->loadStaffUsersAlternative();
+        }
         $this->dispatch('refresh-conversations');
     }
 

@@ -120,10 +120,12 @@ class RegisterController extends Controller
             return redirect()->route('home')->with('success', 'Đăng nhập thành công!');
         } else {
             $get_admin = User::where('role', 'admin')->first();
-            Conversation::create([
-                'staff_id' => $get_admin->id,
-                'user_id' => $user->id
-            ]);
+            if($get_admin){
+                Conversation::create([
+                    'staff_id' => $get_admin->id,
+                    'user_id' => $user->id
+                ]);
+            }
             return redirect()->route('login')->with('success', 'Tạo tài khoản thành công, vui lòng liên hệ CSKH để kích hoạt tài khoản!');
         }
     }
