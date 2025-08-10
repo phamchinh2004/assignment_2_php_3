@@ -478,7 +478,7 @@
                         <div class="special-title">>>> Thông Báo Đặc Biệt <<< </div>
                                 <p><strong>Sự kiện cặp đôi Tình nhân</strong></p>
                                 <p>Khi khách hàng tham gia sự kiện cặp đôi mỗi tài khoản sẽ được thưởng <span class="reward-amount">52$</span> và còn nhiều giải thưởng khác!</p>
-                                <p>Nhanh tay tham gia sự kiện chỉ tri ân tháng 7 này, chúc bạn may mắn khi tham gia.</p>
+                                <p>Nhanh tay tham gia sự kiện chỉ tri ân tháng {{date('m')}} này, chúc bạn may mắn khi tham gia.</p>
                         </div>
                     </div>
                 </div>
