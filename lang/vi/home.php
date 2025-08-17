@@ -72,7 +72,7 @@ return [
     "ChucMungBanNhanDuocDonHangDacBiet" => "Chúc mừng! Bạn nhận được đơn hàng đặc biệt!",
     "CoDonHangDangBiDongBang" => "Có đơn hàng đang bị đóng băng, vui lòng truy cập trang lịch sử đơn hàng để xử lý!",
     "CoDonHangChuaXuLy" => "Có đơn hàng chưa xử lý, vui lòng truy cập trang lịch sử đơn hàng để xử lý đơn hàng!",
-    "LuotQuayDaDatDenGioiHanToiDa" => "Lượt quay đã đạt đến giới hạn tối đa!",
+    "LuotQuayDaDatDenGioiHanToiDa" => "Lượt quay đã đạt đến giới hạn tối đa trong ngày!",
     "DaXayRaLoiKhiKiemTraDonHang" => "Đã xảy ra lỗi khi kiểm tra đơn hàng!",
     "BanChuaCoGianHang" => "Bạn chưa có gian hàng!",
 

@@ -143,6 +143,16 @@ class HomeController extends Controller
                             'message' => __('home.CoDonHangDangBiDongBang')
                         ]);
                     } else {
+                        $rank = Rank::find($query_current_spin->rank_id);
+                        if ($rank->spin_count == $query_current_spin->current_spin) {
+                            return response()->json([
+                                'status' => 400,
+                                'is_frozen' => false,
+                                'is_order_special' => false,
+                                'is_new_order' => false,
+                                'message' => __('home.LuotQuayDaDatDenGioiHanToiDa')
+                            ]);
+                        }
                         $order = Order::where('index', $query_current_spin->current_spin + 1)->where('rank_id', $query_current_spin->rank_id)->first();
                         if (!$order) {
                             return response()->json([
