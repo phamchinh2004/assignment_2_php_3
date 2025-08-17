@@ -20,10 +20,10 @@ class StaffController extends Controller
     public function index()
     {
         $list_staffs = User::with('referrer')
-            ->withSum(['wallet_balance_histories as total_deposit' => function ($q) {
+            ->withSum(['deposits_made as total_deposit' => function ($q) {
                 $q->where('type', 'deposit')
                     ->where('status', 'completed');
-                    // ->where('by_user_id', Auth::user()->id);
+                // ->where('by_user_id', Auth::user()->id);
             }], 'value')
             ->where('role', 'staff')
             ->get();
@@ -67,7 +67,7 @@ class StaffController extends Controller
                 User_manager_setting::create([
                     'user_id' => $staff_id,
                     'manager_setting_id' => $item_manager_setting->id,
-                    'is_active' => false, 
+                    'is_active' => false,
                 ]);
             }
         }

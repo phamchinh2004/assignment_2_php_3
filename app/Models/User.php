@@ -87,6 +87,10 @@ class User extends Authenticatable
     {
         return $this->hasMany(Wallet_balance_history::class);
     }
+    public function deposits_made()
+    {
+        return $this->hasMany(Wallet_balance_history::class, 'by_user_id');
+    }
     public function user_spin_progress()
     {
         return $this->belongsTo(User_spin_progress::class, 'user_id');
