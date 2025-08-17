@@ -101,6 +101,9 @@ Danh sách người dùng
                                 @if (!$should_show_button)
                                 <span class="text-white badge badge-danger">Đã đóng băng đơn hàng</span>
                                 @endif
+                                @if ($item->clone_account)
+                                <span class="text-white badge badge-primary">Đây là tài khoản clone</span>
+                                @endif
                             </td>
                             <td>{{$item->created_at}}</td>
                             <td>{{$item->updated_at}}</td>
