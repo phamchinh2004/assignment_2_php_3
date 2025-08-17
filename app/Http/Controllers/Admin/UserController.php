@@ -39,7 +39,7 @@ class UserController extends Controller
                 }
             }
         }
-        $users = $query->get();
+        $users = $query->latest('id')->get();
         return view('admin.user.index', compact('users'));
     }
 
