@@ -224,7 +224,10 @@
     </div>
     <div class="mt-3 d-flex justify-content-center align-items-center text-white">
         @if ($user_spin_progress && $rank)
-        <span>Đã quay được: {{ $user_spin_progress->current_spin."/". $rank->spin_count ." đơn hàng"}}</span>
+        <span>
+            Đã quay được:
+            <span id="current_spin">{{ $user_spin_progress->current_spin }}</span>/{{ $rank->spin_count }} đơn hàng
+        </span>
         @else
         <span>Chưa có cấp độ</span>
         @endif

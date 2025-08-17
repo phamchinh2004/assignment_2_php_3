@@ -188,12 +188,33 @@ class UserController extends Controller
             return redirect()->route('user.index')->with('error', 'Không tìm thấy người dùng cần thay đổi trạng thái!');
         }
     }
-    public function frozenOrderInterface(User $user)
+    public function frozenOrderInterface(?User $user)
     {
+        if (!$user) {
+            abort(404, 'User not found');
+        }
+
+        if (!$user->rank_id) {
+            $defaultRank = Rank::first();
+            if (!$defaultRank) {
+                abort(500, 'No default rank available');
+            }
+
+            $user->rank_id = $defaultRank->id;
+            $user->save();
+        }
+
+        // Lấy order theo rank của user
         $list_orders = Order::where('rank_id', $user->rank_id)->get();
-        $progress = User_spin_progress::where('user_id', $user->id)->where('rank_id', $user->rank_id)->first();
+
+        // Lấy hoặc tạo progress
+        $progress = User_spin_progress::firstOrCreate(
+            ['user_id' => $user->id, 'rank_id' => $user->rank_id]
+        );
+
         return view('admin.user.frozen_order', compact('list_orders', 'progress', 'user'));
     }
+
     public function editFrozenOrderInterface(User $user, $id)
     {
         $list_orders = Order::where('rank_id', $user->rank_id)->get();
@@ -216,9 +237,9 @@ class UserController extends Controller
             return back()->with('error', 'Không tìm thấy tiến trình quay của người dùng!');
         }
         $get_rank = Rank::find($user->rank_id);
-        if ($get_progress_user->current_spin >= $get_order_by_id->index && $get_rank->spin_count > $get_progress_user->current_spin) {
-            return back()->with('error', 'Không được chọn đơn hàng trước đó!');
-        }
+        // if ($get_progress_user->current_spin >= $get_order_by_id->index && $get_rank->spin_count > $get_progress_user->current_spin) {
+        //     return back()->with('error', 'Không được chọn đơn hàng trước đó!');
+        // }
         $check_frozen_order = Frozen_order::where('order_id', $request->order)->where('user_id', $user->id)->where('is_frozen', true)->first();
         if ($check_frozen_order) {
             return back()->with('error', 'Đã đóng băng đơn hàng này!');

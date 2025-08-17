@@ -353,6 +353,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     }, 1000);
                 }, 1000);
             }, 0);
+            let current_spin = document.getElementById('current_spin');
+            current_spin.innerText = currentIndex;
         } else if (result.status === 409) {
             notification('warning', result.message, trans.CanhBao);
         } else {

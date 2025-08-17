@@ -46,13 +46,10 @@ Thêm mới người dùng
                     @foreach ($list_orders as $order)
                     <option
                         value="{{ $order['id'] }}"
-                        class="{{ $order->index===$progress->current_spin?'text-success fw-bold':'' }}"
-                        {{ $order->index<=$progress->current_spin?"disabled":"" }}>
+                        class="{{ $order->index===$progress->current_spin?'text-success fw-bold':'' }}">
                         {{$order->index}} -
                         {{Str::limit( $order->name ,30,'...')}}
-                        {{ $order->index }}
-                        {{ $progress->current_spin }}
-                        {{ $order->index==$progress->current_spin?" - Hiện tại":"" }}
+                        {{ $order->index==$progress->current_spin?" - Đã quay đến đây":"" }}
                     </option>
                     @endforeach
                     @endif
