@@ -19,7 +19,7 @@ class TransactionHistoryController extends Controller
      */
     public function index_withdraw()
     {
-        $query = Wallet_balance_history::with('user', 'byUser')
+        $query = Wallet_balance_history::with('user', 'byUser')->where('user.clone_account', 0)
             ->where('type', 'withdraw');
         if (Auth::user()->role === "staff") {
             $get_quan_ly_tat_ca_giao_dich_nguoi_dung = Manager_setting::where('manager_code', 'quan_ly_tat_ca_giao_dich_nguoi_dung')->first();
@@ -75,7 +75,7 @@ class TransactionHistoryController extends Controller
     }
     public function index_deposit()
     {
-        $query = Wallet_balance_history::with('user', 'byUser')->where('type', 'deposit');
+        $query = Wallet_balance_history::with('user', 'byUser')->where('user.clone_account', 0)->where('type', 'deposit');
         if (Auth::user()->role === "staff") {
             $get_quan_ly_tat_ca_giao_dich_nguoi_dung = Manager_setting::where('manager_code', 'quan_ly_tat_ca_giao_dich_nguoi_dung')->first();
             if ($get_quan_ly_tat_ca_giao_dich_nguoi_dung) {

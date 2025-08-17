@@ -84,5 +84,5 @@ Route::get('revenue-distribution', [StatisticalController::class, 'revenueDistri
 Route::get('customer-revenue-detail', [StatisticalController::class, 'customerRevenueDetail']);
 
 
-Route::get('/personal-revenue-stats', [StatisticalController::class, 'getPersonalRevenueStats']);
-Route::get('/personal-transactions', [StatisticalController::class, 'getPersonalTransactions']);
+// Route::get('/personal-revenue-stats', [StatisticalController::class, 'getPersonalRevenueStats']);
+// Route::middleware('auth')->get('/personal-transactions', [StatisticalController::class, 'getPersonalTransactions']);

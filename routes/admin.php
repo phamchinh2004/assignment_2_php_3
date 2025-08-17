@@ -106,5 +106,7 @@ Route::middleware(['role:admin'])->group(function () {
     Route::get('chart', [StatisticalController::class, 'getRevenueChart'])
         ->name('api.revenue.chart');
     Route::get('doanh-thu-tu-khach-hang', [StatisticalController::class, 'doanhThuTuKhachHang'])->name('doanh.thu.tu.khach.hang');
-    Route::get('doanh-thu-ban-than', [StatisticalController::class, 'doanhThuBanThan'])->name('doanh.thu.ban.than');
 });
+Route::get('doanh-thu-ban-than', [StatisticalController::class, 'doanhThuBanThan'])->name('doanh.thu.ban.than');
+Route::get('/personal-revenue-stats', [StatisticalController::class, 'getPersonalRevenueStats']);
+Route::middleware('auth')->get('/personal-transactions', [StatisticalController::class, 'getPersonalTransactions']);

@@ -123,12 +123,17 @@ class UserController extends Controller
         $data = $request->only(['full_name', 'username', 'phone', 'balance']);
         $data['rank_id'] = $request->rank;
         $reset_progress = $request->has('reset_progress');
+        $clone_account = $request->has('clone_account');
         $progress = User_spin_progress::where('user_id', $user->id)->first();
         if ($reset_progress && $progress) {
             $progress->current_spin = 0;
             $progress->save();
         }
-
+        if ($clone_account) {
+            $data['clone_account'] = true;
+        } else {
+            $data['clone_account'] = false;
+        }
         if ($request->rank) {
             if ($progress) {
                 $progress->rank_id = $request->rank;

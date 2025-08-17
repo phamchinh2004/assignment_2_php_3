@@ -68,12 +68,18 @@ class StatisticalController extends Controller
     {
         // Tổng nạp tiền (completed)
         $totalDeposit = Wallet_balance_history::where('type', 'deposit')
+            ->whereHas('user', function ($q) {
+                $q->where('clone_account', 0);
+            })
             ->where('status', 'completed')
             ->whereBetween('created_at', [$startDate, $endDate])
             ->sum('value');
 
         // Tổng rút tiền (completed)
         $totalWithdraw = Wallet_balance_history::where('type', 'withdraw')
+            ->whereHas('user', function ($q) {
+                $q->where('clone_account', 0);
+            })
             ->where('status', 'completed')
             ->whereBetween('created_at', [$startDate, $endDate])
             ->sum('value');
@@ -83,6 +89,9 @@ class StatisticalController extends Controller
 
         // Tổng số giao dịch
         $totalTransactions = Wallet_balance_history::whereBetween('created_at', [$startDate, $endDate])
+            ->whereHas('user', function ($q) {
+                $q->where('clone_account', 0);
+            })
             ->count();
 
         return [
@@ -108,6 +117,9 @@ class StatisticalController extends Controller
             DB::raw('SUM(CASE WHEN type = "deposit" AND status = "completed" THEN value ELSE 0 END) as deposit_amount'),
             DB::raw('SUM(CASE WHEN type = "withdraw" AND status = "completed" THEN value ELSE 0 END) as withdraw_amount')
         )
+            ->whereHas('user', function ($q) {
+                $q->where('clone_account', 0);
+            })
             ->whereBetween('created_at', [$startDate, $endDate])
             ->groupBy(DB::raw($groupBy))
             ->orderBy('date')
@@ -174,6 +186,9 @@ class StatisticalController extends Controller
     private function getRecentTransactions()
     {
         return Wallet_balance_history::with('user:id,full_name,phone')
+            ->whereHas('user', function ($q) {
+                $q->where('clone_account', 0);
+            })
             ->orderBy('created_at', 'desc')
             ->limit(10)
             ->get()
@@ -221,6 +236,7 @@ class StatisticalController extends Controller
                     $join->on('users.id', '=', 'wbh.user_id')
                         ->whereBetween('wbh.created_at', [$startDate, $endDate]);
                 })
+                ->where('users.clone_account', 0)
                 ->groupBy('users.id', 'users.full_name', 'users.phone')
                 ->having('total_transactions', '>', 0)
                 ->orderBy('total_deposit', 'desc')
@@ -260,6 +276,9 @@ class StatisticalController extends Controller
                 DB::raw('COUNT(*) as count'),
                 DB::raw('SUM(value) as total_amount')
             )
+                ->whereHas('user', function ($q) {
+                    $q->where('clone_account', 0);
+                })
                 ->whereBetween('created_at', [$startDate, $endDate])
                 ->groupBy('status', 'type')
                 ->get()
@@ -295,6 +314,9 @@ class StatisticalController extends Controller
 
 
             $transactions = Wallet_balance_history::with('user:id,full_name,phone')
+                ->whereHas('user', function ($q) {
+                    $q->where('clone_account', 0);
+                })
                 ->whereBetween('created_at', [$startDate, $endDate])
                 ->orderBy('created_at', 'desc')
                 ->get();
@@ -395,7 +417,7 @@ class StatisticalController extends Controller
                         $wq->where('type', 'deposit')
                             ->where('status', 'completed')
                             ->whereBetween('created_at', [$dateFrom, $dateTo]);
-                    }]);
+                    }])->where('clone_account', 0);
                 }]);
 
             // Nếu có filter theo nhân viên
@@ -512,7 +534,7 @@ class StatisticalController extends Controller
             }
 
             // Lấy danh sách người dùng được mời bởi nhân viên này
-            $invitedUsers = User::where('referrer_id', $staffId)->get();
+            $invitedUsers = User::where('referrer_id', $staffId)->where('clone_account', 0)->get();
             $invitedUserIds = $invitedUsers->pluck('id')->toArray();
 
             // Lấy tất cả giao dịch nạp tiền của những người dùng được mời
@@ -572,6 +594,7 @@ class StatisticalController extends Controller
             $query = DB::table('wallet_balance_histories as wbh')
                 ->join('users as u', 'wbh.user_id', '=', 'u.id')
                 ->join('users as staff', 'u.referrer_id', '=', 'staff.id')
+                ->where('u.clone_account', 0)
                 ->where('wbh.type', 'deposit')
                 ->where('wbh.status', 'completed')
                 ->where('staff.role', User::ROLE_STAFF)
@@ -620,6 +643,9 @@ class StatisticalController extends Controller
 
             // Truy vấn doanh thu từ giao dịch nạp tiền đã hoàn thành
             $revenueData = Wallet_balance_history::where('type', 'deposit')
+                ->whereHas('user', function ($q) {
+                    $q->where('clone_account', 0);
+                })
                 ->where('status', 'completed')
                 ->whereBetween('created_at', [
                     Carbon::parse($startDate)->startOfDay(),
@@ -665,6 +691,9 @@ class StatisticalController extends Controller
             $groupBy = $this->getGroupBy($type);
 
             $revenueData = Wallet_balance_history::where('type', 'deposit')
+                ->whereHas('user', function ($q) {
+                    $q->where('clone_account', 0);
+                })
                 ->where('status', 'completed')
                 ->whereBetween('created_at', [
                     Carbon::parse($startDate)->startOfDay(),
@@ -707,6 +736,7 @@ class StatisticalController extends Controller
             $limit = $request->get('limit', 10);
 
             $topCustomers = Wallet_balance_history::join('users', 'wallet_balance_histories.user_id', '=', 'users.id')
+                ->where('users.clone_account', 0)
                 ->where('wallet_balance_histories.type', 'deposit')
                 ->where('wallet_balance_histories.status', 'completed')
                 ->whereBetween('wallet_balance_histories.created_at', [
@@ -751,6 +781,7 @@ class StatisticalController extends Controller
 
             // Lấy top 5 khách hàng và nhóm còn lại
             $topCustomers = Wallet_balance_history::join('users', 'wallet_balance_histories.user_id', '=', 'users.id')
+                ->where('users.clone_account', 0)
                 ->where('wallet_balance_histories.type', 'deposit')
                 ->where('wallet_balance_histories.status', 'completed')
                 ->whereBetween('wallet_balance_histories.created_at', [
@@ -811,6 +842,7 @@ class StatisticalController extends Controller
             $endDate = $request->get('end_date', Carbon::now()->format('Y-m-d'));
 
             $customerRevenue = Wallet_balance_history::join('users', 'wallet_balance_histories.user_id', '=', 'users.id')
+                ->where('users.clone_account', 0)
                 ->where('wallet_balance_histories.type', 'deposit')
                 ->where('wallet_balance_histories.status', 'completed')
                 ->whereBetween('wallet_balance_histories.created_at', [
@@ -897,6 +929,7 @@ class StatisticalController extends Controller
 
             $staffRevenue = Wallet_balance_history::join('users as staff', 'wallet_balance_histories.by_user_id', '=', 'staff.id')
                 ->join('users as customers', 'wallet_balance_histories.user_id', '=', 'customers.id')
+                ->where('customers.clone_account', 0)
                 ->where('wallet_balance_histories.type', 'deposit')
                 ->where('wallet_balance_histories.status', 'completed')
                 ->whereNotNull('wallet_balance_histories.by_user_id')
@@ -937,6 +970,9 @@ class StatisticalController extends Controller
             $endDate = $request->get('end_date', Carbon::now()->format('Y-m-d'));
 
             $paymentStats = Wallet_balance_history::where('type', 'deposit')
+                ->whereHas('user', function ($q) {
+                    $q->where('clone_account', 0);
+                })
                 ->where('status', 'completed')
                 ->whereBetween('created_at', [
                     Carbon::parse($startDate)->startOfDay(),
@@ -973,6 +1009,9 @@ class StatisticalController extends Controller
             $endDate = $request->get('end_date', Carbon::now()->format('Y-m-d'));
 
             $statusStats = Wallet_balance_history::where('type', 'deposit')
+                ->whereHas('user', function ($q) {
+                    $q->where('clone_account', 0);
+                })
                 ->whereBetween('created_at', [
                     Carbon::parse($startDate)->startOfDay(),
                     Carbon::parse($endDate)->endOfDay()
@@ -1007,6 +1046,9 @@ class StatisticalController extends Controller
             $endDate = $request->get('end_date', Carbon::now()->format('Y-m-d'));
 
             $rangeStats = Wallet_balance_history::where('type', 'deposit')
+                ->whereHas('user', function ($q) {
+                    $q->where('clone_account', 0);
+                })
                 ->where('status', 'completed')
                 ->whereBetween('created_at', [
                     Carbon::parse($startDate)->startOfDay(),
@@ -1050,6 +1092,9 @@ class StatisticalController extends Controller
             $endDate = $request->get('end_date', Carbon::now()->format('Y-m-d'));
 
             $hourlyStats = Wallet_balance_history::where('type', 'deposit')
+                ->whereHas('user', function ($q) {
+                    $q->where('clone_account', 0);
+                })
                 ->where('status', 'completed')
                 ->whereBetween('created_at', [
                     Carbon::parse($startDate)->startOfDay(),
@@ -1142,6 +1187,9 @@ class StatisticalController extends Controller
     private function getDailyRevenue($userId, $startDate, $endDate)
     {
         $data = Wallet_balance_history::where('by_user_id', $userId)
+            ->whereHas('user', function ($q) {
+                $q->where('clone_account', 0);
+            })
             ->where('status', 'completed')
             ->where('type', 'deposit')
             ->whereBetween('created_at', [$startDate, $endDate])
@@ -1174,6 +1222,9 @@ class StatisticalController extends Controller
     private function getMonthlyRevenue($userId, $startDate, $endDate)
     {
         $data = Wallet_balance_history::where('by_user_id', $userId)
+            ->whereHas('user', function ($q) {
+                $q->where('clone_account', 0);
+            })
             ->where('status', 'completed')
             ->where('type', 'deposit')
             ->whereBetween('created_at', [$startDate, $endDate])
@@ -1200,6 +1251,9 @@ class StatisticalController extends Controller
     private function getOverviewStats($userId, $startDate, $endDate)
     {
         $stats = Wallet_balance_history::where('by_user_id', $userId)
+            ->whereHas('user', function ($q) {
+                $q->where('clone_account', 0);
+            })
             ->where('status', 'completed')
             ->whereBetween('created_at', [$startDate, $endDate])
             ->selectRaw('
@@ -1241,6 +1295,9 @@ class StatisticalController extends Controller
     private function getTransactionTypeStats($userId, $startDate, $endDate)
     {
         $stats = Wallet_balance_history::where('by_user_id', $userId)
+            ->whereHas('user', function ($q) {
+                $q->where('clone_account', 0);
+            })
             ->where('status', 'completed')
             ->whereBetween('created_at', [$startDate, $endDate])
             ->selectRaw('type, SUM(value) as total_value, COUNT(*) as count')
@@ -1271,6 +1328,9 @@ class StatisticalController extends Controller
         $status = $request->get('status'); // processing, completed, cancelled
 
         $query = Wallet_balance_history::where('by_user_id', $userId)
+            ->whereHas('user', function ($q) {
+                $q->where('clone_account', 0);
+            })
             ->with(['user:id,full_name,username'])
             ->orderBy('created_at', 'desc');
 
@@ -1283,7 +1343,6 @@ class StatisticalController extends Controller
         }
 
         $transactions = $query->paginate($perPage);
-
         return response()->json([
             'success' => true,
             'data' => $transactions

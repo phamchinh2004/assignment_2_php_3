@@ -18,7 +18,7 @@ $(document).ready(function () {
         $('#statsCards, #revenueChart, #transactionTypeChart').hide();
 
         $.ajax({
-            url: '/api/personal-revenue-stats',
+            url: '/admin/personal-revenue-stats',
             method: 'GET',
             data: { time_range: timeRange },
             headers: {
@@ -211,14 +211,15 @@ $(document).ready(function () {
 
     function loadRecentTransactions() {
         $.ajax({
-            url: '/api/personal-transactions',
+            url: '/admin/personal-transactions',
             method: 'GET',
             data: { per_page: 10 },
-            headers: {
-                'Authorization': 'Bearer ' + $('meta[name="csrf-token"]').attr('content')
+            xhrFields: {
+                withCredentials: true
             },
             success: function (response) {
                 if (response.success) {
+                    // console.log(response.data);
                     updateTransactionsTable(response.data.data);
                 }
             },

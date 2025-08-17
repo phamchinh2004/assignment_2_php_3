@@ -95,6 +95,7 @@ function loadData() {
         method: 'GET',
         data: params,
         success: function (response) {
+            console.log(response.data);            
             updateCustomerTable(response.data);
         },
         error: function (xhr) {
@@ -243,38 +244,19 @@ function updateRevenueDistributionChart(data) {
 }
 
 function updateCustomerTable(data) {
-
-    const tableBody = $('#customerRevenueTableBody');
-    tableBody.empty();
-
-    data.forEach(function (item, index) {
-        const row = `
-            <tr>
-                <td>${index + 1}</td>
-                <td>${item.full_name}</td>
-                <td>${item.phone}</td> <!-- hoặc dùng item.phone nếu có -->
-                <td>${item.transaction_count}</td>
-                <td>${format_currency(item.total_revenue)}</td>
-                <td>${formatDate(item.last_transaction)}</td>
-            </tr>
-        `;
-        tableBody.append(row);
-    });
-
-    // Destroy if exists
-    if ($.fn.DataTable.isDataTable('#customerRevenueTable')) {
-        $('#customerRevenueTable').DataTable().destroy();
-    }
-
-    // Re-init DataTable
-    $('#customerRevenueTable').DataTable({
-        language: {
-            url: "/js/datatables/vi.json"
-        },
-        pageLength: 25,
-        order: [[4, "desc"]]
-    });
+    let table = $('#customerRevenueTable').DataTable();
+    table.clear();
+    table.rows.add(data.map((item, index) => [
+        index + 1,
+        item.full_name,
+        item.phone,
+        item.transaction_count,
+        format_currency(item.total_revenue),
+        formatDate(item.last_transaction)
+    ]));
+    table.draw();
 }
+
 
 
 

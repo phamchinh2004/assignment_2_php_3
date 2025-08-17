@@ -38,6 +38,8 @@ class User extends Authenticatable
         'status',
         'rank_id',
         'referrer_id',
+        'register_ip',
+        'clone_account'
     ];
 
     /**

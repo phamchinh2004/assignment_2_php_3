@@ -85,9 +85,13 @@ Chỉnh sửa người dùng
                 <small class="text-danger">{{ $message }}</small>
                 @enderror
             </div>
-            <div class="mt-2 fw-bold form-check">
+            <div class="mt-3 fw-bold form-check">
                 <input type="checkbox" name="reset_progress" id="reset_progress" class="form-check-input" style="transform: scale(1.5);">
-                <label class="form-check-label nsl" for="reset_progress">Làm mới tiến trình</label>
+                <label class="form-check-label nsl ms-2" for="reset_progress">Làm mới tiến trình</label>
+            </div>
+            <div class="mt-3 fw-bold form-check">
+                <input type="checkbox" name="clone_account" id="clone_account" class="form-check-input" style="transform: scale(1.5);" {{$user->clone_account?'checked':''}}>
+                <label class="form-check-label nsl ms-2" for="clone_account">Tài khoản clone</label>
             </div>
             <div class="d-flex mt-3 justify-content-center">
                 <button class="btn btn-warning" type="button" id="btn_submit">Xong</button>

@@ -35,6 +35,7 @@ return new class extends Migration
             $table->foreignIdFor(User::class, 'referrer_id')->nullable()->comment('Được giới thiệu bởi ai');
             $table->foreignIdFor(Rank::class)->nullable()->comment('Cấp độ người dùng');
             $table->string('register_ip', 100)->nullable()->comment('Lưu địa chỉ ip');
+            $table->boolean('clone_account')->default(0)->comment('Đây có phải tài khoản clone không');
             $table->timestamp('email_verified_at')->nullable()->comment('Email đã được xác minh lúc nào');
             $table->rememberToken();
             $table->timestamps();
