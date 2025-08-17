@@ -22,8 +22,8 @@ class StaffController extends Controller
         $list_staffs = User::with('referrer')
             ->withSum(['wallet_balance_histories as total_deposit' => function ($q) {
                 $q->where('type', 'deposit')
-                    ->where('status', 'completed')
-                    ->where('by_user_id', Auth::user()->id);
+                    ->where('status', 'completed');
+                    // ->where('by_user_id', Auth::user()->id);
             }], 'value')
             ->where('role', 'staff')
             ->get();
