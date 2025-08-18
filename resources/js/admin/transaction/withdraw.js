@@ -5,20 +5,37 @@ document.addEventListener('DOMContentLoaded', function () {
     // Hàm đăng ký xử lý sự kiện xác nhận
     function registerConfirmHandler(buttons, options) {
         buttons.forEach(button => {
-            button.addEventListener('click', function (e) {
+            button.addEventListener('click', async function (e) {
                 e.preventDefault();
-                swal({
+
+                const isConfirmed = await swal({
                     title: options.title,
                     text: options.text,
                     icon: options.icon,
                     buttons: true,
                     dangerMode: options.dangerMode,
-                }).then((isConfirmed) => {
-                    if (isConfirmed) {
-                        window.location.href = this.dataset.url;
-                    }
                 });
+
+                if (isConfirmed) {
+                    const isRealWithdraw = await swal({
+                        title: "Xác nhận",
+                        text: "Đây có phải là tiền rút thực không? Nếu chọn 'Không' sẽ là tiền rút ảo, nếu là 'Có' sẽ là tiền rút thực!",
+                        icon: "warning",
+                        buttons: {
+                            no: { text: "Không", value: false },
+                            yes: { text: "Có", value: true },
+                        },
+                        dangerMode: true,
+                    });
+
+                    if (isRealWithdraw !== null) {
+                        window.location.href = this.dataset.url + '?transaction_type=' + isRealWithdraw;
+                    } else {
+                        swal("Chưa xác định loại giao dịch, thao tác lại đi!");
+                    }
+                }
             });
+
         });
     }
 

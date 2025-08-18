@@ -46,6 +46,7 @@ Danh sách cấp độ
                             <th class="tittle_column">Biến động số dư</th>
                             <th class="tittle_column">Số dư hiện tại</th>
                             <th class="tittle_column">Trạng thái</th>
+                            <th class="tittle_column">Loại giao dịch</th>
                             <th class="tittle_column">Ngày nạp tiền</th>
                             <th class="tittle_column">Thao tác</th>
                         </tr>
@@ -59,6 +60,7 @@ Danh sách cấp độ
                             <th class="tittle_column">Biến động số dư</th>
                             <th class="tittle_column">Số dư hiện tại</th>
                             <th class="tittle_column">Trạng thái</th>
+                            <th class="tittle_column">Loại giao dịch</th>
                             <th class="tittle_column">Ngày nạp tiền</th>
                             <th class="tittle_column">Thao tác</th>
                         </tr>
@@ -97,9 +99,15 @@ Danh sách cấp độ
                                 <span class="badge badge-danger">Đã hủy</span>
                                 @endif
                             </td>
+                            <td>
+                                @if($item->transaction_type==="normal")
+                                <span class="badge badge-primary">Giao dịch thường</span>
+                                @elseif($item->transaction_type==="virtual_withdraw")
+                                <span class="badge badge-warning">Giao dịch ảo</span>
+                                @endif
+                            </td>
                             <td>{{$item->created_at}}</td>
                             <td>
-
                                 <div class="mt-1">
                                     @if($item->status==="processing")
                                     <a data-url="{{ route('confirm.withdraw',['transaction'=>$item->id]) }}" class="btn btn-success btn-sm d-flex align-items-center btn_confirm_transaction nowrap">Xác nhận <i class="fas fa-check fa-sm p-2"></i></a>
@@ -108,7 +116,13 @@ Danh sách cấp độ
                                     <span>&nbsp;</span>
                                     @endif
                                 </div>
-
+                                <div class="mt-1">
+                                    @if($item->transaction_type==="normal")
+                                    <a href="{{ route('change.withdraw.transaction.type',['transaction'=>$item->id])}}" class="btn btn-warning btn-sm d-flex align-items-center nowrap">Chuyển sang GD ảo</a>
+                                    @elseif($item->transaction_type==="virtual_withdraw")
+                                    <a href="{{ route('change.withdraw.transaction.type',['transaction'=>$item->id]) }}" class="btn btn-success btn-sm d-flex align-items-center mt-2 nowrap">Chuyển sang GD thường</a>
+                                    @endif
+                                </div>
                             </td>
                         </tr>
                         @endforeach

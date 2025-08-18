@@ -23,6 +23,9 @@ return new class extends Migration
             $table->string('username_bank')->nullable()->comment('Tên chủ tài khoản');
             $table->string('bank_name')->nullable()->comment('Tên ngân hàng');
             $table->string('account_number')->nullable()->comment('Số tài khoản');
+            $table->enum('transaction_type', ['normal', 'bonus', 'virtual_withdraw'])
+                ->default('normal')
+                ->comment('Loại giao dịch: normal = nạp/rút thường, bonus = tiền thưởng, virtual_withdraw = tiền rút ảo');
             $table->timestamps();
         });
     }

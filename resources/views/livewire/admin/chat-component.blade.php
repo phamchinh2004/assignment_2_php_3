@@ -1,4 +1,4 @@
-<div class="d-flex flex-column flex-md-row" id="chat-root" style="height: 100vh; background-color: #f8f9fa;" wire:poll.5s="refreshChatState" wire:id="{{ $this->getId() }}">
+<div class="d-flex flex-column flex-md-row" id="chat-root" style="height: 100vh; background-color: #f8f9fa;" wire:poll.10s="refreshChatState" wire:id="{{ $this->getId() }}">
     <!-- Sidebar trái -->
     <!-- SIDEBAR DẠNG OFFCANVAS (mobile) -->
     <div class="offcanvas offcanvas-start d-md-none" tabindex="-1" id="mobileSidebar" aria-labelledby="mobileSidebarLabel">

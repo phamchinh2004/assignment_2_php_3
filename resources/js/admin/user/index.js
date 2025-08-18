@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (e.target.classList.contains('btn_plus_money')) {
             const id = e.target.id;
 
-            const value = await swal("Nạp thêm tiền:", {
+            const value = await swal("Nạp tiền:", {
                 content: {
                     element: "input",
                     attributes: {
@@ -23,25 +23,50 @@ document.addEventListener('DOMContentLoaded', function () {
             if (isNaN(numberValue) || numberValue < 0) {
                 swal("Giá trị không hợp lệ, vui lòng nhập số hợp lệ!");
             } else {
-                spinner.hidden = false;
-                const result = await plus_money(numberValue, id);
-                if (result.status === 400) {
-                    spinner.hidden = true;
-                    swal(result.message);
-                } else if (result.status === 200) {
-                    spinner.hidden = true;
-                    swal(result.message)
-                        .then(() => {
-                            location.reload();
-                        });
+                const isRealDeposit = await swal({
+                    title: "Xác nhận",
+                    text: "Đây có phải là tiền nạp thực không? Nếu chọn 'Không' sẽ là tiền thưởng, nếu là 'Có' sẽ là tiền mà khách nạp!",
+                    icon: "warning",
+                    buttons: {
+                        no: {
+                            text: "Không",
+                            value: false,
+                        },
+                        yes: {
+                            text: "Có",
+                            value: true,
+                        },
+                    },
+                    dangerMode: true,
+                });
+                console.log(isRealDeposit);
+
+                if (isRealDeposit !== null) {
+                    spinner.hidden = false;
+                    try {
+                        const result = await plus_money(numberValue, id, isRealDeposit);
+                        spinner.hidden = true;
+
+                        if (result.status === 400) {
+                            swal(result.message);
+                        } else if (result.status === 200) {
+                            swal(result.message).then(() => location.reload());
+                        } else {
+                            swal("Có lỗi không mong muốn xảy ra, vui lòng thử lại");
+                        }
+                    } catch (err) {
+                        spinner.hidden = true;
+                        swal("Có lỗi xảy ra, vui lòng thử lại!");
+                    }
+                } else {
+                    swal("Chưa xác định loại giao dịch, thao tác lại đi!");
                 }
-                swal("Có lỗi không mong muốn xảy ra, vui lòng thử lại");
-                spinner.hidden = true;
+
             }
         }
     });
 
-    function plus_money(value, user_id) {
+    function plus_money(value, user_id, isRealDeposit) {
         return new Promise((resolve, reject) => {
             fetch(route_plus_money, {
                 method: "POST",
@@ -51,7 +76,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 },
                 body: JSON.stringify({
                     value: value,
-                    user_id: user_id
+                    user_id: user_id,
+                    isRealDeposit: isRealDeposit,
                 })
             })
                 .then(response => response.json())

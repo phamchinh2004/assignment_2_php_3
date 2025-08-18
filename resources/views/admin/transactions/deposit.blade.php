@@ -45,6 +45,7 @@ Danh sách cấp độ
                             <th class="tittle_column">Biến động số dư</th>
                             <th class="tittle_column">Số dư hiện tại</th>
                             <th class="tittle_column">Ngày nạp tiền</th>
+                            <th class="tittle_column">Loại giao dịch</th>
                             <th class="tittle_column">Thao tác</th>
                         </tr>
                     </thead>
@@ -57,6 +58,7 @@ Danh sách cấp độ
                             <th class="tittle_column">Biến động số dư</th>
                             <th class="tittle_column">Số dư hiện tại</th>
                             <th class="tittle_column">Ngày nạp tiền</th>
+                            <th class="tittle_column">Loại giao dịch</th>
                             <th class="tittle_column">Thao tác</th>
                         </tr>
                     </tfoot>
@@ -84,6 +86,20 @@ Danh sách cấp độ
                             </td>
                             <td>{{$item->created_at}}</td>
                             <td>
+                                @if($item->transaction_type==="normal")
+                                <span class="badge badge-success">Tiền nạp thực</span>
+                                @elseif($item->transaction_type==="bonus")
+                                <span class="badge badge-primary">Tiền nạp thưởng</span>
+                                @endif
+                            </td>
+                            <td>
+                                <div class="mt-1">
+                                    @if($item->transaction_type==="normal")
+                                    <a href="{{ route('change.deposit.transaction.type',['transaction'=>$item->id])}}" class="btn btn-warning btn-sm d-flex align-items-center nowrap">Chuyển sang GD tiền thưởng</a>
+                                    @elseif($item->transaction_type==="bonus")
+                                    <a href="{{ route('change.deposit.transaction.type',['transaction'=>$item->id]) }}" class="btn btn-success btn-sm d-flex align-items-center mt-2 nowrap">Chuyển sang GD thường</a>
+                                    @endif
+                                </div>
                                 <div class="d-flex flex-row justify-content-center mt-2">
                                     <form id="form" action="{{ route('destroy.deposit',['transaction'=>$item->id]) }}" method="post">
                                         @csrf

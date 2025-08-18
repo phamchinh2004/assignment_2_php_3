@@ -19,7 +19,10 @@ class TransactionHistoryController extends Controller
      */
     public function index_withdraw()
     {
-        $query = Wallet_balance_history::with('user', 'byUser')->where('user.clone_account', 0)
+        $query = Wallet_balance_history::with('user', 'byUser')
+            ->whereHas('user', function ($q) {
+                $q->where('clone_account', 0);
+            })
             ->where('type', 'withdraw');
         if (Auth::user()->role === "staff") {
             $get_quan_ly_tat_ca_giao_dich_nguoi_dung = Manager_setting::where('manager_code', 'quan_ly_tat_ca_giao_dich_nguoi_dung')->first();
@@ -34,12 +37,13 @@ class TransactionHistoryController extends Controller
                 }
             }
         }
-        $list_withdraw_transactions = $query->orderByRaw("wallet_balance_histories.status='processing' DESC")->get();
+        $list_withdraw_transactions = $query->orderByDesc("wallet_balance_histories.id")->get();
         // dd($list_withdraw_transactions); 
         return view('admin.transactions.withdraw', compact('list_withdraw_transactions'));
     }
     public function confirm_withdraw(Wallet_balance_history $transaction)
     {
+        $transaction_type = isset($_GET['transaction_type']) && $_GET['transaction_type'] === "true";
         if ($transaction) {
             if ($transaction->status === "completed") {
                 return back()->with('error', 'Giao dịch đã được xác nhận!');
@@ -47,6 +51,7 @@ class TransactionHistoryController extends Controller
                 return back()->with('error', 'Giao dịch đã bị từ chối!');
             } else {
                 $transaction->status = "completed";
+                $transaction->transaction_type = $transaction_type ? "normal" : "virtual_withdraw";
                 $transaction->by_user_id = Auth::user()->id;
                 $transaction->save();
                 return back()->with('success', 'Đã xác nhận giao dịch thành công!');
@@ -75,7 +80,11 @@ class TransactionHistoryController extends Controller
     }
     public function index_deposit()
     {
-        $query = Wallet_balance_history::with('user', 'byUser')->where('user.clone_account', 0)->where('type', 'deposit');
+        $query = Wallet_balance_history::with('user', 'byUser')
+            ->whereHas('user', function ($q) {
+                $q->where('clone_account', 0);
+            })
+            ->where('type', 'deposit');
         if (Auth::user()->role === "staff") {
             $get_quan_ly_tat_ca_giao_dich_nguoi_dung = Manager_setting::where('manager_code', 'quan_ly_tat_ca_giao_dich_nguoi_dung')->first();
             if ($get_quan_ly_tat_ca_giao_dich_nguoi_dung) {
@@ -108,9 +117,33 @@ class TransactionHistoryController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function change_withdraw_transaction_type(Wallet_balance_history $transaction)
     {
-        //
+        if ($transaction) {
+            if ($transaction->transaction_type === "normal") {
+                $transaction->transaction_type = "virtual_withdraw";
+            } else {
+                $transaction->transaction_type = "normal";
+            }
+            $transaction->save();
+            return back()->with('success', 'Thay đổi loại giao dịch thành công!');
+        } else {
+            return back()->with('success', 'Giao dịch không xác định!');
+        }
+    }
+    public function change_deposit_transaction_type(Wallet_balance_history $transaction)
+    {
+        if ($transaction) {
+            if ($transaction->transaction_type === "normal") {
+                $transaction->transaction_type = "bonus";
+            } else {
+                $transaction->transaction_type = "normal";
+            }
+            $transaction->save();
+            return back()->with('success', 'Thay đổi loại giao dịch thành công!');
+        } else {
+            return back()->with('success', 'Giao dịch không xác định!');
+        }
     }
 
     /**

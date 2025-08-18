@@ -272,6 +272,7 @@ class UserController extends Controller
     {
         $value = request()->input('value');
         $user_id = request()->input('user_id');
+        $isRealDeposit = request()->input(key: 'isRealDeposit');
         if (!is_numeric($value)) {
             return response()->json([
                 'status' => 400,
@@ -301,6 +302,7 @@ class UserController extends Controller
             'type' => 'deposit',
             'status' => 'completed',
             'by_user_id' => Auth::user()->id,
+            'transaction_type' => $isRealDeposit ? "normal" : "bonus"
         ]);
         return response()->json([
             'status' => 200,

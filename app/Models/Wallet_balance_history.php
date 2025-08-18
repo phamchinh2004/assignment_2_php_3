@@ -18,6 +18,7 @@ class Wallet_balance_history extends Model
         'username_bank',
         'bank_name',
         'account_number',
+        'transaction_type'
     ];
     public function user()
     {

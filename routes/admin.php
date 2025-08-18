@@ -55,8 +55,10 @@ Route::middleware(['role:staff|admin', 'checkBanned', 'auth'])->group(function (
     Route::get('/withdraw-transaction', [TransactionHistoryController::class, 'index_withdraw'])->name(name: 'withdraw_transaction');
     Route::get('/confirm-withdraw/{transaction}', [TransactionHistoryController::class, 'confirm_withdraw'])->name('confirm.withdraw');
     Route::get('/cancel-withdraw/{transaction}', [TransactionHistoryController::class, 'cancel_withdraw'])->name('cancel.withdraw');
+    Route::get('/change-withdraw-transaction-type/{transaction}', [TransactionHistoryController::class, 'change_withdraw_transaction_type'])->name(name: 'change.withdraw.transaction.type');
     Route::get('/deposit-transaction', [TransactionHistoryController::class, 'index_deposit'])->name('deposit_transaction');
     Route::delete('/destroy-deposit/{transaction}', [TransactionHistoryController::class, 'destroy_deposit'])->name('destroy.deposit');
+    Route::get('/change-deposit-transaction-type/{transaction}', [TransactionHistoryController::class, 'change_deposit_transaction_type'])->name(name: 'change.deposit.transaction.type');
     // Đã kiểm tra
     Route::get('/chat-panel', [ConversationController::class, 'index'])->name('chat-panel');
 });
