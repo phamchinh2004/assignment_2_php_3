@@ -273,96 +273,145 @@ class HomeController extends Controller
     {
         $user = User::find(Auth::user()->id);
         $rank = Rank::find($user->rank_id);
-        $check = Wallet_balance_history::where('user_id', $user->id)->where('status', 'processing')->where('type', 'withdraw')->first();
-        if ($check) {
-            return response()->json([
-                'status' => 400,
-                'message' => __('home.DangCoMotDonRutTienChuaHoanThanh')
-            ]);
-        }
-        if ($user->count_withdrawals >= $rank->maximum_number_of_withdrawals) {
-            return response()->json([
-                'status' => 400,
-                'message' => __('home.SoLanRutDaDatToiDaTrongNgay')
-            ]);
-        }
-        $amount = floatval(request()->input('amount'));
-        if ($user->balance < $amount) {
-            return response()->json([
-                'status' => 400,
-                'message' => __('home.SoDuKhongDu')
-            ]);
-        }
-        if ($amount > $rank->maximum_withdrawal_amount) {
-            return response()->json([
-                'status' => 400,
-                'message' => __('home.SoTienRutVuotQuaGioiHanQuyDinh')
-            ]);
-        }
-        $username_bank = request()->input('username_bank');
-        $bank_name = request()->input('bank_name');
-        $account_number = request()->input('account_number');
-        $transaction_password = request()->input('transaction_password');
-        $confirm_transaction_password = request()->input('confirm_transaction_password');
-        // return response()->json([
-        //     'status' => 400,
-        //     'message' => 'Vui lòng nhập đầy đủ thông tin!',
-        //     'data' => [
-        //         'username_bank' => $username_bank,
-        //         'bank_name' => $bank_name,
-        //         'account_number' => $account_number,
-        //         'transaction_password' => $transaction_password,
-        //         'confirm_transaction_password' => $confirm_transaction_password,
-        //     ]
-        // ]);
-        if (!$user->transaction_password) {
-            // Kiểm tra đã nhập đầy đủ chưa
-            if (!$transaction_password || !$confirm_transaction_password) {
+        $spin_progress = User_spin_progress::where('user_id', $user->id)->first();
+        if ($user && $rank && $spin_progress) {
+            if ($spin_progress->current_spin < $rank->spin_count) {
                 return response()->json([
                     'status' => 400,
-                    'message' => __('home.VuiLongNhapDayDuThongTin')
+                    'message' => "Bạn chưa hoàn thành tất cả các đơn hàng trong gian hàng!"
                 ]);
+            } else if ($spin_progress->current_spin == $rank->spin_count) {
+                $order = Order::where('index', $rank->spin_count)->where('rank_id', $rank->id)->first();
+                if ($order) {
+                    $frozen_order = Frozen_order::where('order_id', $order->id)->where('user_id', $user->id)->first();
+                    if ($frozen_order) {
+                        if ($frozen_order->spun) {
+                            if ($frozen_order->is_frozen) {
+                                return response()->json([
+                                    'status' => 400,
+                                    'message' => "Bạn chưa hoàn thành tất cả các đơn hàng trong gian hàng!"
+                                ]);
+                            } else {
+                                return response()->json([
+                                    'status' => 400,
+                                    'message' => "Hệ thống đang quá tải vì xử lý đơn rút tiền của rất nhiều người dùng, vui lòng báo với nhân viên chăm sóc khách hàng để được hỗ trợ thủ công, xin cảm ơn!"
+                                ]);
+                            }
+                        } else {
+                            return response()->json([
+                                'status' => 400,
+                                'message' => "Có lỗi xảy ra, vui lòng báo với nhân viên chăm sóc khách hàng, xin cảm ơn!"
+                            ]);
+                        }
+                    } else {
+                        return response()->json([
+                            'status' => 400,
+                            'message' => "Có lỗi xảy ra, vui lòng báo với nhân viên chăm sóc khách hàng, xin cảm ơn!"
+                        ]);
+                    }
+                } else {
+                    return response()->json([
+                        'status' => 400,
+                        'message' => "Kiểm tra đơn hàng đã quay tới không xác định, vui lòng báo với nhân viên chăm sóc khách hàng, xin cảm ơn!"
+                    ]);
+                }
             }
-
-            // Kiểm tra hai mật khẩu có khớp không
-            if ($transaction_password !== $confirm_transaction_password) {
+            $check = Wallet_balance_history::where('user_id', $user->id)->where('status', 'processing')->where('type', 'withdraw')->first();
+            if ($check) {
                 return response()->json([
                     'status' => 400,
-                    'message' => __('home.MatKhauXacNhanKhongKhop')
+                    'message' => __('home.DangCoMotDonRutTienChuaHoanThanh')
                 ]);
             }
+            if ($user->count_withdrawals >= $rank->maximum_number_of_withdrawals) {
+                return response()->json([
+                    'status' => 400,
+                    'message' => __('home.SoLanRutDaDatToiDaTrongNgay')
+                ]);
+            }
+            $amount = floatval(request()->input('amount'));
+            if ($user->balance < $amount) {
+                return response()->json([
+                    'status' => 400,
+                    'message' => __('home.SoDuKhongDu')
+                ]);
+            }
+            if ($amount > $rank->maximum_withdrawal_amount) {
+                return response()->json([
+                    'status' => 400,
+                    'message' => __('home.SoTienRutVuotQuaGioiHanQuyDinh')
+                ]);
+            }
+            $username_bank = request()->input('username_bank');
+            $bank_name = request()->input('bank_name');
+            $account_number = request()->input('account_number');
+            $transaction_password = request()->input('transaction_password');
+            $confirm_transaction_password = request()->input('confirm_transaction_password');
+            // return response()->json([
+            //     'status' => 400,
+            //     'message' => 'Vui lòng nhập đầy đủ thông tin!',
+            //     'data' => [
+            //         'username_bank' => $username_bank,
+            //         'bank_name' => $bank_name,
+            //         'account_number' => $account_number,
+            //         'transaction_password' => $transaction_password,
+            //         'confirm_transaction_password' => $confirm_transaction_password,
+            //     ]
+            // ]);
+            if (!$user->transaction_password) {
+                // Kiểm tra đã nhập đầy đủ chưa
+                if (!$transaction_password || !$confirm_transaction_password) {
+                    return response()->json([
+                        'status' => 400,
+                        'message' => __('home.VuiLongNhapDayDuThongTin')
+                    ]);
+                }
 
-            // Lưu mật khẩu giao dịch
-            $user->transaction_password = password_hash($transaction_password, PASSWORD_DEFAULT);
+                // Kiểm tra hai mật khẩu có khớp không
+                if ($transaction_password !== $confirm_transaction_password) {
+                    return response()->json([
+                        'status' => 400,
+                        'message' => __('home.MatKhauXacNhanKhongKhop')
+                    ]);
+                }
+
+                // Lưu mật khẩu giao dịch
+                $user->transaction_password = password_hash($transaction_password, PASSWORD_DEFAULT);
+                $user->save();
+            } else {
+                if (!password_verify($transaction_password, $user->transaction_password)) {
+                    return response()->json([
+                        'status' => 400,
+                        'message' => __('home.MatKhauGiaoDichKhongChinhXac')
+                    ]);
+                }
+            }
+            $initial_balance = $user->balance;
+            $user->username_bank = $username_bank;
+            $user->bank_name = $bank_name;
+            $user->account_number = $account_number;
+            $user->balance -= $amount;
+            $user->count_withdrawals += 1;
             $user->save();
+            Wallet_balance_history::create([
+                'user_id' => $user->id,
+                'value' => $amount,
+                'initial_balance' => $initial_balance,
+                'type' => "withdraw",
+                'username_bank' => $username_bank,
+                'bank_name' => $bank_name,
+                'account_number' => $account_number,
+            ]);
+            return response()->json([
+                'status' => 200,
+                'message' => __('home.TaoDonRutTienThanhCong')
+            ]);
         } else {
-            if (!password_verify($transaction_password, $user->transaction_password)) {
-                return response()->json([
-                    'status' => 400,
-                    'message' => __('home.MatKhauGiaoDichKhongChinhXac')
-                ]);
-            }
+            return response()->json([
+                'status' => 400,
+                'message' => "Có lỗi xảy ra, vui lòng báo với nhân viên chăm sóc khách hàng!"
+            ]);
         }
-        $initial_balance = $user->balance;
-        $user->username_bank = $username_bank;
-        $user->bank_name = $bank_name;
-        $user->account_number = $account_number;
-        $user->balance -= $amount;
-        $user->count_withdrawals += 1;
-        $user->save();
-        Wallet_balance_history::create([
-            'user_id' => $user->id,
-            'value' => $amount,
-            'initial_balance' => $initial_balance,
-            'type' => "withdraw",
-            'username_bank' => $username_bank,
-            'bank_name' => $bank_name,
-            'account_number' => $account_number,
-        ]);
-        return response()->json([
-            'status' => 200,
-            'message' => __('home.TaoDonRutTienThanhCong')
-        ]);
     }
     /**
      * Show the form for creating a new resource.

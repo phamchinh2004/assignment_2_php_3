@@ -82,6 +82,8 @@ Danh sách cấp độ
                                     <span>Hoa hồng: <b>{{ $item->commission_percentage }}%</b></span>
                                     <span>Tổng giá trị: <b>{{ $item->value }}$</b></span>
                                     <span>Đơn hàng đã tạo: <b>{{ $item->orders_count }}</b></span>
+                                    <span>Số lượt rút tiền tối đa trong 1 ngày: <b>{{ $item->maximum_number_of_withdrawals }}</b></span>
+                                    <span>Số tiền được rút tối đa mỗi lượt: <b>{{ $item->maximum_withdrawal_amount }}</b></span>
                                 </div>
                             </td>
                             <td>{{$item->created_at}}</td>
