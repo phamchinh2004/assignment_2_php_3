@@ -291,11 +291,6 @@ class HomeController extends Controller
                                     'status' => 400,
                                     'message' => "Bạn chưa hoàn thành tất cả các đơn hàng trong gian hàng!"
                                 ]);
-                            } else {
-                                return response()->json([
-                                    'status' => 400,
-                                    'message' => "Hệ thống đang quá tải vì xử lý đơn rút tiền của rất nhiều người dùng, vui lòng báo với nhân viên chăm sóc khách hàng để được hỗ trợ thủ công, xin cảm ơn!"
-                                ]);
                             }
                         } else {
                             return response()->json([
