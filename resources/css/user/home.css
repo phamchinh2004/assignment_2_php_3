@@ -154,7 +154,8 @@ marquee {
     position: fixed;
     z-index: 100 !important;
     width: 65%;
-    height: auto;
+    max-height: 80%;
+    overflow-y: scroll;
     padding: 20px;
     background-color: white;
     top: 45%;
