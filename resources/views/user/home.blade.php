@@ -479,9 +479,9 @@
                     <div class="notification-number">2</div>
                     <div class="special-event">
                         <div class="special-title">>>> Thông Báo Đặc Biệt <<< </div>
-                                <p><strong>Sự kiện cặp đôi Tình nhân</strong></p>
-                                <p>Khi khách hàng tham gia sự kiện cặp đôi mỗi tài khoản sẽ được thưởng <span class="reward-amount">52$</span> và còn nhiều giải thưởng khác!</p>
-                                <p>Nhanh tay tham gia sự kiện chỉ tri ân tháng {{date('m')}} này, chúc bạn may mắn khi tham gia.</p>
+                                <p><strong>Sự kiện mừng Quốc Khánh 2/9</strong></p>
+                                <p>Khi khách hàng tham gia sự kiện đặc biệt, bạn có cơ hội nhận thưởng <span class="reward-amount">lên tới hàng triệu USD</span> cùng nhiều phần quà giá trị khác!</p>
+                                <p>Chương trình chỉ diễn ra trong dịp lễ 2/9 này, hãy nhanh tay tham gia để không bỏ lỡ cơ hội vàng.</p>
                         </div>
                     </div>
                 </div>

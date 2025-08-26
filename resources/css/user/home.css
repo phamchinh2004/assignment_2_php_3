@@ -831,23 +831,46 @@ marquee {
     overflow: hidden;
 }
 
-.special-event::before {
+/* .special-event::before {
     content: '💕';
     position: absolute;
     top: 10px;
     left: 20px;
     font-size: 2rem;
     animation: heartbeat 2s infinite;
+} */
+
+.special-event::before {
+    content: '';
+    position: absolute;
+    top: 10px;
+    left: 20px;
+    width: 40px;
+    height: 25px;
+    background: url('https://upload.wikimedia.org/wikipedia/commons/2/21/Flag_of_Vietnam.svg') no-repeat center/cover;
+    animation: heartbeat 2s infinite;
 }
 
-.special-event::after {
+/* .special-event::after {
     content: '💕';
     position: absolute;
     top: 10px;
     right: 20px;
     font-size: 2rem;
     animation: heartbeat 2s infinite 0.5s;
+} */
+.special-event::after {
+    content: '';
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    width: 40px;
+    height: 25px;
+    background: url('https://upload.wikimedia.org/wikipedia/commons/2/21/Flag_of_Vietnam.svg') no-repeat center/cover;
+    animation: heartbeat 2s infinite 0.5s;
 }
+
+
 
 @keyframes heartbeat {
 
