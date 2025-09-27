@@ -30,7 +30,7 @@
             @csrf
             @method('POST')
             <div>
-                <label for="" class="text-white">Tên đăng nhập test4</label>
+                <label for="" class="text-white">Tên đăng nhập test5</label>
                 <div class="position-relative w-auto">
                     <i class="fa-solid fa-user position-absolute icon-input" style="top: 50%;"></i>
                     <input class="form-control input-text" id="username_login" value="{{ old('username',"") }}" name="username" type="text" placeholder="Nhập tên tài khoản">
