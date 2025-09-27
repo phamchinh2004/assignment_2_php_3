@@ -21,10 +21,10 @@ jobs:
       - name: Deploy to AlmaLinux server
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.USERNAME }}@${{ secrets.HOST }} -p ${{ secrets.PORT }} << 'EOF'
-            cd /var/www/web-for-quyet
+            cd /var/www/amazon
 
             # Fix "dubious ownership" error
-            git config --global --add safe.directory /var/www/web-for-quyet
+            git config --global --add safe.directory /var/www/amazon
 
             # Pull latest code
             git fetch origin main
