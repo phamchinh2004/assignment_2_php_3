@@ -8,16 +8,16 @@
     "devDependencies": {
         "@popperjs/core": "^2.11.6",
         "axios": "^1.6.4",
-        "bootstrap": "^5.3.7",
+        "bootstrap": "^5.3.8",
         "fast-glob": "^3.3.3",
-        "laravel-echo": "^2.1.6",
+        "laravel-echo": "^2.2.4",
         "laravel-vite-plugin": "^1.2.0",
         "pusher-js": "^8.4.0",
         "sass": "^1.56.1",
         "vite": "^6.3.5"
     },
     "dependencies": {
-        "autonumeric": "^4.10.8",
+        "autonumeric": "^4.10.9",
         "fireworks-js": "^2.10.8",
         "sweetalert": "^2.1.2"
     }

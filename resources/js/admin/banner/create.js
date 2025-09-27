@@ -1,3 +1,4 @@
+import swal from 'sweetalert';
 document.addEventListener('DOMContentLoaded', function () {
     const btn_submit = document.getElementById('btn_submit');
     const form = document.getElementById('form');
