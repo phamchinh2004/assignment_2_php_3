@@ -36,17 +36,14 @@ jobs:
             echo "?? Installing dependencies..."
             sudo -u apache /usr/local/bin/composer install --no-dev --optimize-autoloader
             
-            # Frontend build (use root for npm to avoid permission issues)
-            echo "?? Building frontend assets..."
-            if [ -f "package.json" ]; then
-              rm -rf node_modules package-lock.json
-              npm install --no-optional --silent
-              npm run build
-              # Fix ownership after npm operations
-              chown -R apache:apache node_modules public/build public/hot || true
-            else
-              echo "No package.json found, skipping npm build"
-            fi
+            # Frontend build - temporarily skip due to rollup issue
+            echo "?? Skipping frontend build (rollup issue)..."
+            # Complete clean install to fix rollup module issue
+            # rm -rf node_modules package-lock.json .npm .npmrc  
+            # npm cache clean --force
+            # npm install --no-optional
+            # npm run build
+            # chown -R apache:apache node_modules public/build public/hot || true
             
             # Laravel operations
             echo "?? Running Laravel commands..."
