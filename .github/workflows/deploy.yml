@@ -10,47 +10,53 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout code
       - name: Checkout source code
         uses: actions/checkout@v3
 
-      # 2️⃣ Setup SSH agent with private key
       - name: Setup SSH
         uses: webfactory/ssh-agent@v0.5.4
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      # 3️⃣ Deploy to server
       - name: Deploy to server
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.USERNAME }}@${{ secrets.HOST }} -p ${{ secrets.PORT }} bash << 'EOF'
-            set -e  # stop if any command fails
+            set -e
 
-            cd /var/www/amazon
+            # Thư mục project
+            APP_DIR=/var/www/amazon
+            SSH_KEY=$APP_DIR/.ssh/id_ed25519
 
-            # ⚡ Configure safe directory for Apache user
-            sudo -u apache git config --local --add safe.directory /var/www/amazon
+            cd $APP_DIR
 
-            # 1️⃣ Pull latest code
-            sudo -u apache GIT_SSH_COMMAND='ssh -i /var/www/amazon/.ssh/id_ed25519 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/var/www/amazon/.ssh/known_hosts' git fetch origin main
-            sudo -u apache GIT_SSH_COMMAND='ssh -i /var/www/amazon/.ssh/id_ed25519 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/var/www/amazon/.ssh/known_hosts' git reset --hard origin/main
-            sudo -u apache GIT_SSH_COMMAND='ssh -i /var/www/amazon/.ssh/id_ed25519 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/var/www/amazon/.ssh/known_hosts' git clean -fd
+            # Git pull bằng Apache user
+            sudo -u apache GIT_DIR=$APP_DIR/.git GIT_WORK_TREE=$APP_DIR \
+            GIT_SSH_COMMAND="ssh -i $SSH_KEY -o StrictHostKeyChecking=no" \
+            git fetch origin main
 
-            # 2️⃣ Backend dependencies
+            sudo -u apache GIT_DIR=$APP_DIR/.git GIT_WORK_TREE=$APP_DIR \
+            GIT_SSH_COMMAND="ssh -i $SSH_KEY -o StrictHostKeyChecking=no" \
+            git reset --hard origin/main
+
+            sudo -u apache GIT_DIR=$APP_DIR/.git GIT_WORK_TREE=$APP_DIR \
+            GIT_SSH_COMMAND="ssh -i $SSH_KEY -o StrictHostKeyChecking=no" \
+            git clean -fd
+
+            # Backend
             sudo -u apache composer install --no-dev --optimize-autoloader
 
-            # 3️⃣ Frontend build
+            # Frontend
             sudo -u apache npm ci
             sudo -u apache npm run build
 
-            # 4️⃣ Laravel cache & migrations
+            # Laravel cache & migrations
             sudo -u apache php artisan migrate --force
             sudo -u apache php artisan config:cache
             sudo -u apache php artisan route:cache
             sudo -u apache php artisan view:clear
             sudo -u apache php artisan view:cache
 
-            # 5️⃣ Set permissions
+            # Permissions
             sudo chown -R apache:apache storage bootstrap/cache
             sudo chmod -R 775 storage bootstrap/cache
 
