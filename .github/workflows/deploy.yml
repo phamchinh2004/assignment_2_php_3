@@ -21,20 +21,20 @@ jobs:
       - name: Deploy to server
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.USERNAME }}@${{ secrets.HOST }} -p ${{ secrets.PORT }} bash << 'EOF'
-            set -e  # dừng nếu có lỗi
+            set -e
 
             cd /var/www/amazon
 
-            # Git setup
+            # Git
             git config --global --add safe.directory /var/www/amazon
             git fetch origin main
             git reset --hard origin/main
             git clean -fd
 
-            # Backend dependencies
+            # Backend
             composer install --no-dev --optimize-autoloader
 
-            # Frontend assets
+            # Frontend
             npm ci
             npm run build
 
@@ -48,7 +48,6 @@ jobs:
             # Permissions
             sudo chown -R apache:apache storage bootstrap/cache
             sudo chmod -R 775 storage bootstrap/cache
-            ssh -v git@github.com
-            git ls-remote origin main
+
             echo "✅ Deployment completed successfully!"
           EOF
