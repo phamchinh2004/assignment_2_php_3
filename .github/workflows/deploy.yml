@@ -10,44 +10,47 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1️⃣ Checkout code
       - name: Checkout source code
         uses: actions/checkout@v3
 
+      # 2️⃣ Setup SSH agent with private key
       - name: Setup SSH
         uses: webfactory/ssh-agent@v0.5.4
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
+      # 3️⃣ Deploy to server
       - name: Deploy to server
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.USERNAME }}@${{ secrets.HOST }} -p ${{ secrets.PORT }} bash << 'EOF'
-            set -e
+            set -e  # stop if any command fails
 
             cd /var/www/amazon
 
-            # Thiết lập Git safe directory cho Apache
-            sudo -u apache git config --global --add safe.directory /var/www/amazon
+            # ⚡ Configure safe directory for Apache user
+            sudo -u apache git config --local --add safe.directory /var/www/amazon
 
-            # Pull code dưới user Apache
-            sudo -u apache GIT_SSH_COMMAND="ssh -i /var/www/amazon/.ssh/id_ed25519 -o UserKnownHostsFile=/var/www/amazon/.ssh/known_hosts -o StrictHostKeyChecking=yes" git fetch origin main
-            sudo -u apache GIT_SSH_COMMAND="ssh -i /var/www/amazon/.ssh/id_ed25519 -o UserKnownHostsFile=/var/www/amazon/.ssh/known_hosts -o StrictHostKeyChecking=yes" git reset --hard origin/main
-            sudo -u apache GIT_SSH_COMMAND="ssh -i /var/www/amazon/.ssh/id_ed25519 -o UserKnownHostsFile=/var/www/amazon/.ssh/known_hosts -o StrictHostKeyChecking=yes" git clean -fd
+            # 1️⃣ Pull latest code
+            sudo -u apache GIT_SSH_COMMAND='ssh -i /var/www/amazon/.ssh/id_ed25519 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/var/www/amazon/.ssh/known_hosts' git fetch origin main
+            sudo -u apache GIT_SSH_COMMAND='ssh -i /var/www/amazon/.ssh/id_ed25519 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/var/www/amazon/.ssh/known_hosts' git reset --hard origin/main
+            sudo -u apache GIT_SSH_COMMAND='ssh -i /var/www/amazon/.ssh/id_ed25519 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/var/www/amazon/.ssh/known_hosts' git clean -fd
 
-            # Backend
+            # 2️⃣ Backend dependencies
             sudo -u apache composer install --no-dev --optimize-autoloader
 
-            # Frontend
+            # 3️⃣ Frontend build
             sudo -u apache npm ci
             sudo -u apache npm run build
 
-            # Laravel cache & migrations
+            # 4️⃣ Laravel cache & migrations
             sudo -u apache php artisan migrate --force
             sudo -u apache php artisan config:cache
             sudo -u apache php artisan route:cache
             sudo -u apache php artisan view:clear
             sudo -u apache php artisan view:cache
 
-            # Permissions
+            # 5️⃣ Set permissions
             sudo chown -R apache:apache storage bootstrap/cache
             sudo chmod -R 775 storage bootstrap/cache
 
