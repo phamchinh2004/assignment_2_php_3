@@ -24,7 +24,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware(['role:guest'])->group(function () {
     Route::get('register', [RegisterController::class, 'index'])->name('register');
-    Route::post('register', [RegisterController::class, 'register'])->name('register');
+    Route::post('register', [RegisterController::class, 'register'])->name('registerdone');
     Route::post('register/check_referral_code', [RegisterController::class, 'check_referral_code'])->name('check_referral_code');
     Route::post('register/check_email', [RegisterController::class, 'check_email'])->name('check_email');
     Route::post('login', [LoginController::class, 'login'])->name('login');

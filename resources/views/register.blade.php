@@ -26,7 +26,7 @@
             <a href="login" class="me-5 text-white cspt">Đăng Nhập</a>
             <a class="fw-bold text-white cspt title-register">Đăng Ký</a>
         </div>
-        <form class="d-flex flex-column mt-4" id="form_register" method="post">
+        <form href="{{ route('registerdone') }}" class="d-flex flex-column mt-4" id="form_register" method="post">
             @csrf
             @method('POST')
             <div>
