@@ -11,16 +11,14 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v3
         
-      - name: Setup SSH
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -p ${{ secrets.PORT }} ${{ secrets.HOST }} >> ~/.ssh/known_hosts
-          
       - name: Deploy to server
-        run: |
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ${{ secrets.USERNAME }}@${{ secrets.HOST }} -p ${{ secrets.PORT }} bash << 'EOF'
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.PORT }}
+          script: |
             set -e
             APP_DIR=/var/www/amazon 
             SSH_KEY=$APP_DIR/.ssh/id_ed25519
@@ -28,19 +26,11 @@ jobs:
             echo "🚀 Starting deployment..."
             cd $APP_DIR
             
-            # Pull code bằng Apache user
+            # Pull code bằng Apache user (sử dụng HTTPS)
             echo "📥 Fetching latest code..."
-            sudo -u apache GIT_DIR=$APP_DIR/.git GIT_WORK_TREE=$APP_DIR \
-            GIT_SSH_COMMAND="ssh -i $SSH_KEY -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$APP_DIR/.ssh/known_hosts" \
-            git fetch origin main
-            
-            sudo -u apache GIT_DIR=$APP_DIR/.git GIT_WORK_TREE=$APP_DIR \
-            GIT_SSH_COMMAND="ssh -i $SSH_KEY -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$APP_DIR/.ssh/known_hosts" \
-            git reset --hard origin/main
-            
-            sudo -u apache GIT_DIR=$APP_DIR/.git GIT_WORK_TREE=$APP_DIR \
-            GIT_SSH_COMMAND="ssh -i $SSH_KEY -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$APP_DIR/.ssh/known_hosts" \
-            git clean -fd
+            sudo -u apache git fetch origin main
+            sudo -u apache git reset --hard origin/main
+            sudo -u apache git clean -fd
             
             # Composer install
             echo "📦 Installing dependencies..."
@@ -65,4 +55,3 @@ jobs:
             sudo chmod -R 775 storage bootstrap/cache
             
             echo "✅ Deployment completed successfully!"
-          EOF
