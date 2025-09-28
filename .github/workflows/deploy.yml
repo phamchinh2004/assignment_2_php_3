@@ -34,11 +34,12 @@ jobs:
             
             # Composer install
             echo "📦 Installing dependencies..."
-            /usr/local/bin/composer install --no-dev --optimize-autoloader
+            sudo -u apache /usr/local/bin/composer install --no-dev --optimize-autoloader
             
             # Frontend build
             echo "🎨 Building frontend assets..."
-            sudo -u apache npm ci
+            # Use npm install instead of npm ci for more reliability
+            sudo -u apache npm install --no-optional
             sudo -u apache npm run build
             
             # Laravel operations
