@@ -23,7 +23,7 @@ jobs:
           ssh -o StrictHostKeyChecking=no ${{ secrets.USERNAME }}@${{ secrets.HOST }} -p ${{ secrets.PORT }} bash << 'EOF'
             set -e
 
-            cd /var/www/amazon
+            cd /var/www/amazon 
 
             # Git
             git config --global --add safe.directory /var/www/amazon
