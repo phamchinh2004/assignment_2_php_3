@@ -164,19 +164,10 @@ class UserController extends Controller
         if ($user) {
             if ($user->status === "inactivated") {
                 $message = "Kích hoạt tài khoản người dùng thành công!";
-                $get_rank = Rank::first();
-                if (!$get_rank) {
-                    return back()->with('error', 'Chưa có cấp bậc nào, vui lòng thêm cấp bậc!');
-                }
-                User_spin_progress::create([
-                    'user_id' => $user->id,
-                    'rank_id' => $get_rank->id
-                ]);
                 Conversation::create([
                     'staff_id' => Auth::user()->id,
                     'user_id' => $user->id
                 ]);
-                $user->rank_id = $get_rank->id;
                 $user->status = "activated";
                 $user->referrer_id = $user->referrer_id ?? Auth::user()->id;
             } elseif ($user->status === "activated") {
