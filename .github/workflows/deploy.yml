@@ -13,43 +13,37 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v3
 
-      - name: Setup SSH
-        uses: webfactory/ssh-agent@v0.5.4
-        with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
       - name: Deploy to server
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.USERNAME }}@${{ secrets.HOST }} -p ${{ secrets.PORT }} bash << 'EOF'
             set -e
 
-            # Thư mục project
-            APP_DIR=/var/www/amazon 
+            APP_DIR=/var/www/amazon
             SSH_KEY=$APP_DIR/.ssh/id_ed25519
 
             cd $APP_DIR
 
-            # Git pull bằng Apache user
+            # Pull code bằng Apache user
             sudo -u apache GIT_DIR=$APP_DIR/.git GIT_WORK_TREE=$APP_DIR \
-            GIT_SSH_COMMAND="ssh -i $SSH_KEY -o StrictHostKeyChecking=no" \
+            GIT_SSH_COMMAND="ssh -i $SSH_KEY -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$APP_DIR/.ssh/known_hosts" \
             git fetch origin main
 
             sudo -u apache GIT_DIR=$APP_DIR/.git GIT_WORK_TREE=$APP_DIR \
-            GIT_SSH_COMMAND="ssh -i $SSH_KEY -o StrictHostKeyChecking=no" \
+            GIT_SSH_COMMAND="ssh -i $SSH_KEY -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$APP_DIR/.ssh/known_hosts" \
             git reset --hard origin/main
 
             sudo -u apache GIT_DIR=$APP_DIR/.git GIT_WORK_TREE=$APP_DIR \
-            GIT_SSH_COMMAND="ssh -i $SSH_KEY -o StrictHostKeyChecking=no" \
+            GIT_SSH_COMMAND="ssh -i $SSH_KEY -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$APP_DIR/.ssh/known_hosts" \
             git clean -fd
 
-            # Backend
-            sudo -u apache composer install --no-dev --optimize-autoloader
+            # Composer (nếu composer không trong PATH Apache, dùng đường dẫn đầy đủ)
+            /usr/bin/composer install --no-dev --optimize-autoloader
 
             # Frontend
             sudo -u apache npm ci
             sudo -u apache npm run build
 
-            # Laravel cache & migrations
+            # Laravel cache & migrate
             sudo -u apache php artisan migrate --force
             sudo -u apache php artisan config:cache
             sudo -u apache php artisan route:cache
