@@ -10,10 +10,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout source code
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Setup SSH
+      - name: Setup SSH Agent
         uses: webfactory/ssh-agent@v0.5.4
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
@@ -21,33 +21,50 @@ jobs:
       - name: Deploy to server
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.USERNAME }}@${{ secrets.HOST }} -p ${{ secrets.PORT }} bash << 'EOF'
-            set -e
+            set -e  # dừng khi có lỗi
 
-            cd /var/www/amazon 
+            PROJECT_DIR="/var/www/amazon"
+            SSH_DIR="$PROJECT_DIR/.ssh"
 
-            # Git
-            git config --global --add safe.directory /var/www/amazon
-            git fetch origin main
-            git reset --hard origin/main
-            git clean -fd
+            # Tạo thư mục .ssh trong project nếu chưa có
+            mkdir -p $SSH_DIR
+            chmod 700 $SSH_DIR
 
-            # Backend
-            composer install --no-dev --optimize-autoloader
+            # Lưu host key GitHub vào known_hosts
+            echo "${{ secrets.SSH_HOSTKEY }}" > $SSH_DIR/known_hosts
+            chmod 644 $SSH_DIR/known_hosts
 
-            # Frontend
-            npm ci
-            npm run build
+            # SSH config cho apache
+            cat > $SSH_DIR/config <<EOL
+Host github.com
+    User git
+    IdentityFile $SSH_DIR/id_ed25519
+    StrictHostKeyChecking yes
+    UserKnownHostsFile $SSH_DIR/known_hosts
+EOL
+            chmod 600 $SSH_DIR/config
 
-            # Laravel cache & migrations
-            php artisan migrate --force
-            php artisan config:cache
-            php artisan route:cache
-            php artisan view:clear
-            php artisan view:cache
+            # Pull code dưới user apache
+            sudo -u apache GIT_SSH_COMMAND="ssh -F $SSH_DIR/config" git -C $PROJECT_DIR fetch origin main
+            sudo -u apache GIT_SSH_COMMAND="ssh -F $SSH_DIR/config" git -C $PROJECT_DIR reset --hard origin/main
 
-            # Permissions
+            cd $PROJECT_DIR
+
+            # Composer & NPM
+            sudo -u apache composer install --no-dev --optimize-autoloader
+            sudo -u apache npm ci
+            sudo -u apache npm run build
+
+            # Laravel setup
+            sudo -u apache php artisan migrate --force
+            sudo -u apache php artisan config:cache
+            sudo -u apache php artisan route:cache
+            sudo -u apache php artisan view:clear
+            sudo -u apache php artisan view:cache
+
+            # Set quyền
             sudo chown -R apache:apache storage bootstrap/cache
             sudo chmod -R 775 storage bootstrap/cache
 
-            echo "✅ Deployment completed successfully!"
+            echo "✅ Deployment completed!"
           EOF
