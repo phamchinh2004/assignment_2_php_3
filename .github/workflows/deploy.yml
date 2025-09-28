@@ -32,11 +32,10 @@ jobs:
             git clean -fd
 
             # Install backend dependencies
-            sudo composer update
             composer install --no-dev --optimize-autoloader
 
             # Install frontend assets
-            npm install
+            npm ci
             npm run build
 
             # Laravel specific setup
@@ -45,8 +44,7 @@ jobs:
             php artisan route:cache
             php artisan view:cache
 
-            chown -R nginx:nginx storage bootstrap/cache
-            chmod -R ug+rw storage bootstrap/cache
-            chmod -R guo+w storage
-
+            # Set correct permissions
+            sudo chown -R apache:apache storage bootstrap/cache
+            sudo chmod -R 775 storage bootstrap/cache
           EOF
