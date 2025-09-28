@@ -18,33 +18,36 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: Deploy to AlmaLinux server
+      - name: Deploy to server
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.USERNAME }}@${{ secrets.HOST }} -p ${{ secrets.PORT }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no ${{ secrets.USERNAME }}@${{ secrets.HOST }} -p ${{ secrets.PORT }} bash << 'EOF'
+            set -e  # dừng nếu có lỗi
+
             cd /var/www/amazon
 
-            # Fix "dubious ownership" error
+            # Git setup
             git config --global --add safe.directory /var/www/amazon
-
-            # Pull latest code
             git fetch origin main
             git reset --hard origin/main
             git clean -fd
 
-            # Install backend dependencies
+            # Backend dependencies
             composer install --no-dev --optimize-autoloader
 
-            # Install frontend assets
+            # Frontend assets
             npm ci
             npm run build
 
-            # Laravel specific setup
+            # Laravel cache & migrations
             php artisan migrate --force
             php artisan config:cache
             php artisan route:cache
+            php artisan view:clear
             php artisan view:cache
 
-            # Set correct permissions
+            # Permissions
             sudo chown -R apache:apache storage bootstrap/cache
             sudo chmod -R 775 storage bootstrap/cache
+
+            echo "✅ Deployment completed successfully!"
           EOF
