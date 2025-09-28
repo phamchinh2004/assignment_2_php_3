@@ -18,7 +18,7 @@ jobs:
           ssh -o StrictHostKeyChecking=no ${{ secrets.USERNAME }}@${{ secrets.HOST }} -p ${{ secrets.PORT }} bash << 'EOF'
             set -e
 
-            APP_DIR=/var/www/amazon
+            APP_DIR=/var/www/amazon 
             SSH_KEY=$APP_DIR/.ssh/id_ed25519
 
             cd $APP_DIR
