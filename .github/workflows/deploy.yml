@@ -48,6 +48,7 @@ jobs:
             # Permissions
             sudo chown -R apache:apache storage bootstrap/cache
             sudo chmod -R 775 storage bootstrap/cache
-
+            ssh -v git@github.com
+            git ls-remote origin main
             echo "✅ Deployment completed successfully!"
           EOF
