@@ -34,7 +34,7 @@ jobs:
             
             # Composer install
             echo "📦 Installing dependencies..."
-            /usr/bin/composer install --no-dev --optimize-autoloader
+            /usr/local/bin/composer install --no-dev --optimize-autoloader
             
             # Frontend build
             echo "🎨 Building frontend assets..."
