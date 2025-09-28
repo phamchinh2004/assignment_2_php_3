@@ -10,10 +10,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout source code
         uses: actions/checkout@v3
 
-      - name: Setup SSH Agent
+      - name: Setup SSH
         uses: webfactory/ssh-agent@v0.5.4
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
@@ -21,50 +21,35 @@ jobs:
       - name: Deploy to server
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.USERNAME }}@${{ secrets.HOST }} -p ${{ secrets.PORT }} bash << 'EOF'
-            set -e  # dừng khi có lỗi
+            set -e
 
-            PROJECT_DIR="/var/www/amazon"
-            SSH_DIR="$PROJECT_DIR/.ssh"
+            cd /var/www/amazon
 
-            # Tạo thư mục .ssh trong project nếu chưa có
-            mkdir -p $SSH_DIR
-            chmod 700 $SSH_DIR
+            # Thiết lập Git safe directory cho Apache
+            sudo -u apache git config --global --add safe.directory /var/www/amazon
 
-            # Lưu host key GitHub vào known_hosts
-            echo "${{ secrets.SSH_HOSTKEY }}" > $SSH_DIR/known_hosts
-            chmod 644 $SSH_DIR/known_hosts
+            # Pull code dưới user Apache
+            sudo -u apache GIT_SSH_COMMAND="ssh -i /var/www/amazon/.ssh/id_ed25519 -o UserKnownHostsFile=/var/www/amazon/.ssh/known_hosts -o StrictHostKeyChecking=yes" git fetch origin main
+            sudo -u apache GIT_SSH_COMMAND="ssh -i /var/www/amazon/.ssh/id_ed25519 -o UserKnownHostsFile=/var/www/amazon/.ssh/known_hosts -o StrictHostKeyChecking=yes" git reset --hard origin/main
+            sudo -u apache GIT_SSH_COMMAND="ssh -i /var/www/amazon/.ssh/id_ed25519 -o UserKnownHostsFile=/var/www/amazon/.ssh/known_hosts -o StrictHostKeyChecking=yes" git clean -fd
 
-            # SSH config cho apache
-            cat > $SSH_DIR/config <<EOL
-Host github.com
-    User git
-    IdentityFile $SSH_DIR/id_ed25519
-    StrictHostKeyChecking yes
-    UserKnownHostsFile $SSH_DIR/known_hosts
-EOL
-            chmod 600 $SSH_DIR/config
-
-            # Pull code dưới user apache
-            sudo -u apache GIT_SSH_COMMAND="ssh -F $SSH_DIR/config" git -C $PROJECT_DIR fetch origin main
-            sudo -u apache GIT_SSH_COMMAND="ssh -F $SSH_DIR/config" git -C $PROJECT_DIR reset --hard origin/main
-
-            cd $PROJECT_DIR
-
-            # Composer & NPM
+            # Backend
             sudo -u apache composer install --no-dev --optimize-autoloader
+
+            # Frontend
             sudo -u apache npm ci
             sudo -u apache npm run build
 
-            # Laravel setup
+            # Laravel cache & migrations
             sudo -u apache php artisan migrate --force
             sudo -u apache php artisan config:cache
             sudo -u apache php artisan route:cache
             sudo -u apache php artisan view:clear
             sudo -u apache php artisan view:cache
 
-            # Set quyền
+            # Permissions
             sudo chown -R apache:apache storage bootstrap/cache
             sudo chmod -R 775 storage bootstrap/cache
 
-            echo "✅ Deployment completed!"
+            echo "✅ Deployment completed successfully!"
           EOF
