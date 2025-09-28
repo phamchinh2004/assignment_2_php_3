@@ -49,7 +49,7 @@ jobs:
             echo "?? Running Laravel commands..."
             sudo -u apache php artisan migrate --force
             sudo -u apache php artisan config:cache
-            sudo -u apache php artisan route:cache
+            # sudo -u apache php artisan route:cache
             sudo -u apache php artisan view:clear
             sudo -u apache php artisan view:cache
             
