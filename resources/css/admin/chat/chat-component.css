@@ -164,3 +164,119 @@
         display: block !important;
     }
 }
+
+.zoom-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.95);
+    z-index: 99999;
+    overflow: hidden;
+}
+
+.zoom-modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.zoom-container {
+    width: 90vw;
+    height: 90vh;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: none;
+}
+
+.zoom-modal-image {
+    /* QUAN TRỌNG: Không dùng position absolute */
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    cursor: grab;
+    user-select: none;
+    pointer-events: auto;
+    /* Transform origin ở giữa ảnh */
+    transform-origin: center center;
+    /* Không có margin/padding */
+    margin: 0;
+    padding: 0;
+    /* Transition mượt mà */
+    will-change: transform;
+}
+
+.zoom-modal-image:active {
+    cursor: grabbing;
+}
+
+body.modal-open {
+    overflow: hidden !important;
+    height: 100vh;
+}
+
+.panzoom-parent {
+    cursor: pointer;
+    position: relative;
+    display: inline-block;
+}
+
+.panzoom-parent::after {
+    content: '🔍';
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.panzoom-parent:hover::after {
+    opacity: 1;
+}
+
+.zoom-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid white;
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    font-size: 24px;
+    cursor: pointer;
+    transition: all 0.3s;
+    z-index: 100000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.zoom-close:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: rotate(90deg);
+}
+
+.zoom-hint {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 14px;
+    z-index: 100000;
+}

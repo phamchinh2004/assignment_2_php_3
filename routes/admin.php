@@ -47,8 +47,10 @@ Route::middleware(['role:staff|admin', 'checkBanned', 'auth'])->group(function (
     Route::get('/user/change-status-user/{user}', [UserController::class, 'changeStatusUser'])->name('user.change.status');
     Route::get('/user/frozen-order/{user}', [UserController::class, 'frozenOrderInterface'])->name('user.frozen.order.interface');
     Route::post('/user/frozen-order/{user}', [UserController::class, 'frozenOrder'])->name('user.frozen.order');
-    Route::get('/user/edit-frozen-order/{user}/{id}', [UserController::class, 'editFrozenOrderInterface'])->name('user.edit.frozen.order.interface');
-    Route::put('/user/edit-frozen-order/{user}/{id}', [UserController::class, 'updateFrozenOrder'])->name('user.update.frozen.order');
+    Route::delete('user/{user}/frozen-orders/{frozenOrder}', [UserController::class, 'unfrozenOrder'])->name('user.unfrozen.order');
+    Route::put('user/{user}/frozen-orders/{frozenOrder}', [UserController::class, 'updateFrozenOrder'])->name('user.update.frozen.order');
+    // Route::get('/user/edit-frozen-order/{user}/{id}', [UserController::class, 'editFrozenOrderInterface'])->name('user.edit.frozen.order.interface');
+    // Route::put('/user/edit-frozen-order/{user}/{id}', [UserController::class, 'updateFrozenOrder'])->name('user.update.frozen.order');
     Route::post('/user/plus-money', [UserController::class, 'plus_money'])->name('plus_money');
 
     // Đã kiểm tra

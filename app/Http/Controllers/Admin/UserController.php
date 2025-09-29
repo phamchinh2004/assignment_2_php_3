@@ -19,6 +19,7 @@ use App\Models\User_spin_progress;
 use App\Models\Wallet_balance_history;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
@@ -184,6 +185,13 @@ class UserController extends Controller
             return redirect()->route('user.index')->with('error', 'Không tìm thấy người dùng cần thay đổi trạng thái!');
         }
     }
+    public function editFrozenOrderInterface(User $user, $id)
+    {
+        $list_orders = Order::where('rank_id', $user->rank_id)->get();
+        $progress = User_spin_progress::where('user_id', $user->id)->where('rank_id', $user->rank_id)->first();
+        $frozen_order_old = Frozen_order::where('id', $id)->first();
+        return view('admin.user.edit_frozen_order', compact('list_orders', 'progress', 'user', 'frozen_order_old'));
+    }
     public function frozenOrderInterface(?User $user)
     {
         if (!$user) {
@@ -208,57 +216,131 @@ class UserController extends Controller
             ['user_id' => $user->id, 'rank_id' => $user->rank_id]
         );
 
-        return view('admin.user.frozen_order', compact('list_orders', 'progress', 'user'));
+        // Lấy danh sách order đã đóng băng với thông tin chi tiết
+        $frozen_orders_detail = Frozen_order::where('user_id', $user->id)
+            ->where('is_frozen', true)
+            ->where('custom_price', "!=", null)
+            ->with('order')
+            ->get();
+        // dd($frozen_orders_detail);
+        $frozen_orders = $frozen_orders_detail->pluck('order_id')->toArray();
+
+        return view('admin.user.frozen_order', compact('list_orders', 'progress', 'user', 'frozen_orders', 'frozen_orders_detail'));
     }
 
-    public function editFrozenOrderInterface(User $user, $id)
-    {
-        $list_orders = Order::where('rank_id', $user->rank_id)->get();
-        $progress = User_spin_progress::where('user_id', $user->id)->where('rank_id', $user->rank_id)->first();
-        $frozen_order_old = Frozen_order::where('id', $id)->first();
-        return view('admin.user.edit_frozen_order', compact('list_orders', 'progress', 'user', 'frozen_order_old'));
-    }
+
     public function frozenOrder(StoreFrozenOrderRequest $request, User $user)
     {
-        $data = [];
-        $data['custom_price'] = $request->custom_price;
-        $data['order_id'] = $request->order;
-        $data['user_id'] = $user->id;
-        $get_order_by_id = Order::find($request->order);
-        if (!$get_order_by_id) {
-            return back()->with('error', 'Không tìm thấy đơn hàng cần đóng băng!');
+        $order_data = $request->order_data;
+
+        if (empty($order_data) || !is_array($order_data)) {
+            return back()->with('error', 'Vui lòng chọn ít nhất một đơn hàng!');
         }
+
         $get_progress_user = User_spin_progress::where('user_id', $user->id)->first();
         if (!$get_progress_user) {
             return back()->with('error', 'Không tìm thấy tiến trình quay của người dùng!');
         }
-        $get_rank = Rank::find($user->rank_id);
-        // if ($get_progress_user->current_spin >= $get_order_by_id->index && $get_rank->spin_count > $get_progress_user->current_spin) {
-        //     return back()->with('error', 'Không được chọn đơn hàng trước đó!');
-        // }
-        $check_frozen_order = Frozen_order::where('order_id', $request->order)->where('user_id', $user->id)->where('is_frozen', true)->first();
-        if ($check_frozen_order) {
-            return back()->with('error', 'Đã đóng băng đơn hàng này!');
-        }
-        Frozen_order::create($data);
-        return redirect()->route('user.index')->with('success', 'Đóng băng thành công!');
-    }
-    public function updateFrozenOrder(UpdateFrozenOrderRequest $request, User $user, $id)
-    {
-        $frozenOrder = Frozen_order::where('id', $id)
-            ->where('user_id', $user->id)
-            ->firstOrFail();
-        if ($frozenOrder->spun == true) {
-            return redirect()->route('user.index')->with('error', 'Người dùng đang bị đóng băng ở đơn hàng này, không thể sửa!');
-        } else {
-            $frozenOrder->update([
-                'custom_price' => $request->custom_price,
-                'order_id'     => $request->order,
+
+        $success_count = 0;
+        $error_messages = [];
+
+        foreach ($order_data as $data) {
+            $order_id = $data['order_id'] ?? null;
+            $custom_price = $data['custom_price'] ?? null;
+
+            if (!$order_id) {
+                continue;
+            }
+
+            $get_order_by_id = Order::find($order_id);
+            if (!$get_order_by_id) {
+                $error_messages[] = "Không tìm thấy đơn hàng ID: {$order_id}";
+                continue;
+            }
+
+            $check_frozen_order = Frozen_order::where('order_id', $order_id)
+                ->where('user_id', $user->id)
+                ->where('is_frozen', true)
+                ->first();
+
+            if ($check_frozen_order) {
+                $error_messages[] = "Đơn hàng '{$get_order_by_id->name}' đã được đóng băng trước đó";
+                continue;
+            }
+
+            Frozen_order::create([
+                'custom_price' => $custom_price,
+                'order_id' => $order_id,
+                'user_id' => $user->id,
+                'is_frozen' => true,
             ]);
+
+            $success_count++;
         }
 
-        return redirect()->route('user.index')->with('success', 'Cập nhật đóng băng đơn hàng thành công!');
+        if ($success_count > 0 && empty($error_messages)) {
+            return back()->with('success', "Đóng băng thành công {$success_count} đơn hàng!");
+        } elseif ($success_count > 0 && !empty($error_messages)) {
+            return back()->with('warning', "Đóng băng thành công {$success_count} đơn hàng. Lỗi: " . implode(', ', $error_messages));
+        } else {
+            return back()->with('error', 'Không đóng băng được đơn hàng nào. ' . implode(', ', $error_messages));
+        }
     }
+
+    // Hủy đóng băng đơn hàng
+    public function unfrozenOrder(User $user, Frozen_order $frozenOrder)
+    {
+        if ($frozenOrder->user_id !== $user->id) {
+            return back()->with('error', 'Không có quyền thực hiện thao tác này!');
+        }
+
+        $order_name = $frozenOrder->order->name ?? 'Đơn hàng';
+
+        $frozenOrder->delete();
+
+        return back()->with('success', "Đã hủy đóng băng đơn hàng '{$order_name}'!");
+    }
+
+    // Cập nhật giá giả
+    public function updateFrozenOrder(Request $request, User $user, Frozen_order $frozenOrder)
+    {
+        $request->validate([
+            'custom_price' => 'required|numeric|min:0',
+        ], [
+            'custom_price.required' => 'Vui lòng nhập giá giả',
+            'custom_price.numeric' => 'Giá phải là số',
+            'custom_price.min' => 'Giá phải lớn hơn hoặc bằng 0',
+        ]);
+
+        if ($frozenOrder->user_id !== $user->id) {
+            return back()->with('error', 'Không có quyền thực hiện thao tác này!');
+        }
+
+        $old_price = $frozenOrder->custom_price;
+        $frozenOrder->custom_price = $request->custom_price;
+        $frozenOrder->save();
+
+        $order_name = $frozenOrder->order->name ?? 'Đơn hàng';
+
+        return back()->with('success', "Đã cập nhật giá giả của đơn hàng '{$order_name}' từ {$old_price}$ thành {$request->custom_price}$!");
+    }
+    // public function updateFrozenOrder(UpdateFrozenOrderRequest $request, User $user, $id)
+    // {
+    //     $frozenOrder = Frozen_order::where('id', $id)
+    //         ->where('user_id', $user->id)
+    //         ->firstOrFail();
+    //     if ($frozenOrder->spun == true) {
+    //         return redirect()->route('user.index')->with('error', 'Người dùng đang bị đóng băng ở đơn hàng này, không thể sửa!');
+    //     } else {
+    //         $frozenOrder->update([
+    //             'custom_price' => $request->custom_price,
+    //             'order_id'     => $request->order,
+    //         ]);
+    //     }
+
+    //     return redirect()->route('user.index')->with('success', 'Cập nhật đóng băng đơn hàng thành công!');
+    // }
     public function plus_money()
     {
         $value = request()->input('value');

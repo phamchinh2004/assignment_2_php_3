@@ -137,8 +137,11 @@
 
                     <!-- Nội dung tin nhắn -->
                     @if(isset($message['image_path']) && $message['image_path'])
-                    <div class="mb-2">
-                        <img src="{{ asset('storage/' . $message['image_path']) }}" alt="Ảnh" class="img-fluid rounded" style="max-height: 200px;">
+                    <div class="mb-2 panzoom-parent">
+                        <img src="{{ asset('storage/' . $message['image_path']) }}"
+                            alt="Ảnh"
+                            class="img-fluid rounded zoomable-image"
+                            style="max-height: 200px; cursor: pointer;">
                     </div>
                     @elseif($message['message'])
                     <div class="mb-1">{{ $message['message'] }}</div>
@@ -217,6 +220,16 @@
             </div>
         </div>
         @endif
+    </div>
+    <!-- Modal Zoom -->
+    <div class="zoom-modal" id="zoomModal">
+        <button class="zoom-close" id="closeModal">&times;</button>
+        <div class="zoom-container" id="zoomContainer">
+            <img src="" alt="Zoomed image" class="zoom-modal-image" id="zoomModalImage">
+        </div>
+        <div class="zoom-hint">
+            🖱️ Cuộn chuột để zoom | 🖐️ Kéo để di chuyển | 🖱️ Double-click để reset
+        </div>
     </div>
 </div>
 
@@ -328,6 +341,147 @@
     }
 
     document.addEventListener('DOMContentLoaded', function() {
+        const modal = document.getElementById('zoomModal');
+        const modalImage = document.getElementById('zoomModalImage');
+        const closeBtn = document.getElementById('closeModal');
+        const zoomContainer = document.getElementById('zoomContainer');
+        let currentScale = 1;
+        let currentX = 0;
+        let currentY = 0;
+        let isDragging = false;
+        let startX, startY;
+
+        function openZoomModal(imageSrc) {
+            modalImage.src = imageSrc;
+            modal.classList.add('active');
+            document.body.classList.add('modal-open');
+            document.body.style.overflow = 'hidden';
+
+            // Reset về giữa
+            currentScale = 1;
+            currentX = 0;
+            currentY = 0;
+            updateTransform();
+
+            console.log('✅ Modal opened');
+        }
+
+        function closeZoomModal() {
+            modal.classList.remove('active');
+            document.body.classList.remove('modal-open');
+            document.body.style.overflow = '';
+
+            // Reset
+            currentScale = 1;
+            currentX = 0;
+            currentY = 0;
+            updateTransform();
+        }
+
+        function updateTransform() {
+            modalImage.style.transform = `translate(${currentX}px, ${currentY}px) scale(${currentScale})`;
+        }
+
+        // Zoom bằng scroll
+        zoomContainer.addEventListener('wheel', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const rect = modalImage.getBoundingClientRect();
+            const containerRect = zoomContainer.getBoundingClientRect();
+
+            // Vị trí chuột trong container
+            const mouseX = e.clientX - containerRect.left;
+            const mouseY = e.clientY - containerRect.top;
+
+            // Vị trí chuột trong ảnh
+            const imgX = (mouseX - rect.left) / currentScale;
+            const imgY = (mouseY - rect.top) / currentScale;
+
+            // Tính scale mới
+            const delta = e.deltaY > 0 ? 0.9 : 1.1;
+            const newScale = Math.min(Math.max(0.5, currentScale * delta), 10);
+
+            // Tính offset mới để zoom vào điểm chuột
+            const scaleDiff = newScale - currentScale;
+            currentX -= imgX * scaleDiff;
+            currentY -= imgY * scaleDiff;
+            currentScale = newScale;
+
+            updateTransform();
+        }, {
+            passive: false
+        });
+
+        // Kéo thả ảnh
+        modalImage.addEventListener('mousedown', function(e) {
+            if (currentScale > 1) {
+                isDragging = true;
+                startX = e.clientX - currentX;
+                startY = e.clientY - currentY;
+                modalImage.style.cursor = 'grabbing';
+            }
+        });
+
+        document.addEventListener('mousemove', function(e) {
+            if (isDragging) {
+                currentX = e.clientX - startX;
+                currentY = e.clientY - startY;
+                updateTransform();
+            }
+        });
+
+        document.addEventListener('mouseup', function() {
+            isDragging = false;
+            modalImage.style.cursor = 'grab';
+        });
+
+        // Double click để reset
+        modalImage.addEventListener('dblclick', function() {
+            currentScale = 1;
+            currentX = 0;
+            currentY = 0;
+            modalImage.style.transition = 'transform 0.3s ease';
+            updateTransform();
+
+            setTimeout(() => {
+                modalImage.style.transition = '';
+            }, 300);
+        });
+
+        function attachImageClickEvents() {
+            document.querySelectorAll('.zoomable-image').forEach(img => {
+                const newImg = img.cloneNode(true);
+                img.parentNode.replaceChild(newImg, img);
+
+                newImg.onclick = function() {
+                    openZoomModal(this.src);
+                };
+            });
+            console.log('✅ Click events attached');
+        }
+
+        attachImageClickEvents();
+
+        closeBtn.addEventListener('click', closeZoomModal);
+
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeZoomModal();
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modal.classList.contains('active')) {
+                closeZoomModal();
+            }
+        });
+
+        if (typeof Livewire !== 'undefined') {
+            Livewire.hook('morph.updated', () => {
+                setTimeout(attachImageClickEvents, 100);
+            });
+        }
+
+
         Livewire.on('reset-message-input', () => {
             const input = document.querySelector('input[wire\\:model*="messageText"]');
             if (input) {

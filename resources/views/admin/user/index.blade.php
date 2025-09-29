@@ -119,17 +119,12 @@ Danh sách người dùng
                                         @endif
 
 
-                                        @if (!$should_show_button)
-                                        <a href="{{ route('user.edit.frozen.order.interface',['user'=>$item->id,'id'=>$frozen_order_id]) }}"
-                                            class="btn btn-dark btn-sm d-flex align-items-center mr-1">
-                                            <i class="fas fa-snowflake fa-sm p-2 text-warning"></i>
-                                        </a>
-                                        @else
+                                       
                                         <a href="{{ route('user.frozen.order.interface',['user'=>$item->id]) }}"
                                             class="btn btn-dark btn-sm d-flex align-items-center mr-1">
                                             <i class="fas fa-snowflake fa-sm p-2 text-white"></i>
                                         </a>
-                                        @endif
+                                    
                                     </div>
                                     <div class="d-flex justify-content-center flex-row mt-1">
                                         <a href="{{ route('user.edit',['user'=>$item->id]) }}" class="btn btn-warning btn-sm d-flex align-items-center mr-1"><i class="fas fa-pen-to-square fa-sm p-2"></i></a>
