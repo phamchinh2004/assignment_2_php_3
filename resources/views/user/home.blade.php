@@ -482,7 +482,7 @@
                                 <p><strong>Sự kiện mừng Trung Thu</strong></p>
                                 <p>Khi khách hàng tham gia sự kiện đặc biệt, bạn có cơ hội nhận thưởng <span class="reward-amount">lên tới hàng triệu USD</span> cùng nhiều phần quà giá trị khác!</p>
                                 <p>Chương trình chỉ diễn ra trong dịp lễ Trung Thu này, hãy nhanh tay tham gia để không bỏ lỡ cơ hội vàng.</p>
-                        </div>
+                        </div> 
                     </div>
                 </div>
 
