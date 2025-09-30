@@ -8,6 +8,7 @@ use App\Http\Requests\UpdateBannerRequest;
 use App\Http\Controllers\Controller;
 use App\Models\Banner_image;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class BannerController extends Controller
 {
@@ -113,7 +114,9 @@ class BannerController extends Controller
      */
     public function edit(Banner $banner)
     {
-        //
+        // Load relationship để lấy các ảnh của banner
+        $banner->load('banner_images');
+        return view('admin.banner.edit', compact('banner'));
     }
 
     /**
@@ -121,14 +124,74 @@ class BannerController extends Controller
      */
     public function update(UpdateBannerRequest $request, Banner $banner)
     {
-        //
+        DB::beginTransaction();
+        try {
+            // Cập nhật tên banner
+            $banner->update([
+                'name' => $request->name
+            ]);
+
+            // Xử lý xóa các ảnh được đánh dấu
+            if ($request->has('deleted_images') && !empty($request->deleted_images)) {
+                $deletedImageIds = explode(',', $request->deleted_images);
+
+                foreach ($deletedImageIds as $imageId) {
+                    $bannerImage = Banner_image::find($imageId);
+                    if ($bannerImage && $bannerImage->banner_id == $banner->id) {
+                        // Xóa file vật lý
+                        if (Storage::disk('public')->exists($bannerImage->path)) {
+                            Storage::disk('public')->delete($bannerImage->path);
+                        }
+                        // Xóa record trong database
+                        $bannerImage->delete();
+                    }
+                }
+            }
+
+            // Xử lý thêm ảnh mới
+            if ($request->hasFile('images')) {
+                foreach ((array)$request->file('images') as $file) {
+                    if ($file->isValid()) {
+                        $file_name = $file->store('uploads/images/banners', 'public');
+                        Banner_image::create([
+                            'path' => $file_name,
+                            'banner_id' => $banner->id
+                        ]);
+                    }
+                }
+            }
+
+            DB::commit();
+            return redirect()->route('banner.index')->with('success', 'Cập nhật banner thành công!');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Có lỗi xảy ra: ' . $e->getMessage());
+        }
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Remove the specified resource from storage (nếu cần).
      */
     public function destroy(Banner $banner)
     {
-        //
+        DB::beginTransaction();
+        try {
+            // Xóa tất cả ảnh của banner
+            foreach ($banner->banner_images as $bannerImage) {
+                if (Storage::disk('public')->exists($bannerImage->path)) {
+                    Storage::disk('public')->delete($bannerImage->path);
+                }
+                $bannerImage->delete();
+            }
+
+            // Xóa banner
+            $banner->delete();
+
+            DB::commit();
+            return redirect()->route('banner.index')->with('success', 'Xóa banner thành công!');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Có lỗi xảy ra: ' . $e->getMessage());
+        }
     }
 }

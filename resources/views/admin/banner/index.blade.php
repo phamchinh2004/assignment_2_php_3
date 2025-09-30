@@ -18,6 +18,8 @@ Danh sách banner
 <script>
     window.currentPermissionCode = "quan_ly_banner";
 </script>
+@vite('resources/js/admin/banner/index.js')
+
 @endsection
 
 @section('content')
@@ -98,7 +100,14 @@ Danh sách banner
 
                                     </div>
                                     <div class="d-flex flex-row justify-content-center mt-1">
-                                        <a href="#" class="btn btn-warning btn-sm d-flex align-items-center mr-1"><i class="fas fa-pen-to-square fa-sm p-2"></i></a>
+                                        <a href="{{ route('banner.edit', $item->id) }}" class="btn btn-warning btn-sm d-flex align-items-center mr-1"><i class="fas fa-pen-to-square fa-sm p-2"></i></a>
+                                        <form action="{{ route('banner.destroy', $item->id) }}" method="POST" class="form-delete" data-banner-name="{{ $item->name }}">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="button" class="btn btn-danger btn-sm d-flex align-items-center btn-delete">
+                                                <i class="fas fa-trash fa-sm p-2"></i>
+                                            </button>
+                                        </form>
                                     </div>
                                 </div>
                             </td>
