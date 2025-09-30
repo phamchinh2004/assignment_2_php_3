@@ -42,7 +42,7 @@ jobs:
             # rm -rf node_modules package-lock.json .npm .npmrc  
             # npm cache clean --force
             # npm install --no-optional
-            # npm run build
+            npm run build
             # chown -R apache:apache node_modules public/build public/hot || true
             
             # Laravel operations
