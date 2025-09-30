@@ -505,7 +505,7 @@
                                             <strong>#{{ $frozen->order->index }}</strong> -
                                             {{ $frozen->order->name }}
                                             @if ($frozen->spun)
-                                            <i> - Người dùng đang mắc kẹt ở đây, đừng sửa giá</i>
+                                            <i class="text-danger fw-bold"> - Người dùng đang mắc kẹt ở đây, đừng sửa giá</i>
                                             @endif
                                         </h6>
                                         <small class="text-muted">

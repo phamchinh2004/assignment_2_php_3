@@ -195,17 +195,11 @@ class UserController extends Controller
     public function frozenOrderInterface(?User $user)
     {
         if (!$user) {
-            abort(404, 'User not found');
+            abort(404, 'Không tìm thấy người dùng này');
         }
 
         if (!$user->rank_id) {
-            $defaultRank = Rank::first();
-            if (!$defaultRank) {
-                abort(500, 'No default rank available');
-            }
-
-            $user->rank_id = $defaultRank->id;
-            $user->save();
+            return back()->with('error', 'Thằng này chưa có gian hàng!');
         }
 
         // Lấy order theo rank của user
