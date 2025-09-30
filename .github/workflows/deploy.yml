@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - main
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -22,32 +23,30 @@ jobs:
             APP_DIR=/var/www/amazon 
             SSH_KEY=$APP_DIR/.ssh/id_ed25519
             
-            echo "🚀 Starting deployment..."
+            echo "?? Starting deployment..."
             cd $APP_DIR
             
-            # Pull code bằng Apache user (sử dụng HTTPS)
-            echo "📥 Fetching latest code..."
+            # Pull code b?ng Apache user (s? d?ng HTTPS)
+            echo "?? Fetching latest code..."
             sudo -u apache git fetch origin main
             sudo -u apache git reset --hard origin/main
             sudo -u apache git clean -fd
             
             # Composer install
-            echo "📦 Installing dependencies..."
+            echo "?? Installing dependencies..."
             sudo -u apache /usr/local/bin/composer install --no-dev --optimize-autoloader
             
-            # Frontend build
-            echo "🎨 Building frontend assets..."
-            # Xóa cache cũ
-            sudo -u apache rm -rf node_modules/.vite
-            # Install dependencies
-            sudo -u apache npm ci --prefer-offline --no-audit
-            # Build assets
-            sudo -u apache npm run build
-            # Set permissions
-            sudo chown -R apache:apache node_modules public/build public/hot || true
+            # Frontend build - temporarily skip due to rollup issue
+            echo "?? Skipping frontend build (rollup issue)..."
+            # Complete clean install to fix rollup module issue
+            # rm -rf node_modules package-lock.json .npm .npmrc  
+            # npm cache clean --force
+            # npm install --no-optional
+            npm run build
+            # chown -R apache:apache node_modules public/build public/hot || true
             
             # Laravel operations
-            echo "⚙️ Running Laravel commands..."
+            echo "?? Running Laravel commands..."
             sudo -u apache php artisan migrate --force
             sudo -u apache php artisan config:cache
             # sudo -u apache php artisan route:cache
@@ -55,8 +54,8 @@ jobs:
             sudo -u apache php artisan view:cache
             
             # Set permissions
-            echo "🔐 Setting permissions..."
+            echo "?? Setting permissions..."
             sudo chown -R apache:apache storage bootstrap/cache
             sudo chmod -R 775 storage bootstrap/cache
             
-            echo "✅ Deployment completed successfully!"
+            echo "? Deployment completed successfully!"
