@@ -37,6 +37,7 @@ class ResetDailyUserData extends Command
         // Reset tiến trình
         foreach (User_spin_progress::all() as $item) {
             $hasFrozen = Frozen_order::where('spun', 1)
+                ->whereNull('custom_price')
                 ->where('is_frozen', 1)
                 ->where('user_id', $item->user_id)
                 ->exists();
