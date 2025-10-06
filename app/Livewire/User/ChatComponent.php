@@ -33,7 +33,7 @@ class ChatComponent extends Component
 
     protected $rules = [
         'newMessage' => 'nullable|string|max:200',
-        'selectedImage' => 'nullable|image|max:5120', // 5MB
+        'selectedImage' => 'nullable|image', // 5MB
     ];
 
     protected function messages()
@@ -41,7 +41,6 @@ class ChatComponent extends Component
         return [
             'newMessage.max' => __('livewire.TinNhanKhongDuocVuotQua200KyTu'),
             'selectedImage.image' => __('livewire.ChiChapNhanTepHinhAnh'),
-            'selectedImage.max' => __('livewire.HinhAnhKhongDuocVuotQua5MB'),
         ];
     }
 
