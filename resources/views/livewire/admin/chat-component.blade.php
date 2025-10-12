@@ -150,7 +150,7 @@
                     <!-- Thời gian và trạng thái -->
                     <div class="d-flex align-items-center justify-content-between">
                         <div class="small {{ $isCurrentUser ? 'text-white-50' : 'opacity-75' }}" style="font-size: 10px;">
-                            {{ \Carbon\Carbon::parse($message['created_at'])->format('d/m/Y H:i') }}
+                            {{ \Carbon\Carbon::parse($message['created_at'])->setTimezone('Asia/Ho_Chi_Minh')->format('d/m/Y H:i') }}
                         </div>
                         @if($isCurrentUser)
                         <div class="ms-2">
