@@ -111,4 +111,14 @@ class User extends Authenticatable
         return $this->hasOne(Conversation::class, 'user_id')
             ->latestOfMany('updated_at');
     }
+    public function invitedUsersOrdered()
+    {
+        return $this->hasMany(User::class, 'referrer_id')
+            ->where('role', 'member')
+            ->with('latestConversation')
+            ->leftJoin('conversations', 'conversations.user_id', '=', 'users.id')
+            ->select('users.*')
+            ->groupBy('users.id')
+            ->orderByDesc(\DB::raw('MAX(conversations.updated_at)'));
+    }
 }

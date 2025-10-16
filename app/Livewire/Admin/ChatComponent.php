@@ -88,35 +88,6 @@ class ChatComponent extends Component
         }
     }
 
-    // public function loadStaffUsers()
-    // {
-    //     $this->staffUsers = User::where('role', 'staff')
-    //         ->with([
-    //             'invitedUsers' => function ($query) {
-    //                 $query->where('role', 'member')
-    //                     ->with([
-    //                         'latestConversation' => function ($subQuery) {
-    //                             $subQuery->with([
-    //                                 'messages' => function ($msgQuery) {
-    //                                     $msgQuery->latest('created_at')->limit(1);
-    //                                 }
-    //                             ]);
-    //                         }
-    //                     ]);
-    //             }
-    //         ])
-    //         ->get();
-
-    //     // Sắp xếp các invitedUsers theo thời gian tin nhắn mới nhất
-    //     foreach ($this->staffUsers as $staff) {
-    //         $staff->invitedUsers = $staff->invitedUsers->sortByDesc(function ($user) {
-    //             // Lấy tin nhắn mới nhất từ conversation
-    //             $latestMessage = optional($user->latestConversation)->messages->first();
-    //             return $latestMessage ? $latestMessage->created_at : null;
-    //         })->values(); // reset lại index
-    //     }
-    // }
-
     // Alternative method nếu bạn muốn dùng updated_at của conversation
 
     public function loadStaffUsersAlternative()
@@ -164,9 +135,9 @@ class ChatComponent extends Component
         $this->hasMoreMessages = true;
 
         $this->loadMessages();
-        if (Auth::user()->role === 'admin') {
-            $this->loadStaffUsersAlternative();
-        }
+        // if (Auth::user()->role === 'admin') {
+        //     $this->loadStaffUsersAlternative();
+        // }
         $this->dispatch('join-conversation-channel', conversationId: $conversationId);
         $this->dispatch('conversation-selected');
     }

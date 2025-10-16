@@ -84,7 +84,7 @@
                     style="transition: all 0.3s ease; {{ in_array($staff->id, $expandedStaff) ? 'max-height: 500px; opacity: 1;' : 'max-height: 0; opacity: 0; overflow: hidden;' }}">
                     @if(in_array($staff->id, $expandedStaff))
                     <div class="ms-4 mt-2">
-                        @foreach($staff->invitedUsers as $user)
+                        @foreach($staff->invitedUsersOrdered as $user)
                         <div class="user-item d-flex align-items-center p-2 rounded-3 mb-1 cursor-pointer"
                             style="cursor: pointer; transition: all 0.2s ease;"
                             wire:click="selectUserForChat({{ $user->id }}, {{ $staff->id }})">
