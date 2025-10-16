@@ -117,16 +117,12 @@ class User extends Authenticatable
             ->where('role', 'member')
             ->with('latestConversation')
             ->leftJoin('conversations', 'conversations.user_id', '=', 'users.id')
-            ->selectRaw('users.*, MAX(conversations.updated_at) as last_message_time')
+            ->selectRaw('users.id,users.full_name,users.username,users.role, MAX(conversations.updated_at) as last_message_time')
             ->groupBy(
                 'users.id',
                 'users.full_name',
                 'users.username',
-                'users.email',
                 'users.role',
-                'users.created_at',
-                'users.updated_at',
-                'users.referrer_id'
             )
             ->orderByDesc('last_message_time');
     }
