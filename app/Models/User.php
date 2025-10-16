@@ -116,7 +116,18 @@ class User extends Authenticatable
         return $this->hasMany(User::class, 'referrer_id')
             ->where('role', 'member')
             ->with('latestConversation')
-            ->withMax('conversations', 'updated_at') // 👈 thêm dòng này
-            ->orderByDesc('conversations_max_updated_at'); // 👈 sắp xếp theo updated_at mới nhất
+            ->leftJoin('conversations', 'conversations.user_id', '=', 'users.id')
+            ->selectRaw('users.*, MAX(conversations.updated_at) as last_message_time')
+            ->groupBy(
+                'users.id',
+                'users.full_name',
+                'users.username',
+                'users.email',
+                'users.role',
+                'users.created_at',
+                'users.updated_at',
+                'users.referrer_id'
+            )
+            ->orderByDesc('last_message_time');
     }
 }
