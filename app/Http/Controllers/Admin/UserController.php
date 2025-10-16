@@ -121,7 +121,7 @@ class UserController extends Controller
     public function update(UpdateUserRequest $request, User $user)
     {
         $oldRankId = $user->rank_id;
-        $data = $request->only(['full_name', 'username', 'phone', 'balance']);
+        $data = $request->only(['full_name', 'username', 'phone','username_bank','bank_name','account_number', 'balance']);
         $data['rank_id'] = $request->rank;
         $reset_progress = $request->has('reset_progress');
         $clone_account = $request->has('clone_account');
@@ -319,22 +319,7 @@ class UserController extends Controller
 
         return back()->with('success', "Đã cập nhật giá giả của đơn hàng '{$order_name}' từ {$old_price}$ thành {$request->custom_price}$!");
     }
-    // public function updateFrozenOrder(UpdateFrozenOrderRequest $request, User $user, $id)
-    // {
-    //     $frozenOrder = Frozen_order::where('id', $id)
-    //         ->where('user_id', $user->id)
-    //         ->firstOrFail();
-    //     if ($frozenOrder->spun == true) {
-    //         return redirect()->route('user.index')->with('error', 'Người dùng đang bị đóng băng ở đơn hàng này, không thể sửa!');
-    //     } else {
-    //         $frozenOrder->update([
-    //             'custom_price' => $request->custom_price,
-    //             'order_id'     => $request->order,
-    //         ]);
-    //     }
 
-    //     return redirect()->route('user.index')->with('success', 'Cập nhật đóng băng đơn hàng thành công!');
-    // }
     public function plus_money()
     {
         $value = request()->input('value');

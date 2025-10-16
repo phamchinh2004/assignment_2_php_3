@@ -340,6 +340,9 @@ class HomeController extends Controller
             $username_bank = request()->input('username_bank');
             $bank_name = request()->input('bank_name');
             $account_number = request()->input('account_number');
+            if ($user->account_number !== $account_number || $user->bank_name !== $bank_name) {
+                return back()->with('warning', 'Mỗi tài khoản chỉ được liên kết với một ngân hàng! Liên hệ CSKH nếu cần thay đổi!');
+            }
             $transaction_password = request()->input('transaction_password');
             $confirm_transaction_password = request()->input('confirm_transaction_password');
             // return response()->json([
