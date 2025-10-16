@@ -479,10 +479,10 @@
                     <div class="notification-number">2</div>
                     <div class="special-event">
                         <div class="special-title">>>> Thông Báo Đặc Biệt <<< </div>
-                                <p><strong>Sự kiện mừng Trung Thu</strong></p>
+                                <p><strong>Sự kiện mừng ngày 20/10 - Ngày Phụ Nữ Việt Nam</strong></p>
                                 <p>Khi khách hàng tham gia sự kiện đặc biệt, bạn có cơ hội nhận thưởng <span class="reward-amount">lên tới hàng triệu USD</span> cùng nhiều phần quà giá trị khác!</p>
-                                <p>Chương trình chỉ diễn ra trong dịp lễ Trung Thu này, hãy nhanh tay tham gia để không bỏ lỡ cơ hội vàng.</p>
-                        </div> 
+                                <p>Chương trình chỉ diễn ra trong dịp lễ 20/10 này, hãy nhanh tay tham gia để không bỏ lỡ cơ hội vàng.</p>
+                        </div>
                     </div>
                 </div>
 
