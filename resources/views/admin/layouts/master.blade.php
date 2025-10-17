@@ -25,7 +25,6 @@
 
     <!-- Slimselect -->
     <link href="https://unpkg.com/slim-select@latest/dist/slimselect.css" rel="stylesheet">
-    </link>
     <script>
         window.Laravel = {
             userId: @json(Auth::id()),
@@ -215,11 +214,7 @@
     </script>
 
     <!-- Slim Select -->
-    <script src="https://unpkg.com/slim-select@latest/dist/slimselect.min.js">
-        new SlimSelect({
-            select: '#selectElement'
-        })
-    </script>
+    <script src="https://unpkg.com/slim-select@latest/dist/slimselect.min.js"></script>
 
 
     <!-- Tinymce -->

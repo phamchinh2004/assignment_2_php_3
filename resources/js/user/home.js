@@ -5,6 +5,31 @@ document.addEventListener('DOMContentLoaded', function () {
             btn.classList.add('btn-sm');
         });
     }
+    // Tắt focus cho modal
+    document.getElementById('bankLinkModal').addEventListener('shown.bs.modal', function () {
+        const modal = bootstrap.Modal.getInstance(this);
+        if (modal && modal._focustrap) {
+            modal._focustrap.deactivate();
+        }
+    });
+    // Tạo slimselect
+    const bankSelect = new SlimSelect({
+        select: '#bankName',
+        settings: {
+            searchPlaceholder: 'Tìm kiếm ngân hàng...',
+            showSearch: true
+        },
+        events: {
+            afterOpen: () => {
+                setTimeout(() => {
+                    const searchInput = document.querySelector('.ss-search input');
+                    if (searchInput) {
+                        searchInput.focus();
+                    }
+                }, 50);
+            }
+        }
+    });
     // ==================================================Pháo hoa===================================================
     const container = document.getElementById('fireworks-container');
     const fireworks = new Fireworks(container, {

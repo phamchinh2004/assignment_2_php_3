@@ -1,4 +1,13 @@
 document.addEventListener('DOMContentLoaded', function () {
+
+    new SlimSelect({
+        select: '#select_bank_name',
+        settings: {
+            placeholderText: 'Chọn ngân hàng của bạn',
+            keepOrder: true,
+        },
+    })
+
     const bankSelect = document.getElementById('select_bank_name');
     const currentValue = bankSelect.getAttribute('value') || bankSelect.dataset.value;
 
@@ -46,7 +55,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const account_number = document.getElementById('account_number');
         const transaction_password = document.getElementById('transaction_password');
         const confirm_transaction_password = document.getElementById('confirm_transaction_password');
-        if (username_bank.value == "" ||  account_number.value == "" || transaction_password.value == "") {
+        if (username_bank.value == "" || account_number.value == "" || transaction_password.value == "") {
             notification('warning', trans.VuiLongNhapDayDuThongTinNganHang, trans.CanhBao);
             spinner.hidden = true;
             return;
