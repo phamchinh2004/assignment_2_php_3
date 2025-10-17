@@ -25,6 +25,9 @@ Broadcast::channel('user.{userId}', function ($user, $userId) {
 Broadcast::channel('join.conversation', function () {
     return true;
 });
+Broadcast::channel('sent.message', function () {
+    return true;
+});
 Broadcast::channel('chat.conversation.{conversationId}', function ($user, $conversationId) {
     $conversation = Conversation::with(['user', 'staff'])->find($conversationId);
 

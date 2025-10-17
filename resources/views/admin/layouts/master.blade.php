@@ -268,6 +268,11 @@
                         notification('warning', 'Người dùng ' + e.full_name + ' (' + e.username + ') đã tham gia hội thoại! ', 'Tham gia hội thoại!', 100000);
                         playNotificationSound(1, 3, 500);
                     });
+                window.Echo.private(`sent.message`)
+                    .listen('.UserSentMessage', function(e) {
+                        notification('success', e.message, e.full_name, 100000);
+                        playNotificationSound(1, 3, 500);
+                    });
                 window.Echo.private(`staff.{{ auth()->id() }}`)
                     .listen('.StaffLocked', function(e) {
                         location.href = '/log-out-by-locked';

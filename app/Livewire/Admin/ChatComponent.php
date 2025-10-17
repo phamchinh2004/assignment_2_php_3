@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\On;
 use Livewire\WithFileUploads;
+use Str;
 
 
 class ChatComponent extends Component
@@ -428,6 +429,12 @@ class ChatComponent extends Component
                     $this->dispatch('scroll-to-bottom');
                 }
             }
+        } else {
+            $this->dispatch('swal', [
+                'type' => 'warning',
+                'title' => $message['sender']['full_name'],
+                'text' => $message['type'] === "text" ? Str::limit($message['message'], 30, '...') : "Đã gửi hình ảnh"
+            ]);
         }
 
         $this->loadConversations();

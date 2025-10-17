@@ -4,6 +4,7 @@ namespace App\Livewire\User;
 
 use App\Events\MessageSent;
 use App\Events\UserJoinChat;
+use App\Events\UserSentMessage;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
@@ -12,6 +13,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Livewire\WithFileUploads;
+use Str;
 
 class ChatComponent extends Component
 {
@@ -151,7 +153,7 @@ class ChatComponent extends Component
         $this->validate();
 
         $messages = [];
-
+        $template_message_for_notification = "";
         // Gửi ảnh trước nếu có
         if ($this->selectedImage) {
             $imagePath = $this->selectedImage->store('chat-images', 'public');
@@ -169,7 +171,7 @@ class ChatComponent extends Component
             $messages[] = $this->formatMessage($imageMessage);
 
             // Broadcast image message
-
+            $template_message_for_notification = "Đã gửi hình ảnh";
             broadcast(new MessageSent($imageMessage))->toOthers();
         }
 
@@ -185,11 +187,12 @@ class ChatComponent extends Component
             $this->conversation->touch();
             $textMessage->load('sender');
             $messages[] = $this->formatMessage($textMessage);
-
+            $template_message_for_notification = Str::limit($this->newMessage, 30, '...');
             // Broadcast text message
             broadcast(new MessageSent($textMessage))->toOthers();
         }
-        event(new UserJoinChat(Auth::user()->username, Auth::user()->full_name));
+
+        event(new UserSentMessage(Auth::user()->full_name, $template_message_for_notification));
         // Reset form
         $this->newMessage = '';
         $this->selectedImage = null;
