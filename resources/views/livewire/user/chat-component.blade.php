@@ -74,12 +74,14 @@
             <div class="d-flex justify-content-end mb-3" wire:key="msg-{{ is_array($msg) ? $msg['id'] : $msg->id }}">
                 <div class="d-flex align-items-end" style="max-width: 100%;">
                     <div class="me-2">
-                        <div class="message-bubble px-3 py-2 text-start"
-                            style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-size: 14px; line-height: 1.4; word-wrap: break-word; {{ $type === 'text' ? 'border-radius: 25px;' : 'border-radius: 15px;' }}">
+                        <div class="message-bubble px-3 text-start"
+                            style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-size: 14px;
+                             line-height: 1.2; word-wrap: break-word;  white-space: pre-line;vertical-align: bottom;{{ $type === 'text' ? 'border-radius: 25px;' : 'border-radius: 15px;' }}">
                             @if($type === 'image')
-                                <img src="{{ Storage::url($imagePath) }}" alt="Sent image" class="img-fluid rounded" style="max-width: 200px; max-height: 200px; cursor: pointer;" onclick="openImageModal(this.src)">
+                                <img src="{{ Storage::url($imagePath) }}" alt="Sent image" class="img-fluid rounded" 
+                                style="max-width: 200px; max-height: 200px; cursor: pointer;" onclick="openImageModal(this.src)">
                             @else
-                                {{ $message }}
+                                {{ trim($message) }}
                             @endif
                         </div>
                         <div class="text-end mt-1" style="font-size: 10px; color: #6c757d;">
@@ -131,7 +133,7 @@
             </div>
             @endif
 
-            <div class="d-flex align-items-center" style="background: #f8f9fa; border-radius: 25px; padding: 8px 16px;">
+            <div class="d-flex align-items-end" style="background: #f8f9fa; border-radius: 25px; padding: 8px 16px;">
                 <!-- Nút chọn ảnh -->
                 <label for="image-upload" class="btn btn-link p-0 me-2" style="color: #667eea; font-size: 18px; cursor: pointer;">
                     <i class="fa fa-image"></i>
@@ -142,17 +144,18 @@
                        accept="image/*" 
                        style="display: none;">
                 
-                <input type="text"
-                    wire:model.live="newMessage"
-                    class="form-control border-0 bg-transparent"
-                    placeholder="{{__('home.NhapTinNhanCuaBan')}}"
-                    id="chat-input-field"
-                    autocomplete="off"
-                    maxlength="{{ $maxMessageLength }}"
-                    style="font-size: 14px;">
+                <textarea
+                wire:model.live="newMessage"
+                class="form-control border-0 bg-transparent"
+                placeholder="{{__('home.NhapTinNhanCuaBan')}}"
+                id="chat-input-field"
+                autocomplete="off"
+                maxlength="{{ $maxMessageLength }}"
+                style="font-size: 14px; resize: none; overflow-y: auto; max-height: 120px;"
+                rows="1"></textarea>
                 
                 <button type="submit"
-                    class="btn btn-link p-0 ms-2"
+                    class="btn btn-link p-0 ms-2 flex-shrink-0"
                     style="color: #667eea; font-size: 18px;"
                     @if(!$selectedImage && (strlen(trim($newMessage)) == 0 || strlen(trim($newMessage)) > $maxMessageLength)) disabled @endif>
                     <i class="fa fa-paper-plane"></i>
@@ -227,12 +230,54 @@
             }
         }
 
+        // Function để auto-resize textarea
+        function autoResizeTextarea(textarea) {
+            if (!textarea) return;
+            textarea.style.height = 'auto';
+            textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+        }
+
+        // Function để reset textarea
+        function resetTextarea(textarea) {
+            if (!textarea) return;
+            textarea.value = '';
+            textarea.style.height = 'auto';
+            textarea.focus();
+        }
+
+        // Setup textarea auto-resize
+        const textarea = document.getElementById('chat-input-field');
+        if (textarea) {
+            // Auto-resize khi input
+            textarea.addEventListener('input', function() {
+                autoResizeTextarea(this);
+            });
+
+            // Focus khi mở chat
+            textarea.focus();
+            
+            // Handle Enter key
+            textarea.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    const root = document.getElementById('chat-root');
+                    const component = Livewire.find(root.getAttribute('wire:id'));
+
+                    // Kiểm tra có ảnh hoặc tin nhắn không rỗng
+                    const hasImage = component.get('selectedImage') !== null;
+                    const hasText = this.value.trim().length > 0 && this.value.trim().length <= {{ $maxMessageLength }};
+                    
+                    if (hasImage || hasText) {
+                        component.call('sendMessage');
+                    }
+                }
+            });
+        }
+
         // Listen for Livewire events
         Livewire.on('message-sent', () => {
             const input = document.getElementById('chat-input-field');
-            if (input) {
-                input.focus();
-            }
+            resetTextarea(input);
             scrollToBottom();
         });
 
@@ -272,15 +317,12 @@
         if (conversationId && window.Echo) {
             window.Echo.private(`chat.conversation.${conversationId}`)
                 .listen('.MessageSent', (e) => {
-                    // console.log('New message at User:', e.message);
                     const message = e.message;
                     playNotificationSound();
                     if (message.sender_id !== currentUserId) {
                         const root = document.getElementById('chat-root');
                         const component = Livewire.find(root.getAttribute('wire:id'));
                         component.dispatch('message-received', e);
-                    } else {
-                        console.log('Ignoring own message');
                     }
                 })
                 .error((error) => {
@@ -288,41 +330,12 @@
                 });
         }
 
-        // Auto-focus input when chat opens
-        const input = document.getElementById('chat-input-field');
-        if (input) {
-            input.focus();
-            
-            // Handle Enter key
-            input.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    const root = document.getElementById('chat-root');
-                    const component = Livewire.find(root.getAttribute('wire:id'));
-
-                    // Kiểm tra có ảnh hoặc tin nhắn không rỗng
-                    const hasImage = component.get('selectedImage') !== null;
-                    const hasText = this.value.trim().length > 0 && this.value.trim().length <= {{ $maxMessageLength }};
-                    
-                    if (hasImage || hasText) {
-                        component.set('newMessage', this.value);
-                        setTimeout(() => {
-                            component.call('sendMessage');
-                        }, 50);
-                    }
-                }
-            });
-        }
-
-        // Handle Enter key
-        document.addEventListener('DOMContentLoaded', function() {
-            Livewire.on('reset-message-input', () => {
-                const input = document.querySelector('input[wire\\:model\\.live="newMessage"]');
-                if (input) {                    
-                    input.value = '';
-                    input.focus();
-                }
-            });
+        // Re-apply textarea resize khi Livewire update
+        Livewire.hook('morph.updated', ({ el, component }) => {
+            const textarea = document.getElementById('chat-input-field');
+            if (textarea) {
+                autoResizeTextarea(textarea);
+            }
         });
     });
 </script>

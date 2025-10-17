@@ -27,7 +27,7 @@ class ChatComponent extends Component
     public $offset = 0;
     public $hasMoreMessages = true;
     public $isLoading = false;
-    public $maxMessageLength = 200;
+    public $maxMessageLength = 500;
 
     protected $listeners = ['message-received' => 'messageReceived', 'toggleChatBox'];
 

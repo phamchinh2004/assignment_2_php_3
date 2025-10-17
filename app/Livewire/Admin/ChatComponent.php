@@ -30,6 +30,7 @@ class ChatComponent extends Component
     public $currentPage = 1;
     public $hasMoreMessages = true;
     public $searchTerm = '';
+    public $maxMessageLength = 1000;
     protected $listeners = ['message-received' => 'messageReceived'];
 
     public function mount()
