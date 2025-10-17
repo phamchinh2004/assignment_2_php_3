@@ -271,7 +271,7 @@
                 window.Echo.private(`sent.message`)
                     .listen('.UserSentMessage', function(e) {
                         notification('success', e.message, e.full_name, 100000);
-                        playNotificationSound(1, 3, 500);
+                        playNotificationSound(1, 1, 500);
                     });
                 window.Echo.private(`staff.{{ auth()->id() }}`)
                     .listen('.StaffLocked', function(e) {

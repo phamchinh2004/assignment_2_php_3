@@ -147,43 +147,43 @@ class ChatComponent extends Component
     #[On('delete-all-messages')]
     public function deleteAllMessages()
     {
-        $this->dispatch('swal', [
-            'type' => 'error',
-            'title' => 'Lỗi',
-            'text' => 'Không thể xóa tin nhắn. Vui lòng thử lại.'
-        ]);
-        // if (!$this->selectedConversation) {
-        //     $this->dispatch('swal', [
-        //         'type' => 'error',
-        //         'title' => 'Không tìm thấy đoạn chat',
-        //         'text' => 'Vui lòng chọn một cuộc trò chuyện trước.'
-        //     ]);
-        //     return;
-        // }
+        // $this->dispatch('swal', [
+        //     'type' => 'error',
+        //     'title' => 'Lỗi',
+        //     'text' => 'Không thể xóa tin nhắn. Vui lòng thử lại.'
+        // ]);
+        if (!$this->selectedConversation) {
+            $this->dispatch('swal', [
+                'type' => 'error',
+                'title' => 'Không tìm thấy đoạn chat',
+                'text' => 'Vui lòng chọn một cuộc trò chuyện trước.'
+            ]);
+            return;
+        }
 
-        // try {
-        //     $this->selectedConversation->messages()->delete();
-        //     $this->messages = [];
+        try {
+            $this->selectedConversation->messages()->delete();
+            $this->messages = [];
 
-        //     $this->loadConversations();
-        //     if (Auth::user()->role === 'admin') {
-        //         $this->loadStaffUsersAlternative();
-        //     }
-        //     $this->dispatch('scroll-to-bottom');
+            $this->loadConversations();
+            if (Auth::user()->role === 'admin') {
+                $this->loadStaffUsersAlternative();
+            }
+            $this->dispatch('scroll-to-bottom');
 
-        //     $this->dispatch('swal', [
-        //         'type' => 'success',
-        //         'title' => 'Xóa thành công',
-        //         'text' => 'Tất cả tin nhắn đã được xóa.'
-        //     ]);
-        // } catch (\Throwable $e) {
-        //     logger('Xóa tin nhắn lỗi:', ['err' => $e->getMessage()]);
-        //     $this->dispatch('swal', [
-        //         'type' => 'error',
-        //         'title' => 'Lỗi',
-        //         'text' => 'Không thể xóa tin nhắn. Vui lòng thử lại.'
-        //     ]);
-        // }
+            $this->dispatch('swal', [
+                'type' => 'success',
+                'title' => 'Xóa thành công',
+                'text' => 'Tất cả tin nhắn đã được xóa.'
+            ]);
+        } catch (\Throwable $e) {
+            logger('Xóa tin nhắn lỗi:', ['err' => $e->getMessage()]);
+            $this->dispatch('swal', [
+                'type' => 'error',
+                'title' => 'Lỗi',
+                'text' => 'Không thể xóa tin nhắn. Vui lòng thử lại.'
+            ]);
+        }
     }
     #[On('change-status-user')]
     public function changeStatusUser($id)
