@@ -83,7 +83,7 @@
                             @endif
                         </div>
                         <div class="text-end mt-1" style="font-size: 10px; color: #6c757d;">
-                            {{ \Carbon\Carbon::parse($createdAt)->format('H:i') }}
+                            {{ \Carbon\Carbon::parse($createdAt)->setTimezone('Asia/Ho_Chi_Minh')->format('d/m/Y H:i') }}
                         </div>
                     </div>
                     <img src="https://ui-avatars.com/api/?name={{ urlencode($senderName) }}&background=667eea&color=ffffff&size=28&rounded=true"
@@ -106,7 +106,7 @@
                             @endif
                         </div>
                         <div class="mt-1 ps-2" style="font-size: 10px; color: #6c757d;text-align:left;">
-                             {{__('home.HoTro'). \Carbon\Carbon::parse($createdAt)->format('H:i') }}
+                             {{__('home.HoTro'). \Carbon\Carbon::parse($createdAt)->setTimezone('Asia/Ho_Chi_Minh')->format('d/m/Y H:i') }}
                         </div>
                     </div>
                 </div>
