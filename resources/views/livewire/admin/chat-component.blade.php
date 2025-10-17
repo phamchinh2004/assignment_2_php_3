@@ -69,6 +69,18 @@
 
         <!-- Khu vực tin nhắn -->
         <div class="flex-grow-1 overflow-auto p-3 custom-scrollbar" wire:init="scrollToBottom" id="messages-container" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); scroll-behavior: smooth;">
+            @if (empty($messages))
+            <div class="flex-grow-1 d-flex align-items-center justify-content-center" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+                <div class="text-center">
+                    <div class="bg-primary bg-opacity-10 rounded-circle mx-auto mb-4 d-flex align-items-center justify-content-center" style="width: 100px; height: 100px; animation: pulse 2s infinite;">
+                        <i class="fas fa-comments fa-3x text-primary"></i>
+                    </div>
+                    <h4 class="text-dark mb-3 fw-bold">Chưa có tin nhắn nào!</h4>
+                    <p class="text-muted mb-0">Nhắn tin ngay bây giờ...</p>
+                </div>
+            </div>
+            @else
+
             @foreach($messages as $index => $message)
             @php
             $isCurrentUser = $message['sender_id'] == auth()->id();
@@ -174,6 +186,8 @@
                 </div>
             </div>
             @endforeach
+
+            @endif
         </div>
 
         <!-- Input tin nhắn -->
