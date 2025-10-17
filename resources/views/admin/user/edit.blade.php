@@ -168,6 +168,7 @@ Chỉnh sửa người dùng
                     <option value="Vikki Bank">Vikki Bank</option>
                     <option value="Vietbank">Vietbank</option>
                     <option value="ANZVL">ANZVL</option>
+                    <option value="Yucho Ginko">Yucho Ginko</option>
                     <option value="MBV">MBV</option>
                     <option value="CIMB">CIMB</option>
                     <option value="Kienlongbank">Kienlongbank</option>
