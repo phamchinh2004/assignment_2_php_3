@@ -78,7 +78,7 @@
         <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseOrder" aria-expanded="true" aria-controls="collapseOrder">
             <!-- <img src="{{ asset('images/admin/icons/sales1.svg') }}" alt="img"> -->
             <i class="fa-solid fa-arrow-right-arrow-left text-white"></i>
-            <span>Quản lý giao dịch khách hàng</span>
+            <span>Quản lý GDKH</span>
         </a>
         <div id="collapseOrder" class="collapse" aria-labelledby="headingPages" data-parent="#accordionSidebar">
             <div class="bg-white py-2 collapse-inner rounded">
