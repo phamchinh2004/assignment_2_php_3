@@ -62,7 +62,7 @@
         </marquee>
 
     </div>
-    <!-- Các nút -->
+    <!-- Các nút - Amazon Theme -->
     <div class="w-100 ps-4 pe-4 section-1 d-flex align-items-center justify-content-between">
 
         <div class="w-25 position-relative d-flex align-items-center justify-content-center flex-column cspt" id="btn_phan_phoi">
@@ -136,11 +136,12 @@
             <span class="visually-hidden">Next</span>
         </button>
     </div>
-    <!-- Vòng quay may mắn -->
+    <!-- Vòng quay may mắn - Amazon Theme -->
     <div class="section-3" id="section-3">
-        <div class="position-relative">
-            <span class="text-white fw-bold text-title">{{__('home.VongQuayMayMan')}}</span>
-            <img class="title-image" src="{{ asset('images/home/title.png') }}" alt="">
+        <div class="position-relative text-center">
+            <div class="amazon-banner">
+                <span class="text-white fw-bold text-title">🎯 {{__('home.VongQuayMayMan')}}</span>
+            </div>
         </div>
         <div class="mainbox m-auto vong-quay" id="mainbox" hidden>
             <div class="box" id="box">
@@ -233,11 +234,12 @@
         @endif
     </div>
 </div>
-<!-- Tập đoàn amazon -->
+<!-- Tập đoàn amazon - Amazon Theme -->
 <div class="section-4">
-    <div class="position-relative">
-        <span class="text-white fw-bold text-title">{{__('home.TapDoanAmazon')}}</span>
-        <img class="title-image" src="{{ asset('images/home/title.png') }}" alt="">
+    <div class="position-relative text-center">
+        <div class="amazon-banner">
+            <span class="text-white fw-bold text-title">🏢 {{__('home.TapDoanAmazon')}}</span>
+        </div>
     </div>
     <div class="section-4-box-content">
         <div class="section-4-content d-flex flex-column" id="view_amazon">
@@ -350,11 +352,12 @@
         </div>
     </div>
 </div>
-<!-- Thành viên Amazon -->
+<!-- Thành viên Amazon - Amazon Theme -->
 <div class="section-5">
-    <div class="position-relative">
-        <span class="text-white fw-bold text-title">{{__('home.ThanhVienAmazon')}}</span>
-        <img class="title-image" src="{{ asset('images/home/title.png') }}" alt="">
+    <div class="position-relative text-center">
+        <div class="amazon-banner">
+            <span class="text-white fw-bold text-title">👥 {{__('home.ThanhVienAmazon')}}</span>
+        </div>
     </div>
     <div class="section-5-box-content">
         @if (!empty($list_ranks))
@@ -397,7 +400,7 @@
 </div>
 <div class="section-6">
     <div class="position-relative">
-        <span class="text-white fw-bold section-6-title badge bg-warning">{{__('home.GioiThieu')}}</span>
+        <span class="text-white fw-bold section-6-title badge bg-warning">📖 {{__('home.GioiThieu')}}</span>
     </div>
     <div class="section-6-box-content bg-white">
         <p class="text-secondary">
@@ -416,43 +419,66 @@
     </div>
 </div>
 <div class="section-7">
-    <div class="position-relative">
-        <span class="text-white fw-bold text-title">{{__('home.CacThanhVienKhac')}}</span>
-        <img class="title-image" src="{{ asset('images/home/title.png') }}" alt="">
+    <div class="position-relative text-center">
+        <div class="amazon-banner">
+            <span class="text-white fw-bold text-title">🌟 {{__('home.CacThanhVienKhac')}}</span>
+        </div>
     </div>
     <div id="distribution-list" class="text-white"></div>
 </div>
-<!-- Đối tác -->
+<!-- Đối tác - Amazon Theme -->
 <div class="section-8">
-    <div class="bg-warning p-2">
-        <span class="text-white fw-bold fs-3 cac-doi-tac">— {{__('home.CacDoiTac')}} —</span>
+    <div class="position-relative text-center">
+        <div class="amazon-banner">
+            <span class="text-white fw-bold text-title">🤝 {{__('home.CacDoiTac')}}</span>
+        </div>
     </div>
+    
+    <!-- Desktop Table View -->
     <table class="table mt-2 table-striped table-hover table-bordered">
         <thead>
             <tr>
-                <th class="text-center">{{__('home.STT')}}</th>
-                <th class="text-center">{{__('home.TenDoiTac')}}</th>
-                <th class="text-center">{{__('home.HinhAnh')}}</th>
-                <th class="text-center">{{__('home.LinkTrangWeb')}}</th>
+                <th class="text-center">#</th>
+                <th class="text-center">🏢 {{__('home.TenDoiTac')}}</th>
+                <th class="text-center">🖼️ {{__('home.HinhAnh')}}</th>
+                <th class="text-center">🔗 {{__('home.LinkTrangWeb')}}</th>
             </tr>
         </thead>
         <tbody>
             @if (!empty($list_partners))
             @foreach ($list_partners as $index=> $item)
             <tr>
-                <td class="text-center">{{$index+1}}</td>
+                <td class="text-center">
+                    <span class="badge badge-primary" style="background: linear-gradient(45deg, #FF9500, #FF8C00); color: white; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-weight: bold;">{{$index+1}}</span>
+                </td>
                 <td class="text-center fw-bold">{{$item->name}}</td>
                 <td class="text-center">
                     <div class="p-1 d-flex justify-content-center align-items-center">
-                        <img class="image-doi-tac" src="{{ Storage::url($item->image) }}" alt="">
+                        <img class="image-doi-tac" src="{{ Storage::url($item->image) }}" alt="{{$item->name}}">
                     </div>
                 </td>
-                <td class="text-center"><a class="btn btn-sm btn-warning link-doi-tac" href="{{$item->link}}">{{__('home.XemTrangWeb')}}</a></td>
+                <td class="text-center"><a class="btn btn-sm btn-warning link-doi-tac" href="{{$item->link}}" target="_blank">{{__('home.XemTrangWeb')}}</a></td>
             </tr>
             @endforeach
             @endif
         </tbody>
     </table>
+    
+    <!-- Mobile Card View -->
+    <div class="partners-mobile-grid">
+        @if (!empty($list_partners))
+        @foreach ($list_partners as $index=> $item)
+        <div class="partner-card">
+            <div class="partner-number">{{$index+1}}</div>
+            <div class="partner-name">{{$item->name}}</div>
+            <div class="partner-image-container">
+                <img class="partner-image" src="{{ Storage::url($item->image) }}" alt="{{$item->name}}">
+            </div>
+            <a class="partner-link" href="{{$item->link}}" target="_blank">{{__('home.XemTrangWeb')}}</a>
+        </div>
+        @endforeach
+        @endif
+    </div>
 </div>
 <!-- Notification Overlay -->
 <div class="arround_notification">

@@ -420,7 +420,11 @@ document.addEventListener('DOMContentLoaded', function () {
         return `${prefix}**${suffix}`;
     };
 
-    const getRandomAmount = () => `$${Math.floor(10 + Math.random() * 1000)}`;
+    const getRandomAmount = () => {
+        const amounts = [10, 25, 50, 75, 100, 150, 200, 250, 300, 400, 500, 750, 1000];
+        const amount = amounts[Math.floor(Math.random() * amounts.length)];
+        return `$${amount}`;
+    };
 
     const getRandomTimeAgo = () => {
         const n = Math.floor(Math.random() * 60);
@@ -436,22 +440,101 @@ document.addEventListener('DOMContentLoaded', function () {
         const amount = getRandomAmount();
         const time = getRandomTimeAgo();
         return `
-        <div class="border-bottom py-2 d-flex flex-row justify-content-between mt-3 w-100">
-            <div class="section-7-content"><strong>${phone}</strong> - ${trans.successText}</div>
-            <div class="text-success section-7-content">${amount}</div>
-            <div class="section-7-content">${time}</div>
+        <div class="distribution-item mb-3 p-3 rounded-3 shadow-sm border-0" style="background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%); border-left: 4px solid #FF9500 !important;">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <div class="user-avatar me-3">
+                        <div class="avatar-circle" style="width: 40px; height: 40px; background: linear-gradient(135deg, #FF9500 0%, #FF8C00 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 14px;">
+                            ${phone.charAt(3)}
+                        </div>
+                    </div>
+                    <div>
+                        <div class="user-phone fw-bold text-dark mb-1" style="font-size: 14px;">${phone}</div>
+                        <div class="success-text text-muted" style="font-size: 12px;">${trans.successText}</div>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center">
+                    <div class="text-end me-3">
+                        <div class="amount-value fw-bold text-success mb-1" style="font-size: 16px; color: #FF9500 !important;">${amount}</div>
+                        <div class="time-ago text-muted" style="font-size: 11px;">${time}</div>
+                    </div>
+                    <div class="success-icon" style="width: 30px; height: 30px; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 12px;">
+                        ✓
+                    </div>
+                </div>
+            </div>
         </div>
     `;
     };
 
     const listContainer = document.getElementById('distribution-list');
 
+    // Thêm CSS cho animation
+    const style = document.createElement('style');
+    style.textContent = `
+        .distribution-item {
+            transition: all 0.3s ease;
+            animation: slideInFromRight 0.5s ease-out;
+        }
+        
+        .distribution-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 149, 0, 0.15) !important;
+        }
+        
+        @keyframes slideInFromRight {
+            0% {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            100% {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        .avatar-circle {
+            transition: all 0.3s ease;
+        }
+        
+        .distribution-item:hover .avatar-circle {
+            transform: scale(1.1);
+            box-shadow: 0 5px 15px rgba(255, 149, 0, 0.4);
+        }
+        
+        .success-icon {
+            transition: all 0.3s ease;
+        }
+        
+        .distribution-item:hover .success-icon {
+            transform: scale(1.1) rotate(360deg);
+        }
+        
+        .amount-value {
+            transition: all 0.3s ease;
+        }
+        
+        .distribution-item:hover .amount-value {
+            transform: scale(1.05);
+            text-shadow: 1px 1px 2px rgba(255, 149, 0, 0.3);
+        }
+    `;
+    document.head.appendChild(style);
+
     setInterval(() => {
         const items = [];
         for (let i = 0; i < 4; i++) {
             items.push(generateItem());
         }
+        
+        // Thêm animation stagger cho các items
         listContainer.innerHTML = items.join('');
+        
+        // Thêm animation delay cho từng item
+        const distributionItems = listContainer.querySelectorAll('.distribution-item');
+        distributionItems.forEach((item, index) => {
+            item.style.animationDelay = `${index * 0.1}s`;
+        });
     }, 5000);
 
     //==================================================Xem nội dung chi tiết==================================================
