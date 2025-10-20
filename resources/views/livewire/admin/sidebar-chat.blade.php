@@ -1,3 +1,11 @@
+@php
+use Illuminate\Support\Facades\Storage;
+@endphp
+
+@push('styles')
+<link rel="stylesheet" href="{{ asset('css/admin/sidebar-chat.css') }}">
+@endpush
+
 <div class="p-3 border-bottom bg-light">
     <h5 class="mb-0 text-dark fw-bold">
         @if(auth()->user()->role === 'admin')
@@ -25,8 +33,14 @@
             <div class="conversation-item d-flex align-items-center p-3 rounded-3 mb-2 position-relative cursor-pointer {{ $this->selectedConversation && $this->selectedConversation->id === $conversation->id ? 'bg-primary bg-opacity-10 border-start border-primary border-4 shadow-sm' : 'bg-white shadow-sm' }}"
                 style="cursor: pointer; transition: all 0.3s ease; border: 1px solid #e9ecef;"
                 wire:click="selectConversation({{ $conversation->id }})">
-                <div class="avatar bg-primary rounded-circle d-flex align-items-center justify-content-center text-white fw-bold me-3 position-relative" style="width: 45px; height: 45px; font-size: 16px;">
-                    {{ substr($conversation->user->full_name, 0, 1) }}
+                <div class="avatar rounded-circle d-flex align-items-center justify-content-center text-white fw-bold me-3 position-relative" style="width: 45px; height: 45px; font-size: 16px; overflow: hidden;">
+                    @if($conversation->user->avatar && Storage::disk('public')->exists($conversation->user->avatar))
+                        <img src="{{ asset('storage/' . $conversation->user->avatar) }}" alt="{{ $conversation->user->full_name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                    @else
+                        <div class="bg-primary w-100 h-100 d-flex align-items-center justify-content-center">
+                            <i class="fas fa-user" style="font-size: 18px;"></i>
+                        </div>
+                    @endif
                     @if($conversation->messages->where('sender_id', '!=', auth()->id())->where('created_at', '>', now()->subHour())->count() > 0)
                     <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 8px;">
                         <span class="visually-hidden">unread messages</span>
@@ -75,22 +89,28 @@
                             <i class="fas fa-users me-1"></i>{{ $staff->invitedUsers->count() }} khách hàng
                         </div>
                     </div>
-                    <i class="fas fa-chevron-down text-muted transition-transform"
-                        style="font-size: 12px; transition: transform 0.3s ease; {{ in_array($staff->id, $expandedStaff) ? 'transform: rotate(180deg);' : '' }}"></i>
+                    <i class="fas fa-chevron-down text-muted transition-transform {{ in_array($staff->id, $expandedStaff) ? 'rotated' : '' }}"
+                        style="font-size: 12px; transition: transform 0.3s ease;"></i>
                 </div>
 
                 <!-- Danh sách người dùng của nhân viên (có thể thu gọn) -->
-                <div class="staff-users-list"
-                    style="transition: all 0.3s ease; {{ in_array($staff->id, $expandedStaff) ? 'max-height: 500px; opacity: 1;' : 'max-height: 0; opacity: 0; overflow: hidden;' }}">
+                <div class="staff-users-list {{ in_array($staff->id, $expandedStaff) ? 'expanded' : 'collapsed' }}"
+                    style="transition: all 0.3s ease;">
                     @if(in_array($staff->id, $expandedStaff))
                     <div class="ms-4 mt-2">
                         @foreach($staff->invitedUsersOrdered as $user)
                         <div class="user-item d-flex align-items-center p-2 rounded-3 mb-1 cursor-pointer"
                             style="cursor: pointer; transition: all 0.2s ease;"
                             wire:click="selectUserForChat({{ $user->id }}, {{ $staff->id }})">
-                            <div class="bg-info rounded-circle d-flex align-items-center justify-content-center text-white fw-bold me-2"
-                                style="width: 28px; height: 28px; font-size: 12px;">
-                                {{ substr($user->full_name, 0, 1) }}
+                            <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold me-2"
+                                style="width: 28px; height: 28px; font-size: 12px; overflow: hidden;">
+                                @if($user->avatar && Storage::disk('public')->exists($user->avatar))
+                                    <img src="{{ asset('storage/' . $user->avatar) }}" alt="{{ $user->full_name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                                @else
+                                    <div class="bg-info w-100 h-100 d-flex align-items-center justify-content-center">
+                                        <i class="fas fa-user" style="font-size: 12px;"></i>
+                                    </div>
+                                @endif
                             </div>
                             <div class="flex-grow-1">
                                 <div class="text-dark small fw-medium">
@@ -132,8 +152,14 @@
             <div class="conversation-item d-flex align-items-center p-3 rounded-3 mb-2 position-relative cursor-pointer {{ $this->selectedConversation && $this->selectedConversation->id === $conversation->id ? 'bg-primary bg-opacity-10 border-start border-primary border-4 shadow-sm' : 'bg-white shadow-sm' }}"
                 style="cursor: pointer; transition: all 0.3s ease; border: 1px solid #e9ecef;"
                 wire:click="selectConversation({{ $conversation->id }})">
-                <div class="avatar bg-primary rounded-circle d-flex align-items-center justify-content-center text-white fw-bold me-3 position-relative" style="width: 45px; height: 45px; font-size: 16px;">
-                    {{ substr($conversation->user->full_name, 0, 1) }}
+                <div class="avatar rounded-circle d-flex align-items-center justify-content-center text-white fw-bold me-3 position-relative" style="width: 45px; height: 45px; font-size: 16px; overflow: hidden;">
+                    @if($conversation->user->avatar && Storage::disk('public')->exists($conversation->user->avatar))
+                        <img src="{{ asset('storage/' . $conversation->user->avatar) }}" alt="{{ $conversation->user->full_name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                    @else
+                        <div class="bg-primary w-100 h-100 d-flex align-items-center justify-content-center">
+                            <i class="fas fa-user" style="font-size: 18px;"></i>
+                        </div>
+                    @endif
                     @if($conversation->messages->where('sender_id', '!=', auth()->id())->where('created_at', '>', now()->subHour())->count() > 0)
                     <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 8px;">
                         <span class="visually-hidden">unread messages</span>

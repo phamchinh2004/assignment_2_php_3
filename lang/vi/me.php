@@ -14,6 +14,7 @@ return [
     "BaoCaoNhom" => "Báo cáo nhóm",
     "NgonNgu" => "Ngôn ngữ",
     "DangXuat" => "Đăng xuất",
+    "VuiLongLienHeCskh" => "Vui lòng liên hệ CSKH!",
 
     "SoDuHienTai" => "Số dư hiện tại",
     "TongNap" => "Tổng nạp",
