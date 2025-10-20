@@ -585,6 +585,13 @@ document.addEventListener('DOMContentLoaded', function () {
     // Đóng thông báo
     window.closeNotification = function () {
         const overlay = document.getElementById('notificationOverlay');
+        const dontShowAgain = document.getElementById('dontShowAgain');
+        
+        // Kiểm tra nếu người dùng đã tích vào checkbox
+        if (dontShowAgain && dontShowAgain.checked) {
+            localStorage.setItem('notificationDismissed', 'true');
+        }
+        
         overlay.classList.remove('show');
         notificationShown = false;
     }
@@ -610,14 +617,32 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
+    // Xử lý khi người dùng click vào checkbox
+    document.addEventListener('DOMContentLoaded', function() {
+        const dontShowAgain = document.getElementById('dontShowAgain');
+        if (dontShowAgain) {
+            dontShowAgain.addEventListener('change', function() {
+                // Có thể thêm logic bổ sung ở đây nếu cần
+                console.log('Checkbox changed:', this.checked);
+            });
+        }
+    });
+
+    // Hàm để reset trạng thái thông báo (để test hoặc admin sử dụng)
+    window.resetNotificationStatus = function() {
+        localStorage.removeItem('notificationDismissed');
+        console.log('Notification status has been reset. The notification will show again on next page load.');
+    };
+
     // Tự động hiển thị thông báo khi trang được tải (giả lập đăng nhập)
     window.addEventListener('load', function () {
         // Giả lập việc kiểm tra trạng thái đăng nhập
         setTimeout(function () {
             // Trong thực tế, bạn sẽ kiểm tra từ server hoặc session
             const isLoggedIn = true; // Giả lập đã đăng nhập
+            const notificationDismissed = localStorage.getItem('notificationDismissed');
 
-            if (isLoggedIn && !notificationShown) {
+            if (isLoggedIn && !notificationShown && !notificationDismissed) {
                 showNotification();
             }
         }, 1000); // Delay 1 giây để tạo hiệu ứng

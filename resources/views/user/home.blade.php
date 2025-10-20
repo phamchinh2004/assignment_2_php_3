@@ -816,6 +816,13 @@
                 </div>
 
                 <div class="notification-footer">
+                    <div class="notification-options">
+                        <label class="checkbox-container">
+                            <input type="checkbox" id="dontShowAgain">
+                            <span class="checkmark"></span>
+                            Không hiển thị thông báo này nữa
+                        </label>
+                    </div>
                     <button class="cta-button" onclick="participateEvent()">
                         <i class="fas fa-gift"></i> Tham gia ngay
                     </button>

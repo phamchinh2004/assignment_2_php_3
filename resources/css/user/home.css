@@ -4325,3 +4325,55 @@ marquee {
         font-size: 0.6rem;
     }
 }
+
+/* Checkbox styles for notification */
+.notification-options {
+    margin-bottom: 15px;
+    text-align: left;
+}
+
+.checkbox-container {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--amazon-text);
+    user-select: none;
+}
+
+.checkbox-container input[type="checkbox"] {
+    display: none;
+}
+
+.checkmark {
+    width: 20px;
+    height: 20px;
+    background-color: var(--amazon-white);
+    border: 2px solid var(--amazon-orange);
+    border-radius: 4px;
+    margin-right: 10px;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.checkbox-container:hover .checkmark {
+    background-color: var(--amazon-off-white);
+    border-color: var(--amazon-orange-dark);
+}
+
+.checkbox-container input[type="checkbox"]:checked + .checkmark {
+    background-color: var(--amazon-orange);
+    border-color: var(--amazon-orange-dark);
+}
+
+.checkbox-container input[type="checkbox"]:checked + .checkmark::after {
+    content: "";
+    position: absolute;
+    left: 6px;
+    top: 2px;
+    width: 6px;
+    height: 10px;
+    border: solid var(--amazon-white);
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}

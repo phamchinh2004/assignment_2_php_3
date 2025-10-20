@@ -13,7 +13,11 @@ class Frozen_order extends Model
         'order_id',
         'custom_price',
         'is_frozen',
-        'spun'
+        'spun',
+        'reminder_sent_at',
+        'penalty_sent_at',
+        'reminder_sent',
+        'penalty_sent'
     ];
     public function user()
     {

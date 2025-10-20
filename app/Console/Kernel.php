@@ -13,6 +13,9 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule): void
     {
         $schedule->command('app:reset-daily-user-data')->dailyAt('00:00');
+        
+        // Kiểm tra đơn hàng đặc biệt chưa phân phối mỗi giờ
+        $schedule->command('orders:check-special-reminder')->hourly();
     }
 
     /**

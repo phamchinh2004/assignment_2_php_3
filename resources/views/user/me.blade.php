@@ -16,7 +16,10 @@
     <!-- Header Section -->
     <div class="me_top d-flex flex-column justify-content-center align-items-center">
         <div class="me_top_1 d-flex flex-column align-items-center">
-            <img class="me_image" src="{{asset('storage/'.$user->avatar)}}" alt="Avatar">
+            <img class="me_image" 
+                 src="{{ get_user_avatar($user) }}" 
+                 alt="Avatar"
+                 onerror="this.src='{{ asset('images/default-avatar-gray.svg') }}'">
             @if ($rank && $rank->name)
             <div class="mt-2">
                 <span class="badge bg-warning text-dark">{{$rank->name}}</span>
