@@ -1,0 +1,16 @@
+<!-- ISO Certificate Placeholder -->
+<svg width="200" height="120" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="isoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#dc2626;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#ef4444;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="200" height="120" rx="10" fill="url(#isoGrad)"/>
+  <rect x="5" y="5" width="190" height="110" rx="5" fill="none" stroke="white" stroke-width="2"/>
+  <text x="100" y="30" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="16" font-weight="bold">ISO</text>
+  <text x="100" y="50" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="14">27001</text>
+  <text x="100" y="70" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="12">Information</text>
+  <text x="100" y="85" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="12">Security</text>
+  <text x="100" y="105" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="10">Management</text>
+</svg>

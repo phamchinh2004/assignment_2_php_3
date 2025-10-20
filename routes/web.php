@@ -53,6 +53,7 @@ Route::middleware(['role:member', 'checkBanned'])->group(function () {
     Route::post('change-password', [LoginController::class, 'change_password'])->name('change_password');
     Route::post('change-transaction-password', [LoginController::class, 'change_transaction_password'])->name('change_transaction_password');
     Route::post('/reset-transaction-password', [LoginController::class, 'reset_transaction_password'])->name('reset_transaction_password');
+    Route::post('/upload-avatar', [MeController::class, 'upload_avatar'])->name('upload_avatar');
 });
 Route::get('/log-out', [LoginController::class, 'log_out'])->name('logout')->middleware('auth');
 Route::get('/log-out-by-locked', [LoginController::class, 'log_out_by_locked'])->name('log_out_by_locked')->middleware('auth');

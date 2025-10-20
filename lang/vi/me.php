@@ -15,6 +15,16 @@ return [
     "NgonNgu" => "Ngôn ngữ",
     "DangXuat" => "Đăng xuất",
 
-    "VuiLongLienHeCskh" => "Vui lòng liên hệ CSKH!",
-    "ThongBao" => "Thông báo",
+    "SoDuHienTai" => "Số dư hiện tại",
+    "TongNap" => "Tổng nạp",
+    "TongRut" => "Tổng rút", 
+    "LoiNhuan" => "Lợi nhuận",
+    "GiaoDichHomNay" => "Giao dịch hôm nay",
+    "TrangThai" => "Trạng thái",
+    "HoatDong" => "Hoạt động",
+    "KhongHoatDong" => "Không hoạt động",
+    "ChuaKichHoat" => "Chưa kích hoạt",
+    "BiCam" => "Bị cấm",
+    "LoiNhuanGiaiThich" => "Lợi nhuận = Tổng rút - Tổng nạp",
+    "CongThucTinh" => "Công thức tính",
 ];

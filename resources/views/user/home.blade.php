@@ -352,6 +352,227 @@
         </div>
     </div>
 </div>
+<!-- Thống kê tổng quan hệ thống -->
+<div class="section-stats">
+    <div class="position-relative text-center">
+        <div class="amazon-banner">
+            <span class="text-white fw-bold text-title">📊 Thống kê hệ thống</span>
+        </div>
+    </div>
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">👥</div>
+            <div class="stat-number">50,000+</div>
+            <div class="stat-label">Thành viên</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">💰</div>
+            <div class="stat-number">$2M+</div>
+            <div class="stat-label">Tổng giao dịch</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">📦</div>
+            <div class="stat-number">100K+</div>
+            <div class="stat-label">Đơn hàng đã phân phối</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">⭐</div>
+            <div class="stat-number">4.9/5</div>
+            <div class="stat-label">Đánh giá</div>
+        </div>
+    </div>
+</div>
+
+<!-- Chứng nhận và bảo mật -->
+<div class="section-certificates">
+    <div class="position-relative text-center">
+        <div class="amazon-banner">
+            <span class="text-white fw-bold text-title">🛡️ Bảo mật & Chứng nhận</span>
+        </div>
+    </div>
+    <div class="certificates-grid">
+        <div class="cert-item">
+            <div class="cert-icon ssl-icon">
+                <i class="fas fa-lock"></i>
+            </div>
+            <div class="cert-info">
+                <h4>SSL 256-bit</h4>
+                <p>Mã hóa bảo mật</p>
+            </div>
+        </div>
+        <div class="cert-item">
+            <div class="cert-icon pci-icon">
+                <i class="fas fa-shield-alt"></i>
+            </div>
+            <div class="cert-info">
+                <h4>PCI DSS</h4>
+                <p>Bảo mật thanh toán</p>
+            </div>
+        </div>
+        <div class="cert-item">
+            <div class="cert-icon iso-icon">
+                <i class="fas fa-certificate"></i>
+            </div>
+            <div class="cert-info">
+                <h4>ISO 27001</h4>
+                <p>Quản lý bảo mật</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lịch sử hoạt động và thành tựu -->
+<div class="section-timeline">
+    <div class="position-relative text-center">
+        <div class="amazon-banner">
+            <span class="text-white fw-bold text-title">🏆 Hành trình phát triển</span>
+        </div>
+    </div>
+    <div class="timeline">
+        <div class="timeline-item">
+            <div class="timeline-year">2020</div>
+            <div class="timeline-content">Thành lập công ty và ra mắt nền tảng phân phối đơn hàng</div>
+        </div>
+        <div class="timeline-item">
+            <div class="timeline-year">2021</div>
+            <div class="timeline-content">Đạt 10,000 thành viên đầu tiên và mở rộng hệ thống gian hàng</div>
+        </div>
+        <div class="timeline-item">
+            <div class="timeline-year">2022</div>
+            <div class="timeline-content">Mở rộng sang thị trường quốc tế và tích hợp thanh toán đa dạng</div>
+        </div>
+        <div class="timeline-item">
+            <div class="timeline-year">2023</div>
+            <div class="timeline-content">Đạt mốc $1M tổng giao dịch và ra mắt hệ thống VIP</div>
+        </div>
+        <div class="timeline-item">
+            <div class="timeline-year">2024</div>
+            <div class="timeline-content">Tiếp tục phát triển và nâng cấp hệ thống bảo mật</div>
+        </div>
+    </div>
+</div>
+
+<!-- Đánh giá từ khách hàng -->
+<div class="section-testimonials">
+    <div class="position-relative text-center">
+        <div class="amazon-banner">
+            <span class="text-white fw-bold text-title">💬 Đánh giá từ khách hàng</span>
+        </div>
+    </div>
+    <div class="testimonials-section">
+        <div class="testimonials-wrapper">
+            <div class="testimonial-slide active">
+                <div class="testimonial-card">
+                    <div class="testimonial-text">
+                        "Mk kiếm cũng được kha khá tiền ở đây, nhưng hệ thống cho ít đơn thưởng quá săn mãi mới dc 1 đơn hicc"
+                    </div>
+                    <div class="testimonial-author">
+                        <img src="{{ asset('images/avatars/1.jpg') }}" alt="User">
+                        <div class="author-info">
+                            <div class="author-name">Hà Phạm Thị</div>
+                            <div class="author-rank">VIP Gold</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="testimonial-slide">
+                <div class="testimonial-card">
+                    <div class="testimonial-text">
+                        "Làm được gần 1 năm thấy cũng ổn, ae làm mà nhận dc đơn thưởng thì bú luôn đi ko là ko đủ sống đâu, chịu khó đầu tư 1 tí"
+                    </div>
+                    <div class="testimonial-author">
+                        <img src="{{ asset('images/avatars/2.jpg') }}" alt="User">
+                        <div class="author-info">
+                            <div class="author-name">Nguyen Vu</div>
+                            <div class="author-rank">VIP Platinum</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="testimonial-slide">
+                <div class="testimonial-card">
+                    <div class="testimonial-text">
+                        "Đội ngũ hỗ trợ chuyên nghiệp, giải quyết vấn đề nhanh chóng. Tôi tin tưởng và sẽ tiếp tục sử dụng dịch vụ lâu dài."
+                    </div>
+                    <div class="testimonial-author">
+                        <img src="{{ asset('images/avatars/3.jpg') }}" alt="User">
+                        <div class="author-info">
+                            <div class="author-name">Phanhh Nguyễn</div>
+                            <div class="author-rank">VIP Diamond</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="testimonial-slide">
+                <div class="testimonial-card">
+                    <div class="testimonial-text">
+                        "Hệ thống phân phối rất minh bạch và hiệu quả. Tôi đã kiếm được thu nhập ổn định từ đây. Giao diện dễ sử dụng và hỗ trợ khách hàng rất tốt."
+                    </div>
+                    <div class="testimonial-author">
+                        <img src="{{ asset('images/avatars/4.jpg') }}" alt="User">
+                        <div class="author-info">
+                            <div class="author-name">Trần Minh Tuấn</div>
+                            <div class="author-rank">VIP Gold</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="testimonial-slide">
+                <div class="testimonial-card">
+                    <div class="testimonial-text">
+                        "Tôi đã tham gia từ năm 2021 và rất hài lòng với dịch vụ. Hệ thống gian hàng phân cấp giúp tôi có thu nhập tăng dần theo thời gian."
+                    </div>
+                    <div class="testimonial-author">
+                        <img src="{{ asset('images/avatars/5.jpg') }}" alt="User">
+                        <div class="author-info">
+                            <div class="author-name">Lê Thị Mai</div>
+                            <div class="author-rank">VIP Platinum</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="testimonial-slide">
+                <div class="testimonial-card">
+                    <div class="testimonial-text">
+                        "Rất hài lòng với dịch vụ! Hệ thống hoạt động ổn định, không có lỗi gì. Thu nhập hàng tháng đều đặn, đúng như cam kết."
+                    </div>
+                    <div class="testimonial-author">
+                        <img src="{{ asset('images/avatars/6.jpg') }}" alt="User">
+                        <div class="author-info">
+                            <div class="author-name">Nguyễn Văn Đức</div>
+                            <div class="author-rank">VIP Diamond</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="testimonial-controls">
+            <button class="testimonial-btn prev-btn" onclick="showPrevTestimonial()">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <button class="testimonial-btn next-btn" onclick="showNextTestimonial()">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+        
+        <div class="testimonial-dots">
+            <span class="dot active" onclick="showTestimonial(0)"></span>
+            <span class="dot" onclick="showTestimonial(1)"></span>
+            <span class="dot" onclick="showTestimonial(2)"></span>
+            <span class="dot" onclick="showTestimonial(3)"></span>
+            <span class="dot" onclick="showTestimonial(4)"></span>
+            <span class="dot" onclick="showTestimonial(5)"></span>
+        </div>
+    </div>
+</div>
+
+
 <!-- Thành viên Amazon - Amazon Theme -->
 <div class="section-5">
     <div class="position-relative text-center">
@@ -359,50 +580,132 @@
             <span class="text-white fw-bold text-title">👥 {{__('home.ThanhVienAmazon')}}</span>
         </div>
     </div>
-    <div class="section-5-box-content">
-        @if (!empty($list_ranks))
-        @foreach ($list_ranks as $item)
-        <div class="section-5-item-content mb-3">
-            <span class="section-5-vip-title badge text-warning">
-                {{$item->name}}
-            </span>
-            <div class="section-5-content d-flex align-items-center justify-content-between flex-row">
-                <div class="d-flex flex-column align-items-center">
-                    <span class="section-5-content-tittle">
-                        {{__('home.PhiNangCap')}}
-                    </span>
-                    <span class="section-5-content-value text-danger">
-                        {{$item->upgrade_fee}}$
-                    </span>
+    <div class="ranks-comparison">
+        <div class="comparison-header">
+            <h3><i class="fas fa-chart-bar me-2"></i>So sánh các gian hàng</h3>
+            <p class="comparison-subtitle">Chọn gian hàng phù hợp với nhu cầu của bạn</p>
+        </div>
+        <div class="comparison-table">
+            <div class="table-header">
+                <div class="col-rank">
+                    <i class="fas fa-crown me-1"></i>Gian hàng
                 </div>
-                <div class="d-flex flex-column align-items-center">
-                    <span class="section-5-content-tittle">
-                        {{__('home.ChietKhau')}}
-                    </span>
-                    <span class="section-5-content-value">
-                        {{$item->commission_percentage}}%
-                    </span>
+                <div class="col-members">
+                    <i class="fas fa-users me-1"></i>Thành viên
                 </div>
-                <div class="d-flex flex-column align-items-center">
-                    <span class="section-5-content-tittle">
-                        {{__('home.LuotPhanPhoi')}}
-                    </span>
-                    <span class="section-5-content-value">
-                        {{$item->spin_count}}
-                    </span>
+                <div class="col-fee">
+                    <i class="fas fa-dollar-sign me-1"></i>Phí nâng cấp
+                </div>
+                <div class="col-commission">
+                    <i class="fas fa-percentage me-1"></i>Chiết khấu
+                </div>
+                <div class="col-spins">
+                    <i class="fas fa-sync-alt me-1"></i>Lượt phân phối
+                </div>
+                <div class="col-value">
+                    <i class="fas fa-gem me-1"></i>Giá trị
                 </div>
             </div>
+            @if (!empty($list_ranks_with_member_count))
+            @foreach($list_ranks_with_member_count as $index => $item)
+            <div class="table-row {{$index % 2 == 0 ? 'even' : 'odd'}}">
+                <div class="col-rank">
+                    <div class="rank-badge rank-badge-{{$index + 1}}">
+                        <div class="rank-icon">
+                            @if($index == 0)
+                                <i class="fas fa-gem"></i>
+                            @elseif($index == 1)
+                                <i class="fas fa-crown"></i>
+                            @elseif($index == 2)
+                                <i class="fas fa-trophy"></i>
+                            @else
+                                <i class="fas fa-star"></i>
+                            @endif
+                        </div>
+                        <div class="rank-name">{{$item->name}}</div>
+                    </div>
+                </div>
+                <div class="col-members">
+                    <div class="member-count">
+                        <span class="count-number">{{$item->user_count}}</span>
+                        <span class="count-label">thành viên</span>
+                    </div>
+                </div>
+                <div class="col-fee">
+                    <div class="fee-amount">
+                        <span class="currency">$</span>
+                        <span class="amount">{{number_format($item->upgrade_fee)}}</span>
+                    </div>
+                </div>
+                <div class="col-commission">
+                    <div class="commission-rate">
+                        <span class="rate">{{$item->commission_percentage}}</span>
+                        <span class="percent">%</span>
+                    </div>
+                </div>
+                <div class="col-spins">
+                    <div class="spin-count">
+                        <span class="count">{{$item->spin_count}}</span>
+                        <span class="label">lượt/ngày</span>
+                    </div>
+                </div>
+                <div class="col-value">
+                    <div class="value-amount">
+                        <span class="currency">$</span>
+                        <span class="amount">{{number_format($item->value)}}</span>
+                    </div>
+                </div>
+            </div>
+            @endforeach
+            @endif
         </div>
-        @endforeach
-        @endif
-
     </div>
 </div>
+<!-- Minh bạch thông tin -->
+<div class="section-transparency">
+    <div class="position-relative text-center">
+        <div class="amazon-banner">
+            <span class="text-white fw-bold text-title">🔍 Minh bạch thông tin</span>
+        </div>
+    </div>
+    <div class="transparency-grid">
+        <div class="transparency-item">
+            <div class="transparency-icon">📋</div>
+            <div class="transparency-title">Báo cáo tài chính</div>
+            <div class="transparency-desc">Công khai báo cáo hàng tháng về tổng giao dịch và phân phối lợi nhuận</div>
+        </div>
+        <div class="transparency-item">
+            <div class="transparency-icon">⚖️</div>
+            <div class="transparency-title">Quy định pháp lý</div>
+            <div class="transparency-desc">Tuân thủ đầy đủ các quy định về kinh doanh và bảo vệ người tiêu dùng</div>
+        </div>
+        <div class="transparency-item">
+            <div class="transparency-icon">🔒</div>
+            <div class="transparency-title">Bảo vệ dữ liệu</div>
+            <div class="transparency-desc">Cam kết bảo mật thông tin cá nhân và tài chính của khách hàng</div>
+        </div>
+    </div>
+</div>
+
 <div class="section-6">
     <div class="position-relative">
         <span class="text-white fw-bold section-6-title badge bg-warning">📖 {{__('home.GioiThieu')}}</span>
     </div>
     <div class="section-6-box-content bg-white">
+        <div class="operation-info mb-3">
+            <div class="info-item">
+                <i class="fas fa-clock text-warning me-2"></i>
+                <span>Thời gian hoạt động: 24/7</span>
+            </div>
+            <div class="info-item">
+                <i class="fas fa-shield-alt text-success me-2"></i>
+                <span>Bảo mật: SSL 256-bit</span>
+            </div>
+            <div class="info-item">
+                <i class="fas fa-headset text-info me-2"></i>
+                <span>Hỗ trợ: 24/7</span>
+            </div>
+        </div>
         <p class="text-secondary">
             @if (!empty($list_sections))
             @foreach ($list_sections as $item)

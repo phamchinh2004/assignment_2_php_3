@@ -72,12 +72,12 @@
             @if($isCurrentUser)
             <!-- Tin nhắn của user -->
             <div class="d-flex justify-content-end mb-3" wire:key="msg-{{ is_array($msg) ? $msg['id'] : $msg->id }}">
-                <div class="d-flex align-items-end" style="max-width: 100%;">
-                    <div class="me-2">
+                <div class="d-flex align-items-end" style="max-width: 70%;">
+                    <div class="me-2" style="display: flex; flex-direction: column; align-items: flex-end;">
                         <div class="message-bubble px-3 py-2 text-start"
-                            style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-size: 14px; line-height: 1.4; word-wrap: break-word; {{ $type === 'text' ? 'border-radius: 25px;' : 'border-radius: 15px;' }}">
+                            style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-size: 14px; line-height: 1.4; word-wrap: break-word; overflow-wrap: break-word; display: inline-block; {{ $type === 'text' ? 'width: fit-content; max-width: 100%;' : 'width: 200px; max-width: 200px;' }} {{ $type === 'text' ? 'border-radius: 25px;' : 'border-radius: 15px;' }}">
                             @if($type === 'image')
-                                <img src="{{ Storage::url($imagePath) }}" alt="Sent image" class="img-fluid rounded" style="max-width: 200px; max-height: 200px; cursor: pointer;" onclick="openImageModal(this.src)">
+                                <img src="{{ Storage::url($imagePath) }}" alt="Sent image" class="img-fluid rounded" style="width: 100%; max-width: 200px; max-height: 200px; cursor: pointer;" onclick="openImageModal(this.src)">
                             @else
                                 {{ $message }}
                             @endif
@@ -93,14 +93,14 @@
             @else
             <!-- Tin nhắn của support -->
             <div class="d-flex justify-content-start mb-3" wire:key="msg-{{ is_array($msg) ? $msg['id'] : $msg->id }}">
-                <div class="d-flex align-items-end" style="max-width: 100%;">
+                <div class="d-flex align-items-end" style="max-width: 70%;">
                     <img src="https://ui-avatars.com/api/?name=Support&background=28a745&color=ffffff&size=28&rounded=true&bold=true"
                         alt="Support" class="rounded-circle flex-shrink-0" width="28" height="28">
-                    <div class="ms-2">
+                    <div class="ms-2" style="display: flex; flex-direction: column; align-items: flex-start;">
                         <div class="message-bubble rounded-4 px-3 py-2 position-relative member-message text-start"
-                            style="transition: all 0.2s ease; border: 1px solid #e9ecef;">
+                            style="transition: all 0.2s ease; border: 1px solid #e9ecef; display: inline-block; {{ $type === 'text' ? 'width: fit-content; max-width: 100%;' : 'width: 200px; max-width: 200px;' }} word-wrap: break-word; overflow-wrap: break-word;">
                             @if($type === 'image')
-                                <img src="{{ Storage::url($imagePath) }}" alt="Received image" class="img-fluid rounded" style="max-width: 200px; max-height: 200px; cursor: pointer;" onclick="openImageModal(this.src)">
+                                <img src="{{ Storage::url($imagePath) }}" alt="Received image" class="img-fluid rounded" style="width: 100%; max-width: 200px; max-height: 200px; cursor: pointer;" onclick="openImageModal(this.src)">
                             @else
                                 {{ $message }}
                             @endif

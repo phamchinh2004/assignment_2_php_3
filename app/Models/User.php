@@ -126,4 +126,89 @@ class User extends Authenticatable
             )
             ->orderByDesc('last_message_time');
     }
+
+    /**
+     * Tính tổng số tiền đã nạp (chỉ tính các giao dịch đã hoàn thành)
+     */
+    public function getTotalDepositAttribute()
+    {
+        return $this->wallet_balance_histories()
+            ->where('type', 'deposit')
+            ->where('status', 'completed')
+            ->sum('value');
+    }
+
+    /**
+     * Tính tổng số tiền đã rút (chỉ tính các giao dịch đã hoàn thành)
+     */
+    public function getTotalWithdrawAttribute()
+    {
+        return $this->wallet_balance_histories()
+            ->where('type', 'withdraw')
+            ->where('status', 'completed')
+            ->sum('value');
+    }
+
+    /**
+     * Tính lợi nhuận đơn giản (Tổng rút - Tổng nạp)
+     * Cho thấy số tiền thực tế đã rút được từ hệ thống
+     */
+    public function getProfitAttribute()
+    {
+        return $this->total_withdraw - $this->total_deposit;
+    }
+
+    /**
+     * Tính lợi nhuận từ hoạt động (chỉ tính các giao dịch bonus)
+     */
+    public function getBusinessProfitAttribute()
+    {
+        return $this->wallet_balance_histories()
+            ->where('transaction_type', 'bonus')
+            ->where('status', 'completed')
+            ->sum('value');
+    }
+
+    /**
+     * Tính tổng số tiền đã rút thực tế (không bao gồm virtual_withdraw)
+     */
+    public function getRealWithdrawAttribute()
+    {
+        return $this->wallet_balance_histories()
+            ->where('type', 'withdraw')
+            ->where('status', 'completed')
+            ->where('transaction_type', '!=', 'virtual_withdraw')
+            ->sum('value');
+    }
+
+    /**
+     * Đếm số giao dịch hôm nay
+     */
+    public function getTodayTransactionsAttribute()
+    {
+        return $this->wallet_balance_histories()
+            ->whereDate('created_at', today())
+            ->count();
+    }
+
+    /**
+     * Đếm số giao dịch trong tháng hiện tại
+     */
+    public function getThisMonthTransactionsAttribute()
+    {
+        return $this->wallet_balance_histories()
+            ->whereMonth('created_at', now()->month)
+            ->whereYear('created_at', now()->year)
+            ->count();
+    }
+
+    /**
+     * Lấy giao dịch gần đây nhất
+     */
+    public function getLatestTransactionAttribute()
+    {
+        return $this->wallet_balance_histories()
+            ->latest()
+            ->first();
+    }
 }

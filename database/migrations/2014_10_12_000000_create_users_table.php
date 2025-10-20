@@ -15,6 +15,7 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
+            $table->string('avatar')->nullable()->comment('Ảnh đại diện');
             $table->string('full_name')->comment('Họ và tên');
             $table->string('username')->unique()->comment('Tên đăng nhập');
             $table->string('email')->unique()->nullable()->comment('Email');

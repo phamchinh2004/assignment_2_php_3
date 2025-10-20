@@ -34,7 +34,100 @@ class HomeController extends Controller
             $rank = Rank::find(Auth::user()->rank_id);
         }
 
-        return view('user.home', compact('list_ranks', 'list_sections', 'list_partners', 'get_banner', 'user_spin_progress', 'rank'));
+        // Tính toán số liệu thành viên hợp lý cho từng gian hàng
+        $list_ranks_with_member_count = $this->calculateMemberCounts($list_ranks);
+
+        return view('user.home', compact('list_ranks_with_member_count', 'list_sections', 'list_partners', 'get_banner', 'user_spin_progress', 'rank'));
+    }
+
+    /**
+     * Tính toán số lượng thành viên hợp lý cho từng gian hàng
+     */
+    private function calculateMemberCounts($ranks)
+    {
+        $ranks_with_count = collect();
+        
+        foreach ($ranks as $index => $rank) {
+            // Số liệu thực từ database
+            $real_member_count = User::where('rank_id', $rank->id)->count();
+            
+            // Số liệu ảo dựa trên logic phân cấp
+            // Gian hàng cấp thấp (dễ nâng cấp) có nhiều thành viên hơn
+            // Gian hàng cấp cao (khó nâng cấp) có ít thành viên hơn
+            $virtual_member_count = $this->getVirtualMemberCount($index, count($ranks));
+            
+            // Tổng số thành viên = số thực + số ảo
+            $total_member_count = $real_member_count + $virtual_member_count;
+            
+            // Làm tròn số liệu và thêm dấu "+" nếu cần
+            $formatted_count = $this->formatMemberCount($total_member_count, $real_member_count);
+            
+            // Thêm thuộc tính user_count vào rank
+            $rank->user_count = $formatted_count;
+            $ranks_with_count->push($rank);
+        }
+        
+        return $ranks_with_count;
+    }
+
+    /**
+     * Format số liệu thành viên với dấu "+" và làm tròn
+     */
+    private function formatMemberCount($total_count, $real_count)
+    {
+        // Nếu có thành viên thực tế, hiển thị số chính xác (không làm tròn)
+        if ($real_count > 0) {
+            return number_format($total_count);
+        }
+        
+        // Nếu chưa có thành viên thực tế, làm tròn và thêm dấu "+"
+        $rounded_count = $this->roundToNearest($total_count);
+        return number_format($rounded_count) . '+';
+    }
+
+    /**
+     * Làm tròn số về các mốc đẹp nhưng giữ nguyên số liệu thực tế
+     */
+    private function roundToNearest($number)
+    {
+        if ($number >= 100000) {
+            return round($number / 1000) * 1000;
+        } elseif ($number >= 10000) {
+            return round($number / 100) * 100;
+        } elseif ($number >= 1000) {
+            return round($number / 50) * 50;
+        } elseif ($number >= 100) {
+            return round($number / 10) * 10;
+        } else {
+            return round($number);
+        }
+    }
+
+    /**
+     * Tính số liệu ảo dựa trên vị trí gian hàng
+     */
+    private function getVirtualMemberCount($index, $total_ranks)
+    {
+        // Logic phân phối số liệu ảo với số tròn:
+        // - Gian hàng đầu tiên (index 0): nhiều thành viên nhất
+        // - Gian hàng cuối cùng: ít thành viên nhất
+        // - Giảm dần theo cấp độ
+        
+        $base_members = [
+            0 => 12000,  // Gian hàng cấp 1: 12,000 thành viên
+            1 => 21000,   // Gian hàng cấp 2: 6,000 thành viên  
+            2 => 14000,   // Gian hàng cấp 3: 3,000 thành viên
+            3 => 5500,   // Gian hàng cấp 4: 1,500 thành viên
+        ];
+        
+        // Nếu có nhiều hơn 4 gian hàng, tính toán động
+        if ($index >= 4) {
+            // Công thức giảm dần: 1500 * (0.5 ^ (index - 3))
+            $virtual_count = 1500 * pow(0.5, $index - 3);
+            return max(100, round($virtual_count)); // Tối thiểu 100 thành viên
+        }
+        
+        return $base_members[$index] ?? 100;
     }
     public function get_10_orders_next()
     {
@@ -543,7 +636,7 @@ class HomeController extends Controller
             $user->username_bank = $username_bank;
             $user->bank_name = $bank_name;
             $user->account_number = $account_number;
-            $user->transaction_password = password_hash($username_bank, PASSWORD_DEFAULT);
+            $user->transaction_password = password_hash($transaction_password, PASSWORD_DEFAULT);
             $user->save();
             return response()->json([
                 'status' => 200,

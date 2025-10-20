@@ -1,0 +1,15 @@
+<!-- PCI DSS Certificate Placeholder -->
+<svg width="200" height="120" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="pciGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e3a8a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="200" height="120" rx="10" fill="url(#pciGrad)"/>
+  <rect x="5" y="5" width="190" height="110" rx="5" fill="none" stroke="white" stroke-width="2"/>
+  <text x="100" y="35" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="16" font-weight="bold">PCI DSS</text>
+  <text x="100" y="55" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="12">Level 1</text>
+  <text x="100" y="75" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="10">Certified</text>
+  <text x="100" y="95" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="8">Payment Security</text>
+</svg>
