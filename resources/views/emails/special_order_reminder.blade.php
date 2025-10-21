@@ -3,7 +3,17 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="x-apple-disable-message-reformatting">
     <title>Nhắc nhở đơn hàng đặc biệt</title>
+    <!--[if mso]>
+    <noscript>
+        <xml>
+            <o:OfficeDocumentSettings>
+                <o:PixelsPerInch>96</o:PixelsPerInch>
+            </o:OfficeDocumentSettings>
+        </xml>
+    </noscript>
+    <![endif]-->
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -49,18 +59,23 @@
     </style>
 </head>
 <body>
+    <!-- Preheader text -->
+    <div style="display:none;font-size:1px;color:#ffffff;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">
+        Bạn có đơn hàng đặc biệt đang chờ xử lý. Vui lòng kiểm tra ngay.
+    </div>
+    
     <div class="header">
-        <h2>🔔 Nhắc nhở đơn hàng đặc biệt</h2>
+        <h2>📦 Thông báo đơn hàng đặc biệt</h2>
     </div>
     
     <div class="content">
         <p>Xin chào <strong>{{ $user->name }}</strong>,</p>
         
         <div class="warning">
-            <strong>⚠️ Cảnh báo:</strong> Bạn có đơn hàng đặc biệt chưa được phân phối trong vòng 8 tiếng!
+            <strong>Thông báo quan trọng:</strong> Bạn có đơn hàng đặc biệt đang chờ phân phối ({{ $hoursPassed }} giờ)
         </div>
         
-        <p>Chúng tôi nhận thấy bạn đã nhận được đơn hàng đặc biệt nhưng chưa thực hiện phân phối. Vui lòng thực hiện phân phối sớm nhất có thể để kịp tiến độ kho vận chuyển đơn hàng tới tay khách hàng đúng hạn.</p>
+        <p>Chúng tôi nhận thấy bạn đã nhận được đơn hàng đặc biệt nhưng chưa thực hiện phân phối. Để đảm bảo đơn hàng được giao đến khách hàng đúng hạn, vui lòng thực hiện phân phối sớm nhất có thể.</p>
         
         <div class="order-info">
             <h3>Thông tin đơn hàng:</h3>
@@ -71,19 +86,24 @@
             <p><strong>Thời gian đã trôi qua:</strong> {{ $hoursPassed }} giờ</p>
         </div>
         
-        <p><strong>Lưu ý quan trọng:</strong></p>
+        <p><strong>Thời hạn và chính sách:</strong></p>
         <ul>
-            <li>Nếu bạn không phân phối đơn hàng trong vòng 24 giờ, bạn sẽ bị phạt 30% tổng giá trị đơn hàng</li>
-            <li>Hãy truy cập vào hệ thống và thực hiện phân phối ngay lập tức</li>
-            <li>Nếu có bất kỳ vấn đề gì, vui lòng liên hệ với bộ phận hỗ trợ</li>
+            <li>Thời hạn phân phối: trong vòng 24 giờ kể từ khi nhận đơn</li>
+            <li>Nếu quá thời hạn: sẽ áp dụng phí xử lý trễ (30% giá trị đơn hàng)</li>
+            <li>Bạn có thể truy cập hệ thống tại: <a href="{{ config('app.url') }}">{{ config('app.url') }}</a></li>
+            <li>Cần hỗ trợ? Liên hệ: {{ config('mail.from.address') }}</li>
         </ul>
         
-        <p>Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi!</p>
+        <p>Trân trọng,<br>Đội ngũ {{ config('app.name') }}</p>
     </div>
     
     <div class="footer">
-        <p>Email này được gửi tự động từ hệ thống {{ config('app.name') }}</p>
-        <p>Vui lòng không trả lời email này.</p>
+        <p><strong>{{ config('app.name') }}</strong></p>
+        <p>Email: {{ config('mail.from.address') }} | Website: {{ config('app.url') }}</p>
+        <p style="margin-top: 10px;">Email này được gửi tự động từ hệ thống. Nếu bạn nhận nhầm email này, vui lòng bỏ qua.</p>
+        <p style="margin-top: 10px; font-size: 11px; color: #999;">
+            Bạn nhận được email này vì bạn là thành viên của {{ config('app.name') }}.
+        </p>
     </div>
 </body>
 </html>

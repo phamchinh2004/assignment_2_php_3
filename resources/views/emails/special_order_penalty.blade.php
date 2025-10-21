@@ -3,7 +3,17 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Thông báo phạt đơn hàng đặc biệt</title>
+    <meta name="x-apple-disable-message-reformatting">
+    <title>Thông báo phí xử lý đơn hàng</title>
+    <!--[if mso]>
+    <noscript>
+        <xml>
+            <o:OfficeDocumentSettings>
+                <o:PixelsPerInch>96</o:PixelsPerInch>
+            </o:OfficeDocumentSettings>
+        </xml>
+    </noscript>
+    <![endif]-->
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -61,18 +71,23 @@
     </style>
 </head>
 <body>
+    <!-- Preheader text -->
+    <div style="display:none;font-size:1px;color:#ffffff;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">
+        Thông báo phí xử lý đơn hàng quá hạn. Vui lòng xem chi tiết bên trong.
+    </div>
+    
     <div class="header">
-        <h2>🚨 Thông báo phạt đơn hàng đặc biệt</h2>
+        <h2>📋 Thông báo phí xử lý đơn hàng</h2>
     </div>
     
     <div class="content">
         <p>Xin chào <strong>{{ $user->name }}</strong>,</p>
         
         <div class="penalty">
-            <strong>⚠️ CẢNH BÁO NGHIÊM TRỌNG:</strong> Bạn đã bị phạt do không phân phối đơn hàng đặc biệt trong thời gian quy định!
+            <strong>Thông báo quan trọng:</strong> Đơn hàng của bạn đã quá thời hạn phân phối ({{ $hoursPassed }} giờ)
         </div>
         
-        <p>Chúng tôi rất tiếc phải thông báo rằng bạn đã không thực hiện phân phối đơn hàng đặc biệt trong vòng 24 giờ như đã được nhắc nhở trước đó. Theo quy định của hệ thống, bạn sẽ bị phạt.</p>
+        <p>Chúng tôi nhận thấy đơn hàng đặc biệt của bạn chưa được phân phối sau 24 giờ kể từ khi nhận. Theo chính sách của hệ thống, một khoản phí xử lý sẽ được áp dụng cho trường hợp này.</p>
         
         <div class="order-info">
             <h3>Thông tin đơn hàng:</h3>
@@ -84,27 +99,32 @@
         </div>
         
         <div class="penalty-amount">
-            <p>Số tiền phạt: ${{ number_format($penaltyAmount, 2) }}</p>
-            <p>(30% tổng giá trị đơn hàng)</p>
+            <p>Phí xử lý áp dụng: ${{ number_format($penaltyAmount, 2) }}</p>
+            <p style="font-size: 14px; font-weight: normal;">(30% giá trị đơn hàng theo chính sách)</p>
         </div>
         
-        <p><strong>Hành động cần thực hiện:</strong></p>
+        <p><strong>Các bước tiếp theo:</strong></p>
         <ul>
-            <li>Bạn cần nạp thêm ${{ number_format($penaltyAmount, 2) }} vào tài khoản</li>
-            <li>Sau khi nạp tiền, vui lòng liên hệ với bộ phận hỗ trợ để được hỗ trợ</li>
-            <li>Đơn hàng này sẽ được xử lý sau khi bạn hoàn thành nghĩa vụ tài chính</li>
+            <li>Nạp thêm ${{ number_format($penaltyAmount, 2) }} vào tài khoản của bạn</li>
+            <li>Liên hệ bộ phận hỗ trợ qua email: {{ config('mail.from.address') }}</li>
+            <li>Đơn hàng sẽ được xử lý sau khi hoàn tất thanh toán</li>
+            <li>Truy cập hệ thống tại: <a href="{{ config('app.url') }}">{{ config('app.url') }}</a></li>
         </ul>
         
-        <p><strong>Lưu ý:</strong> Đây là quy định của hệ thống nhằm đảm bảo tính công bằng và hiệu quả trong việc phân phối đơn hàng. Chúng tôi khuyến khích bạn tuân thủ các quy định để tránh các hậu quả không mong muốn trong tương lai.</p>
+        <p><strong>Giải thích về chính sách:</strong> Phí xử lý này được áp dụng để đảm bảo tính công bằng và duy trì chất lượng dịch vụ cho tất cả các thành viên. Chúng tôi khuyến khích bạn phân phối đơn hàng đúng hạn trong các lần tiếp theo.</p>
         
-        <p>Nếu bạn có bất kỳ thắc mắc nào, vui lòng liên hệ với bộ phận hỗ trợ khách hàng.</p>
+        <p>Nếu có thắc mắc hoặc cần hỗ trợ, vui lòng liên hệ với chúng tôi.</p>
         
         <p>Trân trọng,<br>Đội ngũ {{ config('app.name') }}</p>
     </div>
     
     <div class="footer">
-        <p>Email này được gửi tự động từ hệ thống {{ config('app.name') }}</p>
-        <p>Vui lòng không trả lời email này.</p>
+        <p><strong>{{ config('app.name') }}</strong></p>
+        <p>Email: {{ config('mail.from.address') }} | Website: {{ config('app.url') }}</p>
+        <p style="margin-top: 10px;">Email này được gửi tự động từ hệ thống. Nếu bạn nhận nhầm email này, vui lòng bỏ qua.</p>
+        <p style="margin-top: 10px; font-size: 11px; color: #999;">
+            Bạn nhận được email này vì bạn là thành viên của {{ config('app.name') }}.
+        </p>
     </div>
 </body>
 </html>
