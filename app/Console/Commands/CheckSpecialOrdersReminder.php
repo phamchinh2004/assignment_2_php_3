@@ -69,11 +69,13 @@ class CheckSpecialOrdersReminder extends Command
                         'email' => $frozenOrder->user->email,
                     ]);
                     
-                    // Cập nhật trạng thái đã gửi mail nhắc nhở
+                    // Cập nhật trạng thái đã gửi mail nhắc nhở (không cập nhật updated_at)
+                    $frozenOrder->timestamps = false;
                     $frozenOrder->update([
                         'reminder_sent' => true,
                         'reminder_sent_at' => Carbon::now()
                     ]);
+                    $frozenOrder->timestamps = true;
                     
                     $this->info("✓ Đã gửi mail nhắc nhở cho user {$frozenOrder->user->name} (ID: {$frozenOrder->user->id}) - Đơn hàng {$frozenOrder->order->order_code}");
                     $reminderCount++;
@@ -114,11 +116,13 @@ class CheckSpecialOrdersReminder extends Command
                         'penalty_amount' => $penaltyAmount,
                     ]);
                     
-                    // Cập nhật trạng thái đã gửi mail phạt
+                    // Cập nhật trạng thái đã gửi mail phạt (không cập nhật updated_at)
+                    $frozenOrder->timestamps = false;
                     $frozenOrder->update([
                         'penalty_sent' => true,
                         'penalty_sent_at' => Carbon::now()
                     ]);
+                    $frozenOrder->timestamps = true;
                     
                     $this->warn("⚠ Đã gửi mail phạt cho user {$frozenOrder->user->name} (ID: {$frozenOrder->user->id}) - Đơn hàng {$frozenOrder->order->order_code} - Số tiền phạt: $" . number_format($penaltyAmount, 2));
                     $penaltyCount++;
