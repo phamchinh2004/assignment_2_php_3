@@ -5,15 +5,17 @@ namespace App\Livewire\User;
 use App\Events\MessageSent;
 use App\Events\UserJoinChat;
 use App\Events\UserSentMessage;
+use App\Jobs\SendChatNotificationEmail;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Livewire\Component;
 use Livewire\WithFileUploads;
-use Str;
 
 class ChatComponent extends Component
 {
@@ -152,65 +154,79 @@ class ChatComponent extends Component
 
         $this->validate();
 
+        // Lưu data (frontend đã reset input rồi, nhưng vẫn cần lấy giá trị)
+        $messageText = trim($this->newMessage);
+        $imageFile = $this->selectedImage;
+        $conversationId = $this->conversation->id;
+        $userId = Auth::id();
+        $userName = Auth::user()->full_name;
+        
         $messages = [];
         $template_message_for_notification = "";
-        // Gửi ảnh trước nếu có
-        if ($this->selectedImage) {
-            $imagePath = $this->selectedImage->store('chat-images', 'public');
-
-            $imageMessage = Message::create([
-                'conversation_id' => $this->conversation->id,
-                'sender_id' => Auth::user()->id,
-                'message' => null,
-                'type' => 'image',
-                'image_path' => $imagePath,
-            ]);
-            $this->conversation->touch();
-
-            $imageMessage->load('sender');
-            $messages[] = $this->formatMessage($imageMessage);
-
-            // Broadcast image message
-            $template_message_for_notification = "Đã gửi hình ảnh";
-            broadcast(new MessageSent($imageMessage))->toOthers();
-        }
-
-        // Gửi tin nhắn sau nếu có
-        if ($this->newMessage && trim($this->newMessage) !== '') {
-            $textMessage = Message::create([
-                'conversation_id' => $this->conversation->id,
-                'sender_id' => Auth::user()->id,
-                'message' => trim($this->newMessage),
-                'type' => 'text',
-                'image_path' => null,
-            ]);
-            $this->conversation->touch();
-            $textMessage->load('sender');
-            $messages[] = $this->formatMessage($textMessage);
-            $template_message_for_notification = Str::limit($this->newMessage, 30, '...');
-            // Broadcast text message
-            broadcast(new MessageSent($textMessage))->toOthers();
-        }
-
-        event(new UserSentMessage(Auth::user()->full_name, $template_message_for_notification));
-        // Reset form
-        $this->newMessage = '';
-        $this->selectedImage = null;
-        $this->resetErrorBag();
-        $this->dispatch('reset-message-input');
-
-        // Add messages to collection
+        
+        // Prepare collection
         if (!$this->chatMessages instanceof Collection) {
             $this->chatMessages = collect($this->chatMessages);
         }
 
+        // XỬ LÝ ẢNH (nếu có) - Insert DB đồng bộ
+        if ($imageFile) {
+            $imagePath = $imageFile->store('chat-images', 'public');
+
+            $imageMessage = Message::create([
+                'conversation_id' => $conversationId,
+                'sender_id' => $userId,
+                'message' => null,
+                'type' => 'image',
+                'image_path' => $imagePath,
+            ]);
+
+            $imageMessage->load('sender');
+            $messages[] = $this->formatMessage($imageMessage);
+            $template_message_for_notification = "Đã gửi hình ảnh";
+            
+            // Broadcast ngay (cần để người khác thấy)
+            broadcast(new MessageSent($imageMessage))->toOthers();
+        }
+
+        // XỬ LÝ TEXT (nếu có) - Insert DB đồng bộ
+        if ($messageText !== '') {
+            $textMessage = Message::create([
+                'conversation_id' => $conversationId,
+                'sender_id' => $userId,
+                'message' => $messageText,
+                'type' => 'text',
+                'image_path' => null,
+            ]);
+            
+            $textMessage->load('sender');
+            $messages[] = $this->formatMessage($textMessage);
+            $template_message_for_notification = Str::limit($messageText, 30, '...');
+            
+            // Broadcast ngay
+            broadcast(new MessageSent($textMessage))->toOthers();
+        }
+
+        // Update conversation
+        $this->conversation->touch();
+        
+        // Add messages vào UI
         foreach ($messages as $message) {
             $this->chatMessages->push($message);
         }
+        
+        // Reset Livewire state (đồng bộ với frontend)
+        $this->newMessage = '';
+        $this->selectedImage = null;
+        $this->resetErrorBag();
 
-        // Dispatch events
+        // Dispatch UI events
         $this->dispatch('message-sent');
         $this->dispatch('scroll-to-bottom');
+        
+        // Event và Email notification (đã dùng Queue, không block)
+        event(new UserSentMessage($userName, $template_message_for_notification));
+        $this->checkAndSendEmailNotification($template_message_for_notification);
     }
 
     public function messageReceived($message)
@@ -264,6 +280,96 @@ class ChatComponent extends Component
     public function getRemainingCharacters()
     {
         return $this->maxMessageLength - strlen($this->newMessage);
+    }
+
+    /**
+     * Kiểm tra và gửi email thông báo nếu admin/staff offline
+     */
+    protected function checkAndSendEmailNotification($messageContent)
+    {
+        try {
+            $currentUser = Auth::user();
+            $emailsSent = [];
+            $recipients = collect([]);
+            
+            // 1. Lấy nhân viên mời (referrer) nếu có
+            $referrer = null;
+            if ($currentUser->referrer_id) {
+                $referrer = User::find($currentUser->referrer_id);
+            }
+            
+            // 2. Lấy admin (người có quyền cao nhất)
+            $admin = User::where('role', 'admin')->first();
+            
+            // LOGIC GỬI EMAIL:
+            // - Nếu user CÓ referrer (được nhân viên mời):
+            //   + Gửi cho referrer nếu offline
+            //   + Gửi cho admin nếu offline (và admin khác referrer)
+            // - Nếu user KHÔNG CÓ referrer:
+            //   + Chỉ gửi cho admin nếu offline
+            
+            if ($referrer) {
+                // User được mời bởi nhân viên
+                
+                // Gửi cho referrer nếu offline
+                if (!$referrer->isOnline()) {
+                    $recipients->push($referrer);
+                    $emailsSent[] = "Nhân viên: {$referrer->full_name} ({$referrer->email})";
+                }
+                
+                // Gửi cho admin nếu offline và admin khác referrer
+                if ($admin && !$admin->isOnline() && $admin->id !== $referrer->id) {
+                    $recipients->push($admin);
+                    $emailsSent[] = "Admin: {$admin->full_name} ({$admin->email})";
+                }
+                
+            } else {
+                // User đăng ký không có ai mời → chỉ gửi cho admin
+                
+                if ($admin && !$admin->isOnline()) {
+                    $recipients->push($admin);
+                    $emailsSent[] = "Admin: {$admin->full_name} ({$admin->email})";
+                }
+            }
+            
+            // Nếu không có ai offline, không gửi email
+            if ($recipients->isEmpty()) {
+                Log::info('Tất cả staff/admin đang online, không cần gửi email', [
+                    'user_id' => Auth::id(),
+                    'conversation_id' => $this->conversation->id,
+                    'has_referrer' => $referrer ? true : false
+                ]);
+                return;
+            }
+            
+            // Dispatch email jobs vào queue (gửi bất đồng bộ để không block UI)
+            foreach ($recipients as $recipient) {
+                SendChatNotificationEmail::dispatch(
+                    $currentUser,
+                    $messageContent,
+                    $this->conversation->id,
+                    $recipient->email
+                );
+            }
+
+            Log::info('Đã đưa email thông báo chat vào queue', [
+                'user_id' => Auth::id(),
+                'user_name' => $currentUser->full_name,
+                'conversation_id' => $this->conversation->id,
+                'has_referrer' => $referrer ? true : false,
+                'recipients' => $emailsSent,
+                'total_emails' => $recipients->count()
+            ]);
+
+        } catch (\Exception $e) {
+            // Log lỗi nhưng không làm gián đoạn việc gửi tin nhắn
+            Log::error('Lỗi gửi email thông báo chat: ' . $e->getMessage(), [
+                'conversation_id' => $this->conversation->id ?? null,
+                'user_id' => Auth::id(),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+        }
     }
 
     public function render()

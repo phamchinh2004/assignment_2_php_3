@@ -19,6 +19,8 @@ use App\Models\User_spin_progress;
 use App\Models\Wallet_balance_history;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 
 class UserController extends Controller
@@ -470,14 +472,36 @@ class UserController extends Controller
             'transaction_type' => $isRealDeposit ? "normal" : "bonus"
         ]);
         
+        $transactionType = $isRealDeposit ? 'normal' : 'bonus';
+        $adminName = Auth::user()->full_name ?? Auth::user()->username;
+        
         // Broadcast event thông báo nạp tiền realtime
         event(new \App\Events\MoneyDeposited(
             $user_id,
             $value,
             $get_user->balance,
-            $isRealDeposit ? 'normal' : 'bonus',
-            Auth::user()->full_name ?? Auth::user()->username
+            $transactionType,
+            $adminName
         ));
+        
+        // Gửi email thông báo nạp tiền
+        try {
+            Mail::to($get_user->email)->send(
+                new \App\Mail\DepositNotificationMail(
+                    $get_user,
+                    $value,
+                    $get_user->balance,
+                    $transactionType,
+                    $adminName
+                )
+            );
+        } catch (\Exception $e) {
+            // Log lỗi nhưng không fail transaction
+            Log::error('Lỗi gửi email nạp tiền: ' . $e->getMessage(), [
+                'user_id' => $user_id,
+                'amount' => $value
+            ]);
+        }
         
         return response()->json([
             'status' => 200,

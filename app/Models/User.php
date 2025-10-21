@@ -39,7 +39,8 @@ class User extends Authenticatable
         'rank_id',
         'referrer_id',
         'register_ip',
-        'clone_account'
+        'clone_account',
+        'last_seen'
     ];
 
     /**
@@ -59,6 +60,7 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'last_seen' => 'datetime',
         'password' => 'hashed',
     ];
     public function user_manager_settings()
@@ -210,5 +212,45 @@ class User extends Authenticatable
         return $this->wallet_balance_histories()
             ->latest()
             ->first();
+    }
+
+    /**
+     * Kiểm tra user có online không (hoạt động trong 5 phút gần đây)
+     */
+    public function isOnline()
+    {
+        if (!$this->last_seen) {
+            return false;
+        }
+        
+        return $this->last_seen->gt(now()->subMinutes(5));
+    }
+
+    /**
+     * Kiểm tra user có online không (hoạt động trong X phút gần đây)
+     */
+    public function isOnlineWithin($minutes = 5)
+    {
+        if (!$this->last_seen) {
+            return false;
+        }
+        
+        return $this->last_seen->gt(now()->subMinutes($minutes));
+    }
+
+    /**
+     * Lấy thời gian lần cuối user online
+     */
+    public function getLastSeenTextAttribute()
+    {
+        if (!$this->last_seen) {
+            return 'Chưa từng online';
+        }
+
+        if ($this->isOnline()) {
+            return 'Đang online';
+        }
+
+        return $this->last_seen->diffForHumans();
     }
 }

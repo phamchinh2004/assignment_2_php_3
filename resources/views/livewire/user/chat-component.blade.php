@@ -1,13 +1,21 @@
-<div class="footer-item" wire:id="{{ $this->getId() }}" id="chat-root">
-    <!-- Nút CSKH trong footer -->
-    <a wire:click="toggleBox" class="cspt text-dark text-decoration-none" style="cursor: pointer">
-        <i class="fa fa-solid fa-headset"></i>
-        <div class="fw-bold text-footer">{{__('layout.CSKH')}}</div>
-    </a>
+<div class="floating-chat-container" wire:id="{{ $this->getId() }}" id="chat-root" x-data="{ isOpen: @entangle('showBox') }">
+    <!-- Floating Chat Button -->
+    <button class="floating-chat-button" 
+            wire:click="toggleBox"
+            x-show="!isOpen"
+            type="button">
+        <i class="fa-solid fa-comments"></i>
+        <span class="chat-badge">CSKH</span>
+    </button>
 
     <!-- Hộp thoại chat -->
-    @if ($showBox)
-    <div wire:init="scrollToBottom" id="box_arround">
+    <div class="floating-chat-window" 
+         x-show="isOpen"
+         x-transition:enter="chat-enter"
+         x-transition:leave="chat-leave"
+         style="display: none;"
+         wire:init="scrollToBottom" 
+         id="box_arround">
 
         <!-- Header với gradient -->
         <div class="p-3 d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
@@ -23,8 +31,8 @@
                     <div class="text-start" style="font-size: 11px; opacity: 0.9;">{{__('home.DangTrucTuyen')}}</div>
                 </div>
             </div>
-            <button wire:click="closeBox" class="btn btn-sm p-1" style="color: white; opacity: 0.8;">
-                <i class="fa fa-times"></i>
+            <button wire:click="closeBox" class="btn-close-chat" type="button">
+                <i class="fa-solid fa-times"></i>
             </button>
         </div>
 
@@ -116,7 +124,30 @@
         </div>
 
         <!-- Form nhập với design hiện đại -->
-        <form wire:submit.prevent="sendMessage" class="p-3" style="background: white; border-top: 1px solid #e9ecef;">
+        <form class="p-3" style="background: white; border-top: 1px solid #e9ecef;" 
+              x-data="{ formSending: false }"
+              x-on:submit.prevent="
+                  if (!formSending) {
+                      const input = $el.querySelector('#chat-input-field');
+                      const val = input ? input.value.trim() : '';
+                      
+                      // Kiểm tra có tin nhắn không
+                      if (!val) {
+                          return; // Không làm gì nếu input rỗng
+                      }
+                      
+                      formSending = true;
+                      // Clear input NGAY LẬP TỨC
+                      if (input) input.value = '';
+                      
+                      // Gọi Livewire
+                      $wire.set('newMessage', val);
+                      $wire.call('sendMessage').finally(() => {
+                          formSending = false;
+                          if (input) input.focus();
+                      });
+                  }
+              ">
             
             <!-- Preview ảnh đã chọn -->
             @if($selectedImage)
@@ -143,19 +174,25 @@
                        style="display: none;">
                 
                 <input type="text"
-                    wire:model.live="newMessage"
+                    wire:model="newMessage"
                     class="form-control border-0 bg-transparent"
                     placeholder="{{__('home.NhapTinNhanCuaBan')}}"
                     id="chat-input-field"
                     autocomplete="off"
                     maxlength="{{ $maxMessageLength }}"
-                    style="font-size: 14px;">
+                    style="font-size: 14px;"
+                    x-on:keydown.enter.prevent="
+                        if (!formSending && $el.value.trim()) {
+                            $el.closest('form').dispatchEvent(new Event('submit', { bubbles: true }));
+                        }
+                    ">
                 
                 <button type="submit"
                     class="btn btn-link p-0 ms-2"
                     style="color: #667eea; font-size: 18px;"
-                    @if(!$selectedImage && (strlen(trim($newMessage)) == 0 || strlen(trim($newMessage)) > $maxMessageLength)) disabled @endif>
-                    <i class="fa fa-paper-plane"></i>
+                    x-bind:disabled="formSending">
+                    <i class="fa fa-paper-plane" x-show="!formSending"></i>
+                    <i class="fa fa-spinner fa-spin" x-show="formSending" style="display: none;"></i>
                 </button>
             </div>
             
@@ -182,8 +219,8 @@
                 </div>
             @enderror
         </form>
-    </div>
-    @endif
+    </div> <!-- End floating-chat-window -->
+
     <!-- Modal để xem ảnh phóng to -->
     <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel">
         <div class="modal-dialog modal-lg modal-dialog-centered">
@@ -293,36 +330,9 @@
         if (input) {
             input.focus();
             
-            // Handle Enter key
-            input.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    const root = document.getElementById('chat-root');
-                    const component = Livewire.find(root.getAttribute('wire:id'));
-
-                    // Kiểm tra có ảnh hoặc tin nhắn không rỗng
-                    const hasImage = component.get('selectedImage') !== null;
-                    const hasText = this.value.trim().length > 0 && this.value.trim().length <= {{ $maxMessageLength }};
-                    
-                    if (hasImage || hasText) {
-                        component.set('newMessage', this.value);
-                        setTimeout(() => {
-                            component.call('sendMessage');
-                        }, 50);
-                    }
-                }
-            });
+            // Enter key đã được xử lý bởi Alpine.js (x-on:keydown.enter)
         }
 
-        // Handle Enter key
-        document.addEventListener('DOMContentLoaded', function() {
-            Livewire.on('reset-message-input', () => {
-                const input = document.querySelector('input[wire\\:model\\.live="newMessage"]');
-                if (input) {                    
-                    input.value = '';
-                    input.focus();
-                }
-            });
-        });
+        // Không cần event listener nữa - Alpine.js đã xử lý
     });
 </script>

@@ -21,6 +21,7 @@
     @vite('resources/css/user.css')
     @vite('resources/css/general.css')
     @vite('resources/css/user/notification.css')
+    @vite('resources/css/floating-chat.css')
     @yield('css-libs')
     @livewireStyles
 </head>
@@ -48,16 +49,23 @@
                     </div>
                 </a>
 
+                <!-- Thống kê giao dịch -->
+                <a class="cspt footer-item text-dark text-decoration-none" href="{{ route('balance_fluctuation') }}">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <div class="fw-bold text-footer">{{__('layout.ThongKe')}}</div>
+                </a>
 
-                <!-- Hộp thoại -->
-                @livewire('user.chat-component')
-                <!-- End hộp thoại -->
                 <a class="cspt footer-item text-dark text-decoration-none" href="{{ route('me') }}">
                     <i class="fa fa-regular fa-user"></i>
                     <div class="fw-bold text-footer">{{__('layout.Toi')}}</div>
                 </a>
             </div>
         </footer>
+
+        <!-- Floating Chat Bubble -->
+        @livewire('user.chat-component')
+        <!-- End Floating Chat Bubble -->
+
         <!-- Change Password Modal-->
         <div class="modal fade" id="changePasswordModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
             aria-hidden="true">
