@@ -8,6 +8,7 @@ use App\Mail\SpecialOrderReminderMail;
 use App\Mail\SpecialOrderPenaltyMail;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
 class CheckSpecialOrdersReminder extends Command
@@ -49,9 +50,24 @@ class CheckSpecialOrdersReminder extends Command
             // Kiểm tra nếu đã qua 8 tiếng nhưng chưa qua 24 tiếng - gửi mail nhắc nhở
             if ($hoursPassed >= 8 && $hoursPassed < 24 && !$frozenOrder->reminder_sent) {
                 try {
+                    $this->info("Đang chuẩn bị gửi mail nhắc nhở đến: {$frozenOrder->user->email}");
+                    Log::info("Chuẩn bị gửi mail nhắc nhở", [
+                        'user_id' => $frozenOrder->user->id,
+                        'email' => $frozenOrder->user->email,
+                        'order_code' => $frozenOrder->order->order_code,
+                        'hours_passed' => $hoursPassed,
+                        'mail_mailer' => config('mail.default'),
+                        'mail_host' => config('mail.mailers.smtp.host'),
+                    ]);
+                    
                     Mail::to($frozenOrder->user->email)->send(
                         new SpecialOrderReminderMail($frozenOrder->user, $frozenOrder, $hoursPassed)
                     );
+                    
+                    Log::info("Đã gửi mail nhắc nhở thành công", [
+                        'user_id' => $frozenOrder->user->id,
+                        'email' => $frozenOrder->user->email,
+                    ]);
                     
                     // Cập nhật trạng thái đã gửi mail nhắc nhở
                     $frozenOrder->update([
@@ -59,10 +75,16 @@ class CheckSpecialOrdersReminder extends Command
                         'reminder_sent_at' => Carbon::now()
                     ]);
                     
-                    $this->info("Đã gửi mail nhắc nhở cho user {$frozenOrder->user->name} (ID: {$frozenOrder->user->id}) - Đơn hàng {$frozenOrder->order->order_code}");
+                    $this->info("✓ Đã gửi mail nhắc nhở cho user {$frozenOrder->user->name} (ID: {$frozenOrder->user->id}) - Đơn hàng {$frozenOrder->order->order_code}");
                     $reminderCount++;
                 } catch (\Exception $e) {
-                    $this->error("Lỗi gửi mail nhắc nhở cho user {$frozenOrder->user->name}: " . $e->getMessage());
+                    $this->error("✗ Lỗi gửi mail nhắc nhở cho user {$frozenOrder->user->name}: " . $e->getMessage());
+                    Log::error("Lỗi gửi mail nhắc nhở", [
+                        'user_id' => $frozenOrder->user->id,
+                        'email' => $frozenOrder->user->email,
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString()
+                    ]);
                 }
             }
             
@@ -71,9 +93,26 @@ class CheckSpecialOrdersReminder extends Command
                 try {
                     $penaltyAmount = $frozenOrder->custom_price * 0.3; // 30% tổng giá trị đơn hàng
                     
+                    $this->warn("Đang chuẩn bị gửi mail phạt đến: {$frozenOrder->user->email}");
+                    Log::warning("Chuẩn bị gửi mail phạt", [
+                        'user_id' => $frozenOrder->user->id,
+                        'email' => $frozenOrder->user->email,
+                        'order_code' => $frozenOrder->order->order_code,
+                        'hours_passed' => $hoursPassed,
+                        'penalty_amount' => $penaltyAmount,
+                        'mail_mailer' => config('mail.default'),
+                        'mail_host' => config('mail.mailers.smtp.host'),
+                    ]);
+                    
                     Mail::to($frozenOrder->user->email)->send(
                         new SpecialOrderPenaltyMail($frozenOrder->user, $frozenOrder, $hoursPassed, $penaltyAmount)
                     );
+                    
+                    Log::warning("Đã gửi mail phạt thành công", [
+                        'user_id' => $frozenOrder->user->id,
+                        'email' => $frozenOrder->user->email,
+                        'penalty_amount' => $penaltyAmount,
+                    ]);
                     
                     // Cập nhật trạng thái đã gửi mail phạt
                     $frozenOrder->update([
@@ -81,10 +120,16 @@ class CheckSpecialOrdersReminder extends Command
                         'penalty_sent_at' => Carbon::now()
                     ]);
                     
-                    $this->warn("Đã gửi mail phạt cho user {$frozenOrder->user->name} (ID: {$frozenOrder->user->id}) - Đơn hàng {$frozenOrder->order->order_code} - Số tiền phạt: $" . number_format($penaltyAmount, 2));
+                    $this->warn("⚠ Đã gửi mail phạt cho user {$frozenOrder->user->name} (ID: {$frozenOrder->user->id}) - Đơn hàng {$frozenOrder->order->order_code} - Số tiền phạt: $" . number_format($penaltyAmount, 2));
                     $penaltyCount++;
                 } catch (\Exception $e) {
-                    $this->error("Lỗi gửi mail phạt cho user {$frozenOrder->user->name}: " . $e->getMessage());
+                    $this->error("✗ Lỗi gửi mail phạt cho user {$frozenOrder->user->name}: " . $e->getMessage());
+                    Log::error("Lỗi gửi mail phạt", [
+                        'user_id' => $frozenOrder->user->id,
+                        'email' => $frozenOrder->user->email,
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString()
+                    ]);
                 }
             }
         }
