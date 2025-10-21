@@ -196,8 +196,10 @@
     }
     
     .floating-chat-button {
-        width: 65px;
-        height: 65px;
+        width: 60px;
+        height: 60px;
+        /* Disable animation xoay tròn và phóng to trên mobile */
+        animation: none !important;
     }
     
     .floating-chat-button i {
@@ -304,6 +306,8 @@
     .floating-chat-button {
         width: 60px;
         height: 60px;
+        /* Disable animation xoay tròn và phóng to trên mobile nhỏ */
+        animation: none !important;
     }
     
     .floating-chat-button i {
