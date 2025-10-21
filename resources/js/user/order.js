@@ -197,35 +197,25 @@ window.addEventListener('DOMContentLoaded', function () {
     }
     document.getElementById('list_orders').addEventListener('click', async function (e) {
         if (e.target.classList.contains('btn_phan_phoi')) {
-            spinner.hidden = false;
+            // Hiển thị modal loading phân phối
+            showDistributionModal();
+            
             let frozen_id = e.target.closest('.order_item').id;
             let result = await handle_distribution(frozen_id);
+            
+            // Đóng modal loading
+            closeDistributionModal();
+            
             if (result.status === 200) {
                 const profit = result.profit;
-                await notification('warning', "", trans.ChoXuLy2);
-                await sleep(1000);
-                await notification('warning', "", trans.DangPhanPhoi);
-                await sleep(1000);
-                await notification('success', result.message, trans.ThanhCong);
-                swal({
-                    title: trans.PhanPhoiThanhCong,
-                    content: {
-                        element: "span",
-                        attributes: {
-                            innerHTML: "<span style='color:green;font-weight:bold;'>+" + format_currency(profit, 4, 4) + "</span>"
-                        }
-                    },
-                    icon: "success",
-                    buttons: {
-                        confirm: {
-                            text: "OK",
-                            value: true,
-                            visible: true,
-                            className: "btn-success",
-                            closeModal: true
-                        }
-                    },
-                });
+                const totalAmount = result.total_amount || 0;
+                const commission = result.commission || 0;
+                const penaltyAmount = result.penalty_amount || 0;
+                
+                // Hiển thị modal thành công với animation
+                showSuccessModal(profit, totalAmount, commission, penaltyAmount);
+                
+                // Refresh tab hiện tại
                 if (tab === 'tat-ca') {
                     activeTab('btn_tat_ca');
                 } else if (tab === 'cho-xu-ly') {
@@ -235,9 +225,12 @@ window.addEventListener('DOMContentLoaded', function () {
                 } else if (tab === 'dong-bang') {
                     activeTab('btn_dong_bang');
                 }
+                
+                // Cập nhật số dư
                 const so_du_user = document.getElementById('so_du_user');
                 so_du_user.innerHTML = trans.SoDuHienTai + format_currency(result.balance);
             } else if (result.status === 409) {
+                // Refresh tab
                 if (tab === 'tat-ca') {
                     activeTab('btn_tat_ca');
                 } else if (tab === 'cho-xu-ly') {
@@ -248,11 +241,9 @@ window.addEventListener('DOMContentLoaded', function () {
                     activeTab('btn_dong_bang');
                 }
                 notification('warning', result.message, trans.CanhBao);
-                // spinner.hidden = true;
             } else {
                 notification('warning', result.message, trans.Loi);
             }
-            spinner.hidden = true;
         }
     });
 
@@ -279,3 +270,82 @@ window.addEventListener('DOMContentLoaded', function () {
         })
     }
 });
+
+// ======================= MODAL FUNCTIONS =======================
+
+// Hàm hiển thị modal phân phối
+window.showDistributionModal = function() {
+    const modal = document.getElementById('distributionModalOverlay');
+    if (!modal) return;
+    
+    // Reset trạng thái các step
+    document.getElementById('dist-step-1').className = 'loading-step active';
+    document.getElementById('dist-step-2').className = 'loading-step';
+    document.getElementById('dist-step-3').className = 'loading-step';
+    document.getElementById('dist-progress-bar').style.width = '0%';
+    
+    // Hiển thị modal
+    modal.classList.add('show');
+    
+    setTimeout(() => {
+        document.getElementById('dist-progress-bar').style.width = '33%';
+        
+        setTimeout(() => {
+            document.getElementById('dist-step-1').classList.remove('active');
+            document.getElementById('dist-step-1').classList.add('completed');
+            document.getElementById('dist-step-2').classList.add('active');
+            document.getElementById('dist-progress-bar').style.width = '66%';
+            
+            setTimeout(() => {
+                document.getElementById('dist-step-2').classList.remove('active');
+                document.getElementById('dist-step-2').classList.add('completed');
+                document.getElementById('dist-step-3').classList.add('active');
+                document.getElementById('dist-progress-bar').style.width = '100%';
+            }, 400);
+        }, 400);
+    }, 10);
+}
+
+// Hàm đóng modal phân phối
+window.closeDistributionModal = function() {
+    const modal = document.getElementById('distributionModalOverlay');
+    if (modal) {
+        modal.classList.remove('show');
+    }
+}
+
+// Hàm hiển thị modal thành công
+window.showSuccessModal = function(profit, totalAmount, commission, penaltyAmount = 0) {
+    // Tính tổng tiền hoàn nhập = Giá trị đơn hàng + Hoa hồng (chưa trừ phạt)
+    const totalRefund = totalAmount + commission;
+    
+    // Lấy modal và cập nhật nội dung
+    const modal = document.getElementById('successModalOverlay');
+    if (!modal) return;
+    
+    document.getElementById('success_profit_amount').textContent = '+' + format_currency(profit, 4, 4);
+    document.getElementById('success_total_amount').textContent = '' + format_currency(totalAmount, 4, 4);
+    document.getElementById('success_commission').textContent = '+' + format_currency(commission, 4, 4);
+    document.getElementById('success_total_refund').textContent = '+' + format_currency(totalRefund, 4, 4);
+    document.getElementById('success_time').textContent = new Date().toLocaleString('vi-VN');
+    
+    // Hiển thị/ẩn dòng tiền phạt
+    const penaltyRow = document.getElementById('success_penalty_row');
+    if (penaltyAmount > 0) {
+        document.getElementById('success_penalty_amount').textContent = '-' + format_currency(penaltyAmount, 4, 4);
+        penaltyRow.style.display = 'flex';
+    } else {
+        penaltyRow.style.display = 'none';
+    }
+    
+    // Hiển thị modal
+    modal.classList.add('show');
+}
+
+// Hàm đóng modal thành công
+window.closeSuccessModal = function() {
+    const modal = document.getElementById('successModalOverlay');
+    if (modal) {
+        modal.classList.remove('show');
+    }
+}

@@ -115,7 +115,10 @@ class OrderController extends Controller
             'status' => 200,
             'message' => __('order.PhanPhoiThanhCong'),
             'balance' => $user->balance,
-            'profit' => $actual_profit
+            'profit' => $actual_profit,
+            'total_amount' => $total_price,
+            'commission' => $rose,
+            'penalty_amount' => $penalty_amount
         ]);
     }
 

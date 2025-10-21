@@ -11,4 +11,5 @@ return [
     "SoDuDongBang" => "Số dư đóng băng",
     "MoTa" => "Mô tả",
     "QuayLai" => "Quay lại",
+    "ChuaCoCapDo" => "Chưa có cấp độ",
 ];

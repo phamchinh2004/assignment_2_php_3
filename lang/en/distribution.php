@@ -11,4 +11,5 @@ return [
     "SoDuDongBang" => "Frozen Balance",
     "MoTa" => "Description",
     "QuayLai" => "Go back",
+    "ChuaCoCapDo" => "No Rank Yet",
 ];

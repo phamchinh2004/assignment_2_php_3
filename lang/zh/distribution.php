@@ -11,4 +11,5 @@ return [
     "SoDuDongBang" => "冻结余额",
     "MoTa" => "描述",
     "QuayLai" => "返回",
+    "ChuaCoCapDo" => "尚未有等级",
 ];

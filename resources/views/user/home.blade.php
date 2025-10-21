@@ -1,7 +1,7 @@
 @extends('user.layouts.master')
 @section('css-libs')
 @vite('resources/css/user/home.css')
-@vite('resources/css/user/winwheel/main.css')
+@vite('resources/css/user/lucky-wheel.css')
 @endsection
 @section('script-libs')
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -9,31 +9,17 @@
 <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
 <script>
     const trans = {
-        justNow: @json(__('home.VuaXong')), // Vừa xong
-        secondsAgo: @json(__('home.GiayTruoc')), // giây trước
-        minutesAgo: @json(__('home.PhutTruoc')), // phút trước
-        successText: @json(__('home.PhanPhoiThanhCong')), // Phân phối thành công
-        heThongDangQuaTai: @json(__('home.HeThongDangQuaTai')), // Phân phối thành công
-        vuiLongLienHeCskhDeNapTien: @json(__('home.VuiLongLienHeCskhDeNapTien')), // Phân phối thành công
-        coLoiXayRa: @json(__('home.CoLoiXayRa')),
-        donHangChuaXuLy: @json(__('home.DonHangChuaXuLy')),
-        DonHangDangBiDongBang: @json(__('home.DonHangDangBiDongBang')),
-        HetLuotQuay: @json(__('home.HetLuotQuay')),
-        QuayLaiNhaBan: @json(__('home.QuayLaiNhaBan')),
-        LoiDanhSachDonHang: @json(__('home.LoiDanhSachDonHang')),
-        ThoiGianDatPhanPhoi: @json(__('home.ThoiGianDatPhanPhoi')),
-        CanhBao: @json(__('home.CanhBao')),
-        Loi: @json(__('home.Loi')),
-        ChoXuLy: @json(__('home.ChoXuLy')),
-        DangPhanPhoi: @json(__('home.DangPhanPhoi')),
-        ThanhCong: @json(__('home.ThanhCong')),
-        PhanPhoiThanhCong2: @json(__('home.PhanPhoiThanhCong2')),
-
+        justNow: @json(__('home.VuaXong')),
+        secondsAgo: @json(__('home.GiayTruoc')),
+        minutesAgo: @json(__('home.PhutTruoc')),
+        heThongDangQuaTai: @json(__('home.HeThongDangQuaTai')),
+        vuiLongLienHeCskhDeNapTien: @json(__('home.VuiLongLienHeCskhDeNapTien')),
         MatKhauXacNhanKhongKhop: @json(__('home.MatKhauXacNhanKhongKhop')),
         SoTaiKhoanPhaiLaSo: @json(__('home.SoTaiKhoanPhaiLaSo')),
     };
 </script>
 @vite('resources/js/user/home.js')
+@vite('resources/js/user/lucky-wheel.js')
 @endsection
 
 @section('content')
@@ -136,102 +122,147 @@
             <span class="visually-hidden">Next</span>
         </button>
     </div>
-    <!-- Vòng quay may mắn - Amazon Theme -->
+    <!-- Vòng quay may mắn - Giải thưởng -->
     <div class="section-3" id="section-3">
         <div class="position-relative text-center">
             <div class="amazon-banner">
-                <span class="text-white fw-bold text-title">🎯 {{__('home.VongQuayMayMan')}}</span>
+                <span class="text-white fw-bold text-title">🎁 {{__('home.VongQuayMayMan')}}</span>
             </div>
         </div>
-        <div class="mainbox m-auto vong-quay" id="mainbox" hidden>
-            <div class="box" id="box">
-                <div class="box1">
-                    <span class="font span1"><b>Đơn hàng 1</b></span>
-                    <span class="font span2"><b>Đơn hàng 2</b></span>
-                    <span class="font span3"><b>Đơn hàng 3</b></span>
-                    <span class="font span4"><b>Đơn hàng 4</b></span>
-                    <span class="font span5"><b>Đơn hàng 5</b></span>
-                </div>
-                <div class="box2">
-                    <span class="font span1"><b>Đơn hàng 6</b></span>
-                    <span class="font span2"><b>Đơn hàng 7</b></span>
-
-                    <span class="font span3"><b>Đơn hàng 8</b></span>
-                    <span class="font span4"><b>Đơn hàng 9</b></span>
-                    <span class="font span5"><b>Đơn hàng 10</b></span>
-                </div>
+        
+        <!-- Kiểm tra điều kiện quay -->
+        @php
+            $can_spin = false;
+            $spin_message = '';
+            
+            // Kiểm tra đã quay hôm nay chưa
+            if ($has_spun_today) {
+                $spin_message = 'Bạn đã quay vòng quay hôm nay rồi. Hãy quay lại vào ngày mai!';
+            } elseif ($user_spin_progress && $rank) {
+                $current = $user_spin_progress->current_spin ?? 0;
+                $total = $rank->spin_count ?? 0;
+                if ($current >= $total && $total > 0) {
+                    $can_spin = true;
+                    $spin_message = 'Bạn đã hoàn thành ' . $total . ' đơn hàng! Hãy quay thử vận may!';
+                } else {
+                    $remaining = $total - $current;
+                    $spin_message = 'Hoàn thành thêm ' . $remaining . ' đơn hàng nữa để được quay!';
+                }
+            } else {
+                $spin_message = 'Bạn cần có cấp độ để tham gia quay thưởng!';
+            }
+        @endphp
+        
+        <div class="wheel-container-modern">
+            <div class="wheel-status-card">
+                <i class="fas {{ $can_spin ? 'fa-check-circle text-success' : 'fa-lock text-warning' }}"></i>
+                <p class="wheel-status-message">{{ $spin_message }}</p>
             </div>
-            <button class="spin" id="spin" onclick="spin()">{{__('home.Quay')}}</button>
-        </div>
-        <audio
-            controls="controls"
-            id="applause"
-            src="{{asset('audio/applause.mp3')}}"
-            type="audio/mp3"></audio>
-        <audio
-            controls="controls"
-            id="wheel"
-            src="{{asset('audio/wheel.mp3')}}"
-            type="audio/mp3"></audio>
-    </div>
-    <div class="dark_surface" id="order_award" hidden>
-        <div class="" id="order">
-            <div class="order_bg">
-                <div class="div_img">
-                    <img src="{{ asset('images/home/congratulations.png') }}" alt="">
+            
+            <div class="wheel-wrapper">
+                <div class="wheel-pointer">
+                    <i class="fas fa-caret-down"></i>
                 </div>
-                <div class="order_details">
-                    <div class="order_details_vien">
-                        <div class="div_img_cho_xu_ly">
-                            <img src="{{ asset('images/nhan_cho_xu_ly.png') }}" alt="">
+                
+                <div class="prize-wheel" id="prizeWheel">
+                    <div class="wheel-slice slice-1" data-prize="SH Mode">
+                        <div class="slice-content">
+                            <i class="fas fa-motorcycle"></i>
+                            <span>Xe SH</span>
                         </div>
-                        <span class="order_details_time" id="order_details_time">{{__('home.ThoiGianDatPhanPhoi')}}</span>
-                        <div class="order_details_info">
-                            <div class="order_details_img">
-                                <img id="order_details_img" src="{{ asset('images/orders/syglp5via6r7rxqjc1k8.jpg') }}" alt="">
-                            </div>
-                            <div class="order_details_info_2">
-                                <span class="order_details_name" id="order_details_name">Apple iPhone 14 Pro Max</span>
-                                <div class="d-flex flex-row justify-content-between">
-                                    <span class="order_details_price" id="order_details_price">10.000$</span>
-                                    <span class="order_details_quantity" id="order_details_quantity">x1</span>
-                                </div>
-                            </div>
+                    </div>
+                    <div class="wheel-slice slice-2" data-prize="$100">
+                        <div class="slice-content">
+                            <i class="fas fa-dollar-sign"></i>
+                            <span>$100</span>
                         </div>
-                        <table class="order_details_end">
-                            <tbody>
-                                <tr>
-                                    <td class="order_details_end_title">{{__('order.TongTienPhanPhoi')}}</td>
-                                    <th class="order_details_end_value" id="order_details_end_value_total_price">10.000$</th>
-                                </tr>
-                                <tr>
-                                    <td class="order_details_end_title">{{__('order.HoaHong')}}</td>
-                                    <th class="order_details_end_value" id="order_details_end_value_price_rose">20$</th>
-                                </tr>
-                                <tr>
-                                    <td class="order_details_end_title_total">{{__('order.SoTienHoanNhap')}}</td>
-                                    <th class="order_details_end_value_total" id="order_details_end_value_total">10.020$</th>
-                                </tr>
-                            </tbody>
-                        </table>
+                    </div>
+                    <div class="wheel-slice slice-3" data-prize="iPhone 17">
+                        <div class="slice-content">
+                            <i class="fab fa-apple"></i>
+                            <span>iPhone 17</span>
+                        </div>
+                    </div>
+                    <div class="wheel-slice slice-4" data-prize="$500">
+                        <div class="slice-content">
+                            <i class="fas fa-dollar-sign"></i>
+                            <span>$500</span>
+                        </div>
+                    </div>
+                    <div class="wheel-slice slice-5" data-prize="$1000">
+                        <div class="slice-content">
+                            <i class="fas fa-dollar-sign"></i>
+                            <span>$1000</span>
+                        </div>
+                    </div>
+                    <div class="wheel-slice slice-6" data-prize="$50">
+                        <div class="slice-content">
+                            <i class="fas fa-dollar-sign"></i>
+                            <span>$50</span>
+                        </div>
+                    </div>
+                    <div class="wheel-slice slice-7" data-prize="$10000">
+                        <div class="slice-content">
+                            <i class="fas fa-gem"></i>
+                            <span>$10000</span>
+                        </div>
+                    </div>
+                    <div class="wheel-slice slice-8" data-prize="$200">
+                        <div class="slice-content">
+                            <i class="fas fa-dollar-sign"></i>
+                            <span>$200</span>
+                        </div>
                     </div>
                 </div>
+                
+                <button class="wheel-spin-button" id="wheelSpinButton" {{ !$can_spin ? 'disabled' : '' }}>
+                    <span class="spin-text">QUAY</span>
+                    <i class="fas fa-sync-alt"></i>
+                </button>
             </div>
-            <div class="order_button">
-                <button class="btn btn-secondary me-5" id="later"><i class="fas fa-arrow-left me-1"></i>{{__('order.DeSau')}}</button>
-                <button class="btn btn-dark" id="btn_phan_phoi_ngay"><i class="fa-solid fa-gears me-2"></i>{{__('order.PhanPhoiNgay')}}</button>
+            
+            @if ($user_spin_progress && $rank)
+            <div class="wheel-progress-info">
+                <div class="progress-item">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Đã hoàn thành: <strong>{{ $user_spin_progress->current_spin }}/{{ $rank->spin_count }}</strong></span>
+                </div>
+            </div>
+            @endif
+        </div>
+        
+        <audio id="wheelSpinSound" src="{{asset('audio/wheel.mp3')}}" preload="auto"></audio>
+        <audio id="applauseSound" src="{{asset('audio/applause.mp3')}}" preload="auto"></audio>
+    </div>
+    
+    <!-- Modal giải thưởng -->
+    <div class="prize-modal-overlay" id="prizeModalOverlay">
+        <div class="prize-modal-container">
+            <div class="prize-modal-content">
+                <div class="prize-confetti" id="prizeConfetti"></div>
+                
+                <div class="prize-icon">
+                    <i class="fas fa-trophy"></i>
+                </div>
+                
+                <h2 class="prize-title">Chúc Mừng!</h2>
+                <p class="prize-subtitle">Bạn đã trúng giải:</p>
+                
+                <div class="prize-name-display" id="prizeNameDisplay">
+                    <i class="prize-icon-display" id="prizeIconDisplay"></i>
+                    <span class="prize-text-display" id="prizeTextDisplay">Đang tải...</span>
+                </div>
+                
+                <div class="prize-message">
+                    Vui lòng liên hệ CSKH để nhận thưởng!
+                </div>
+                
+                <button class="prize-close-button" onclick="closePrizeModal()">
+                    <span>Đóng</span>
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
         </div>
-    </div>
-    <div class="mt-3 d-flex justify-content-center align-items-center text-white">
-        @if ($user_spin_progress && $rank)
-        <span>
-            Đã quay được:
-            <span id="current_spin">{{ $user_spin_progress->current_spin }}</span>/{{ $rank->spin_count }} đơn hàng
-        </span>
-        @else
-        <span>Chưa có cấp độ</span>
-        @endif
     </div>
 </div>
 <!-- Tập đoàn amazon - Amazon Theme -->

@@ -42,7 +42,6 @@ marquee {
     padding-top: 90px;
     background: linear-gradient(135deg, var(--amazon-black) 0%, var(--amazon-black-light) 100%);
     border-radius: 20px;
-    margin: 10px;
     box-shadow: 0 10px 30px rgba(19, 25, 33, 0.3);
     border: 2px solid var(--amazon-orange);
 }
@@ -816,7 +815,6 @@ marquee {
     /* Section 1 improvements */
     .section-1 {
         padding-top: 80px;
-        margin: 5px;
         border-radius: 15px;
     }
 

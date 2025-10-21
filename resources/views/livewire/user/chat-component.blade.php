@@ -1,24 +1,18 @@
-<div class="floating-chat-container" wire:id="{{ $this->getId() }}" id="chat-root" x-data="{ isOpen: @entangle('showBox') }">
+<div class="floating-chat-container" wire:id="{{ $this->getId() }}" id="chat-root"
+    x-data="{ isOpen: @entangle('showBox') }">
     <!-- Floating Chat Button -->
-    <button class="floating-chat-button" 
-            wire:click="toggleBox"
-            x-show="!isOpen"
-            type="button">
+    <button class="floating-chat-button" wire:click="toggleBox" x-show="!isOpen" type="button">
         <i class="fa-solid fa-comments"></i>
         <span class="chat-badge">CSKH</span>
     </button>
 
     <!-- Hộp thoại chat -->
-    <div class="floating-chat-window" 
-         x-show="isOpen"
-         x-transition:enter="chat-enter"
-         x-transition:leave="chat-leave"
-         style="display: none;"
-         wire:init="scrollToBottom" 
-         id="box_arround">
+    <div class="floating-chat-window" x-show="isOpen" x-transition:enter="chat-enter" x-transition:leave="chat-leave"
+        style="display: none;" wire:init="scrollToBottom" id="box_arround">
 
         <!-- Header với gradient -->
-        <div class="p-3 d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+        <div class="p-3 d-flex justify-content-between align-items-center"
+            style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
             <div class="d-flex align-items-center">
                 <div class="position-relative">
                     <img src="https://ui-avatars.com/api/?name=Support&background=ffffff&color=667eea&size=32&rounded=true&bold=true"
@@ -37,103 +31,109 @@
         </div>
 
         <!-- Danh sách tin nhắn -->
-        <div class="p-3 position-relative" style="height: 300px; overflow-y: auto; background: #f8f9fa;" id="chat-messages-container">
+        <div class="p-3 position-relative" style="height: 300px; overflow-y: auto; background: #f8f9fa;"
+            id="chat-messages-container">
             <!-- Loading indicator cho load more -->
             @if($isLoading)
-            <div class="text-center py-2" id="loading-indicator">
-                <div class="spinner-border spinner-border-sm text-primary" role="status">
-                    <span class="visually-hidden">{{__('home.DangTai')}}</span>
+                <div class="text-center py-2" id="loading-indicator">
+                    <div class="spinner-border spinner-border-sm text-primary" role="status">
+                        <span class="visually-hidden">{{__('home.DangTai')}}</span>
+                    </div>
+                    <small class="text-muted ms-2">{{__('home.DangTaiTinNhanCu')}}</small>
                 </div>
-                <small class="text-muted ms-2">{{__('home.DangTaiTinNhanCu')}}</small>
-            </div>
             @endif
 
             <!-- Nút load more messages -->
             @if($hasMoreMessages && !$isLoading)
-            <div class="text-center py-2">
-                <button wire:click="loadMoreMessages" class="btn btn-sm btn-outline-primary rounded-pill">
-                    <i class="fa fa-chevron-up me-1"></i>
-                    {{__('home.TaiTinNhanCuHon')}}
-                </button>
-            </div>
+                <div class="text-center py-2">
+                    <button onclick="loadMoreMessagesManual()" class="btn btn-sm btn-outline-primary rounded-pill">
+                        <i class="fa fa-chevron-up me-1"></i>
+                        {{__('home.TaiTinNhanCuHon')}}
+                    </button>
+                </div>
             @endif
 
             @if($chatMessages->count() == 0)
-            <div class="text-center text-muted py-3">
-                <i class="fa fa-comments fa-2x mb-2"></i>
-                <div>{{__('home.ChaoBanChungToiCoTheGiupGiChoBan')}}</div>
-            </div>
+                <div class="text-center text-muted py-3">
+                    <i class="fa fa-comments fa-2x mb-2"></i>
+                    <div>{{__('home.ChaoBanChungToiCoTheGiupGiChoBan')}}</div>
+                </div>
             @endif
 
             @foreach ($chatMessages as $msg)
-            @php
-                $isCurrentUser = (is_array($msg) ? $msg['sender_id'] : $msg->sender_id) === auth()->id();
-                $message = is_array($msg) ? $msg['message'] : $msg->message;
-                $type = is_array($msg) ? $msg['type'] : $msg->type;
-                $imagePath = is_array($msg) ? $msg['image_path'] : $msg->image_path;
-                $createdAt = is_array($msg) ? $msg['created_at'] : $msg->created_at;
-                $senderName = is_array($msg) 
-                    ? ($msg['sender']['full_name'] ?? 'User') 
-                    : ($msg->sender->full_name ?? 'User');
-            @endphp
+                @php
+                    $isCurrentUser = (is_array($msg) ? $msg['sender_id'] : $msg->sender_id) === auth()->id();
+                    $message = is_array($msg) ? $msg['message'] : $msg->message;
+                    $type = is_array($msg) ? $msg['type'] : $msg->type;
+                    $imagePath = is_array($msg) ? $msg['image_path'] : $msg->image_path;
+                    $createdAt = is_array($msg) ? $msg['created_at'] : $msg->created_at;
+                    $senderName = is_array($msg)
+                        ? ($msg['sender']['full_name'] ?? 'User')
+                        : ($msg->sender->full_name ?? 'User');
+                @endphp
 
-            @if($isCurrentUser)
-            <!-- Tin nhắn của user -->
-            <div class="d-flex justify-content-end mb-3" wire:key="msg-{{ is_array($msg) ? $msg['id'] : $msg->id }}">
-                <div class="d-flex align-items-end" style="max-width: 70%;">
-                    <div class="me-2" style="display: flex; flex-direction: column; align-items: flex-end;">
-                        <div class="message-bubble px-3 py-2 text-start"
-                            style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-size: 14px; line-height: 1.4; word-wrap: break-word; overflow-wrap: break-word; display: inline-block; {{ $type === 'text' ? 'width: fit-content; max-width: 100%;' : 'width: 200px; max-width: 200px;' }} {{ $type === 'text' ? 'border-radius: 25px;' : 'border-radius: 15px;' }}">
-                            @if($type === 'image')
-                                <img src="{{ Storage::url($imagePath) }}" alt="Sent image" class="img-fluid rounded" style="width: 100%; max-width: 200px; max-height: 200px; cursor: pointer;" onclick="openImageModal(this.src)">
-                            @else
-                                {{ $message }}
-                            @endif
-                        </div>
-                        <div class="text-end mt-1" style="font-size: 10px; color: #6c757d;">
-                            {{ \Carbon\Carbon::parse($createdAt)->setTimezone('Asia/Ho_Chi_Minh')->format('d/m/Y H:i') }}
-                        </div>
-                    </div>
-                    <img src="https://ui-avatars.com/api/?name={{ urlencode($senderName) }}&background=667eea&color=ffffff&size=28&rounded=true"
-                        alt="You" class="rounded-circle flex-shrink-0" width="28" height="28">
-                </div>
-            </div>
-            @else
-            <!-- Tin nhắn của support -->
-            <div class="d-flex justify-content-start mb-3" wire:key="msg-{{ is_array($msg) ? $msg['id'] : $msg->id }}">
-                <div class="d-flex align-items-end" style="max-width: 70%;">
-                    <img src="https://ui-avatars.com/api/?name=Support&background=28a745&color=ffffff&size=28&rounded=true&bold=true"
-                        alt="Support" class="rounded-circle flex-shrink-0" width="28" height="28">
-                    <div class="ms-2" style="display: flex; flex-direction: column; align-items: flex-start;">
-                        <div class="message-bubble rounded-4 px-3 py-2 position-relative member-message text-start"
-                            style="transition: all 0.2s ease; border: 1px solid #e9ecef; display: inline-block; {{ $type === 'text' ? 'width: fit-content; max-width: 100%;' : 'width: 200px; max-width: 200px;' }} word-wrap: break-word; overflow-wrap: break-word;">
-                            @if($type === 'image')
-                                <img src="{{ Storage::url($imagePath) }}" alt="Received image" class="img-fluid rounded" style="width: 100%; max-width: 200px; max-height: 200px; cursor: pointer;" onclick="openImageModal(this.src)">
-                            @else
-                                {{ $message }}
-                            @endif
-                        </div>
-                        <div class="mt-1 ps-2" style="font-size: 10px; color: #6c757d;text-align:left;">
-                             {{__('home.HoTro'). \Carbon\Carbon::parse($createdAt)->setTimezone('Asia/Ho_Chi_Minh')->format('d/m/Y H:i') }}
+                @if($isCurrentUser)
+                    <!-- Tin nhắn của user -->
+                    <div class="d-flex justify-content-end mb-3" wire:key="msg-{{ is_array($msg) ? $msg['id'] : $msg->id }}">
+                        <div class="d-flex align-items-end" style="max-width: 100%;">
+                            <div class="me-2" style="display: flex; flex-direction: column; align-items: flex-end;">
+                                <div class="message-bubble px-3 py-2 text-start"
+                                    style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-size: 14px; line-height: 1.4; word-wrap: break-word; overflow-wrap: break-word; display: inline-block; {{ $type === 'text' ? 'width: fit-content; max-width: 100%;' : 'width: 200px; max-width: 200px;' }} {{ $type === 'text' ? 'border-radius: 25px;' : 'border-radius: 15px;' }}">
+                                    @if($type === 'image')
+                                        <img src="{{ Storage::url($imagePath) }}" alt="Sent image" class="img-fluid rounded"
+                                            style="width: 100%; max-width: 200px; max-height: 200px; cursor: pointer;"
+                                            onclick="openImageModal(this.src)">
+                                    @else
+                                        {{ $message }}
+                                    @endif
+                                </div>
+                                <div class="text-end mt-1" style="font-size: 10px; color: #6c757d;">
+                                    {{ \Carbon\Carbon::parse($createdAt)->setTimezone('Asia/Ho_Chi_Minh')->format('d/m/Y H:i') }}
+                                </div>
+                            </div>
+                            <img src="https://ui-avatars.com/api/?name={{ urlencode($senderName) }}&background=667eea&color=ffffff&size=28&rounded=true"
+                                alt="You" class="rounded-circle flex-shrink-0" width="28" height="28">
                         </div>
                     </div>
-                </div>
-            </div>
-            @endif
+                @else
+                    <!-- Tin nhắn của support -->
+                    <div class="d-flex justify-content-start mb-3" wire:key="msg-{{ is_array($msg) ? $msg['id'] : $msg->id }}">
+                        <div class="d-flex align-items-end" style="max-width: 100%;">
+                            <img src="https://ui-avatars.com/api/?name=Support&background=28a745&color=ffffff&size=28&rounded=true&bold=true"
+                                alt="Support" class="rounded-circle flex-shrink-0" width="28" height="28">
+                            <div class="ms-2" style="display: flex; flex-direction: column; align-items: flex-start;">
+                                <div class="message-bubble rounded-4 px-3 py-2 position-relative member-message text-start"
+                                    style="transition: all 0.2s ease; border: 1px solid #e9ecef; display: inline-block; {{ $type === 'text' ? 'width: fit-content; max-width: 100%;' : 'width: 200px; max-width: 200px;' }} word-wrap: break-word; overflow-wrap: break-word;">
+                                    @if($type === 'image')
+                                        <img src="{{ Storage::url($imagePath) }}" alt="Received image" class="img-fluid rounded"
+                                            style="width: 100%; max-width: 200px; max-height: 200px; cursor: pointer;"
+                                            onclick="openImageModal(this.src)">
+                                    @else
+                                        {{ $message }}
+                                    @endif
+                                </div>
+                                <div class="mt-1 ps-2" style="font-size: 10px; color: #6c757d;text-align:left;">
+                                    {{__('home.HoTro') . \Carbon\Carbon::parse($createdAt)->setTimezone('Asia/Ho_Chi_Minh')->format('d/m/Y H:i') }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @endif
             @endforeach
         </div>
 
         <!-- Form nhập với design hiện đại -->
-        <form class="p-3" style="background: white; border-top: 1px solid #e9ecef;" 
-              x-data="{ formSending: false }"
-              x-on:submit.prevent="
+        <form class="p-3" style="background: white; border-top: 1px solid #e9ecef;" x-data="{ 
+                  formSending: false,
+                  hasImage: @entangle('selectedImage')
+              }" x-on:submit.prevent="
                   if (!formSending) {
                       const input = $el.querySelector('#chat-input-field');
                       const val = input ? input.value.trim() : '';
                       
-                      // Kiểm tra có tin nhắn không
-                      if (!val) {
-                          return; // Không làm gì nếu input rỗng
+                      // Kiểm tra có tin nhắn hoặc ảnh không
+                      if (!val && !hasImage) {
+                          return; // Không làm gì nếu không có text và không có ảnh
                       }
                       
                       formSending = true;
@@ -148,71 +148,63 @@
                       });
                   }
               ">
-            
+
             <!-- Preview ảnh đã chọn -->
             @if($selectedImage)
-            <div class="mb-3 p-2 border rounded" style="background: #f8f9fa;">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <small class="text-muted">Ảnh được chọn</small>
-                    <button type="button" wire:click="removeImage" class="btn btn-sm btn-outline-danger">
-                        <i class="fa fa-times"></i>
-                    </button>
+                <div class="mb-3 p-2 border rounded" style="background: #f8f9fa;">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <small class="text-muted">Ảnh được chọn</small>
+                        <button type="button" wire:click="removeImage" class="btn btn-sm btn-outline-danger">
+                            <i class="fa fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="d-flex justify-content-center align-items-center">
+                        <img src="{{ $selectedImage->temporaryUrl() }}" alt="Preview" class="img-fluid rounded"
+                            style="max-width: 150px; max-height: 150px;">
+                    </div>
                 </div>
-                <img src="{{ $selectedImage->temporaryUrl() }}" alt="Preview" class="img-fluid rounded" style="max-width: 150px; max-height: 150px;">
-            </div>
             @endif
 
             <div class="d-flex align-items-center" style="background: #f8f9fa; border-radius: 25px; padding: 8px 16px;">
                 <!-- Nút chọn ảnh -->
-                <label for="image-upload" class="btn btn-link p-0 me-2" style="color: #667eea; font-size: 18px; cursor: pointer;">
+                <label for="image-upload" class="btn btn-link p-0 me-2"
+                    style="color: #667eea; font-size: 18px; cursor: pointer;">
                     <i class="fa fa-image"></i>
                 </label>
-                <input type="file" 
-                       wire:model="selectedImage" 
-                       id="image-upload" 
-                       accept="image/*" 
-                       style="display: none;">
-                
-                <input type="text"
-                    wire:model="newMessage"
-                    class="form-control border-0 bg-transparent"
-                    placeholder="{{__('home.NhapTinNhanCuaBan')}}"
-                    id="chat-input-field"
-                    autocomplete="off"
-                    maxlength="{{ $maxMessageLength }}"
-                    style="font-size: 14px;"
-                    x-on:keydown.enter.prevent="
-                        if (!formSending && $el.value.trim()) {
+                <input type="file" wire:model="selectedImage" id="image-upload" accept="image/*" style="display: none;">
+
+                <input type="text" wire:model="newMessage" class="form-control border-0 bg-transparent"
+                    placeholder="{{__('home.NhapTinNhanCuaBan')}}" id="chat-input-field" autocomplete="off"
+                    maxlength="{{ $maxMessageLength }}" style="font-size: 14px;" x-on:keydown.enter.prevent="
+                        if (!formSending && ($el.value.trim() || hasImage)) {
                             $el.closest('form').dispatchEvent(new Event('submit', { bubbles: true }));
                         }
                     ">
-                
-                <button type="submit"
-                    class="btn btn-link p-0 ms-2"
-                    style="color: #667eea; font-size: 18px;"
+
+                <button type="submit" class="btn btn-link p-0 ms-2" style="color: #667eea; font-size: 18px;"
                     x-bind:disabled="formSending">
                     <i class="fa fa-paper-plane" x-show="!formSending"></i>
                     <i class="fa fa-spinner fa-spin" x-show="formSending" style="display: none;"></i>
                 </button>
             </div>
-            
+
             <!-- Hiển thị số ký tự còn lại và lỗi -->
             <div class="d-flex justify-content-between align-items-center mt-2">
                 <div style="font-size: 11px; color: #6c757d;">
                     {{__('home.NhanEnterDeGuiTinNhan')}}
                 </div>
-                <div style="font-size: 11px;" 
-                     class="{{ $this->getRemainingCharacters() < 20 ? 'text-warning' : 'text-muted' }}">
+                <div style="font-size: 11px;"
+                    class="{{ $this->getRemainingCharacters() < 20 ? 'text-warning' : 'text-muted' }}">
                     {{ $this->getRemainingCharacters() }}/{{ $maxMessageLength }}
                 </div>
             </div>
-            
+
             @error('newMessage')
                 <div class="text-danger mt-1" style="font-size: 11px;">
                     {{ $message }}
                 </div>
             @enderror
-            
+
             @error('selectedImage')
                 <div class="text-danger mt-1" style="font-size: 11px;">
                     {{ $message }}
@@ -251,6 +243,7 @@
         let currentUserId = @json(auth()->id());
         let isLoadingMore = false;
         let previousScrollHeight = 0;
+        let previousScrollTop = 0;
 
         function scrollToBottom(behavior = 'smooth') {
             const container = document.getElementById('chat-messages-container');
@@ -261,6 +254,22 @@
                         behavior: behavior
                     });
                 }, 100);
+            }
+        }
+
+        // Hàm load tin nhắn cũ hơn khi bấm nút
+        window.loadMoreMessagesManual = function () {
+            if (!isLoadingMore) {
+                const container = document.getElementById('chat-messages-container');
+                if (container) {
+                    isLoadingMore = true;
+                    previousScrollHeight = container.scrollHeight;
+                    previousScrollTop = container.scrollTop;
+
+                    const root = document.getElementById('chat-root');
+                    const component = Livewire.find(root.getAttribute('wire:id'));
+                    component.call('loadMoreMessages');
+                }
             }
         }
 
@@ -280,30 +289,16 @@
         Livewire.on('messages-loaded', () => {
             const container = document.getElementById('chat-messages-container');
             if (container) {
-                const newScrollHeight = container.scrollHeight;
-                const scrollDiff = newScrollHeight - previousScrollHeight;
-                container.scrollTop = container.scrollTop + scrollDiff;
+                // Đợi DOM cập nhật hoàn toàn
+                setTimeout(() => {
+                    const newScrollHeight = container.scrollHeight;
+                    const scrollDiff = newScrollHeight - previousScrollHeight;
+                    // Đặt vị trí scroll = vị trí cũ + phần tin nhắn mới thêm vào
+                    container.scrollTop = previousScrollTop + scrollDiff;
+                }, 50);
             }
             isLoadingMore = false;
         });
-
-        // Xử lý scroll để load tin nhắn cũ
-        const container = document.getElementById('chat-messages-container');
-        if (container) {
-            container.addEventListener('scroll', function() {
-                if (this.scrollTop <= 50 && !isLoadingMore) {
-                    const hasMoreMessages = @json($hasMoreMessages);
-                    if (hasMoreMessages) {
-                        isLoadingMore = true;
-                        previousScrollHeight = this.scrollHeight;
-                        
-                        const root = document.getElementById('chat-root');
-                        const component = Livewire.find(root.getAttribute('wire:id'));
-                        component.call('loadMoreMessages');
-                    }
-                }
-            });
-        }
 
         // Listen for WebSocket messages
         if (conversationId && window.Echo) {
@@ -329,7 +324,7 @@
         const input = document.getElementById('chat-input-field');
         if (input) {
             input.focus();
-            
+
             // Enter key đã được xử lý bởi Alpine.js (x-on:keydown.enter)
         }
 

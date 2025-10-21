@@ -9,5 +9,7 @@ return [
     "PhanPhoiHomNay" => "本日の配布",
     "ChietKhauHomNay" => "本日のコミッション",
     "SoDuDongBang" => "凍結残高",
-    "MoTa" => "説明","QuayLai" => "戻る",
+    "MoTa" => "説明",
+    "QuayLai" => "戻る",
+    "ChuaCoCapDo" => "ランクなし",
 ];

@@ -9,5 +9,7 @@ return [
     "PhanPhoiHomNay" => "Distribución de Hoy",
     "ChietKhauHomNay" => "Comisión de Hoy",
     "SoDuDongBang" => "Saldo Congelado",
-    "MoTa" => "Descripción","QuayLai" => "Volver",
+    "MoTa" => "Descripción",
+    "QuayLai" => "Volver",
+    "ChuaCoCapDo" => "Sin Rango Todavía",
 ];

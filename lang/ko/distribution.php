@@ -11,4 +11,5 @@ return [
     "SoDuDongBang" => "동결 잔액",
     "MoTa" => "설명",
     "QuayLai" => "뒤로가기",
+    "ChuaCoCapDo" => "아직 등급 없음",
 ];

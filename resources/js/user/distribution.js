@@ -146,11 +146,28 @@ document.addEventListener('DOMContentLoaded', function () {
                 loadOrders();
                 notification('error', trans.QuayLaiNhaBan, trans.LoiDanhSachDonHang);
             }
-            notification('warning', 'Đang tìm kiếm đơn hàng...', 'Waiting!');
+            
+            // Hiển thị loading modal cho tìm kiếm
+            showSearchingModal();
+            
             setTimeout(() => {
                 spinner.hidden = true;
-                notification('success', 'Tìm kiếm đơn hàng thành công!', 'Successfully!', 2000);
+                closeSearchingModal();
+                
+                // Xử lý giao diện cho đơn thường hoặc đặc biệt
+                const orderModal = document.getElementById('order');
+                const headerNormal = document.querySelector('.order-header-normal');
+                const headerSpecial = document.querySelector('.order-header-special');
+                const specialTag = document.querySelector('.special-tag');
+                const imageShine = document.querySelector('.image-shine');
+                
                 if (!is_order_special) {
+                    // Đơn thường - hiển thị header thường, ẩn header đặc biệt
+                    orderModal.classList.remove('special-order');
+                    headerNormal.style.display = 'block';
+                    headerSpecial.style.display = 'none';
+                    if (specialTag) specialTag.style.display = 'none';
+                    if (imageShine) imageShine.style.display = 'none';
                     const order_details_price_formatted = format_currency(selectedOrder.price);
                     const order_details_end_value_total_price_formatted = format_currency(selectedOrder.quantity * selectedOrder.price);
                     const order_details_end_value_price_rose_formatted = format_currency((selectedOrder.quantity * selectedOrder.price) * selectedOrder.commission_percentage);
@@ -168,6 +185,12 @@ document.addEventListener('DOMContentLoaded', function () {
                     order_details_end_value_price_rose.innerText = order_details_end_value_price_rose_formatted;
                     order_details_end_value_total.innerText = order_details_end_value_total_formatted;
                 } else {
+                    // Đơn đặc biệt - hiển thị header đặc biệt, ẩn header thường
+                    orderModal.classList.add('special-order');
+                    headerNormal.style.display = 'none';
+                    headerSpecial.style.display = 'block';
+                    if (specialTag) specialTag.style.display = 'flex';
+                    if (imageShine) imageShine.style.display = 'block';
                     const order_details_price_formatted = format_currency(fake_price / selectedOrder.quantity);
                     const order_details_end_value_total_price_formatted = format_currency(fake_price);
                     const order_details_end_value_price_rose_formatted = format_currency(fake_price * selectedOrder.commission_percentage);
@@ -243,34 +266,22 @@ document.addEventListener('DOMContentLoaded', function () {
         let result = await handle_distribution(frozen_id);
         if (result.status === 200) {
             const profit = result.profit;
+            const totalAmount = result.total_amount || 0;
+            const commission = result.commission || 0;
+            const penaltyAmount = result.penalty_amount || 0;
+            
+            // Hiển thị loading modal phân phối
+            showDistributionModal();
+            
+            // Sau 1.5 giây đóng loading và hiển thị kết quả
             setTimeout(() => {
-                notification('warning', "", trans.ChoXuLy);
+                closeDistributionModal();
                 setTimeout(() => {
-                    notification('warning', "", trans.DangPhanPhoi);
-                    setTimeout(() => {
-                        notification('success', result.message, trans.ThanhCong);
-                        swal({
-                            title: trans.PhanPhoiThanhCong2,
-                            content: {
-                                element: "span",
-                                attributes: {
-                                    innerHTML: "<span style='color:green;font-weight:bold;'>+" + format_currency(profit, 4, 4) + "</span>"
-                                }
-                            },
-                            icon: "success",
-                            buttons: {
-                                confirm: {
-                                    text: "OK",
-                                    value: true,
-                                    visible: true,
-                                    className: "btn-success",
-                                    closeModal: true
-                                }
-                            },
-                        });
-                    }, 1000);
-                }, 1000);
-            }, 0);
+                    showSuccessModal(profit, totalAmount, commission, penaltyAmount);
+                    // Cập nhật tiến độ phân phối
+                    updateProgress();
+                }, 300);
+            }, 1500);
         } else if (result.status === 409) {
             notification('warning', result.message, trans.CanhBao);
         } else {
@@ -281,6 +292,157 @@ document.addEventListener('DOMContentLoaded', function () {
             spinner.hidden = true;
         }, 2000);
     })
+    
+    // Hàm hiển thị modal thành công với thiết kế đẹp
+    function showSuccessModal(profit, totalAmount, commission, penaltyAmount = 0) {
+        // Tính tổng tiền hoàn nhập = Giá trị đơn hàng + Hoa hồng (chưa trừ phạt)
+        const totalRefund = totalAmount + commission;
+        
+        // Lấy modal và cập nhật nội dung
+        const modal = document.getElementById('successModalOverlay');
+        document.getElementById('success_profit_amount').textContent = '+' + format_currency(profit, 4, 4);
+        document.getElementById('success_total_amount').textContent = '' + format_currency(totalAmount, 4, 4);
+        document.getElementById('success_commission').textContent = '+' + format_currency(commission, 4, 4);
+        document.getElementById('success_total_refund').textContent = '+' + format_currency(totalRefund, 4, 4);
+        document.getElementById('success_time').textContent = new Date().toLocaleString('vi-VN');
+        
+        // Hiển thị/ẩn dòng tiền phạt
+        const penaltyRow = document.getElementById('success_penalty_row');
+        if (penaltyAmount > 0) {
+            document.getElementById('success_penalty_amount').textContent = '-' + format_currency(penaltyAmount, 4, 4);
+            penaltyRow.style.display = 'flex';
+        } else {
+            penaltyRow.style.display = 'none';
+        }
+        
+        // Hiển thị modal
+        modal.classList.add('show');
+    }
+    
+    // Hàm đóng modal thành công
+    window.closeSuccessModal = function() {
+        const modal = document.getElementById('successModalOverlay');
+        if (modal) {
+            modal.classList.remove('show');
+        }
+    }
+    
+    // Hàm hiển thị loading modal cho tìm kiếm đơn hàng
+    function showSearchingModal() {
+        const modal = document.getElementById('searchingModalOverlay');
+        
+        // Reset trạng thái các step
+        document.getElementById('search-step-1').className = 'loading-step active';
+        document.getElementById('search-step-2').className = 'loading-step';
+        document.getElementById('search-step-3').className = 'loading-step';
+        document.getElementById('search-progress-bar').style.width = '0%';
+        
+        // Hiển thị modal
+        modal.classList.add('show');
+        
+        setTimeout(() => {
+            document.getElementById('search-progress-bar').style.width = '33%';
+            
+            setTimeout(() => {
+                document.getElementById('search-step-1').classList.remove('active');
+                document.getElementById('search-step-1').classList.add('completed');
+                document.getElementById('search-step-2').classList.add('active');
+                document.getElementById('search-progress-bar').style.width = '66%';
+                
+                setTimeout(() => {
+                    document.getElementById('search-step-2').classList.remove('active');
+                    document.getElementById('search-step-2').classList.add('completed');
+                    document.getElementById('search-step-3').classList.add('active');
+                    document.getElementById('search-progress-bar').style.width = '100%';
+                }, 300);
+            }, 300);
+        }, 10);
+    }
+    
+    // Hàm đóng loading modal tìm kiếm
+    function closeSearchingModal() {
+        const modal = document.getElementById('searchingModalOverlay');
+        if (modal) {
+            modal.classList.remove('show');
+        }
+    }
+    
+    // Hàm hiển thị loading modal cho phân phối
+    function showDistributionModal() {
+        const modal = document.getElementById('distributionModalOverlay');
+        
+        // Reset trạng thái các step
+        document.getElementById('dist-step-1').className = 'loading-step active';
+        document.getElementById('dist-step-2').className = 'loading-step';
+        document.getElementById('dist-step-3').className = 'loading-step';
+        document.getElementById('dist-progress-bar').style.width = '0%';
+        
+        // Hiển thị modal
+        modal.classList.add('show');
+        
+        setTimeout(() => {
+            document.getElementById('dist-progress-bar').style.width = '33%';
+            
+            setTimeout(() => {
+                document.getElementById('dist-step-1').classList.remove('active');
+                document.getElementById('dist-step-1').classList.add('completed');
+                document.getElementById('dist-step-2').classList.add('active');
+                document.getElementById('dist-progress-bar').style.width = '66%';
+                
+                setTimeout(() => {
+                    document.getElementById('dist-step-2').classList.remove('active');
+                    document.getElementById('dist-step-2').classList.add('completed');
+                    document.getElementById('dist-step-3').classList.add('active');
+                    document.getElementById('dist-progress-bar').style.width = '100%';
+                }, 400);
+            }, 400);
+        }, 10);
+    }
+    
+    // Hàm đóng loading modal phân phối
+    function closeDistributionModal() {
+        const modal = document.getElementById('distributionModalOverlay');
+        if (modal) {
+            modal.classList.remove('show');
+        }
+    }
+    
+    // Hàm cập nhật tiến độ phân phối
+    function updateProgress() {
+        const currentElement = document.getElementById('progress-current');
+        const totalElement = document.getElementById('progress-total');
+        const progressBar = document.getElementById('progress-bar');
+        const progressText = document.getElementById('progress-text');
+        
+        if (!currentElement || !totalElement || !progressBar || !progressText) {
+            return; // Không có progress card (user chưa có rank)
+        }
+        
+        // Lấy giá trị hiện tại
+        let current = parseInt(currentElement.textContent);
+        const total = parseInt(totalElement.textContent);
+        
+        // Tăng current lên 1
+        current = Math.min(current + 1, total);
+        
+        // Tính phần trăm
+        const percentage = total > 0 ? (current / total * 100) : 0;
+        const remaining = Math.max(0, total - current);
+        
+        // Cập nhật UI
+        currentElement.textContent = current;
+        progressBar.style.width = percentage + '%';
+        progressText.textContent = `Còn lại ${remaining} đơn hàng • ${percentage.toFixed(1)}% hoàn thành`;
+        
+        // Animation cho số current
+        currentElement.style.transform = 'scale(1.2)';
+        currentElement.style.color = '#10b981';
+        setTimeout(() => {
+            currentElement.style.transform = 'scale(1)';
+            currentElement.style.color = '';
+        }, 300);
+    }
+    
     function handle_distribution(frozen_id) {
         return new Promise((resolve, reject) => {
             fetch(route_handle_distribution, {
