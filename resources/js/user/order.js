@@ -1,3 +1,19 @@
+// Hàm format datetime
+function formatDateTime(dateString) {
+    if (!dateString) return '';
+    
+    const date = new Date(dateString);
+    
+    // Option 1: Định dạng DD/MM/YYYY HH:mm
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    
+    return `${day}/${month}/${year} ${hours}:${minutes}`;
+}
+
 window.addEventListener('DOMContentLoaded', function () {
     const tab = localStorage.getItem('tab_order') ?? "tat-ca";
 
@@ -52,6 +68,12 @@ window.addEventListener('DOMContentLoaded', function () {
                 for (let frozen_order of list_orders) {
                     let order_item = document.createElement('div');
                     order_item.classList.add('order_item');
+                    
+                    // Thêm class penalized nếu đơn bị phạt
+                    if (frozen_order.penalty_sent == 1) {
+                        order_item.classList.add('penalized');
+                    }
+                    
                     order_item.id = frozen_order.id;
                     let image_status = null;
                     if (frozen_order.is_frozen == 1) {
@@ -64,14 +86,26 @@ window.addEventListener('DOMContentLoaded', function () {
                     const order_details_end_value_total_price_formatted = format_currency(frozen_order.order.quantity * price);
                     const order_details_end_value_price_rose_formatted = format_currency((frozen_order.order.quantity * price) * frozen_order.order.commission_percentage);
                     const order_details_end_value_total_formatted = format_currency((frozen_order.order.quantity * price) + ((frozen_order.order.quantity * price) * frozen_order.order.commission_percentage));
+                    
+                    // Tính toán penalty nếu có
+                    const penalty_amount = frozen_order.penalty_amount ? parseFloat(frozen_order.penalty_amount) : 0;
+                    const penalty_amount_formatted = format_currency(penalty_amount);
+                    const total_after_penalty = ((frozen_order.order.quantity * price) + ((frozen_order.order.quantity * price) * frozen_order.order.commission_percentage)) - penalty_amount;
+                    const total_after_penalty_formatted = format_currency(total_after_penalty);
+                    
+                    // Tính số tiền cần nạp thêm cho đơn bị phạt
+                    const total_payment_needed = frozen_order.order.quantity * price; // Tổng tiền cần thanh toán để phân phối
+                    const money_need_to_deposit = total_payment_needed - userBalance;
+                    const money_need_to_deposit_formatted = format_currency(money_need_to_deposit);
 
                     order_item.innerHTML = `
                         <div class="d-flex flex-column">
-                            <span class="order_time">${trans.ThoiGianDatPhanPhoi} ${frozen_order.order.created_at}</span>
+                            <span class="order_time">${trans.ThoiGianDatPhanPhoi} ${formatDateTime(frozen_order.order.updated_at)}</span>
                             <span class="order_code">${trans.MaDonHang} ${frozen_order.order.order_code}</span>
                             <div class="order_status">
                                 <img class="order_status_image" src="${image_status}" alt="">
                             </div>
+                            ${frozen_order.penalty_sent == 1 ? `<div class="penalty_badge">⚠ BỊ PHẠT</div>` : ''}
                         </div>
                         <div class="order_info d-flex flex-row">
                             <div class="p-2 order_div_image">
@@ -95,12 +129,31 @@ window.addEventListener('DOMContentLoaded', function () {
                                     <td>${trans.ChietKhau}</td>
                                     <th>${order_details_end_value_price_rose_formatted}</th>
                                 </tr>
+                                ${frozen_order.penalty_sent == 1 ? `
+                                <tr class="penalty_row">
+                                    <td>⚠ Tiền phạt (30%)</td>
+                                    <th class="penalty_amount">-${penalty_amount_formatted}</th>
+                                </tr>` : ''}
                                 <tr>
                                     <td>${trans.SoTienHoanNhap}</td>
-                                    <th class="total">${order_details_end_value_total_formatted}</th>
+                                    <th class="total">${frozen_order.penalty_sent == 1 ? total_after_penalty_formatted : order_details_end_value_total_formatted}</th>
                                 </tr>
                             </tbody>
                         </table>
+                        ${frozen_order.penalty_sent == 1 && frozen_order.is_frozen == 1 ? `
+                        <div class="penalty_info_warning">
+                            <p class="penalty_text_danger mb-1"><strong>⚠ Đơn hàng bị phạt do quá thời hạn phân phối!</strong></p>
+                            <p class="penalty_text_danger mb-1">• Bạn đã nhận thông báo qua email</p>
+                            <p class="penalty_text_danger mb-1">• Tiền phạt: <strong>${penalty_amount_formatted}</strong> (30% giá trị đơn)</p>
+                            ${money_need_to_deposit > 0 ? `<p class="penalty_text_danger mb-1">• <strong>Cần nạp thêm: ${money_need_to_deposit_formatted}</strong> để có thể phân phối</p>` : ''}
+                            <p class="penalty_text_danger mb-0">• Vui lòng ${money_need_to_deposit > 0 ? 'nạp tiền và ' : ''}hoàn thành phân phối sớm nhất</p>
+                        </div>` : ''}
+                        ${frozen_order.penalty_sent == 1 && frozen_order.is_frozen == 0 ? `
+                        <div class="penalty_info">
+                            <p class="penalty_text mb-1"><strong>ℹ️ Thông tin phạt:</strong></p>
+                            <p class="penalty_text mb-1">• Đơn hàng đã phân phối nhưng bị phạt do quá hạn</p>
+                            <p class="penalty_text mb-0">• Tiền phạt <strong>${penalty_amount_formatted}</strong> đã được trừ khỏi số tiền hoàn nhập</p>
+                        </div>` : ''}
                         ${frozen_order.is_frozen == 1 ? `<div class="mt-2 d-flex justify-content-center">
                             <button class="btn btn-outline-dark btn-sm btn_phan_phoi w-50">${trans.PhanPhoiNgay}</button>
                         </div>`: ``}

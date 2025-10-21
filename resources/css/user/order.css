@@ -121,7 +121,81 @@ th {
     background-color: #ee9705;
     color: white;
     border: none;
+}
 
+/* Styles cho đơn hàng bị phạt */
+.order_item.penalized {
+    border: 2px solid #dc3545;
+    /* background: url('../../images/order/vien.png'), linear-gradient(rgba(220, 53, 69, 0.05), rgba(220, 53, 69, 0.05)); */
+}
+
+.penalty_badge {
+    position: absolute;
+    top: 50px;
+    right: 10px;
+    background-color: #dc3545;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 11px;
+    font-weight: bold;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.penalty_info {
+    background-color: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: 5px;
+    padding: 10px;
+    margin-top: 10px;
+}
+
+.penalty_info_warning {
+    background-color: #f8d7da;
+    border: 1px solid #dc3545;
+    border-radius: 5px;
+    padding: 10px;
+    margin-top: 10px;
+}
+
+.penalty_text {
+    font-size: 12px;
+    color: #856404;
+    margin: 0;
+}
+
+.penalty_text_danger {
+    font-size: 12px;
+    color: #721c24;
+    margin: 0;
+}
+
+.penalty_amount {
+    font-size: 14px;
+    font-weight: bold;
+    color: #dc3545;
+}
+
+.penalty_row {
+    background-color: #fff3cd;
+}
+
+.penalty_row td {
+    color: #856404;
+}
+
+.penalty_row th {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.money_need_highlight {
+    background-color: #fff3cd;
+    padding: 5px 10px;
+    border-radius: 4px;
+    border: 1px solid #ffc107;
+    display: inline-block;
+    margin: 2px 0;
 }
 .order_div_image{
     display: flex;
@@ -152,5 +226,21 @@ th {
 
     .btn_status_text {
         font-size: 11px;
+    }
+
+    .penalty_badge {
+        top: 30px;
+        right: 5px;
+        padding: 3px 8px;
+        font-size: 10px;
+    }
+
+    .penalty_text,
+    .penalty_text_danger {
+        font-size: 11px;
+    }
+
+    .penalty_amount {
+        font-size: 12px;
     }
 }

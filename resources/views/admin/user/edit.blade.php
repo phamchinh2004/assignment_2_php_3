@@ -74,15 +74,32 @@ Chỉnh sửa người dùng
                             </div>
                         </div>
 
-                        <div class="form-group-custom">
-                            <label for="phone">Số điện thoại <span class="text-danger">*</span></label>
-                            <input type="number" name="phone" id="phone"
-                                value="{{ old('phone',$user->phone) }}"
-                                class="form-control form-control-custom"
-                                placeholder="Nhập số điện thoại">
-                            @error('phone')
-                            <small class="error-message">{{ $message }}</small>
-                            @enderror
+                        <div class="row row-cols-custom">
+                            <div class="col-md-6">
+                                <div class="form-group-custom">
+                                    <label for="phone">Số điện thoại <span class="text-danger">*</span></label>
+                                    <input type="number" name="phone" id="phone"
+                                        value="{{ old('phone',$user->phone) }}"
+                                        class="form-control form-control-custom"
+                                        placeholder="Nhập số điện thoại">
+                                    @error('phone')
+                                    <small class="error-message">{{ $message }}</small>
+                                    @enderror
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-group-custom">
+                                    <label for="email">Email <span class="text-danger">*</span></label>
+                                    <input type="email" name="email" id="email"
+                                        value="{{ old('email',$user->email) }}"
+                                        class="form-control form-control-custom"
+                                        placeholder="Nhập địa chỉ email">
+                                    @error('email')
+                                    <small class="error-message">{{ $message }}</small>
+                                    @enderror
+                                </div>
+                            </div>
                         </div>
                     </div>
 

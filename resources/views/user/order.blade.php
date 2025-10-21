@@ -21,6 +21,7 @@
         KhongCoDuLieu: @json(__('order.KhongCoDuLieu')),
         SoDuHienTai: @json(__('order.SoDuHienTai')),
     };
+    const userBalance = @json($user->balance ?? 0);
 </script>
 @vite('resources/js/user/order.js')
 @endsection

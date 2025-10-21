@@ -76,9 +76,17 @@ class OrderController extends Controller
         }
         $frozen_order->is_frozen = 0;
         $frozen_order->save();
+        
+        // Tính chiết khấu
         $rose = $total_price * $order->commission_percentage;
-        $user->balance += $rose;
-        $user->todays_discount += $rose;
+        
+        // Trừ tiền phạt nếu có
+        $penalty_amount = $frozen_order->penalty_amount ?? 0;
+        $actual_profit = $rose - $penalty_amount;
+        
+        // Cập nhật balance (trừ đi tiền phạt nếu có)
+        $user->balance += $actual_profit;
+        $user->todays_discount += $actual_profit;
         $user->save();
         Transaction_history::create([
             'user_id' => $user_id,
@@ -92,12 +100,22 @@ class OrderController extends Controller
             'type' => "profit",
             'note' => $order->order_code
         ]);
+        
+        // Lưu lịch sử phạt nếu có
+        if ($penalty_amount > 0) {
+            Transaction_history::create([
+                'user_id' => $user_id,
+                'value' => -$penalty_amount,
+                'type' => "penalty",
+                'note' => "Phạt quá hạn - " . $order->order_code
+            ]);
+        }
 
         return response()->json([
             'status' => 200,
             'message' => __('order.PhanPhoiThanhCong'),
             'balance' => $user->balance,
-            'profit' => $rose
+            'profit' => $actual_profit
         ]);
     }
 

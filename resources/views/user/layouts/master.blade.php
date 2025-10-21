@@ -20,6 +20,7 @@
    
     @vite('resources/css/user.css')
     @vite('resources/css/general.css')
+    @vite('resources/css/user/notification.css')
     @yield('css-libs')
     @livewireStyles
 </head>
@@ -246,6 +247,11 @@
         @endif
     </script>
     <script>
+        // Define userId for notification system
+        @auth
+        const userId = {{ auth()->id() }};
+        @endauth
+        
         window.addEventListener('load', function() {
             @auth
             if (window.Echo) {
@@ -260,6 +266,7 @@
             @endauth
         });
     </script>
+    @vite('resources/js/user/notification.js')
     @livewireScripts
 </body>
 

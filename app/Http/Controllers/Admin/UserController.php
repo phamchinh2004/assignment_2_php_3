@@ -234,7 +234,7 @@ class UserController extends Controller
     public function update(UpdateUserRequest $request, User $user)
     {
         $oldRankId = $user->rank_id;
-        $data = $request->only(['full_name', 'username', 'phone', 'username_bank', 'bank_name', 'account_number', 'balance']);
+        $data = $request->only(['full_name', 'username', 'email', 'phone', 'username_bank', 'bank_name', 'account_number', 'balance']);
         $data['rank_id'] = $request->rank;
         $reset_progress = $request->has('reset_progress');
         $clone_account = $request->has('clone_account');
@@ -469,6 +469,16 @@ class UserController extends Controller
             'by_user_id' => Auth::user()->id,
             'transaction_type' => $isRealDeposit ? "normal" : "bonus"
         ]);
+        
+        // Broadcast event thông báo nạp tiền realtime
+        event(new \App\Events\MoneyDeposited(
+            $user_id,
+            $value,
+            $get_user->balance,
+            $isRealDeposit ? 'normal' : 'bonus',
+            Auth::user()->full_name ?? Auth::user()->username
+        ));
+        
         return response()->json([
             'status' => 200,
             'message' => 'Đã nạp thêm ' . $value . '$ vào tài khoản của người dùng ' . $get_user->full_name . '!'

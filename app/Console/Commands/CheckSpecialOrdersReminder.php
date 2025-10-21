@@ -116,11 +116,12 @@ class CheckSpecialOrdersReminder extends Command
                         'penalty_amount' => $penaltyAmount,
                     ]);
                     
-                    // Cập nhật trạng thái đã gửi mail phạt (không cập nhật updated_at)
+                    // Cập nhật trạng thái đã gửi mail phạt và lưu số tiền phạt (không cập nhật updated_at)
                     $frozenOrder->timestamps = false;
                     $frozenOrder->update([
                         'penalty_sent' => true,
-                        'penalty_sent_at' => Carbon::now()
+                        'penalty_sent_at' => Carbon::now(),
+                        'penalty_amount' => $penaltyAmount
                     ]);
                     $frozenOrder->timestamps = true;
                     

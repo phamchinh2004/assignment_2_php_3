@@ -17,7 +17,8 @@ class Frozen_order extends Model
         'reminder_sent_at',
         'penalty_sent_at',
         'reminder_sent',
-        'penalty_sent'
+        'penalty_sent',
+        'penalty_amount'
     ];
     public function user()
     {
