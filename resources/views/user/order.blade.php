@@ -28,27 +28,66 @@
 @endsection
 @section('content')
 
-<div class="history-top d-flex flex-column justify-content-center align-items-center">
-    <span class="tittle_order">{{__('order.LichSuPhanPhoi')}}</span>
-    <span class="so_du" id="so_du_user">{{__('order.SoDuHienTai'). format_money($user->balance, 7) }}$</span>
-    <span align="center" class="history-top-text-3">{{__('order.DuLieuNayDuocCungCap')}}</span>
+<!-- Header Section with Modern Design -->
+<div class="order-header-wrapper">
+    <div class="order-header-container">
+        <div class="order-header-content">
+            <!-- Icon & Title -->
+            <div class="header-title-section">
+                <div class="header-icon">
+                    <i class="fas fa-history"></i>
+                </div>
+                <div class="header-text">
+                    <h1 class="header-title">{{__('order.LichSuPhanPhoi')}}</h1>
+                    <p class="header-subtitle">{{__('order.DuLieuNayDuocCungCap')}}</p>
+                </div>
+            </div>
+            
+            <!-- Balance Card -->
+            <div class="balance-card">
+                <div class="balance-icon">
+                    <i class="fas fa-wallet"></i>
+                </div>
+                <div class="balance-info">
+                    <span class="balance-label">{{__('order.SoDuHienTai')}}</span>
+                    <span class="balance-amount" id="so_du_user">{{ format_money($user->balance, 7) }}$</span>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
-<div class="status_btns d-flex flex-row justify-content-center align-items-center">
-    <a data-tab="tat-ca" class="btn_status cspt">
-        <span class="btn_status_text" id="btn_tat_ca">{{__('order.TatCa')}}</span>
-    </a>
-    <a data-tab="cho-xu-ly" class="btn_status cspt">
-        <span class="btn_status_text" id="btn_cho_xu_ly">{{__('order.ChoXuLy')}}</span>
-    </a>
-    <a data-tab="hoan-thanh" class="btn_status cspt">
-        <span class="btn_status_text" id="btn_hoan_thanh">{{__('order.HoanThanh')}}</span>
-    </a>
-    <a data-tab="dong-bang" class="btn_status cspt">
-        <span class="btn_status_text" id="btn_dong_bang">{{__('order.DongBang')}}</span>
-    </a>
-</div>
-<div class="list_orders" id="list_orders">
 
+<!-- Modern Tab Navigation -->
+<div class="tab-navigation-wrapper">
+    <div class="tab-navigation-container">
+        <div class="tab-navigation">
+            <button data-tab="tat-ca" class="tab-btn cspt">
+                <i class="fas fa-list"></i>
+                <span class="btn_status_text" id="btn_tat_ca">{{__('order.TatCa')}}</span>
+            </button>
+            <button data-tab="cho-xu-ly" class="tab-btn cspt">
+                <i class="fas fa-clock"></i>
+                <span class="btn_status_text" id="btn_cho_xu_ly">{{__('order.ChoXuLy')}}</span>
+            </button>
+            <button data-tab="hoan-thanh" class="tab-btn cspt">
+                <i class="fas fa-check-circle"></i>
+                <span class="btn_status_text" id="btn_hoan_thanh">{{__('order.HoanThanh')}}</span>
+            </button>
+            <button data-tab="dong-bang" class="tab-btn cspt">
+                <i class="fas fa-snowflake"></i>
+                <span class="btn_status_text" id="btn_dong_bang">{{__('order.DongBang')}}</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Orders List with Modern Layout -->
+<div class="orders-wrapper">
+    <div class="orders-container">
+        <div class="list_orders" id="list_orders">
+            <!-- Orders will be loaded here -->
+        </div>
+    </div>
 </div>
 
 <!-- Success Modal -->

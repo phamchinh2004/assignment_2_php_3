@@ -260,34 +260,140 @@
         const spinner = document.getElementById('spinner');
     </script>
     <script>
+        // ===== HỆ THỐNG NOTIFICATION MỚI =====
+        
+        // Function phát âm thanh notification
+        function playNotificationSound(soundFile = 'notification.mp3') {
+            try {
+                // Tạo audio element mới mỗi lần để tránh conflict
+                const audio = new Audio('/audio/' + soundFile);
+                audio.volume = 1.0;
+                
+                // Play âm thanh
+                const playPromise = audio.play();
+                
+                if (playPromise !== undefined) {
+                    playPromise
+                        .then(() => {
+                            console.log('✅ Âm thanh notification đã phát:', soundFile);
+                        })
+                        .catch(error => {
+                            console.log('⚠️ Không thể phát âm thanh:', error.message);
+                        });
+                }
+            } catch (error) {
+                console.error('❌ Lỗi khi phát âm thanh:', error);
+            }
+        }
+
+        // Function hiển thị desktop notification
+        function showDesktopNotification(title, body, icon = '/images/logo.png', soundFile = 'notification.mp3') {
+            // Kiểm tra browser support
+            if (!("Notification" in window)) {
+                console.log("Browser không hỗ trợ Desktop Notifications");
+                // Chỉ phát âm thanh
+                playNotificationSound(soundFile);
+                return;
+            }
+
+            // Nếu đã có permission
+            if (Notification.permission === "granted") {
+                createNotification(title, body, icon, soundFile);
+            } 
+            // Nếu chưa từ chối, yêu cầu permission
+            else if (Notification.permission !== "denied") {
+                Notification.requestPermission().then(permission => {
+                    if (permission === "granted") {
+                        createNotification(title, body, icon, soundFile);
+                    } else {
+                        // Nếu từ chối, vẫn phát âm thanh
+                        playNotificationSound(soundFile);
+                    }
+                });
+            } 
+            // Nếu đã từ chối, chỉ phát âm thanh
+            else {
+                playNotificationSound(soundFile);
+            }
+        }
+
+        // Function tạo notification
+        function createNotification(title, body, icon, soundFile = 'notification.mp3') {
+            const notification = new Notification(title, {
+                body: body,
+                icon: icon,
+                badge: icon,
+                tag: 'chat-msg-' + Date.now(),
+                requireInteraction: false,
+                silent: true // Không dùng âm thanh mặc định, chúng ta tự phát
+            });
+
+            // Click notification để focus window
+            notification.onclick = function() {
+                window.focus();
+                notification.close();
+            };
+
+            // Auto close
+            setTimeout(() => notification.close(), 10000);
+
+            // Phát âm thanh custom
+            playNotificationSound(soundFile);
+        }
+
+        // Setup khi page load
         window.addEventListener('load', function() {
+            // Request notification permission
+            if ("Notification" in window && Notification.permission === "default") {
+                Notification.requestPermission();
+            }
+
             @auth
             if (window.Echo) {
-                window.Echo.private(`join.conversation`)
-                    .listen('.UserJoinChat', function(e) {
-                        notification('warning', 'Người dùng ' + e.full_name + ' (' + e.username + ') đã tham gia hội thoại! ', 'Tham gia hội thoại!', 100000);
-                        playNotificationSound(1, 3, 500);
-                    });
-                window.Echo.private(`sent.message`)
-                    .listen('.UserSentMessage', function(e) {
-                        notification('success', e.message, e.full_name, 100000);
-                        playNotificationSound(1, 1, 500);
-                    });
-                window.Echo.private(`staff.{{ auth()->id() }}`)
-                    .listen('.StaffLocked', function(e) {
-                        location.href = '/log-out-by-locked';
-                    });
-                window.Echo.private(`staff.{{ auth()->id() }}`)
-                    .listen('.PermissionRevoked', (e) => {
-                        const currentPermission = window.currentPermissionCode;
-                        if (e.revokedPermissionCode === currentPermission) {
-                            if (currentPermission == "quan_ly_tat_ca_nguoi_dung" || currentPermission == "quan_ly_tat_ca_giao_dich_nguoi_dung") {
-                                location.reload();
-                            } else {
-                                window.location.href = "/";
+                // Listen staff channel cho admin/staff để nhận notifications từ users
+                @if(auth()->user()->role === 'admin' || auth()->user()->role === 'staff')
+                    window.Echo.private(`staff.{{ auth()->id() }}`)
+                        .listen('.UserJoinChat', function(e) {
+                            const title = 'Tham gia hội thoại';
+                            const body = 'Người dùng ' + e.full_name + ' (' + e.username + ') đã tham gia hội thoại!';
+                            
+                            // Hiển thị cả toastr và desktop notification
+                            notification('warning', body, title, 10000);
+                            showDesktopNotification(title, body, '/images/logo.png', 'notification_fb.mp3');
+                        })
+                        .listen('.MessageSent', function(e) {
+                            // Chỉ show notification nếu không phải tin nhắn của mình
+                            if (e.message && e.message.sender_id !== {{ auth()->id() }}) {
+                                const messageText = e.message.type === "text" 
+                                    ? (e.message.message.length > 30 ? e.message.message.substring(0, 30) + '...' : e.message.message)
+                                    : "Đã gửi hình ảnh";
+                                const title = e.message.sender.full_name + ' đã gửi tin nhắn';
+                                
+                                // Hiển thị cả toastr và desktop notification
+                                notification('success', messageText, title, 10000);
+                                showDesktopNotification(title, messageText, '/images/logo.png', 'notification.mp3');
                             }
-                        }
-                    });
+                        })
+                        .listen('.StaffLocked', function(e) {
+                            location.href = '/log-out-by-locked';
+                        })
+                        .listen('.PermissionRevoked', (e) => {
+                            const currentPermission = window.currentPermissionCode;
+                            if (e.revokedPermissionCode === currentPermission) {
+                                if (currentPermission == "quan_ly_tat_ca_nguoi_dung" || currentPermission == "quan_ly_tat_ca_giao_dich_nguoi_dung") {
+                                    location.reload();
+                                } else {
+                                    window.location.href = "/";
+                                }
+                            }
+                        });
+                @else
+                    // Member chỉ listen staff channel để nhận StaffLocked
+                    window.Echo.private(`staff.{{ auth()->id() }}`)
+                        .listen('.StaffLocked', function(e) {
+                            location.href = '/log-out-by-locked';
+                        });
+                @endif
             } else {
                 console.error('Echo is not loaded');
             }

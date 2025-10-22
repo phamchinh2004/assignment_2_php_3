@@ -169,6 +169,16 @@
                             </span>
                             <span class="summary-value profit" id="order_details_end_value_price_rose">+20$</span>
                         </div>
+                        <div class="summary-row" id="bonus_special_row" style="display: none; background: linear-gradient(135deg, #fff9e6 0%, #ffe8a1 100%); padding: 12px; border-radius: 8px; border: 2px solid #ffd700; margin: 8px 0;">
+                            <span class="summary-label" style="color: #d4a100; font-weight: 600;">
+                                <i class="fas fa-gift" style="color: #ff6b6b;"></i>
+                                Thưởng đơn đặc biệt (10%)
+                            </span>
+                            <span class="summary-value" style="color: #d4a100; font-weight: 700;">
+                                <i class="fas fa-star" style="color: #ffd700; font-size: 0.9em;"></i>
+                                Hệ thống cộng thủ công
+                            </span>
+                        </div>
                         <div class="summary-divider"></div>
                         <div class="summary-row total">
                             <span class="summary-label-total">
@@ -241,7 +251,7 @@
             </div>
             <div class="stat-info">
                 <h4 class="stat-label">{{__('distribution.ChietKhauHomNay')}}</h4>
-                <p class="stat-value">${{format_money($user->todays_discount!=null?$user->todays_discount:0)}}</p>
+                <p class="stat-value">${{format_money($todays_discount)}}</p>
             </div>
             <div class="stat-trend positive">
                 <i class="fas fa-arrow-trend-up"></i>
@@ -416,6 +426,16 @@
                             Hoa hồng nhận được
                         </span>
                         <span class="detail-value profit-color" id="success_commission">+$0.00</span>
+                    </div>
+                    <div class="detail-row" id="success_bonus_row" style="display: none; background: linear-gradient(135deg, #fff9e6 0%, #ffe8a1 100%); padding: 12px; border-radius: 8px; border: 2px solid #ffd700; margin: 8px 0;">
+                        <span class="detail-label" style="color: #d4a100; font-weight: 600;">
+                            <i class="fas fa-gift" style="color: #ff6b6b;"></i>
+                            Thưởng đơn đặc biệt (10%)
+                        </span>
+                        <span class="detail-value" style="color: #d4a100; font-weight: 700; font-size: 1.1em;">
+                            <i class="fas fa-star" style="color: #ffd700; font-size: 0.8em;"></i>
+                            Sẽ được cộng thủ công
+                        </span>
                     </div>
                     <div class="detail-row" id="success_penalty_row" style="display: none;">
                         <span class="detail-label">

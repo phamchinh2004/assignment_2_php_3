@@ -10,6 +10,7 @@ use App\Models\Order;
 use App\Models\Partner;
 use App\Models\Rank;
 use App\Models\Section;
+use App\Models\Transaction_history;
 use App\Models\User;
 use App\Models\User_spin_progress;
 use App\Models\Wallet_balance_history;
@@ -229,6 +230,7 @@ class HomeController extends Controller
                             'custom_price' => $check_frozen->custom_price,
                             'order_id' => $get_order_special->id,
                             'frozen_id' => $check_frozen->id,
+                            'frozen_updated_at' => $check_frozen->updated_at,
                             'message' => __('home.ChucMungBanNhanDuocDonHangDacBiet')
                         ]);
                     } else if ($query_current_spin->current_spin <= $get_order_special->index && $check_frozen->spun == true) {
@@ -271,6 +273,7 @@ class HomeController extends Controller
                             'is_new_order' => true,
                             'order_id' => $order->id,
                             'frozen_id' => $new_frozen->id,
+                            'frozen_updated_at' => $new_frozen->updated_at,
                             'message' => 'Đây là đơn hàng bình thường'
                         ]);
                     }
@@ -329,6 +332,7 @@ class HomeController extends Controller
                     'is_new_order' => true,
                     'order_id' => $order->id,
                     'frozen_id' => $new_frozen->id,
+                    'frozen_updated_at' => $new_frozen->updated_at,
                     'message' => 'Đây là đơn hàng bình thường'
                 ]);
             }
@@ -348,7 +352,12 @@ class HomeController extends Controller
         $frozen_price = null;
         $frozen_order = Frozen_order::where('user_id', $user->id)->where('custom_price', '!=', null)->where('is_frozen', true)->where('spun', true)->first();
         if ($frozen_order) {
-            $frozen_price = $frozen_order->custom_price;
+            // Tổng tiền cần = Giá trị đơn hàng + Tiền phạt (nếu có)
+            $penalty_amount = $frozen_order->penalty_amount ?? 0;
+            $total_required = $frozen_order->custom_price + $penalty_amount;
+            
+            // Số dư đóng băng = Tổng tiền cần - Số dư hiện tại
+            $frozen_price = max(0, $total_required - $user->balance);
         }
         
         // Lấy rank của user hiện tại
@@ -370,7 +379,23 @@ class HomeController extends Controller
             }
         }
         
-        return view('user.distribution', compact('user', 'frozen_price', 'section_mo_ta', 'user_rank', 'total_orders', 'current_order'));
+        // Tính chiết khấu hôm nay = Tổng lợi nhuận hôm nay - Tổng tiền phạt hôm nay
+        $today_start = \Carbon\Carbon::today();
+        $today_end = \Carbon\Carbon::tomorrow();
+        
+        $today_profit = Transaction_history::where('user_id', $user->id)
+            ->where('type', 'profit')
+            ->whereBetween('created_at', [$today_start, $today_end])
+            ->sum('value');
+        
+        $today_penalty = Transaction_history::where('user_id', $user->id)
+            ->where('type', 'penalty')
+            ->whereBetween('created_at', [$today_start, $today_end])
+            ->sum('value');
+        
+        $todays_discount = $today_profit - $today_penalty;
+        
+        return view('user.distribution', compact('user', 'frozen_price', 'section_mo_ta', 'user_rank', 'total_orders', 'current_order', 'todays_discount'));
     }
     public function withdraw_money()
     {

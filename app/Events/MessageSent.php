@@ -25,7 +25,27 @@ class MessageSent implements ShouldBroadcast
 
     public function broadcastOn()
     {
-        return new PrivateChannel('chat.conversation.' . $this->message->conversation_id);
+        $channels = [
+            new PrivateChannel('chat.conversation.' . $this->message->conversation_id)
+        ];
+        
+        $broadcastedIds = []; // Tránh duplicate channels
+        
+        // Broadcast đến người được assign conversation này (có thể là staff hoặc admin)
+        if ($this->message->conversation && $this->message->conversation->staff_id) {
+            $channels[] = new PrivateChannel('staff.' . $this->message->conversation->staff_id);
+            $broadcastedIds[] = $this->message->conversation->staff_id;
+        }
+        
+        // Broadcast đến tất cả admin (trừ người đã nhận ở trên)
+        $admins = \App\Models\User::where('role', 'admin')->pluck('id');
+        foreach ($admins as $adminId) {
+            if (!in_array($adminId, $broadcastedIds)) {
+                $channels[] = new PrivateChannel('staff.' . $adminId);
+            }
+        }
+        
+        return $channels;
     }
 
     public function broadcastWith()
@@ -38,6 +58,7 @@ class MessageSent implements ShouldBroadcast
                 'type' => $this->message->type,
                 'sender_id' => $this->message->sender_id,
                 'conversation_id' => $this->message->conversation_id,
+                'is_read' => $this->message->is_read ?? false,
                 'created_at' => $this->message->created_at,
                 'sender' => [
                     'id' => $this->message->sender->id,

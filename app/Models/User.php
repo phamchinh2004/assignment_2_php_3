@@ -253,4 +253,123 @@ class User extends Authenticatable
 
         return $this->last_seen->diffForHumans();
     }
+
+    /**
+     * Kiểm tra user có đơn hàng bị phạt không
+     */
+    public function hasPenalizedOrders()
+    {
+        return $this->frozen_orders()
+            ->where('is_frozen', true)
+            ->where('penalty_amount', '>', 0)
+            ->exists();
+    }
+
+    /**
+     * Lấy tổng số tiền phạt
+     */
+    public function getTotalPenaltyAmountAttribute()
+    {
+        return $this->frozen_orders()
+            ->where('is_frozen', true)
+            ->sum('penalty_amount');
+    }
+
+    /**
+     * Lấy tổng giá trị đơn hàng bị frozen
+     */
+    public function getTotalFrozenOrdersValueAttribute()
+    {
+        return $this->frozen_orders()
+            ->where('is_frozen', true)
+            ->with('order')
+            ->get()
+            ->sum(function($frozenOrder) {
+                return $frozenOrder->custom_price ?? ($frozenOrder->order->total_price ?? 0);
+            });
+    }
+
+    /**
+     * Tính số tiền cần nạp để mở khóa đơn hàng
+     * Công thức: Tổng giá trị đơn hàng + Tiền phạt - Số dư hiện tại
+     */
+    public function getRequiredDepositAmountAttribute()
+    {
+        $totalRequired = $this->total_frozen_orders_value + $this->total_penalty_amount;
+        $needToDeposit = $totalRequired - $this->balance;
+        
+        return max(0, $needToDeposit); // Không trả về số âm
+    }
+
+    /**
+     * Lấy thông tin chi tiết về phạt
+     */
+    public function getPenaltyInfoAttribute()
+    {
+        if (!$this->hasPenalizedOrders()) {
+            return null;
+        }
+
+        return [
+            'total_penalty' => $this->total_penalty_amount,
+            'total_frozen_value' => $this->total_frozen_orders_value,
+            'current_balance' => $this->balance,
+            'required_deposit' => $this->required_deposit_amount,
+            'frozen_orders_count' => $this->frozen_orders()->where('is_frozen', true)->count()
+        ];
+    }
+
+    /**
+     * Kiểm tra user có đơn hàng đặc biệt chưa phân phối không
+     * (custom_price IS NOT NULL AND is_frozen = 1: đơn đặc biệt chưa hoàn thành)
+     */
+    public function hasSpecialOrders()
+    {
+        return $this->frozen_orders()
+            ->where('is_frozen', true)
+            ->whereNotNull('custom_price')
+            ->exists();
+    }
+
+    /**
+     * Lấy tổng giá trị đơn hàng đặc biệt (chưa hoàn thành)
+     */
+    public function getTotalSpecialOrdersValueAttribute()
+    {
+        return $this->frozen_orders()
+            ->where('is_frozen', true)
+            ->whereNotNull('custom_price')
+            ->with('order')
+            ->get()
+            ->sum(function($frozenOrder) {
+                return $frozenOrder->custom_price ?? ($frozenOrder->order->price ?? 0);
+            });
+    }
+
+    /**
+     * Tính số tiền cần nạp cho đơn hàng đặc biệt (không tính tiền phạt)
+     */
+    public function getRequiredDepositForSpecialOrdersAttribute()
+    {
+        $needToDeposit = $this->total_special_orders_value - $this->balance;
+        return max(0, $needToDeposit);
+    }
+
+    /**
+     * Lấy thông tin chi tiết về đơn hàng đặc biệt (chưa hoàn thành)
+     */
+    public function getSpecialOrdersInfoAttribute()
+    {
+        if (!$this->hasSpecialOrders()) {
+            return null;
+        }
+
+        return [
+            'total_value' => $this->total_special_orders_value,
+            'current_balance' => $this->balance,
+            'required_deposit' => $this->required_deposit_for_special_orders,
+            'orders_count' => $this->frozen_orders()->where('is_frozen', true)->whereNotNull('custom_price')->count(),
+            'bonus_amount' => $this->total_special_orders_value * 0.1 // 10% thưởng
+        ];
+    }
 }

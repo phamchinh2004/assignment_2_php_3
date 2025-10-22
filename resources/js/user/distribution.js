@@ -1,3 +1,19 @@
+// Hàm format datetime
+function formatDateTime(dateString) {
+    if (!dateString) return '';
+    
+    const date = new Date(dateString);
+    
+    // Option 1: Định dạng DD/MM/YYYY HH:mm
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    
+    return `${day}/${month}/${year} ${hours}:${minutes}`;
+}
+
 document.addEventListener('DOMContentLoaded', function () {
     // ==================================================Pháo hoa===================================================
     const container = document.getElementById('fireworks-container');
@@ -74,6 +90,7 @@ document.addEventListener('DOMContentLoaded', function () {
         let is_order_special = false;
         let order_id = null;
         let frozen_id = null;
+        let frozen_updated_at = null;
         const check_frozen = await check_frozen_order();
         let can_spin = false;
         if (check_frozen.status == 200 && check_frozen.is_frozen == true && check_frozen.is_order_special == false && check_frozen.is_new_order == false) {
@@ -100,6 +117,7 @@ document.addEventListener('DOMContentLoaded', function () {
             can_spin = true;
             order_id = check_frozen.order_id;
             frozen_id = check_frozen.frozen_id;
+            frozen_updated_at = check_frozen.frozen_updated_at;
         } else if (check_frozen.status == 400) {
             swal({
                 title: trans.HetLuotQuay,
@@ -113,6 +131,7 @@ document.addEventListener('DOMContentLoaded', function () {
             can_spin = true;
             order_id = check_frozen.order_id;
             frozen_id = check_frozen.frozen_id;
+            frozen_updated_at = check_frozen.frozen_updated_at;
         } else if (check_frozen.status == 500) {
             swal({
                 title: check_frozen.message,
@@ -126,6 +145,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (can_spin) {
             const btn_phan_phoi_ngay = document.getElementById('btn_phan_phoi_ngay');
             btn_phan_phoi_ngay.dataset.frozenId = frozen_id;
+            btn_phan_phoi_ngay.dataset.isSpecial = is_order_special ? '1' : '0';
 
             let order_details_time = document.getElementById('order_details_time');
             let order_details_img = document.getElementById('order_details_img');
@@ -145,6 +165,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (selectedOrder === null) {
                 loadOrders();
                 notification('error', trans.QuayLaiNhaBan, trans.LoiDanhSachDonHang);
+                return; // Dừng lại nếu không tìm thấy order
             }
             
             // Hiển thị loading modal cho tìm kiếm
@@ -161,6 +182,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 const specialTag = document.querySelector('.special-tag');
                 const imageShine = document.querySelector('.image-shine');
                 
+                const bonusSpecialRow = document.getElementById('bonus_special_row');
+                
                 if (!is_order_special) {
                     // Đơn thường - hiển thị header thường, ẩn header đặc biệt
                     orderModal.classList.remove('special-order');
@@ -168,15 +191,13 @@ document.addEventListener('DOMContentLoaded', function () {
                     headerSpecial.style.display = 'none';
                     if (specialTag) specialTag.style.display = 'none';
                     if (imageShine) imageShine.style.display = 'none';
+                    if (bonusSpecialRow) bonusSpecialRow.style.display = 'none';
                     const order_details_price_formatted = format_currency(selectedOrder.price);
                     const order_details_end_value_total_price_formatted = format_currency(selectedOrder.quantity * selectedOrder.price);
                     const order_details_end_value_price_rose_formatted = format_currency((selectedOrder.quantity * selectedOrder.price) * selectedOrder.commission_percentage);
                     const order_details_end_value_total_formatted = format_currency((selectedOrder.quantity * selectedOrder.price) + ((selectedOrder.quantity * selectedOrder.price) * selectedOrder.commission_percentage));
 
-                    const randomTime = getRandomTimeYesterday();
-                    const formattedTime = randomTime.toLocaleString();
-
-                    order_details_time.innerText = trans.ThoiGianDatPhanPhoi + formattedTime;
+                    order_details_time.innerText = trans.ThoiGianDatPhanPhoi + formatDateTime(frozen_updated_at);
                     order_details_img.src = `/storage/${selectedOrder.image}`;
                     order_details_name.innerText = selectedOrder.name;
                     order_details_price.innerText = order_details_price_formatted;
@@ -191,15 +212,13 @@ document.addEventListener('DOMContentLoaded', function () {
                     headerSpecial.style.display = 'block';
                     if (specialTag) specialTag.style.display = 'flex';
                     if (imageShine) imageShine.style.display = 'block';
+                    if (bonusSpecialRow) bonusSpecialRow.style.display = 'flex';
                     const order_details_price_formatted = format_currency(fake_price / selectedOrder.quantity);
                     const order_details_end_value_total_price_formatted = format_currency(fake_price);
                     const order_details_end_value_price_rose_formatted = format_currency(fake_price * selectedOrder.commission_percentage);
                     const order_details_end_value_total_formatted = format_currency(fake_price + (fake_price * selectedOrder.commission_percentage));
 
-                    const randomTime = getRandomTimeYesterday();
-                    const formattedTime = randomTime.toLocaleString();
-
-                    order_details_time.innerText = trans.ThoiGianDatPhanPhoi + formattedTime;
+                    order_details_time.innerText = trans.ThoiGianDatPhanPhoi + formatDateTime(frozen_updated_at);
                     order_details_img.src = `/storage/${selectedOrder.image}`;
                     order_details_name.innerText = selectedOrder.name;
                     order_details_price.innerText = order_details_price_formatted;
@@ -238,31 +257,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 })
         })
     }
-    // Random thời gian phân phối
-    function getRandomTimeYesterday() {
-        const now = new Date();
-
-        // Lấy ngày hôm qua
-        const yesterday = new Date(now);
-        yesterday.setDate(now.getDate() - 1);
-        yesterday.setHours(0, 0, 0, 0); // Đặt thời gian bắt đầu là 00:00:00
-
-        // Thời gian cuối cùng trong ngày hôm qua (23:59:59)
-        const endOfYesterday = new Date(yesterday);
-        endOfYesterday.setHours(23, 59, 59, 999);
-
-        // Random thời gian giữa khoảng này
-        const randomTimestamp = Math.floor(
-            Math.random() * (endOfYesterday.getTime() - yesterday.getTime()) + yesterday.getTime()
-        );
-
-        return new Date(randomTimestamp);
-    }
     // ==================================================Xử lý bấm nút phân phối==================================================
     const btn_phan_phoi_ngay = document.getElementById('btn_phan_phoi_ngay');
     btn_phan_phoi_ngay.addEventListener('click', async function () {
         spinner.hidden = false;
         let frozen_id = this.dataset.frozenId;
+        let isSpecialOrder = this.dataset.isSpecial === '1';
         let result = await handle_distribution(frozen_id);
         if (result.status === 200) {
             const profit = result.profit;
@@ -277,9 +277,11 @@ document.addEventListener('DOMContentLoaded', function () {
             setTimeout(() => {
                 closeDistributionModal();
                 setTimeout(() => {
-                    showSuccessModal(profit, totalAmount, commission, penaltyAmount);
+                    showSuccessModal(profit, totalAmount, commission, penaltyAmount, isSpecialOrder);
                     // Cập nhật tiến độ phân phối
                     updateProgress();
+                    // Cập nhật stats cards
+                    updateStats(result);
                 }, 300);
             }, 1500);
         } else if (result.status === 409) {
@@ -294,7 +296,7 @@ document.addEventListener('DOMContentLoaded', function () {
     })
     
     // Hàm hiển thị modal thành công với thiết kế đẹp
-    function showSuccessModal(profit, totalAmount, commission, penaltyAmount = 0) {
+    function showSuccessModal(profit, totalAmount, commission, penaltyAmount = 0, isSpecialOrder = false) {
         // Tính tổng tiền hoàn nhập = Giá trị đơn hàng + Hoa hồng (chưa trừ phạt)
         const totalRefund = totalAmount + commission;
         
@@ -305,6 +307,14 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('success_commission').textContent = '+' + format_currency(commission, 4, 4);
         document.getElementById('success_total_refund').textContent = '+' + format_currency(totalRefund, 4, 4);
         document.getElementById('success_time').textContent = new Date().toLocaleString('vi-VN');
+        
+        // Hiển thị/ẩn dòng thưởng đơn đặc biệt
+        const bonusRow = document.getElementById('success_bonus_row');
+        if (isSpecialOrder) {
+            bonusRow.style.display = 'flex';
+        } else {
+            bonusRow.style.display = 'none';
+        }
         
         // Hiển thị/ẩn dòng tiền phạt
         const penaltyRow = document.getElementById('success_penalty_row');
@@ -441,6 +451,61 @@ document.addEventListener('DOMContentLoaded', function () {
             currentElement.style.transform = 'scale(1)';
             currentElement.style.color = '';
         }, 300);
+    }
+    
+    // Hàm cập nhật stats cards sau khi phân phối thành công
+    function updateStats(result) {
+        // Cập nhật Tổng số dư
+        const balanceElement = document.querySelector('.balance-card .stat-value');
+        if (balanceElement && result.balance !== undefined) {
+            balanceElement.textContent = format_currency(result.balance);
+            // Animation
+            balanceElement.style.transform = 'scale(1.1)';
+            balanceElement.style.color = '#10b981';
+            setTimeout(() => {
+                balanceElement.style.transform = 'scale(1)';
+                balanceElement.style.color = '';
+            }, 500);
+        }
+        
+        // Cập nhật Phân phối hôm nay
+        const distributionElement = document.querySelector('.distribution-card .stat-value');
+        if (distributionElement && result.distribution_today !== undefined) {
+            distributionElement.textContent = '+' + result.distribution_today;
+            // Animation
+            distributionElement.style.transform = 'scale(1.1)';
+            distributionElement.style.color = '#3b82f6';
+            setTimeout(() => {
+                distributionElement.style.transform = 'scale(1)';
+                distributionElement.style.color = '';
+            }, 500);
+        }
+        
+        // Cập nhật Chiết khấu hôm nay
+        const commissionElement = document.querySelector('.commission-card .stat-value');
+        if (commissionElement && result.todays_discount !== undefined) {
+            commissionElement.textContent = format_currency(result.todays_discount);
+            // Animation
+            commissionElement.style.transform = 'scale(1.1)';
+            commissionElement.style.color = '#f59e0b';
+            setTimeout(() => {
+                commissionElement.style.transform = 'scale(1)';
+                commissionElement.style.color = '';
+            }, 500);
+        }
+        
+        // Cập nhật Số dư đóng băng
+        const frozenElement = document.querySelector('.frozen-card .stat-value');
+        if (frozenElement && result.frozen_price !== undefined) {
+            frozenElement.textContent = format_currency(result.frozen_price);
+            // Animation
+            frozenElement.style.transform = 'scale(1.1)';
+            frozenElement.style.color = '#8b5cf6';
+            setTimeout(() => {
+                frozenElement.style.transform = 'scale(1)';
+                frozenElement.style.color = '';
+            }, 500);
+        }
     }
     
     function handle_distribution(frozen_id) {

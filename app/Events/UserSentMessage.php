@@ -17,18 +17,42 @@ class UserSentMessage implements ShouldBroadcast
 
     public $full_name;
     public $message;
+    public $user;
 
-    public function __construct($full_name, $message)
+    public function __construct($full_name, $message, $user = null)
     {
         $this->full_name = $full_name;
         $this->message = $message;
+        $this->user = $user;
     }
 
     public function broadcastOn(): array
     {
-        return [
-            new PrivateChannel("sent.message"),
-        ];
+        // Nếu không có thông tin user, broadcast như cũ
+        if (!$this->user || !$this->user->conversation) {
+            return [
+                new PrivateChannel("sent.message"),
+            ];
+        }
+
+        $channels = [];
+        $broadcastedIds = [];
+        
+        // Broadcast đến người được assign conversation này (có thể là staff hoặc admin)
+        if ($this->user->conversation->staff_id) {
+            $channels[] = new PrivateChannel('staff.' . $this->user->conversation->staff_id);
+            $broadcastedIds[] = $this->user->conversation->staff_id;
+        }
+        
+        // Broadcast đến tất cả admin (trừ người đã nhận ở trên)
+        $admins = \App\Models\User::where('role', 'admin')->pluck('id');
+        foreach ($admins as $adminId) {
+            if (!in_array($adminId, $broadcastedIds)) {
+                $channels[] = new PrivateChannel('staff.' . $adminId);
+            }
+        }
+        
+        return $channels;
     }
 
     public function broadcastAs()

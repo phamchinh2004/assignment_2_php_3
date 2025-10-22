@@ -1,3 +1,11 @@
+@php
+    use Illuminate\Support\Facades\Storage;
+@endphp
+
+@push('css')
+    @vite('resources/css/admin/chat.css')
+@endpush
+
 <div class="d-flex flex-column flex-md-row" id="chat-root" style="height: 100vh; background-color: #f8f9fa;" wire:id="{{ $this->getId() }}">
     <!-- Sidebar trái -->
     <!-- SIDEBAR DẠNG OFFCANVAS (mobile) -->
@@ -27,34 +35,241 @@
         <!-- Header chat -->
         <div class="bg-white border-bottom p-3 shadow-sm chat-header" style="transition: all 0.3s ease;">
             <div class="d-flex align-items-center">
-                <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center text-white fw-bold me-3 position-relative" style="width: 45px; height: 45px; font-size: 16px;">
-                    {{ substr($this->selectedConversation->user->full_name, 0, 1) }}
-                    <span class="position-absolute bottom-0 end-0 bg-success border border-2 border-white rounded-circle" style="width: 12px; height: 12px;"></span>
-                </div>
-                <div class="flex-grow-1">
-                    <div class="fw-semibold text-dark mb-1">{{ $this->selectedConversation->user->full_name }}</div>
-                    <div class="text-muted small d-flex align-items-center">
-                        <!-- <i class="fas fa-circle text-success me-1" style="font-size: 8px;"></i> -->
-                        @if(auth()->user()->role === 'admin' || auth()->user()->role === 'staff')
-                        Được quản lý bởi: {{ $this->selectedConversation->staff->full_name }}
+                <div class="position-relative me-3" style="width: 45px; height: 45px;">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold" style="width: 100%; height: 100%; font-size: 16px; overflow: hidden;">
+                        @if($this->selectedConversation->user->avatar && Storage::disk('public')->exists($this->selectedConversation->user->avatar))
+                            <img src="{{ asset('storage/' . $this->selectedConversation->user->avatar) }}"
+                                alt="{{ $this->selectedConversation->user->full_name }}"
+                                style="width: 100%; height: 100%; object-fit: cover;">
                         @else
-                        Đang hoạt động
+                            <div class="bg-primary w-100 h-100 d-flex align-items-center justify-content-center rounded-circle">
+                                {{ substr($this->selectedConversation->user->full_name, 0, 1) }}
+                            </div>
                         @endif
                     </div>
+                    @php
+                        $isOnline = $this->selectedConversation->user->last_seen && 
+                                    $this->selectedConversation->user->last_seen->diffInMinutes(now()) <= 5;
+                    @endphp
+                    <span class="position-absolute bottom-0 end-0 {{ $isOnline ? 'bg-success' : 'bg-secondary' }} border border-2 border-white rounded-circle" 
+                          style="width: 12px; height: 12px;" 
+                          title="{{ $isOnline ? 'Đang hoạt động' : ($this->selectedConversation->user->last_seen ? 'Hoạt động ' . $this->selectedConversation->user->last_seen->diffForHumans() : 'Chưa từng online') }}"></span>
                 </div>
-                <div class="d-flex align-items-center">
-                    @if($this->selectedConversation->user->status==="activated")
-                    <button class="btn btn-outline-danger btn-sm me-2" onclick="confirmChangeStatusOfUser({{ $this->selectedConversation->user->id }},'{{ $this->selectedConversation->user->status }}')" title="Khóa tài khoản người dùng">
-                        <i class="fas fa-lock"></i>
-                    </button>
-                    @elseif($this->selectedConversation->user->status==="banned")
-                    <button class="btn btn-outline-success btn-sm me-2" onclick="confirmChangeStatusOfUser({{ $this->selectedConversation->user->id }},'{{ $this->selectedConversation->user->status }}')" title="Mở khóa tài khoản người dùng">
-                        <i class="fas fa-lock-open"></i>
-                    </button>
+                <div class="flex-grow-1">
+                    <div class="fw-semibold text-dark mb-1">
+                        @if($this->selectedConversation->user->hasPenalizedOrders())
+                            <i class="fas fa-exclamation-triangle text-warning me-1" title="Người dùng đang bị phạt"></i>
+                        @endif
+                        {{ $this->selectedConversation->user->full_name }}
+                    </div>
+                    <div class="text-muted small d-flex align-items-center">
+                        @if(auth()->user()->role === 'admin' || auth()->user()->role === 'staff')
+                            {{ $isOnline ? 'Đang hoạt động' : ($this->selectedConversation->user->last_seen ? 'Hoạt động ' . $this->selectedConversation->user->last_seen->diffForHumans() : 'Chưa từng online') }} | 
+                            Được quản lý bởi: {{ $this->selectedConversation->staff->full_name }}
+                        @else
+                            {{ $isOnline ? 'Đang hoạt động' : ($this->selectedConversation->user->last_seen ? 'Hoạt động ' . $this->selectedConversation->user->last_seen->diffForHumans() : 'Chưa từng online') }}
+                        @endif
+                    </div>
+                    @if($this->selectedConversation->user->hasPenalizedOrders())
+                        @php
+                            $penaltyInfo = $this->selectedConversation->user->penalty_info;
+                            $usdToVnd = 26342; // Tỷ giá USD/VND hiện tại
+                        @endphp
+                        <div class="alert alert-warning mb-0 mt-2 py-1 px-2" style="font-size: 11px; border-left: 3px solid #ffc107;" x-data="{ penaltyOpen: true }">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <div class="fw-bold" style="font-size: 12px;">
+                                    <i class="fas fa-exclamation-triangle text-warning me-1"></i>
+                                    Đang bị phạt ({{ $penaltyInfo['frozen_orders_count'] }} đơn)
+                                </div>
+                                <button class="btn btn-sm p-0 text-warning" type="button" @click="penaltyOpen = !penaltyOpen" style="border: none; background: none;">
+                                    <i class="fas" :class="penaltyOpen ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                                </button>
+                            </div>
+                            <div x-show="penaltyOpen" x-transition>
+                            <div class="d-flex flex-wrap gap-2">
+                                <div>
+                                    <span class="text-muted">💰 Phạt (30%):</span> <strong class="text-danger">{{ number_format($penaltyInfo['total_penalty'] * $usdToVnd, 0, ',', '.') }}₫</strong>
+                                    <span class="text-muted" style="font-size: 9px;">(~${{ number_format($penaltyInfo['total_penalty'], 2) }})</span>
+                                </div>
+                                <div>
+                                    <span class="text-muted">🛒 ĐH:</span> <strong>{{ number_format($penaltyInfo['total_frozen_value'] * $usdToVnd, 0, ',', '.') }}₫</strong>
+                                    <span class="text-muted" style="font-size: 9px;">(~${{ number_format($penaltyInfo['total_frozen_value'], 2) }})</span>
+                                </div>
+                                <div>
+                                    <span class="text-muted">💳 Dư:</span> <strong>{{ number_format($penaltyInfo['current_balance'] * $usdToVnd, 0, ',', '.') }}₫</strong>
+                                    <span class="text-muted" style="font-size: 9px;">(~${{ number_format($penaltyInfo['current_balance'], 2) }})</span>
+                                </div>
+                                @if($penaltyInfo['required_deposit'] > 0)
+                                    <div>
+                                        <span class="text-danger">⬆️ Nạp:</span> <strong class="text-danger">{{ number_format($penaltyInfo['required_deposit'] * $usdToVnd, 0, ',', '.') }}₫</strong>
+                                        <span class="text-danger" style="font-size: 9px;">(~${{ number_format($penaltyInfo['required_deposit'], 2) }})</span>
+                                    </div>
+                                @else
+                                    <div class="text-success fw-bold">
+                                        <i class="fas fa-check-circle"></i> Đủ tiền
+                                    </div>
+                                @endif
+                            </div>
+                            <div class="text-muted mt-1" style="font-size: 9px;">
+                                <i class="fas fa-info-circle"></i> 1 USD = {{ number_format($usdToVnd, 0, ',', '.') }}₫ | Được thưởng 10% khi hoàn thành
+                            </div>
+                            <hr class="my-2">
+                            <div class="mb-1" style="font-size: 10px;">
+                                <strong><i class="fas fa-bolt me-1"></i>Tin nhắn nhanh:</strong>
+                            </div>
+                            <div class="d-flex flex-column gap-1">
+                                @php
+                                    $quickMessage2 = "Tài khoản của bạn đang có " . $penaltyInfo['frozen_orders_count'] . " đơn hàng bị phạt với tổng giá trị " . number_format($penaltyInfo['total_frozen_value'] * $usdToVnd, 0, ',', '.') . " VND và tiền phạt " . number_format($penaltyInfo['total_penalty'] * $usdToVnd, 0, ',', '.') . " VND (30%). Vui lòng xử lý để tiếp tục.";
+                                @endphp
+                                
+                                @if($penaltyInfo['required_deposit'] > 0)
+                                    @php
+                                        $quickMessage1 = "Bạn cần nạp thêm " . number_format($penaltyInfo['required_deposit'] * $usdToVnd, 0, ',', '.') . " VND (số dư: " . number_format($penaltyInfo['current_balance'] * $usdToVnd, 0, ',', '.') . " - [đơn hàng: " . number_format($penaltyInfo['total_frozen_value'] * $usdToVnd, 0, ',', '.') . " + tiền phạt: " . number_format($penaltyInfo['total_penalty'] * $usdToVnd, 0, ',', '.') . "]) để xử lý đơn hàng. Hoàn thành đơn hàng sẽ được hệ thống thưởng 10%.";
+                                    @endphp
+                                    <button type="button" class="btn btn-outline-primary btn-sm text-start" style="font-size: 9px; white-space: normal;" onclick="copyQuickMessage('{{ addslashes($quickMessage1) }}')" title="Click để sao chép">
+                                        📋 {{ Str::limit($quickMessage1, 60) }}
+                                    </button>
+                                @else
+                                    @php
+                                        $quickMessage4 = "Số dư của bạn đủ để xử lý đơn hàng bị phạt. Vui lòng hoàn thành các đơn hàng để được hệ thống thưởng 10%.";
+                                    @endphp
+                                    <button type="button" class="btn btn-outline-success btn-sm text-start" style="font-size: 9px; white-space: normal;" onclick="copyQuickMessage('{{ addslashes($quickMessage4) }}')" title="Click để sao chép">
+                                        📋 {{ Str::limit($quickMessage4, 60) }}
+                                    </button>
+                                @endif
+                                
+                                <button type="button" class="btn btn-outline-primary btn-sm text-start" style="font-size: 9px; white-space: normal;" onclick="copyQuickMessage('{{ addslashes($quickMessage2) }}')" title="Click để sao chép">
+                                    📋 {{ Str::limit($quickMessage2, 60) }}
+                                </button>
+                            </div>
+                            </div>
+                        </div>
                     @endif
-                    <button class="btn btn-outline-danger btn-sm" onclick="confirmDeleteMessages()" title="Kết thúc cuộc trò chuyện">
-                        <i class="fas fa-phone-slash"></i>
+                    
+                    {{-- Tin nhắn nhanh cho người có đơn hàng đặc biệt --}}
+                    @if($this->selectedConversation->user->hasSpecialOrders())
+                        @php
+                            $specialInfo = $this->selectedConversation->user->special_orders_info;
+                            $usdToVnd = 26342;
+                        @endphp
+                        
+                        @if(!$this->selectedConversation->user->hasPenalizedOrders())
+                            {{-- Người có đơn đặc biệt nhưng không bị phạt --}}
+                            <div class="alert alert-success mb-0 mt-2 py-1 px-2" style="font-size: 11px; border-left: 3px solid #198754;" x-data="{ specialOpen: true }">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <div style="font-size: 10px;">
+                                        <strong><i class="fas fa-gift me-1"></i>Đơn hàng đặc biệt ({{ $specialInfo['orders_count'] }} đơn)</strong>
+                                    </div>
+                                    <button class="btn btn-sm p-0 text-success" type="button" @click="specialOpen = !specialOpen" style="border: none; background: none;">
+                                        <i class="fas" :class="specialOpen ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                                    </button>
+                                </div>
+                                <div x-show="specialOpen" x-transition class="d-flex flex-column gap-1">
+                                    @php
+                                        $quickMessageSpecial1 = "Sau khi kiểm tra tài khoản của bạn, xin chúc mừng bạn khi tham gia chương trình sự kiện cặp đôi đã quay trúng đơn thương may mắn của sự kiện. Bạn sẽ được hệ thống thưởng 10% khi hoàn thành phân phối.";
+                                        
+                                        if ($specialInfo['required_deposit'] > 0) {
+                                            $quickMessageSpecial2 = "Bạn cần nạp thêm " . number_format($specialInfo['required_deposit'] * $usdToVnd, 0, ',', '.') . " VND (số dư: " . number_format($specialInfo['current_balance'] * $usdToVnd, 0, ',', '.') . " - đơn hàng đặc biệt: " . number_format($specialInfo['total_value'] * $usdToVnd, 0, ',', '.') . ") để xử lý đơn hàng. Hoàn thành sẽ được hệ thống thưởng 10%.";
+                                        }
+                                    @endphp
+                                    
+                                    <button type="button" class="btn btn-outline-success btn-sm text-start" style="font-size: 9px; white-space: normal;" onclick='copyQuickMessage(`{{ str_replace('`', '\`', $quickMessageSpecial1) }}`)' title="Click để sao chép">
+                                        🎉 Chúc mừng trúng đơn may mắn
+                                    </button>
+                                    
+                                    @if($specialInfo['required_deposit'] > 0)
+                                        <button type="button" class="btn btn-outline-primary btn-sm text-start" style="font-size: 9px; white-space: normal;" onclick="copyQuickMessage('{{ addslashes($quickMessageSpecial2) }}')" title="Click để sao chép">
+                                            📋 {{ Str::limit($quickMessageSpecial2, 60) }}
+                                        </button>
+                                    @endif
+                                </div>
+                                </div>
+                            </div>
+                        @endif
+                        
+                        {{-- Tin nhắn chung cho người có đơn đặc biệt --}}
+                        <div class="alert alert-info mb-0 mt-2 py-1 px-2" style="font-size: 11px; border-left: 3px solid #0dcaf0;" x-data="{ quickMsgOpen: true }">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <div style="font-size: 10px;">
+                                    <strong><i class="fas fa-bolt me-1"></i>Tin nhắn nhanh:</strong>
+                                </div>
+                                <button class="btn btn-sm p-0 text-info" type="button" @click="quickMsgOpen = !quickMsgOpen" style="border: none; background: none;">
+                                    <i class="fas" :class="quickMsgOpen ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                                </button>
+                            </div>
+                            <div x-show="quickMsgOpen" x-transition class="d-flex flex-column gap-1">
+                                @php
+                                    $quickMessage5 = "VIB : 071679952" . PHP_EOL . "PHAM VAN HIEU";
+                                    $quickMessage6 = "Sau khi giao dịch thành công, bạn vui lòng cung cấp hình ảnh để xác minh. Hiệu lực trong vòng 30 phút tính từ lúc cung cấp tài khoản ngân hàng. Xin Cảm Ơn!";
+                                @endphp
+                                
+                                <button type="button" class="btn btn-outline-info btn-sm text-start" style="font-size: 9px; white-space: normal;" onclick='copyQuickMessage(`{{ str_replace('`', '\`', $quickMessage5) }}`)' title="Click để sao chép">
+                                    🏦 Thông tin tài khoản ngân hàng
+                                </button>
+                                
+                                <button type="button" class="btn btn-outline-warning btn-sm text-start" style="font-size: 9px; white-space: normal;" onclick='copyQuickMessage(`{{ str_replace('`', '\`', $quickMessage6) }}`)' title="Click để sao chép">
+                                    ⏱️ Hướng dẫn xác minh giao dịch
+                                </button>
+                            </div>
+                        </div>
+                    @else
+                        {{-- Tin nhắn chung cho người không có đơn đặc biệt --}}
+                        <div class="alert alert-secondary mb-0 mt-2 py-1 px-2" style="font-size: 11px; border-left: 3px solid #6c757d;" x-data="{ generalMsgOpen: true }">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <div style="font-size: 10px;">
+                                    <strong><i class="fas fa-comments me-1"></i>Tin nhắn nhanh:</strong>
+                                </div>
+                                <button class="btn btn-sm p-0 text-secondary" type="button" @click="generalMsgOpen = !generalMsgOpen" style="border: none; background: none;">
+                                    <i class="fas" :class="generalMsgOpen ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                                </button>
+                            </div>
+                            <div x-show="generalMsgOpen" x-transition class="d-flex flex-column gap-1">
+                                @php
+                                    $quickMessageGeneral1 = "Xin chào, tôi có thể giúp gì cho bạn?";
+                                    $quickMessageGeneral2 = "Chào bạn! Nếu bạn có bất kỳ thắc mắc nào, vui lòng cho tôi biết.";
+                                    $quickMessageGeneral3 = "Cảm ơn bạn đã liên hệ. Tôi sẽ hỗ trợ bạn ngay bây giờ.";
+                                @endphp
+                                
+                                <button type="button" class="btn btn-outline-secondary btn-sm text-start" style="font-size: 9px; white-space: normal;" onclick='copyQuickMessage(`{{ $quickMessageGeneral1 }}`)' title="Click để sao chép">
+                                    👋 {{ $quickMessageGeneral1 }}
+                                </button>
+                                
+                                <button type="button" class="btn btn-outline-secondary btn-sm text-start" style="font-size: 9px; white-space: normal;" onclick='copyQuickMessage(`{{ $quickMessageGeneral2 }}`)' title="Click để sao chép">
+                                    💬 {{ $quickMessageGeneral2 }}
+                                </button>
+                                
+                                <button type="button" class="btn btn-outline-secondary btn-sm text-start" style="font-size: 9px; white-space: normal;" onclick='copyQuickMessage(`{{ $quickMessageGeneral3 }}`)' title="Click để sao chép">
+                                    🙏 {{ $quickMessageGeneral3 }}
+                                </button>
+                            </div>
+                        </div>
+                    @endif
+                </div>
+                <div class="dropdown ms-3">
+                    <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Thao tác">
+                        <i class="fas fa-bars"></i>
                     </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        @if($this->selectedConversation->user->status==="activated")
+                            <li>
+                                <a class="dropdown-item text-danger" href="javascript:void(0)" onclick="confirmChangeStatusOfUser({{ $this->selectedConversation->user->id }},'{{ $this->selectedConversation->user->status }}')">
+                                    <i class="fas fa-lock me-2"></i>Khóa tài khoản
+                                </a>
+                            </li>
+                        @elseif($this->selectedConversation->user->status==="banned")
+                            <li>
+                                <a class="dropdown-item text-success" href="javascript:void(0)" onclick="confirmChangeStatusOfUser({{ $this->selectedConversation->user->id }},'{{ $this->selectedConversation->user->status }}')">
+                                    <i class="fas fa-lock-open me-2"></i>Mở khóa tài khoản
+                                </a>
+                            </li>
+                        @endif
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item text-danger" href="javascript:void(0)" onclick="confirmDeleteMessages()">
+                                <i class="fas fa-trash me-2"></i>Xóa tin nhắn
+                            </a>
+                        </li>
+                    </ul>
                 </div>
             </div>
         </div>
@@ -156,7 +371,7 @@
                             style="max-height: 200px; cursor: pointer;">
                     </div>
                     @elseif($message['message'])
-                    <div class="mb-1">{{ $message['message'] }}</div>
+                    <div style="white-space: pre-line; word-wrap: break-word; margin: 0;">{{ trim($message['message']) }}</div>
                     @endif
 
                     <!-- Thời gian và trạng thái -->
@@ -165,8 +380,12 @@
                             {{ \Carbon\Carbon::parse($message['created_at'])->setTimezone('Asia/Ho_Chi_Minh')->format('d/m/Y H:i') }}
                         </div>
                         @if($isCurrentUser)
-                        <div class="ms-2">
-                            <i class="fas fa-check-double text-white-50" style="font-size: 10px;" title="Đã gửi"></i>
+                        <div class="ms-2" data-message-id="{{ $message['id'] }}" data-seen-status="{{ $message['is_read'] ? 'true' : 'false' }}">
+                            @if($message['is_read'] ?? false)
+                                <i class="fas fa-check-double text-info" style="font-size: 10px;" title="Đã xem"></i>
+                            @else
+                                <i class="fas fa-check text-white-50" style="font-size: 10px;" title="Đã gửi"></i>
+                            @endif
                         </div>
                         @endif
                     </div>
@@ -201,23 +420,24 @@
                 </div>
             </div>
             @endif
-            <form wire:submit.prevent="sendMessage" class="d-flex align-items-center">
+            <form wire:submit.prevent="sendMessage" class="d-flex align-items-end">
                 <input type="file" wire:model="image" accept="image/*" class="d-none" id="upload-image-admin">
-                <label for="upload-image-admin" class="btn btn-outline-secondary btn-sm rounded-circle d-flex align-items-center justify-content-center m-0 me-2" style="width: 40px; height: 40px;" title="Gửi ảnh">
+                <label for="upload-image-admin" class="btn btn-outline-secondary btn-sm rounded-circle d-flex align-items-center justify-content-center m-0 me-2" style="width: 40px; height: 40px; flex-shrink: 0;" title="Gửi ảnh">
                     <i class="fas fa-image"></i>
                 </label>
                 <div class="flex-grow-1 position-relative">
-                    <input type="text"
+                    <textarea
+                        id="message-input-textarea"
                         wire:model="messageText"
-                        placeholder="Nhập tin nhắn..."
-                        class="form-control rounded-pill pe-5"
-                        style="border: 2px solid #e9ecef; transition: all 0.3s ease;"
-                        wire:keydown.enter.prevent="sendMessage">
+                        placeholder="Nhập tin nhắn... (Shift+Enter để xuống dòng)"
+                        class="form-control rounded-3 pe-5"
+                        rows="1"
+                        style="border: 2px solid #e9ecef; transition: all 0.3s ease; resize: none; overflow-y: hidden; max-height: 150px; padding: 10px 40px 10px 15px; line-height: 1.5;"></textarea>
                     <button type="button" class="btn btn-link position-absolute end-0 top-50 translate-middle-y" style="z-index: 10;">
                         <i class="fas fa-smile text-muted"></i>
                     </button>
                 </div>
-                <button type="submit" class="btn btn-primary rounded-circle ms-2 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; transition: all 0.3s ease;">
+                <button type="submit" class="btn btn-primary rounded-circle ms-2 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; flex-shrink: 0; transition: all 0.3s ease;">
                     <i class="fas fa-paper-plane"></i>
                 </button>
             </form>
@@ -292,6 +512,41 @@
         // Load more messages when scrolling to top
 
 
+        // Listen MessageSent event trên staff channel để update sidebar khi có tin nhắn mới
+        // (Notification sound và popup đã được xử lý ở master.blade.php)
+        @if(auth()->user()->role === 'admin' || auth()->user()->role === 'staff')
+            const staffChannel = `staff.{{ auth()->id() }}`;
+            window.Echo.private(staffChannel)
+                .listen('.MessageSent', (e) => {
+                    console.log('New message on staff channel:', e.message);
+                    
+                    const root = document.getElementById('chat-root');
+                    const component = Livewire.find(root.getAttribute('wire:id'));
+                    
+                    // Nếu tin nhắn không phải từ conversation đang mở, reload sidebar
+                    const currentConvId = component.get('selectedConversationId');
+                    if (currentConvId != e.message.conversation_id) {
+                        // Reload conversations và staff users để cập nhật sidebar
+                        component.call('loadConversations');
+                        @if(auth()->user()->role === 'admin')
+                            component.call('loadStaffUsersAlternative');
+                        @endif
+                    }
+                })
+                .listen('.UserJoinChat', (e) => {
+                    // Update sidebar khi user join chat
+                    const root = document.getElementById('chat-root');
+                    const component = Livewire.find(root.getAttribute('wire:id'));
+                    component.call('loadConversations');
+                    @if(auth()->user()->role === 'admin')
+                        component.call('loadStaffUsersAlternative');
+                    @endif
+                })
+                .error((error) => {
+                    console.error('Staff Echo error:', error);
+                });
+        @endif
+
         // Join conversation channel
         Livewire.on('join-conversation-channel', (data) => {
 
@@ -307,10 +562,31 @@
                 .listen('.MessageSent', (e) => {
                     // console.log('New message at Admin:', e.message);
 
-                    playNotificationSound(1, 3, 500);
+                    // Âm thanh đã được phát bởi global listener trong master.blade.php
+                    // Chỉ cần dispatch event để update UI
                     const root = document.getElementById('chat-root');
                     const component = Livewire.find(root.getAttribute('wire:id'));
                     component.dispatch('message-received', e);
+                })
+                .listen('.MessageRead', (e) => {
+                    // console.log('Message read:', e);
+                    
+                    // Update Livewire property để giữ trạng thái khi re-render
+                    const root = document.getElementById('chat-root');
+                    const component = Livewire.find(root.getAttribute('wire:id'));
+                    component.call('onMessageReadUpdate', e.message_id);
+                    
+                    // Update icon seen cho tin nhắn trong DOM ngay lập tức
+                    const messageElement = document.querySelector(`[data-message-id="${e.message_id}"]`);
+                    if (messageElement) {
+                        messageElement.setAttribute('data-seen-status', 'true');
+                        const icon = messageElement.querySelector('i');
+                        if (icon) {
+                            icon.className = 'fas fa-check-double text-info';
+                            icon.style.fontSize = '10px';
+                            icon.title = 'Đã xem';
+                        }
+                    }
                 })
                 .error((error) => {
                     console.error('Echo error:', error);
@@ -355,6 +631,52 @@
     }
 
     document.addEventListener('DOMContentLoaded', function() {
+        // ===== Xử lý textarea tự động điều chỉnh chiều cao =====
+        function autoResizeTextarea() {
+            const textarea = document.getElementById('message-input-textarea');
+            if (textarea) {
+                textarea.style.height = 'auto';
+                textarea.style.height = Math.min(textarea.scrollHeight, 150) + 'px';
+            }
+        }
+
+        // Xử lý Enter và Shift+Enter
+        function handleTextareaKeydown(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                const form = e.target.closest('form');
+                if (form) {
+                    // Trigger submit
+                    const root = document.getElementById('chat-root');
+                    const component = Livewire.find(root.getAttribute('wire:id'));
+                    component.call('sendMessage').then(() => {
+                        // Reset textarea sau khi gửi
+                        e.target.value = '';
+                        e.target.style.height = 'auto';
+                        autoResizeTextarea();
+                    });
+                }
+            }
+        }
+
+        // Attach event listeners
+        function attachTextareaEvents() {
+            const textarea = document.getElementById('message-input-textarea');
+            if (textarea) {
+                // Remove old listeners by cloning
+                const newTextarea = textarea.cloneNode(true);
+                textarea.parentNode.replaceChild(newTextarea, textarea);
+                
+                // Add new listeners
+                newTextarea.addEventListener('keydown', handleTextareaKeydown);
+                newTextarea.addEventListener('input', autoResizeTextarea);
+            }
+        }
+
+        // Initialize textarea events
+        attachTextareaEvents();
+
+        // ===== Xử lý zoom ảnh =====
         const modal = document.getElementById('zoomModal');
         const modalImage = document.getElementById('zoomModalImage');
         const closeBtn = document.getElementById('closeModal');
@@ -491,16 +813,20 @@
 
         if (typeof Livewire !== 'undefined') {
             Livewire.hook('morph.updated', () => {
-                setTimeout(attachImageClickEvents, 100);
+                setTimeout(() => {
+                    attachImageClickEvents();
+                    attachTextareaEvents();
+                }, 100);
             });
         }
 
-
         Livewire.on('reset-message-input', () => {
-            const input = document.querySelector('input[wire\\:model*="messageText"]');
-            if (input) {
-                input.value = '';
-                input.focus();
+            const textarea = document.getElementById('message-input-textarea');
+            if (textarea) {
+                textarea.value = '';
+                textarea.style.height = 'auto';
+                textarea.focus();
+                autoResizeTextarea();
             }
         });
 
@@ -520,21 +846,6 @@
             });
         });
     });
-
-    function confirmDeleteMessages() {
-        swal({
-                title: "Xác nhận xóa",
-                text: "Bạn có chắc muốn xóa tất cả tin nhắn trong đoạn chat này?",
-                icon: "warning",
-                buttons: true,
-                dangerMode: true,
-            })
-            .then((isConfirmed) => {
-                if (isConfirmed) {
-                    Livewire.dispatch('delete-all-messages');
-                }
-            });
-    }
 
     function confirmChangeStatusOfUser(id, status) {
         let title = "";
@@ -562,3 +873,7 @@
             });
     }
 </script>
+
+@push('scripts')
+    @vite('resources/js/admin/chat.js')
+@endpush

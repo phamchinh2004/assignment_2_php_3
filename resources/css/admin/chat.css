@@ -1,0 +1,23 @@
+/* Chat Component Styles */
+
+/* Alpine.js collapse animation */
+[x-cloak] { 
+    display: none !important; 
+}
+
+/* Smooth transitions for collapsible sections */
+.section-collapse {
+    transition: all 0.3s ease-out;
+}
+
+.section-collapse.collapsed {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+}
+
+.section-collapse.expanded {
+    max-height: 2000px;
+    opacity: 1;
+}
+

@@ -64,62 +64,120 @@ class OrderController extends Controller
     }
     public function handle_so_du($order_id, $total_price, $frozen_id)
     {
-        $user = User::find(Auth::user()->id);
-        $user_id = $user->id;
-        $frozen_order = Frozen_order::find($frozen_id);
-        $order = Order::find($order_id);
-        if (!$order) {
-            return response()->json([
-                'status' => 404,
-                'message' => __('order.KhongTimThayDonHang'),
+        try {
+            $user = User::find(Auth::user()->id);
+            $user_id = $user->id;
+            $frozen_order = Frozen_order::find($frozen_id);
+            $order = Order::find($order_id);
+            if (!$order) {
+                return response()->json([
+                    'status' => 404,
+                    'message' => __('order.KhongTimThayDonHang'),
+                ]);
+            }
+            $frozen_order->is_frozen = 0;
+            $frozen_order->save();
+            
+            // Tính chiết khấu
+            $rose = $total_price * $order->commission_percentage;
+            
+            // Trừ tiền phạt nếu có
+            $penalty_amount = $frozen_order->penalty_amount ?? 0;
+            $actual_profit = $rose - $penalty_amount;
+            
+            \Log::info('Phân phối đơn hàng', [
+                'order_id' => $order_id,
+                'total_price' => $total_price,
+                'rose' => $rose,
+                'penalty_amount' => $penalty_amount,
+                'actual_profit' => $actual_profit
             ]);
-        }
-        $frozen_order->is_frozen = 0;
-        $frozen_order->save();
-        
-        // Tính chiết khấu
-        $rose = $total_price * $order->commission_percentage;
-        
-        // Trừ tiền phạt nếu có
-        $penalty_amount = $frozen_order->penalty_amount ?? 0;
-        $actual_profit = $rose - $penalty_amount;
-        
-        // Cập nhật balance (trừ đi tiền phạt nếu có)
-        $user->balance += $actual_profit;
-        $user->todays_discount += $actual_profit;
-        $user->save();
-        Transaction_history::create([
-            'user_id' => $user_id,
-            'value' => $total_price,
-            'type' => "order",
-            'note' => $order->order_code
-        ]);
-        Transaction_history::create([
-            'user_id' => $user_id,
-            'value' => $rose,
-            'type' => "profit",
-            'note' => $order->order_code
-        ]);
-        
-        // Lưu lịch sử phạt nếu có
-        if ($penalty_amount > 0) {
+            
+            // Cập nhật balance (trừ đi tiền phạt nếu có)
+            $user->balance += $actual_profit;
+            $user->todays_discount += $actual_profit;
+            $user->save();
+            
             Transaction_history::create([
                 'user_id' => $user_id,
-                'value' => -$penalty_amount,
-                'type' => "penalty",
-                'note' => "Phạt quá hạn - " . $order->order_code
+                'value' => $total_price,
+                'type' => "order",
+                'note' => $order->order_code
+            ]);
+            Transaction_history::create([
+                'user_id' => $user_id,
+                'value' => $rose,
+                'type' => "profit",
+                'note' => $order->order_code
+            ]);
+            
+            // Lưu lịch sử phạt nếu có
+            if ($penalty_amount > 0) {
+                Transaction_history::create([
+                    'user_id' => $user_id,
+                    'value' => $penalty_amount, // Lưu số dương
+                    'type' => "penalty",
+                    'note' => $order->order_code // Giống format với order và profit
+                ]);
+            }
+
+            // Reload user để lấy thông tin mới nhất
+            $user->refresh();
+            
+            // Tính chiết khấu hôm nay
+            $today_start = \Carbon\Carbon::today();
+            $today_end = \Carbon\Carbon::tomorrow();
+            
+            $today_profit = Transaction_history::where('user_id', $user_id)
+                ->where('type', 'profit')
+                ->whereBetween('created_at', [$today_start, $today_end])
+                ->sum('value');
+            
+            $today_penalty = Transaction_history::where('user_id', $user_id)
+                ->where('type', 'penalty')
+                ->whereBetween('created_at', [$today_start, $today_end])
+                ->sum('value');
+            
+            $todays_discount = $today_profit - $today_penalty;
+            
+            // Tính số dư đóng băng (nếu có đơn đặc biệt chưa phân phối)
+            $frozen_price = 0;
+            $frozen_order = Frozen_order::where('user_id', $user_id)
+                ->where('custom_price', '!=', null)
+                ->where('is_frozen', true)
+                ->where('spun', true)
+                ->first();
+            
+            if ($frozen_order) {
+                $penalty_amount_frozen = $frozen_order->penalty_amount ?? 0;
+                $total_required = $frozen_order->custom_price + $penalty_amount_frozen;
+                $frozen_price = max(0, $total_required - $user->balance);
+            }
+            
+            return response()->json([
+                'status' => 200,
+                'message' => __('order.PhanPhoiThanhCong'),
+                'balance' => $user->balance,
+                'profit' => $actual_profit,
+                'total_amount' => $total_price,
+                'commission' => $rose,
+                'penalty_amount' => $penalty_amount,
+                'distribution_today' => $user->distribution_today,
+                'todays_discount' => $todays_discount,
+                'frozen_price' => $frozen_price
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Lỗi phân phối đơn hàng', [
+                'message' => $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => $e->getFile()
+            ]);
+            
+            return response()->json([
+                'status' => 500,
+                'message' => 'Lỗi hệ thống: ' . $e->getMessage()
             ]);
         }
-
-        return response()->json([
-            'status' => 200,
-            'message' => __('order.PhanPhoiThanhCong'),
-            'balance' => $user->balance,
-            'profit' => $actual_profit,
-            'total_amount' => $total_price,
-            'commission' => $rose,
-            'penalty_amount' => $penalty_amount
-        ]);
     }
 
     public function handle_distribution()

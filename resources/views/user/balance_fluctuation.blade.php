@@ -178,30 +178,56 @@
 @if($tab === 'distribution')
 <div class="bg-white" id="content_items">
     @if(optional($list_distribution)->isNotEmpty())
-        @foreach($list_distribution as $item)
-        <div class="transaction-list-item">
-            <div class="transaction-icon-list {{ $item->type === 'profit' ? 'success' : ($item->type === 'penalty' ? 'warning' : 'danger') }}">
-                <i class="fa-solid {{ $item->type === 'profit' ? 'fa-arrow-up' : 'fa-arrow-down' }}"></i>
+        @php
+            // Group theo mã đơn hàng và giữ thứ tự thời gian
+            $grouped = $list_distribution->groupBy('note');
+            
+            // Sắp xếp các group theo thời gian của transaction đầu tiên trong group (mới nhất)
+            $sortedGroups = $grouped->sortByDesc(function($transactions) {
+                return $transactions->first()->created_at;
+            });
+        @endphp
+        
+        @foreach($sortedGroups as $orderCode => $transactions)
+            {{-- Sắp xếp trong mỗi group theo thứ tự: order -> profit -> penalty --}}
+            @php
+                $sortedTransactions = $transactions->sortBy(function($item) {
+                    $order = ['order' => 1, 'profit' => 2, 'penalty' => 3];
+                    return $order[$item->type] ?? 999;
+                });
+            @endphp
+            
+            {{-- Header cho mỗi group --}}
+            <div style="background: #f8f9fa; padding: 8px 16px; border-bottom: 2px solid #dee2e6; font-weight: 600; color: #495057; margin-top: 8px;">
+                <i class="fa-solid fa-box"></i> {{ $orderCode }}
             </div>
-            <div class="transaction-details">
-                <div class="transaction-type-name">
+            
+            @foreach($sortedTransactions as $item)
+            <div class="transaction-list-item">
+                <div class="transaction-icon-list {{ $item->type === 'profit' ? 'success' : ($item->type === 'penalty' ? 'warning' : 'danger') }}">
+                    <i class="fa-solid {{ $item->type === 'profit' ? 'fa-arrow-up' : 'fa-arrow-down' }}"></i>
+                </div>
+                <div class="transaction-details">
+                    <div class="transaction-type-name">
+                        @if($item->type === 'profit')
+                            {{__('balance_fluctuation.LoiNhuan')}}
+                        @elseif($item->type === 'order')
+                            {{__('balance_fluctuation.DatHang')}}
+                        @elseif($item->type === 'penalty')
+                            {{__('balance_fluctuation.TienPhat')}}
+                        @endif
+                    </div>
+                    <div class="transaction-time">{{ $item->created_at->format('d/m/Y H:i') }}</div>
+                </div>
+                <div class="transaction-value {{ $item->type === 'profit' ? 'positive' : 'negative' }}">
                     @if($item->type === 'profit')
-                        {{__('balance_fluctuation.LoiNhuan')}}
-                    @elseif($item->type === 'order')
-                        {{__('balance_fluctuation.DatHang')}}
-                    @elseif($item->type === 'penalty')
-                        {{__('balance_fluctuation.TienPhat')}}
+                        +${{ number_format($item->value, 2) }}
+                    @else
+                        -${{ number_format($item->value, 2) }}
                     @endif
                 </div>
-                <div class="transaction-time">{{ $item->created_at->format('d/m/Y H:i') }}</div>
-                @if($item->note)
-                <div class="transaction-note">{{ $item->note }}</div>
-                @endif
             </div>
-            <div class="transaction-value {{ $item->type === 'profit' ? 'positive' : 'negative' }}">
-                {{ $item->type === 'profit' ? '+' : '-' }}${{ number_format($item->value, 2) }}
-            </div>
-        </div>
+            @endforeach
         @endforeach
     @else
     <div class="empty-state">

@@ -260,6 +260,28 @@
         @endif
     </script>
     <script>
+        // ===== HỆ THỐNG NOTIFICATION =====
+        
+        // Function phát âm thanh notification
+        function playNotificationSound(soundFile = 'notification.mp3') {
+            try {
+                // Tạo audio element mới mỗi lần để tránh conflict
+                const audio = new Audio('/audio/' + soundFile);
+                audio.volume = 1.0;
+                
+                // Play âm thanh
+                const playPromise = audio.play();
+                
+                if (playPromise !== undefined) {
+                    playPromise.catch(() => {
+                        // Ignore error - user may need to interact with page first
+                    });
+                }
+            } catch (error) {
+                // Ignore error
+            }
+        }
+
         // Define userId for notification system
         @auth
         const userId = {{ auth()->id() }};

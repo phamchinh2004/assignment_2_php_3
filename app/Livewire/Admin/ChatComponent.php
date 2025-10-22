@@ -3,6 +3,7 @@
 namespace App\Livewire\Admin;
 
 use App\Events\MessageSent;
+use App\Events\MessageRead;
 use App\Events\UserLocked;
 use Livewire\Component;
 use App\Models\User;
@@ -59,15 +60,15 @@ class ChatComponent extends Component
         $user = Auth::user();
 
         // Main query
-        $query = Conversation::with([
-            'user',
-            'staff',
-            'messages' => function ($query) {
-                $query->latest()->limit(1);
-            }
-        ])
-            ->orderByDesc('updated_at')
-            ->select('conversations.*');
+        $query = Conversation::query()
+            ->with([
+                'user',
+                'staff',
+                'messages' => function ($query) {
+                    $query->latest()->limit(1);
+                }
+            ])
+            ->orderByDesc('updated_at');
 
         if ($user->role === 'staff') {
             $query->where('staff_id', $user->id);
@@ -80,7 +81,18 @@ class ChatComponent extends Component
             });
         }
 
-        $this->conversations = $query->get();
+        $conversations = $query->get();
+        
+        // Tính unread_count cho mỗi conversation
+        foreach ($conversations as $conv) {
+            $unreadCount = Message::where('conversation_id', $conv->id)
+                ->where('sender_id', '!=', $user->id)
+                ->where('is_read', 0)
+                ->count();
+            $conv->unread_count = $unreadCount;
+        }
+        
+        $this->conversations = $conversations;
     }
     public function updatedSearchTerm()
     {
@@ -94,13 +106,13 @@ class ChatComponent extends Component
 
     public function loadStaffUsersAlternative()
     {
+        $currentUserId = Auth::id();
+        
         $staffData = User::where('role', 'staff')
             ->with([
                 'invitedUsers' => function ($query) {
                     $query->where('role', 'member')
-                        ->with([
-                            'latestConversation.messages' // Eager load cả messages luôn
-                        ]);
+                        ->with(['latestConversation.messages']);
                 }
             ])
             ->get();
@@ -109,6 +121,17 @@ class ChatComponent extends Component
         $this->staffUsers = collect();
 
         foreach ($staffData as $staff) {
+            // Tính unread_count cho mỗi user
+            foreach ($staff->invitedUsers as $user) {
+                if ($user->latestConversation) {
+                    $unreadCount = Message::where('conversation_id', $user->latestConversation->id)
+                        ->where('sender_id', '!=', $currentUserId)
+                        ->where('is_read', 0)
+                        ->count();
+                    $user->latestConversation->unread_count = $unreadCount;
+                }
+            }
+            
             // Sắp xếp invitedUsers
             $sortedUsers = $staff->invitedUsers
                 ->sortByDesc(function ($user) {
@@ -137,11 +160,43 @@ class ChatComponent extends Component
         $this->hasMoreMessages = true;
 
         $this->loadMessages();
-        // if (Auth::user()->role === 'admin') {
-        //     $this->loadStaffUsersAlternative();
-        // }
+        $this->markMessagesAsRead($conversationId);
+        
+        // Reload conversations để cập nhật unread_count
+        $this->loadConversations();
+        if (Auth::user()->role === 'admin') {
+            $this->loadStaffUsersAlternative();
+        }
+        
         $this->dispatch('join-conversation-channel', conversationId: $conversationId);
         $this->dispatch('conversation-selected');
+    }
+
+    /**
+     * Đánh dấu tất cả tin nhắn chưa đọc trong conversation là đã đọc
+     */
+    private function markMessagesAsRead($conversationId)
+    {
+        $conversation = Conversation::find($conversationId);
+        if (!$conversation) {
+            return;
+        }
+
+        // Lấy tất cả tin nhắn chưa đọc không phải của mình
+        $unreadMessages = $conversation->messages()
+            ->where('is_read', false)
+            ->where('sender_id', '!=', Auth::id())
+            ->get();
+
+        foreach ($unreadMessages as $message) {
+            $message->update(['is_read' => true]);
+            
+            // Cập nhật trong $this->messages array để UI hiển thị đúng
+            $this->updateMessageReadStatus($message->id, true);
+            
+            // Broadcast event để người gửi biết tin nhắn đã được đọc
+            broadcast(new MessageRead($message, $conversationId))->toOthers();
+        }
     }
 
     #[On('delete-all-messages')]
@@ -267,6 +322,7 @@ class ChatComponent extends Component
                     'type' => $message->type,
                     'sender_id' => $message->sender_id,
                     'conversation_id' => $message->conversation_id,
+                    'is_read' => $message->is_read,
                     'created_at' => $message->created_at,
                     'sender' => [
                         'id' => $message->sender->id,
@@ -375,6 +431,7 @@ class ChatComponent extends Component
                 'type' => $message->type,
                 'sender_id' => $message->sender_id,
                 'conversation_id' => $message->conversation_id,
+                'is_read' => $message->is_read ?? false,
                 'created_at' => $message->created_at,
                 'sender' => [
                     'id' => $message->sender->id,
@@ -383,7 +440,11 @@ class ChatComponent extends Component
                 ]
             ];
 
-            $this->messages[] = $messageArray;
+            // Thêm tin nhắn mới và force Livewire detect change bằng cách reassign
+            $tempMessages = $this->messages;
+            $tempMessages[] = $messageArray;
+            $this->messages = $tempMessages;
+            
             broadcast(new MessageSent($message))->toOthers();
 
             // Reset
@@ -425,7 +486,17 @@ class ChatComponent extends Component
                 // Kiểm tra trùng ID
                 $ids = array_column($this->messages, 'id');
                 if (!in_array($message['id'], $ids)) {
-                    $this->messages[] = $message;
+                    // Tự động đánh dấu tin nhắn là đã đọc vì conversation đang được mở
+                    $this->markSingleMessageAsRead($message['id'], $message['conversation_id']);
+                    
+                    // Cập nhật message trong UI để hiển thị is_read = true
+                    $message['is_read'] = true;
+                    
+                    // Thêm tin nhắn mới và force Livewire detect change
+                    $tempMessages = $this->messages;
+                    $tempMessages[] = $message;
+                    $this->messages = $tempMessages;
+                    
                     $this->dispatch('scroll-to-bottom');
                 }
             }
@@ -442,6 +513,59 @@ class ChatComponent extends Component
             $this->loadStaffUsersAlternative();
         }
         $this->dispatch('refresh-conversations');
+    }
+
+    /**
+     * Đánh dấu một tin nhắn cụ thể là đã đọc
+     */
+    private function markSingleMessageAsRead($messageId, $conversationId)
+    {
+        $message = Message::find($messageId);
+        if ($message && !$message->is_read) {
+            $message->update(['is_read' => true]);
+            
+            // Cập nhật trong $this->messages array để UI hiển thị đúng
+            $this->updateMessageReadStatus($messageId, true);
+            
+            // Broadcast event để người gửi biết tin nhắn đã được đọc
+            broadcast(new MessageRead($message, $conversationId))->toOthers();
+        }
+    }
+
+    /**
+     * Xử lý khi nhận event MessageRead từ WebSocket
+     */
+    public function onMessageReadUpdate($messageId)
+    {
+        if ($messageId) {
+            $this->updateMessageReadStatus($messageId, true);
+        }
+    }
+
+    /**
+     * Cập nhật trạng thái is_read của tin nhắn trong $this->messages array
+     */
+    private function updateMessageReadStatus($messageId, $isRead)
+    {
+        if (!is_array($this->messages)) {
+            return;
+        }
+
+        $updated = false;
+        $newMessages = [];
+        
+        foreach ($this->messages as $key => $message) {
+            if (isset($message['id']) && $message['id'] == $messageId) {
+                $message['is_read'] = $isRead;
+                $updated = true;
+            }
+            $newMessages[] = $message;
+        }
+        
+        // Force Livewire to detect the change by completely reassigning
+        if ($updated) {
+            $this->messages = $newMessages;
+        }
     }
 
     public function render()

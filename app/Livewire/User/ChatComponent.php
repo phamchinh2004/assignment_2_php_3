@@ -3,6 +3,7 @@
 namespace App\Livewire\User;
 
 use App\Events\MessageSent;
+use App\Events\MessageRead;
 use App\Events\UserJoinChat;
 use App\Events\UserSentMessage;
 use App\Jobs\SendChatNotificationEmail;
@@ -32,8 +33,12 @@ class ChatComponent extends Component
     public $hasMoreMessages = true;
     public $isLoading = false;
     public $maxMessageLength = 500;
+    public $unreadCount = 0;
 
-    protected $listeners = ['message-received' => 'messageReceived', 'toggleChatBox'];
+    protected $listeners = [
+        'message-received' => 'messageReceived',
+        'toggleChatBox'
+    ];
 
     protected $rules = [
         'newMessage' => 'nullable|string|max:200',
@@ -58,7 +63,19 @@ class ChatComponent extends Component
         );
 
         $this->loadLatestMessages();
+        $this->loadUnreadCount();
         $this->dispatch('join-conversation-channel', conversationId: $this->conversation->id);
+    }
+
+    /**
+     * Đếm số tin nhắn chưa đọc
+     */
+    public function loadUnreadCount()
+    {
+        $this->unreadCount = Message::where('conversation_id', $this->conversation->id)
+            ->where('sender_id', '!=', Auth::id())
+            ->where('is_read', false)
+            ->count();
     }
 
     public function loadLatestMessages()
@@ -122,6 +139,7 @@ class ChatComponent extends Component
             'image_path' => $message->image_path,
             'sender_id' => $message->sender_id,
             'conversation_id' => $message->conversation_id,
+            'is_read' => $message->is_read ?? false,
             'created_at' => $message->created_at,
             'sender' => [
                 'id' => $message->sender->id,
@@ -212,7 +230,7 @@ class ChatComponent extends Component
         
         // Add messages vào UI
         foreach ($messages as $message) {
-            $this->chatMessages->push($message);
+            $this->chatMessages = $this->chatMessages->push($message);
         }
         
         // Reset Livewire state (đồng bộ với frontend)
@@ -225,7 +243,8 @@ class ChatComponent extends Component
         $this->dispatch('scroll-to-bottom');
         
         // Event và Email notification (đã dùng Queue, không block)
-        event(new UserSentMessage($userName, $template_message_for_notification));
+        $user = Auth::user()->load('conversation');
+        event(new UserSentMessage($userName, $template_message_for_notification, $user));
         $this->checkAndSendEmailNotification($template_message_for_notification);
     }
 
@@ -250,9 +269,36 @@ class ChatComponent extends Component
             }
 
             if (!$this->chatMessages->contains('id', $message['id'])) {
-                $this->chatMessages->push($message);
+                // Nếu chat box đang mở, tự động đánh dấu tin nhắn là đã đọc
+                if ($this->showBox) {
+                    $this->markMessageAsRead($message['id']);
+                    // Cập nhật message trong UI để hiển thị is_read = true
+                    $message['is_read'] = true;
+                } else {
+                    // Nếu chat box đóng, tăng số tin nhắn chưa đọc
+                    $this->unreadCount++;
+                }
+                
+                $this->chatMessages = $this->chatMessages->push($message);
                 $this->dispatch('scroll-to-bottom');
             }
+        }
+    }
+
+    /**
+     * Đánh dấu một tin nhắn cụ thể là đã đọc
+     */
+    private function markMessageAsRead($messageId)
+    {
+        $message = Message::find($messageId);
+        if ($message && !$message->is_read) {
+            $message->update(['is_read' => true]);
+            
+            // Cập nhật trong $this->chatMessages collection để UI hiển thị đúng
+            $this->updateMessageReadStatus($messageId, true);
+            
+            // Broadcast event để người gửi biết tin nhắn đã được đọc
+            broadcast(new MessageRead($message, $this->conversation->id))->toOthers();
         }
     }
 
@@ -265,11 +311,75 @@ class ChatComponent extends Component
     {
         $this->showBox = !$this->showBox;
         if ($this->showBox) {
-            event(new UserJoinChat(Auth::user()->username, Auth::user()->full_name));
+            $user = Auth::user()->load('conversation');
+            event(new UserJoinChat($user->username, $user->full_name, $user));
+            // Đánh dấu tin nhắn đã đọc khi mở chat box
+            $this->markMessagesAsRead();
+            // Reset unread count về 0
+            $this->unreadCount = 0;
         }
         if ($this->showBox) {
             $this->dispatch('scroll-to-bottom');
         }
+    }
+
+    /**
+     * Đánh dấu tất cả tin nhắn chưa đọc là đã đọc
+     */
+    private function markMessagesAsRead()
+    {
+        if (!$this->conversation) {
+            return;
+        }
+
+        // Lấy tất cả tin nhắn chưa đọc không phải của mình
+        $unreadMessages = $this->conversation->messages()
+            ->where('is_read', false)
+            ->where('sender_id', '!=', Auth::id())
+            ->get();
+
+        foreach ($unreadMessages as $message) {
+            $message->update(['is_read' => true]);
+            
+            // Cập nhật trong $this->chatMessages collection để UI hiển thị đúng
+            $this->updateMessageReadStatus($message->id, true);
+            
+            // Broadcast event để người gửi biết tin nhắn đã được đọc
+            broadcast(new MessageRead($message, $this->conversation->id))->toOthers();
+        }
+    }
+
+    /**
+     * Xử lý khi nhận event MessageRead từ WebSocket
+     */
+    public function onMessageReadUpdate($messageId)
+    {
+        if ($messageId) {
+            $this->updateMessageReadStatus($messageId, true);
+        }
+    }
+
+    /**
+     * Cập nhật trạng thái is_read của tin nhắn trong $this->chatMessages collection
+     */
+    private function updateMessageReadStatus($messageId, $isRead)
+    {
+        if (!$this->chatMessages instanceof \Illuminate\Support\Collection) {
+            $this->chatMessages = collect($this->chatMessages);
+        }
+
+        // Convert to array để modify, sau đó convert lại thành collection
+        $messages = $this->chatMessages->toArray();
+        
+        foreach ($messages as &$message) {
+            if (isset($message['id']) && $message['id'] == $messageId) {
+                $message['is_read'] = $isRead;
+                break;
+            }
+        }
+        unset($message); // Break reference
+        
+        $this->chatMessages = collect($messages);
     }
 
     public function scrollToBottom()
