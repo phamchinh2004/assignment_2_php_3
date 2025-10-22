@@ -73,6 +73,7 @@ body {
         0 5px 15px rgba(0, 0, 0, 0.1);
     position: relative;
     overflow: hidden;
+    isolation: isolate; /* Tạo stacking context mới */
 }
 
 .rank-info-card::before {
@@ -84,6 +85,8 @@ body {
     height: 200%;
     background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
     animation: rotate 10s linear infinite;
+    pointer-events: none; /* Không chặn click events */
+    z-index: 0; /* Đảm bảo ở dưới các element khác */
 }
 
 @keyframes rotate {
@@ -295,6 +298,8 @@ body {
     gap: 15px;
     animation: slideIn 0.5s ease;
     box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+    position: relative;
+    z-index: 10; /* Đảm bảo hiển thị trên cùng */
 }
 
 @keyframes slideIn {
@@ -718,6 +723,11 @@ select:focus {
     .rank-info-card {
         width: 95%;
         padding: 20px 15px;
+    }
+
+    /* Tắt animation xoay trên mobile để tránh lỗi */
+    .rank-info-card::before {
+        display: none;
     }
 
     .rank-badge {
