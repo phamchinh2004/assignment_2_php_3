@@ -383,6 +383,13 @@ class HomeController extends Controller
 
         $maximum_number_of_withdrawals = $rank->maximum_number_of_withdrawals - $user->count_withdrawals;
         $maximum_withdrawal_amount = $rank->maximum_withdrawal_amount;
+        
+        // Lấy thông tin tiến độ hoàn thành đơn hàng
+        $user_spin_progress = User_spin_progress::where('user_id', $user->id)
+            ->where('rank_id', $rank->id)
+            ->first();
+        $current_orders = $user_spin_progress ? $user_spin_progress->current_spin : 0;
+        $total_orders = $rank->spin_count;
         $banks = [
             'Ngân hàng Việt Nam' => [
                 'VPBank',
@@ -496,7 +503,7 @@ class HomeController extends Controller
                 'Banco Popular Español',
             ],
         ];
-        return view('user.withdraw_money', compact('user', 'maximum_number_of_withdrawals', 'maximum_withdrawal_amount', 'has_password', 'rank', 'banks'));
+        return view('user.withdraw_money', compact('user', 'maximum_number_of_withdrawals', 'maximum_withdrawal_amount', 'has_password', 'rank', 'banks', 'current_orders', 'total_orders'));
     }
     public function handle_withdraw()
     {

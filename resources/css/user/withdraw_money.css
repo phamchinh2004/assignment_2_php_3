@@ -61,36 +61,372 @@ body {
     min-height: calc(100vh - 100px);
 }
 
-/* Rank Info Section */
-.box_content_withdraw_money > .pt-2 {
-    background: white;
-    padding: 20px !important;
-    border-radius: 15px;
-    margin: 0 auto 20px;
+/* ========== Rank Info Card ========== */
+.rank-info-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 25px;
+    border-radius: 20px;
+    margin: 0 auto 25px;
     max-width: 700px;
-    box-shadow: var(--card-shadow);
-    border-left: 5px solid var(--primary-color);
+    box-shadow: 
+        0 15px 50px rgba(102, 126, 234, 0.3),
+        0 5px 15px rgba(0, 0, 0, 0.1);
+    position: relative;
+    overflow: hidden;
 }
 
-.box_content_withdraw_money > .pt-2 i {
+.rank-info-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    animation: rotate 10s linear infinite;
+}
+
+@keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Rank Header */
+.rank-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    position: relative;
+    z-index: 1;
+}
+
+.rank-badge {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    padding: 10px 20px;
+    border-radius: 50px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.rank-badge i {
+    color: #FFD700;
+    font-size: 20px;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.rank-badge span {
+    color: white;
+    font-weight: 700;
+    font-size: 16px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.rank-level {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 13px;
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.15);
+    padding: 6px 15px;
+    border-radius: 20px;
+}
+
+/* Rank Stats */
+.rank-stats {
+    display: grid;
+    gap: 15px;
+    position: relative;
+    z-index: 1;
+}
+
+.stat-item {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    padding: 15px;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.stat-item:hover {
+    background: white;
+    transform: translateX(5px);
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+}
+
+.stat-icon {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    color: white;
+    flex-shrink: 0;
+}
+
+.stat-content {
+    flex: 1;
+}
+
+.stat-label {
+    font-size: 13px;
+    color: var(--text-secondary);
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.stat-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+/* Progress Stat Highlight */
+.stat-highlight {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.95) 100%);
+    border: 2px solid rgba(255, 215, 0, 0.3);
+}
+
+.stat-highlight .stat-icon {
+    background: linear-gradient(135deg, #FF9500 0%, #FF8C00 100%);
+    box-shadow: 0 5px 15px rgba(255, 149, 0, 0.3);
+}
+
+.progress-value {
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
+    margin-bottom: 10px;
+}
+
+.progress-value .current {
     color: var(--primary-color);
+    font-size: 28px;
+}
+
+.progress-value .separator {
+    color: var(--text-secondary);
+    font-size: 20px;
+}
+
+.progress-value .total {
+    color: var(--text-primary);
+    font-size: 22px;
+}
+
+.progress-value .unit {
+    color: var(--text-secondary);
     font-size: 14px;
     font-weight: 600;
 }
 
-.box_content_withdraw_money > .pt-2 p {
-    font-size: 14px;
-    color: var(--text-primary);
+/* Progress Bar */
+.progress-bar-container {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin: 10px 0 !important;
+    gap: 10px;
 }
 
-.box_content_withdraw_money > .pt-2 p::before {
-    content: "•";
+.progress-bar-bg {
+    flex: 1;
+    height: 12px;
+    background: #e0e0e0;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, #FF9500 100%);
+    border-radius: 10px;
+    transition: width 1s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.progress-bar-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.4),
+        transparent
+    );
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.progress-percentage {
+    font-size: 14px;
+    font-weight: 700;
     color: var(--primary-color);
-    font-size: 20px;
+    min-width: 45px;
+    text-align: right;
+}
+
+/* ========== Alert Boxes ========== */
+.remaining-orders-alert,
+.success-alert {
+    max-width: 700px;
+    margin: 20px auto;
+    padding: 20px;
+    border-radius: 15px;
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    animation: slideIn 0.5s ease;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Warning Alert */
+.remaining-orders-alert {
+    background: linear-gradient(135deg, #fff5e6 0%, #ffe8cc 100%);
+    border: 2px solid #FF9500;
+    border-left: 6px solid #FF9500;
+}
+
+.remaining-orders-alert .alert-icon {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #FF9500 0%, #FF8C00 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: white;
+    flex-shrink: 0;
+    animation: bounce 2s ease-in-out infinite;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+/* Success Alert */
+.success-alert {
+    background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+    border: 2px solid #4CAF50;
+    border-left: 6px solid #4CAF50;
+}
+
+.success-alert .alert-icon {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: white;
+    flex-shrink: 0;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+/* Alert Content */
+.alert-content {
+    flex: 1;
+}
+
+.alert-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
+.remaining-orders-alert .alert-title {
+    color: #FF8C00;
+}
+
+.success-alert .alert-title {
+    color: #4CAF50;
+}
+
+.alert-message {
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 12px;
+}
+
+.alert-message strong {
+    color: var(--primary-color);
+    font-weight: 700;
+    font-size: 16px;
+}
+
+.remaining-orders-alert .alert-message strong {
+    color: #FF8C00;
+}
+
+.success-alert .alert-message strong {
+    color: #4CAF50;
+}
+
+/* Alert Action Button */
+.alert-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #FF9500 0%, #FF8C00 100%);
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+    border-radius: 25px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(255, 149, 0, 0.3);
+}
+
+.alert-action:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 149, 0, 0.4);
+    color: white;
+}
+
+.alert-action i {
+    font-size: 16px;
+    animation: shake 1s ease-in-out infinite;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-3px); }
+    75% { transform: translateX(3px); }
 }
 
 /* ========== Card Content ========== */
@@ -378,9 +714,108 @@ select:focus {
         margin: 15px auto;
     }
 
-    .box_content_withdraw_money > .pt-2 {
+    /* Rank Info Card Mobile */
+    .rank-info-card {
         width: 95%;
-        padding: 15px !important;
+        padding: 20px 15px;
+    }
+
+    .rank-badge {
+        padding: 8px 15px;
+    }
+
+    .rank-badge span {
+        font-size: 14px;
+    }
+
+    .rank-badge i {
+        font-size: 18px;
+    }
+
+    .rank-level {
+        font-size: 11px;
+        padding: 5px 12px;
+    }
+
+    .stat-item {
+        padding: 12px;
+        gap: 12px;
+    }
+
+    .stat-icon {
+        width: 45px;
+        height: 45px;
+        font-size: 20px;
+    }
+
+    .stat-label {
+        font-size: 12px;
+    }
+
+    .stat-value {
+        font-size: 18px;
+    }
+
+    .progress-value .current {
+        font-size: 24px;
+    }
+
+    .progress-value .separator {
+        font-size: 18px;
+    }
+
+    .progress-value .total {
+        font-size: 20px;
+    }
+
+    .progress-value .unit {
+        font-size: 12px;
+    }
+
+    .progress-bar-bg {
+        height: 10px;
+    }
+
+    .progress-percentage {
+        font-size: 12px;
+        min-width: 40px;
+    }
+
+    /* Alert Boxes Mobile */
+    .remaining-orders-alert,
+    .success-alert {
+        width: 95%;
+        padding: 15px;
+        gap: 12px;
+        margin: 15px auto;
+    }
+
+    .remaining-orders-alert .alert-icon,
+    .success-alert .alert-icon {
+        width: 45px;
+        height: 45px;
+        font-size: 20px;
+    }
+
+    .alert-title {
+        font-size: 14px;
+    }
+
+    .alert-message {
+        font-size: 13px;
+    }
+
+    .alert-message strong {
+        font-size: 14px;
+    }
+
+    .alert-action {
+        padding: 8px 16px;
+        font-size: 13px;
+    }
+
+    .alert-action i {
+        font-size: 14px;
     }
 
     .input_nhap_tien {
@@ -430,6 +865,33 @@ select:focus {
     #btn_withdraw_now {
         padding: 12px 25px;
         font-size: 13px;
+    }
+
+    /* Alert Boxes Small Mobile */
+    .remaining-orders-alert .alert-icon,
+    .success-alert .alert-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+    }
+
+    .alert-title {
+        font-size: 13px;
+    }
+
+    .alert-message {
+        font-size: 12px;
+    }
+
+    .alert-message strong {
+        font-size: 13px;
+    }
+
+    .alert-action {
+        padding: 7px 14px;
+        font-size: 12px;
+        width: 100%;
+        justify-content: center;
     }
 }
 

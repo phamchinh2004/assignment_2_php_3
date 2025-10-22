@@ -23,10 +23,94 @@
     <h3 class="position-absolute title">💰 {{__('withdraw_money.RutTien')}}</h3>
 </div>
 <div class="box_content_withdraw_money">
-    <div class="pt-2 ps-4">
-        <i class="text-secondary">({{ $rank->name }})</i>
-        <p class="m-0 p-0 text-danger">{{__('withdraw_money.Con')}} <b class="text-success">{{ $maximum_number_of_withdrawals }}</b> {{__('withdraw_money.LanRutTien')}}</p>
-        <p class="m-0 p-0 text-danger">{{__('withdraw_money.MoiLanRutToiDa')}} <b class="text-success">{{ format_money($maximum_withdrawal_amount) }}$ </b></p>
+    <!-- Rank Info Card with Progress -->
+    <div class="rank-info-card">
+        <div class="rank-header">
+            <div class="rank-badge">
+                <i class="fas fa-crown"></i>
+                <span>{{ $rank->name }}</span>
+            </div>
+            <div class="rank-level">Cấp độ {{ $rank->id }}</div>
+        </div>
+        
+        <div class="rank-stats">
+            <div class="stat-item">
+                <div class="stat-icon">
+                    <i class="fas fa-sync-alt"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-label">Lượt rút tiền còn lại</div>
+                    <div class="stat-value">{{ $maximum_number_of_withdrawals }} lượt</div>
+                </div>
+            </div>
+            
+            <div class="stat-item">
+                <div class="stat-icon">
+                    <i class="fas fa-money-bill-wave"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-label">Hạn mức mỗi lần rút</div>
+                    <div class="stat-value">{{ format_money($maximum_withdrawal_amount) }}$</div>
+                </div>
+            </div>
+            
+            <div class="stat-item stat-highlight">
+                <div class="stat-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-label">Tiến độ hoàn thành đơn hàng</div>
+                    <div class="stat-value progress-value">
+                        <span class="current">{{ $current_orders }}</span>
+                        <span class="separator">/</span>
+                        <span class="total">{{ $total_orders }}</span>
+                        <span class="unit">đơn</span>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-bg">
+                            <div class="progress-bar-fill" style="width: {{ $total_orders > 0 ? ($current_orders / $total_orders * 100) : 0 }}%"></div>
+                        </div>
+                        <div class="progress-percentage">{{ $total_orders > 0 ? round($current_orders / $total_orders * 100) : 0 }}%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        @php
+            $remaining_orders = max(0, $total_orders - $current_orders);
+            $can_withdraw = $current_orders >= $total_orders;
+        @endphp
+        
+        <!-- Remaining Orders Alert -->
+        @if(!$can_withdraw && $remaining_orders > 0)
+        <div class="remaining-orders-alert">
+            <div class="alert-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="alert-content">
+                <div class="alert-title">Cần hoàn thành thêm đơn hàng</div>
+                <div class="alert-message">
+                    Bạn cần hoàn thành thêm <strong>{{ $remaining_orders }} đơn hàng</strong> nữa để đủ điều kiện rút tiền.
+                </div>
+                <a href="{{ route('distribution') }}" class="alert-action">
+                    <i class="fas fa-shopping-bag"></i>
+                    <span>Đi phân phối ngay</span>
+                </a>
+            </div>
+        </div>
+        @elseif($can_withdraw)
+        <div class="success-alert">
+            <div class="alert-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="alert-content">
+                <div class="alert-title">🎉 Chúc mừng!</div>
+                <div class="alert-message">
+                    Bạn đã hoàn thành đủ <strong>{{ $total_orders }} đơn hàng</strong>. Bạn có thể rút tiền ngay bây giờ!
+                </div>
+            </div>
+        </div>
+        @endif
     </div>
     <div class="d-flex flex-column box_content">
         <div>
