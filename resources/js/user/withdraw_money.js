@@ -1,12 +1,13 @@
 document.addEventListener('DOMContentLoaded', function () {
 
+    // Khởi tạo SlimSelect
     new SlimSelect({
         select: '#select_bank_name',
         settings: {
             placeholderText: 'Chọn ngân hàng của bạn',
             keepOrder: true,
         },
-    })
+    });
 
     const bankSelect = document.getElementById('select_bank_name');
     const currentValue = bankSelect.getAttribute('value') || bankSelect.dataset.value;
@@ -45,10 +46,19 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const btn_withdraw_now = document.getElementById('btn_withdraw_now');
     btn_withdraw_now.addEventListener('click', async function () {
+        // Add loading state to button
+        const originalText = this.innerHTML;
+        this.classList.add('loading');
+        this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xử lý...';
+        this.disabled = true;
+        
         spinner.hidden = false;
         if (amount_input_field.value == "") {
             notification('warning', trans.VuiLongNhapSoTienRut, trans.CanhBao);
             spinner.hidden = true;
+            btn_withdraw_now.classList.remove('loading');
+            btn_withdraw_now.innerHTML = originalText;
+            btn_withdraw_now.disabled = false;
             return;
         }
         const username_bank = document.getElementById('username_bank');
@@ -58,6 +68,9 @@ document.addEventListener('DOMContentLoaded', function () {
         if (username_bank.value == "" || account_number.value == "" || transaction_password.value == "") {
             notification('warning', trans.VuiLongNhapDayDuThongTinNganHang, trans.CanhBao);
             spinner.hidden = true;
+            btn_withdraw_now.classList.remove('loading');
+            btn_withdraw_now.innerHTML = originalText;
+            btn_withdraw_now.disabled = false;
             return;
         }
 
@@ -66,6 +79,9 @@ document.addEventListener('DOMContentLoaded', function () {
             if (confirm_transaction_password.value != "" && confirm_transaction_password.value != transaction_password.value) {
                 notification('warning', trans.XacNhanMatKhauGiaoDichKhongKhop, trans.CanhBao);
                 spinner.hidden = true;
+                btn_withdraw_now.classList.remove('loading');
+                btn_withdraw_now.innerHTML = originalText;
+                btn_withdraw_now.disabled = false;
                 return;
             }
         }
@@ -78,9 +94,14 @@ document.addEventListener('DOMContentLoaded', function () {
         let numeric_value = parseFloat(unformatted_value) || 0;
 
         let result = await handle_withdraw(numeric_value, username_bank.value, bankSelect.value, account_number.value, transaction_password.value, confirm_transaction_password.value);
+        
+        spinner.hidden = true;
+        btn_withdraw_now.classList.remove('loading');
+        btn_withdraw_now.innerHTML = originalText;
+        btn_withdraw_now.disabled = false;
+        
         if (result.status == 400) {
             notification('warning', result.message, trans.CanhBao);
-
         } else if (result.status == 200) {
             swal({
                 title: trans.ThanhCong,
@@ -94,7 +115,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             });
         }
-        spinner.hidden = true;
     })
     function handle_withdraw(amount, username_bank, bankSelect, account_number, transaction_password, confirm_transaction_password) {
         return new Promise((resolve, reject) => {

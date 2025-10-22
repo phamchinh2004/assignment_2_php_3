@@ -16,8 +16,11 @@
 @endsection
 @section('content')
 <div class="bg-white d-flex flex-row position-relative">
-    <a class="text-dark fw-bold text-decoration-none p-2 hover btn-back" href="#" onclick="history.back(); return false;"><i class="fa fa-arrow-left fa-sm pe-1"></i>{{__('withdraw_money.QuayLai')}}</a>
-    <h3 class="position-absolute title">{{__('withdraw_money.RutTien')}}</h3>
+    <a class="text-dark fw-bold text-decoration-none p-2 hover btn-back" href="#" onclick="history.back(); return false;">
+        <i class="fa fa-arrow-left fa-sm"></i>
+        <span>{{__('withdraw_money.QuayLai')}}</span>
+    </a>
+    <h3 class="position-absolute title">💰 {{__('withdraw_money.RutTien')}}</h3>
 </div>
 <div class="box_content_withdraw_money">
     <div class="pt-2 ps-4">

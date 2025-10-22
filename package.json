@@ -19,6 +19,7 @@
     "dependencies": {
         "autonumeric": "^4.10.9",
         "fireworks-js": "^2.10.8",
+        "slim-select": "^3.0.0",
         "sweetalert": "^2.1.2"
     }
 }

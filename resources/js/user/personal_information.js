@@ -8,6 +8,7 @@ document
             modal._focustrap.deactivate();
         }
     });
+
 // Tạo slimselect
 const bankSelect = new SlimSelect({
     select: "#bankName",

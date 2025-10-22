@@ -5,3 +5,6 @@ import Fireworks from 'fireworks-js';
 window.Fireworks = Fireworks;
 import AutoNumeric from 'autonumeric';
 window.AutoNumeric = AutoNumeric;
+import SlimSelect from 'slim-select';
+import 'slim-select/styles';
+window.SlimSelect = SlimSelect;

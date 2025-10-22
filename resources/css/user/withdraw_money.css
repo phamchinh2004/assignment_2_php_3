@@ -1,115 +1,462 @@
+/* ========== Variables ========== */
+:root {
+    --primary-color: #FF9500;
+    --primary-dark: #FF8C00;
+    --secondary-color: #4CAF50;
+    --danger-color: #f44336;
+    --text-primary: #2c3e50;
+    --text-secondary: #7f8c8d;
+    --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --card-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    --hover-shadow: 0 15px 50px rgba(0, 0, 0, 0.15);
+}
+
+/* ========== Body & Container ========== */
+body {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+}
+
+.container-1 {
+    box-shadow: none;
+    background-color: transparent !important;
+}
+
+/* ========== Header ========== */
+.bg-white {
+    background: white !important;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    padding: 15px 20px !important;
+    border-radius: 15px 15px 0 0;
+}
+
 .title {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
+    color: var(--text-primary);
+    font-weight: 700;
+    font-size: 20px;
+    margin: 0;
 }
 
-/* .around-content {
-    padding-bottom: 0px;
-} */
+.btn-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    color: var(--text-primary) !important;
+    font-weight: 600;
+}
 
+.btn-back:hover {
+    transform: translateX(-5px);
+    color: var(--primary-color) !important;
+}
+
+/* ========== Main Content ========== */
 .box_content_withdraw_money {
-    background-color: #faebd7;
-    padding-top: 10px;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    padding: 30px 20px;
+    min-height: calc(100vh - 100px);
 }
 
+/* Rank Info Section */
+.box_content_withdraw_money > .pt-2 {
+    background: white;
+    padding: 20px !important;
+    border-radius: 15px;
+    margin: 0 auto 20px;
+    max-width: 700px;
+    box-shadow: var(--card-shadow);
+    border-left: 5px solid var(--primary-color);
+}
+
+.box_content_withdraw_money > .pt-2 i {
+    color: var(--primary-color);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.box_content_withdraw_money > .pt-2 p {
+    font-size: 14px;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 10px 0 !important;
+}
+
+.box_content_withdraw_money > .pt-2 p::before {
+    content: "•";
+    color: var(--primary-color);
+    font-size: 20px;
+}
+
+/* ========== Card Content ========== */
 .box_content {
-    background: #ffffff;
-    width: 50%;
-    margin: auto;
-    padding: 10px 20px 10px 20px;
-    border-radius: 10px;
+    background: white;
+    width: 100%;
+    max-width: 700px;
+    margin: 20px auto;
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: var(--card-shadow);
+    transition: all 0.3s ease;
+    border: 1px solid rgba(102, 126, 234, 0.1);
 }
 
+.box_content:hover {
+    box-shadow: var(--hover-shadow);
+    transform: translateY(-2px);
+}
 
+/* ========== Amount Input Section ========== */
 .tittle_so_tien_rut {
-    font-weight: bold;
-    font-size: 12px;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--text-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tittle_so_tien_rut::before {
+    content: "💰";
+    font-size: 18px;
 }
 
 .input_nhap_tien {
-    border: none;
-    outline-style: none;
+    border: 2px solid #e0e0e0;
+    outline: none;
     width: 100%;
-    margin: 15px 0px;
-    font-size: 20px;
-    padding-right: 30px;
+    margin: 15px 0;
+    font-size: 32px;
+    font-weight: 700;
+    padding: 15px 20px;
+    border-radius: 12px;
+    background: #f8f9fa;
+    color: var(--primary-color);
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.input_nhap_tien:focus {
+    border-color: var(--primary-color);
+    background: white;
+    box-shadow: 0 0 0 4px rgba(255, 149, 0, 0.1);
+}
+
+.input_nhap_tien::placeholder {
+    color: #bdc3c7;
+    font-size: 16px;
 }
 
 .currency {
     position: absolute;
-    font-size: 20px;
+    font-size: 24px;
+    font-weight: 700;
     top: 50%;
-    right: 0px;
-    transform: translate(-50%, -50%);
+    right: 20px;
+    transform: translateY(-50%);
+    color: var(--primary-color);
 }
 
+/* ========== Balance & Withdraw All ========== */
 .so_du_tai_khoan,
 .btn_rut_toan_bo {
-    color: #999;
-    font-size: 13px;
+    font-size: 14px;
+    font-weight: 600;
 }
 
+.so_du_tai_khoan {
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.so_du_tai_khoan::before {
+    content: "💳";
+    font-size: 16px;
+}
+
+.btn_rut_toan_bo {
+    color: var(--primary-color);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    padding: 8px 16px;
+    border-radius: 8px;
+    background: rgba(255, 149, 0, 0.1);
+}
+
+.btn_rut_toan_bo:hover {
+    background: var(--primary-color);
+    color: white;
+    transform: scale(1.05);
+}
+
+/* ========== Bank Information Table ========== */
 table {
     border-collapse: separate;
-    border-spacing: 0 10px;
+    border-spacing: 0 15px;
+    width: 100%;
 }
 
 th {
-    font-size: 13px;
-    color: #999;
-    font-weight: 300;
+    font-size: 14px;
+    color: var(--text-secondary);
+    font-weight: 600;
     white-space: nowrap;
-    padding-right: 15px !important;
+    padding-right: 20px !important;
+    text-align: left;
+    vertical-align: middle;
 }
 
 td {
     text-align: end;
     font-weight: 600;
+    vertical-align: middle;
 }
 
 tr {
-    margin-top: 10px;
+    transition: all 0.3s ease;
 }
 
-.bank_infor_input {
+.bank_infor_input,
+select {
     width: 100%;
     text-align: end;
     border: none;
-    border-bottom: 1px solid black;
-    outline-style: none;
+    border-bottom: 2px solid #e0e0e0;
+    outline: none;
+    padding: 10px 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    background: transparent;
+    transition: all 0.3s ease;
 }
 
-.luu_y_tittle,
+.bank_infor_input:focus,
+select:focus {
+    border-bottom-color: var(--primary-color);
+    background: rgba(255, 149, 0, 0.05);
+}
+
+/* SlimSelect Styling */
+.ss-main {
+    width: 100% !important;
+}
+
+.ss-single-selected {
+    border: none !important;
+    border-bottom: 2px solid #e0e0e0 !important;
+    border-radius: 0 !important;
+    padding: 10px 0 !important;
+    background: transparent !important;
+}
+
+.ss-single-selected:hover,
+.ss-single-selected.ss-open-above,
+.ss-single-selected.ss-open-below {
+    border-bottom-color: var(--primary-color) !important;
+}
+
+/* ========== Note Section ========== */
+.luu_y_tittle {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--danger-color);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.luu_y_tittle::before {
+    content: "⚠️";
+    font-size: 16px;
+}
+
 .luu_y_content {
-    font-size: 10px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.6;
 }
 
+/* ========== Submit Button ========== */
 .box_btn_rut_tien_ngay {
-    width: 50%;
+    width: 100%;
+    max-width: 700px;
+    padding: 0 20px;
 }
 
-body {
-    background-color: #faebd7;
+#btn_withdraw_now {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    border: none;
+    padding: 18px 40px;
+    font-size: 16px;
+    font-weight: 700;
+    border-radius: 50px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 0 10px 30px rgba(255, 149, 0, 0.3);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
 }
 
-.container-1 {
-    box-shadow: none;
-    background-color: unset !important;
+#btn_withdraw_now::before {
+    content: "💸";
+    margin-right: 10px;
+    font-size: 20px;
 }
 
+#btn_withdraw_now:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 40px rgba(255, 149, 0, 0.4);
+}
+
+#btn_withdraw_now:active {
+    transform: translateY(-1px);
+}
+
+/* Loading Animation */
+#btn_withdraw_now.loading {
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+/* ========== Animations ========== */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.box_content {
+    animation: fadeInUp 0.6s ease;
+}
+
+.box_content:nth-child(1) {
+    animation-delay: 0.1s;
+}
+
+.box_content:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.box_content:nth-child(3) {
+    animation-delay: 0.3s;
+}
+
+/* ========== Responsive Design ========== */
 @media screen and (max-width: 768px) {
-    .tittle_so_tien_rut {
-        font-weight: bold;
-        font-size: 10px;
+    .title {
+        font-size: 16px;
     }
 
     .btn-back {
         font-size: 13px;
     }
 
-    .box_content,
+    .box_content_withdraw_money {
+        padding: 15px 10px;
+    }
+
+    .box_content {
+        width: 95%;
+        padding: 20px 15px;
+        margin: 15px auto;
+    }
+
+    .box_content_withdraw_money > .pt-2 {
+        width: 95%;
+        padding: 15px !important;
+    }
+
+    .input_nhap_tien {
+        font-size: 24px;
+        padding: 12px 15px;
+    }
+
+    .tittle_so_tien_rut {
+        font-size: 12px;
+    }
+
+    .so_du_tai_khoan,
+    .btn_rut_toan_bo {
+        font-size: 12px;
+    }
+
+    th {
+        font-size: 12px;
+        padding-right: 10px !important;
+    }
+
+    .bank_infor_input,
+    select {
+        font-size: 12px;
+    }
+
+    table {
+        border-spacing: 0 10px;
+    }
+
     .box_btn_rut_tien_ngay {
-        width: 90%;
+        width: 95%;
+        padding: 0 10px;
+    }
+
+    #btn_withdraw_now {
+        padding: 15px 30px;
+        font-size: 14px;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .input_nhap_tien {
+        font-size: 20px;
+    }
+
+    #btn_withdraw_now {
+        padding: 12px 25px;
+        font-size: 13px;
+    }
+}
+
+/* ========== Dark Mode Support (Optional) ========== */
+@media (prefers-color-scheme: dark) {
+    .box_content,
+    .bg-white,
+    .box_content_withdraw_money > .pt-2 {
+        background: #2c3e50;
+        color: #ecf0f1;
+    }
+
+    .title,
+    th,
+    .bank_infor_input,
+    select {
+        color: #ecf0f1;
+    }
+
+    .bank_infor_input,
+    select {
+        border-bottom-color: #34495e;
+    }
+
+    .input_nhap_tien {
+        background: #34495e;
+        color: var(--primary-color);
+        border-color: #34495e;
     }
 }

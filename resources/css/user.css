@@ -15,42 +15,215 @@ body {
     z-index: -2;
 }
 
+/* ========== Footer Styles - Modern Design ========== */
 footer {
-    z-index: 99;
+    z-index: 999;
     width: 70%;
 }
 
 .footer {
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
-    z-index: 99;
-    height: 100px;
+    /* Glassmorphism effect */
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.1);
+    border-top: 1px solid rgba(255, 255, 255, 0.3);
+    
+    z-index: 999;
+    height: 85px;
     width: 70% !important;
-    background-color: white;
     position: fixed;
-    bottom: 0px;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    
+    transition: all 0.3s ease;
+}
+
+.footer::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, 
+        #667eea 0%, 
+        #764ba2 25%, 
+        #FF9500 50%, 
+        #764ba2 75%, 
+        #667eea 100%);
+    animation: gradientShift 3s ease infinite;
+}
+
+@keyframes gradientShift {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
 }
 
 .text-footer {
-    font-size: 15px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-top: 4px;
+    transition: all 0.3s ease;
 }
 
 .footer-item {
     width: 20%;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    position: relative;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 12px;
+    color: #6c757d !important;
+}
+
+/* Hover effect */
+.footer-item:hover {
+    background: rgba(102, 126, 234, 0.1);
+    transform: translateY(-4px);
+}
+
+.footer-item:hover .text-footer {
+    color: #667eea !important;
+    font-weight: 700;
+}
+
+.footer-item:hover i,
+.footer-item:hover img {
+    transform: scale(1.15);
+}
+
+/* Active state indicator */
+.footer-item::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 50%;
+    transform: translateX(-50%) scaleX(0);
+    width: 40px;
+    height: 3px;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    border-radius: 3px 3px 0 0;
+    transition: transform 0.3s ease;
+}
+
+.footer-item.active::after,
+.footer-item:hover::after {
+    transform: translateX(-50%) scaleX(1);
+}
+
+.footer-item.active {
+    color: #667eea !important;
+}
+
+.footer-item.active .text-footer {
+    color: #667eea !important;
+    font-weight: 700;
+}
+
+.footer-item.active i {
+    color: #667eea;
+}
+
+/* Icons styling */
+.footer-item i {
+    font-size: 22px;
+    transition: all 0.3s ease;
+    color: #6c757d;
+}
+
+.footer-item:hover i {
+    color: #667eea;
+}
+
+.footer-item img {
+    transition: all 0.3s ease;
+    filter: grayscale(50%);
+}
+
+.footer-item:hover img,
+.footer-item.active img {
+    filter: grayscale(0%);
 }
 
 .cspt {
     cursor: pointer;
 }
 
+/* Center Amazon button - Floating style */
 .amazon_btn {
-    width: 100px;
-    height: 80px;
-    background-color: black;
+    width: 70px;
+    height: 70px;
+    background: linear-gradient(135deg, #FF9500 0%, #FF8C00 100%);
     border-radius: 50%;
+    box-shadow: 
+        0 10px 30px rgba(255, 149, 0, 0.4),
+        0 0 0 8px rgba(255, 255, 255, 0.9),
+        0 0 0 10px rgba(255, 149, 0, 0.1);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    margin-top: -35px;
+}
+
+.amazon_btn::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+        45deg,
+        transparent,
+        rgba(255, 255, 255, 0.3),
+        transparent
+    );
+    transform: rotate(45deg);
+    animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+    100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+}
+
+.amazon_btn:hover {
+    transform: translateY(-8px) scale(1.05);
+    box-shadow: 
+        0 15px 40px rgba(255, 149, 0, 0.5),
+        0 0 0 8px rgba(255, 255, 255, 0.9),
+        0 0 0 12px rgba(255, 149, 0, 0.2);
+}
+
+.amazon_btn:active {
+    transform: translateY(-6px) scale(1.02);
 }
 
 .footer-logo {
-    width: 40px;
+    width: 35px;
+    filter: brightness(0) invert(1);
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+.amazon_btn:hover .footer-logo {
+    animation: spin 0.6s ease;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }
 
 
@@ -76,22 +249,37 @@ footer {
     }
 }
 
+/* ========== Responsive Design ========== */
 @media screen and (max-width: 768px) {
     .text-footer {
-        font-size: 11px;
+        font-size: 10px;
     }
 
     .footer-logo {
-        width: 30px;
+        width: 28px;
     }
 
     .footer-item {
         width: 20%;
+        padding: 4px;
+    }
+
+    .footer-item i {
+        font-size: 20px;
     }
 
     .amazon_btn {
         width: 60px;
         height: 60px;
+        margin-top: -30px;
+        box-shadow: 
+            0 8px 20px rgba(255, 149, 0, 0.3),
+            0 0 0 6px rgba(255, 255, 255, 0.9),
+            0 0 0 8px rgba(255, 149, 0, 0.1);
+    }
+
+    .footer {
+        height: 75px;
     }
 
     body {
@@ -100,6 +288,30 @@ footer {
 
     .footer {
         width: 100% !important;
-        bottom: -2px;
+        bottom: 0;
+        border-radius: 0;
+    }
+
+    .footer::before {
+        height: 2px;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .text-footer {
+        font-size: 9px;
+    }
+
+    .footer-item i {
+        font-size: 18px;
+    }
+
+    .amazon_btn {
+        width: 55px;
+        height: 55px;
+    }
+
+    .footer {
+        height: 70px;
     }
 }

@@ -16,7 +16,6 @@
     @vite(['resources/js/app.js', 'resources/css/app.css'])
     <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.css" rel="stylesheet" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet" />
-    <link href="https://unpkg.com/slim-select@latest/dist/slimselect.css" rel="stylesheet">
    
     @vite('resources/css/user.css')
     @vite('resources/css/general.css')
@@ -24,6 +23,12 @@
     @vite('resources/css/floating-chat.css')
     @yield('css-libs')
     @livewireStyles
+    <style>
+        /* Smooth scroll for better UX */
+        html {
+            scroll-behavior: smooth;
+        }
+    </style>
 </head>
 
 <body class="m-auto">
@@ -188,8 +193,8 @@
     <script src="https://kit.fontawesome.com/26096abf41.js" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.js.map"></script>
-    <script src="https://unpkg.com/slim-select@latest/dist/slimselect.min.js"></script>
     @vite('resources/js/general.js')
+    @vite('resources/js/user/footer-active.js')
     @yield('script-libs')
     @stack('scripts')
     <script>
