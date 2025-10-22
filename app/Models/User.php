@@ -315,7 +315,11 @@ class User extends Authenticatable
             'total_frozen_value' => $this->total_frozen_orders_value,
             'current_balance' => $this->balance,
             'required_deposit' => $this->required_deposit_amount,
-            'frozen_orders_count' => $this->frozen_orders()->where('is_frozen', true)->count()
+            'frozen_orders_count' => $this->frozen_orders()
+                ->where('is_frozen', true)
+                ->whereNotNull('penalty_amount')
+                ->where('penalty_amount', '>', 0)
+                ->count()
         ];
     }
 
