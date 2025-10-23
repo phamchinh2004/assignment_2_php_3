@@ -75,7 +75,7 @@
                             <div class="{{ $hasUnread ? 'fw-bold' : '' }} text-muted small text-truncate d-flex align-items-center mb-1">
                                 @if($conversation->messages->last())
                                     <i class="fas fa-comment-dots me-1" style="font-size: 10px;"></i>
-                                    {{ Str::limit(trim($conversation->messages->last()->message) ?: "Hình ảnh", 30) }}
+                                    {{ Str::limit(trim($conversation->messages->last()->message) ?: "Hình ảnh", 20) }}
                                 @else
                                     <i class="fas fa-clock me-1" style="font-size: 10px;"></i>
                                     Chưa có tin nhắn
