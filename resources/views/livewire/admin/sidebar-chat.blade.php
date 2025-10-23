@@ -197,7 +197,7 @@
                                                         @php
                                                             $lastMsg = end($user['latest_conversation']['messages']);
                                                         @endphp
-                                                        {{ Str::limit(trim($lastMsg['message']) ?: "Hình ảnh", 30) }}
+                                                        {{ Str::limit(trim($lastMsg['message']) ?: "Hình ảnh", 20) }}
                                                     @else
                                                         <i class="fas fa-clock me-1" style="font-size: 10px;"></i>
                                                         Chưa có tin nhắn
