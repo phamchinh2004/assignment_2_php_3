@@ -33,9 +33,9 @@ class CheckRole
                 case 'member':
                     return redirect()->route('home')->with('warning', 'Bạn đã đăng nhập!');
                 case 'staff':
-                    return redirect()->route('admin.dashboard')->with('warning', 'Bạn đã đăng nhập!');
+                    return redirect()->route('chat-panel')->with('warning', 'Bạn đã đăng nhập!');
                 case 'admin':
-                    return redirect()->route('admin.dashboard')->with('warning', 'Bạn đã đăng nhập!');
+                    return redirect()->route('chat-panel')->with('warning', 'Bạn đã đăng nhập!');
                 default:
                     abort(403, 'Bạn đã đăng nhập, vui lòng quay lại trang chủ.');
             }
@@ -50,9 +50,9 @@ class CheckRole
             case 'member':
                 abort(403, 'NOT FOUND.');
             case 'staff':
-                return redirect()->route('admin.dashboard')->with('warning', 'Bạn không có quyền truy cập!');
+                return redirect()->route('chat-panel')->with('warning', 'Bạn không có quyền truy cập!');
             case 'admin':
-                return redirect()->route('admin.dashboard');
+                return redirect()->route('chat-panel');
             default:
                 abort(403, 'Bạn không có quyền truy cập.');
         }

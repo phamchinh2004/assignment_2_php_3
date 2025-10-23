@@ -30,7 +30,7 @@ class CheckPermission
             ->exists();
 
         if (!$userHasPermission) {
-            return redirect()->route('admin.dashboard')->with(['error' => 'Bạn không có quyền truy cập chức năng này.']);
+            return redirect()->route('chat-panel')->with(['error' => 'Bạn không có quyền truy cập chức năng này.']);
         }
         return $next($request);
     }
