@@ -4,6 +4,24 @@
 
 @push('css')
     @vite('resources/css/admin/chat.css')
+    <style>
+        [x-cloak] { display: none !important; }
+        
+        @keyframes spinner-border {
+            to { transform: rotate(360deg); }
+        }
+        
+        .spinner-border {
+            display: inline-block;
+            width: 3rem;
+            height: 3rem;
+            vertical-align: -0.125em;
+            border: 0.25em solid currentColor;
+            border-right-color: transparent;
+            border-radius: 50%;
+            animation: spinner-border 0.75s linear infinite;
+        }
+    </style>
 @endpush
 
 <div class="d-flex flex-column flex-md-row" id="chat-root" style="height: 100vh; background-color: #f8f9fa;">
@@ -26,6 +44,18 @@
 
     <!-- Khu vực chat chính -->
     <div class="flex-grow-1 d-flex flex-column position-relative" style="transition: all 0.3s ease; height: 100vh; min-width: 0; overflow: hidden;">
+        <!-- Loading Spinner Overlay -->
+        <div id="chat-loading-spinner"
+             style="display: none; z-index: 1000; top: 0; left: 0; opacity: 0; transition: opacity 0.2s ease; pointer-events: none;"
+             class="position-absolute w-100 h-100 d-flex align-items-center justify-content-center bg-white bg-opacity-75">
+            <div class="text-center">
+                <div class="spinner-border text-primary mb-3" role="status">
+                    <span class="visually-hidden">Đang tải...</span>
+                </div>
+                <p class="text-muted fw-semibold">Đang tải hội thoại...</p>
+            </div>
+        </div>
+        
         <button class="btn btn-outline-primary d-md-none mb-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileSidebar">
             <i class="fas fa-bars me-1"></i> Mở danh sách Chat
         </button>
@@ -329,20 +359,25 @@
         </div>
 
         <!-- Khu vực tin nhắn -->
-        <div wire:key="messages-container-{{ $this->selectedConversation->id }}" class="flex-grow-1 overflow-auto p-3 custom-scrollbar position-relative" wire:init="scrollToBottom" id="messages-container" style="background: linear-gradient(135deg,rgb(255, 255, 255) 0%,rgb(255, 255, 255) 100%); scroll-behavior: smooth;">
+        <div wire:key="messages-container-{{ $this->selectedConversation->id }}" class="flex-grow-1 overflow-auto p-3 custom-scrollbar position-relative" id="messages-container" style="background: linear-gradient(135deg,rgb(255, 255, 255) 0%,rgb(255, 255, 255) 100%); display: flex; flex-direction: column;">
+            
+            <!-- Wrapper để đẩy messages xuống dưới khi ít tin nhắn -->
             
             @if (empty($messages))
-            <div class="flex-grow-1 d-flex align-items-center justify-content-center" style="background: linear-gradient(135deg,rgb(255, 255, 255) 0%,rgb(255, 255, 255) 100%);">
-                <div class="text-center">
-                    <div class="bg-primary bg-opacity-10 rounded-circle mx-auto mb-4 d-flex align-items-center justify-content-center" style="width: 100px; height: 100px; animation: pulse 2s infinite;">
-                        <i class="fas fa-comments fa-3x text-primary"></i>
+            <div class="w-100 h-100 d-flex justify-content-center align-items-center">
+                <div class="flex-grow-1 d-flex align-items-center justify-content-center" style="background: linear-gradient(135deg,rgb(255, 255, 255) 0%,rgb(255, 255, 255) 100%);">
+                    <div class="text-center">
+                        <div class="bg-primary bg-opacity-10 rounded-circle mx-auto mb-4 d-flex align-items-center justify-content-center" style="width: 100px; height: 100px; animation: pulse 2s infinite;">
+                            <i class="fas fa-comments fa-3x text-primary"></i>
+                        </div>
+                        <h4 class="text-dark mb-3 fw-bold">Chưa có tin nhắn nào!</h4>
+                        <p class="text-muted mb-0">Nhắn tin ngay bây giờ...</p>
                     </div>
-                    <h4 class="text-dark mb-3 fw-bold">Chưa có tin nhắn nào!</h4>
-                    <p class="text-muted mb-0">Nhắn tin ngay bây giờ...</p>
                 </div>
             </div>
             @else
-
+            <div style="margin-top: auto; display: flex; flex-direction: column;">
+            
             @foreach($messages as $index => $message)
             @php
             $isCurrentUser = $message['sender_id'] == auth()->id();
@@ -453,7 +488,9 @@
             </div>
             @endforeach
 
+            </div><!-- End wrapper -->
             @endif
+            
         </div>
 
         <!-- Input tin nhắn -->
@@ -593,37 +630,49 @@
     let hasMoreMessages = true;
     let currentPage = 1;
 
-    document.addEventListener('livewire:initialized', () => {
-        // Scroll to bottom with smooth animation
-        Livewire.on('scroll-to-bottom', () => {
-            const container = document.getElementById('messages-container');
-            if (container) {
-                setTimeout(() => {
-                    container.scrollTo({
-                        top: container.scrollHeight,
-                        behavior: 'smooth'
-                    });
-                }, 100);
-            }
-        });
+    // Loading Spinner Functions
+    function showChatLoadingSpinner() {
+        const spinner = document.getElementById('chat-loading-spinner');
+        if (spinner) {
+            spinner.style.display = 'flex';
+            spinner.style.pointerEvents = 'auto';
+            setTimeout(() => {
+                spinner.style.opacity = '1';
+            }, 10);
+        }
+    }
 
-        // Scroll to bottom when new conversation selected
+    function hideChatLoadingSpinner() {
+        const spinner = document.getElementById('chat-loading-spinner');
+        if (spinner) {
+            spinner.style.opacity = '0';
+            spinner.style.pointerEvents = 'none';
+            setTimeout(() => {
+                spinner.style.display = 'none';
+            }, 200);
+        }
+    }
+
+    document.addEventListener('livewire:initialized', () => {
+
+        // Hide spinner when conversation loaded
         Livewire.on('conversation-selected', () => {
-            // Reset pagination ngay lập tức
+            // Reset pagination
             currentPage = 1;
             hasMoreMessages = true;
             isLoadingMessages = false;
             
+            // Đợi messages render xong, scroll xuống bottom, rồi tắt spinner
             setTimeout(() => {
                 const container = document.getElementById('messages-container');
                 if (container) {
-                    // Scroll to bottom
-                    container.scrollTo({
-                        top: container.scrollHeight,
-                        behavior: 'smooth'
-                    });
+                    // Scroll ngay xuống dưới (instant, không smooth)
+                    container.scrollTop = container.scrollHeight;
                 }
-            }, 150);
+                
+                // Tắt spinner ngay sau khi scroll
+                hideChatLoadingSpinner();
+            }, 300);
         });
 
         // Load more messages when scrolling to top
