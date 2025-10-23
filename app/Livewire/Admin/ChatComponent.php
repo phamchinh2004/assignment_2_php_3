@@ -11,9 +11,10 @@ use App\Models\Conversation;
 use App\Models\Message;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Livewire\Attributes\On;
 use Livewire\WithFileUploads;
-use Str;
 
 
 class ChatComponent extends Component
@@ -33,6 +34,7 @@ class ChatComponent extends Component
     public $hasMoreMessages = true;
     public $searchTerm = '';
     public $maxMessageLength = 1000;
+    public $staffUsersUpdateKey = 0; // Key để force re-render
     protected $listeners = ['message-received' => 'messageReceived'];
 
     public function mount()
@@ -109,45 +111,74 @@ class ChatComponent extends Component
         $currentUserId = Auth::id();
         
         $staffData = User::where('role', 'staff')
-            ->with([
-                'invitedUsers' => function ($query) {
-                    $query->where('role', 'member')
-                        ->with(['latestConversation.messages']);
-                }
-            ])
+            ->orderBy('id', 'asc')
             ->get();
 
-        // Tạo collection mới để đảm bảo reference được cập nhật đúng
-        $this->staffUsers = collect();
+        // Tạo array mới hoàn toàn
+        $staffArray = [];
 
         foreach ($staffData as $staff) {
-            // Tính unread_count cho mỗi user
-            foreach ($staff->invitedUsers as $user) {
-                if ($user->latestConversation) {
-                    $unreadCount = Message::where('conversation_id', $user->latestConversation->id)
+            // Load tất cả invited users của staff này
+            $users = User::where('role', 'member')
+                ->where('referrer_id', $staff->id)
+                ->get();
+            
+            $usersArray = [];
+            
+            foreach ($users as $user) {
+                // Fresh load latest conversation
+                $latestConv = Conversation::where('user_id', $user->id)
+                    ->orderBy('updated_at', 'desc')
+                    ->with('messages')
+                    ->first();
+                
+                $userData = [
+                    'id' => $user->id,
+                    'full_name' => $user->full_name,
+                    'username' => $user->username,
+                    'avatar' => $user->avatar,
+                    'last_seen' => $user->last_seen,
+                    'referrer_id' => $user->referrer_id,
+                    'latest_conversation' => null,
+                    'conv_updated_at_timestamp' => 0,
+                    '_user_model' => $user, // Lưu model để gọi methods
+                ];
+                
+                if ($latestConv) {
+                    $unreadCount = Message::where('conversation_id', $latestConv->id)
                         ->where('sender_id', '!=', $currentUserId)
                         ->where('is_read', 0)
                         ->count();
-                    $user->latestConversation->unread_count = $unreadCount;
+                    
+                    $userData['latest_conversation'] = [
+                        'id' => $latestConv->id,
+                        'updated_at' => $latestConv->updated_at,
+                        'unread_count' => $unreadCount,
+                        'messages' => $latestConv->messages->toArray(),
+                    ];
+                    $userData['conv_updated_at_timestamp'] = $latestConv->updated_at->timestamp;
                 }
+                
+                $usersArray[] = $userData;
             }
             
-            // Sắp xếp invitedUsers
-            $sortedUsers = $staff->invitedUsers
-                ->sortByDesc(function ($user) {
-                    if ($user->latestConversation) {
-                        return $user->latestConversation->updated_at;
-                    }
-                    return '1900-01-01 00:00:00';
-                })
-                ->values();
-
-            // Gán lại sorted users cho staff
-            $staff->setRelation('invitedUsers', $sortedUsers);
-
-            // Thêm vào collection mới
-            $this->staffUsers->push($staff);
+            // Sắp xếp users theo timestamp
+            usort($usersArray, function($a, $b) {
+                return $b['conv_updated_at_timestamp'] - $a['conv_updated_at_timestamp'];
+            });
+            
+            $staffArray[] = [
+                'id' => $staff->id,
+                'full_name' => $staff->full_name,
+                'invited_users' => $usersArray,
+            ];
         }
+        
+        // Gán array mới hoàn toàn
+        $this->staffUsers = $staffArray;
+        
+        // Tăng key để force re-render trong view
+        $this->staffUsersUpdateKey++;
     }
 
 
@@ -155,6 +186,8 @@ class ChatComponent extends Component
 
     public function selectConversation($conversationId)
     {
+        // Reset state trước khi chọn conversation mới
+        $this->messages = [];
         $this->selectedConversationId = $conversationId;
         $this->currentPage = 1;
         $this->hasMoreMessages = true;
@@ -162,14 +195,43 @@ class ChatComponent extends Component
         $this->loadMessages();
         $this->markMessagesAsRead($conversationId);
         
-        // Reload conversations để cập nhật unread_count
-        $this->loadConversations();
-        if (Auth::user()->role === 'admin') {
-            $this->loadStaffUsersAlternative();
-        }
+        // Chỉ cập nhật unread count cho conversation này, không reload toàn bộ sidebar
+        // Sidebar sẽ tự cập nhật qua WebSocket events khi có tin nhắn mới
+        $this->updateConversationUnreadCount($conversationId);
         
         $this->dispatch('join-conversation-channel', conversationId: $conversationId);
         $this->dispatch('conversation-selected');
+    }
+    
+    /**
+     * Cập nhật unread count cho một conversation cụ thể
+     */
+    private function updateConversationUnreadCount($conversationId)
+    {
+        // Tìm conversation trong danh sách hiện tại và set unread_count = 0
+        foreach ($this->conversations as $conv) {
+            if ($conv->id == $conversationId) {
+                $conv->unread_count = 0;
+                break;
+            }
+        }
+        
+        // Nếu là admin, cập nhật trong staffUsers (array format)
+        if (Auth::user()->role === 'admin' && is_array($this->staffUsers)) {
+            foreach ($this->staffUsers as &$staff) {
+                if (isset($staff['invited_users']) && is_array($staff['invited_users'])) {
+                    foreach ($staff['invited_users'] as &$user) {
+                        if (isset($user['latest_conversation']) && 
+                            $user['latest_conversation']['id'] == $conversationId) {
+                            $user['latest_conversation']['unread_count'] = 0;
+                            break 2; // Break cả 2 vòng lặp
+                        }
+                    }
+                }
+            }
+            // Reassign để Livewire detect change
+            $this->staffUsers = $this->staffUsers;
+        }
     }
 
     /**
@@ -240,6 +302,41 @@ class ChatComponent extends Component
             ]);
         }
     }
+
+    public function deleteConversation()
+    {
+        if (!$this->selectedConversation) {
+            return false;
+        }
+
+        try {
+            // Lưu conversation để xóa
+            $conversationToDelete = $this->selectedConversation;
+            
+            // Reset state trước khi xóa
+            $this->messages = [];
+            $this->selectedConversationId = null;
+            $this->messageText = '';
+            
+            // Xóa tất cả messages trong conversation
+            $conversationToDelete->messages()->delete();
+            
+            // Xóa luôn bản ghi conversation
+            $conversationToDelete->delete();
+            
+            // Reload danh sách
+            $this->loadConversations();
+            if (Auth::user()->role === 'admin') {
+                $this->loadStaffUsersAlternative();
+            }
+            
+            return true;
+        } catch (\Throwable $e) {
+            Log::error('Error deleting conversation: ' . $e->getMessage());
+            return false;
+        }
+    }
+
     #[On('change-status-user')]
     public function changeStatusUser($id)
     {
@@ -305,7 +402,7 @@ class ChatComponent extends Component
             ->get();
 
         // Log để debug
-        \Log::info('Loading messages', [
+        Log::info('Loading messages', [
             'page' => $page,
             'total_messages' => $totalMessages,
             'loaded_count' => $messages->count(),
@@ -356,10 +453,10 @@ class ChatComponent extends Component
 
     public function loadMoreMessages($page)
     {
-        \Log::info('loadMoreMessages called', ['page' => $page, 'hasMore' => $this->hasMoreMessages]);
+        Log::info('loadMoreMessages called', ['page' => $page, 'hasMore' => $this->hasMoreMessages]);
 
         if (!$this->hasMoreMessages || !$this->selectedConversation) {
-            \Log::info('Cannot load more messages', ['hasMore' => $this->hasMoreMessages, 'hasConversation' => !!$this->selectedConversation]);
+            Log::info('Cannot load more messages', ['hasMore' => $this->hasMoreMessages, 'hasConversation' => !!$this->selectedConversation]);
             return;
         }
 
@@ -393,11 +490,22 @@ class ChatComponent extends Component
             return;
         }
 
+        // Reset state trước
+        $this->messages = [];
+        
         // Tìm hoặc tạo conversation
         $conversation = Conversation::firstOrCreate([
             'user_id' => $userId,
             'staff_id' => $actualStaffId
         ]);
+        
+        // Nếu tạo mới conversation, cần reload sidebar để hiển thị
+        if ($conversation->wasRecentlyCreated) {
+            $this->loadConversations();
+            if (Auth::user()->role === 'admin') {
+                $this->loadStaffUsersAlternative();
+            }
+        }
 
         $this->selectConversation($conversation->id);
     }
@@ -422,7 +530,7 @@ class ChatComponent extends Component
                 'type' => $imagePath ? 'image' : 'text'
             ]);
             $message->load('sender');
-            $this->selectedConversation->touch();
+            // Conversation tự động được touch qua $touches trong Message model
 
             $messageArray = [
                 'id' => $message->id,

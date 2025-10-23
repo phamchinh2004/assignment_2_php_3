@@ -146,6 +146,11 @@
         color: white;
     }
     
+    .btn-info-modern {
+        background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
+        color: white;
+    }
+    
     .btn-create {
         background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
         color: white;
@@ -199,4 +204,333 @@
         flex-wrap: wrap;
         justify-content: center;
         gap: 0.25rem;
+    }
+    
+    /* Deposit Modal Styles */
+    .deposit-modal {
+        border: none;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    }
+    
+    .modal-header-gradient {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1.5rem;
+        border: none;
+    }
+    
+    .modal-header-gradient .modal-title {
+        font-weight: 700;
+        font-size: 1.25rem;
+    }
+    
+    .user-info-card {
+        background: linear-gradient(135deg, #f8f9ff 0%, #fff5f5 100%);
+        border-radius: 15px;
+        padding: 1.25rem;
+        border-left: 4px solid #667eea;
+    }
+    
+    .user-avatar {
+        width: 50px;
+        height: 50px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+    }
+    
+    .user-name {
+        font-weight: 700;
+        color: #2d3748;
+        margin: 0;
+    }
+    
+    #depositAmount {
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        font-size: 1.5rem;
+        font-weight: 700;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+    
+    #depositAmount:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    
+    .input-group-text {
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        font-weight: 600;
+    }
+    
+    .input-group-lg .input-group-text {
+        padding: 0.75rem 1rem;
+    }
+    
+    .amount-preview {
+        font-size: 0.9rem;
+        color: #667eea;
+        font-weight: 600;
+        text-align: center;
+        min-height: 24px;
+    }
+    
+    .deposit-type-toggle {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+    
+    .deposit-type-toggle .btn {
+        border-radius: 12px;
+        padding: 1rem;
+        border-width: 2px;
+        transition: all 0.3s ease;
+        text-align: left;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .deposit-type-toggle .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .deposit-type-toggle .btn-check:checked + .btn {
+        transform: scale(1.05);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    }
+    
+    .deposit-type-toggle .btn-outline-success:hover,
+    .deposit-type-toggle .btn-check:checked + .btn-outline-success {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        border-color: #11998e;
+        color: white;
+    }
+    
+    .deposit-type-toggle .btn-outline-warning:hover,
+    .deposit-type-toggle .btn-check:checked + .btn-outline-warning {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        border-color: #f093fb;
+        color: white;
+    }
+    
+    .summary-card {
+        background: linear-gradient(135deg, #f8f9ff 0%, #fff 100%);
+        border: 2px solid #e2e8f0;
+        border-radius: 15px;
+        padding: 1.25rem;
+        margin-top: 1.5rem;
+    }
+    
+    .summary-card hr {
+        border-top: 2px dashed #cbd5e0;
+    }
+    
+    .btn-success-gradient {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        border: none;
+        color: white;
+        font-weight: 600;
+        border-radius: 12px;
+        padding: 0.75rem 2rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(56, 239, 125, 0.3);
+    }
+    
+    .btn-success-gradient:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(56, 239, 125, 0.4);
+        background: linear-gradient(135deg, #0d7f74 0%, #2dd363 100%);
+    }
+    
+    .btn-secondary {
+        border-radius: 12px;
+        padding: 0.75rem 2rem;
+        font-weight: 600;
+    }
+    
+    /* Confirm Modal */
+    .confirm-modal {
+        border: none;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    }
+    
+    .confirm-icon {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        animation: scaleIn 0.3s ease;
+    }
+    
+    .confirm-icon i {
+        font-size: 2.5rem;
+        color: white;
+    }
+    
+    .btn-primary-gradient {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        color: white;
+        font-weight: 600;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+    
+    .btn-primary-gradient:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        background: linear-gradient(135deg, #5568d3 0%, #6a3f8f 100%);
+    }
+    
+    /* Success Modal */
+    .success-modal {
+        border: none;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    }
+    
+    .success-icon {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto;
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        animation: scaleIn 0.3s ease, pulse 1s ease infinite;
+    }
+    
+    .success-icon i {
+        font-size: 2.5rem;
+        color: white;
+    }
+    
+    /* Error Modal */
+    .error-modal {
+        border: none;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    }
+    
+    .error-icon {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto;
+        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        animation: shake 0.5s ease;
+    }
+    
+    .error-icon i {
+        font-size: 2.5rem;
+        color: white;
+    }
+    
+    .btn-danger-gradient {
+        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        border: none;
+        color: white;
+        font-weight: 600;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(250, 112, 154, 0.3);
+    }
+    
+    .btn-danger-gradient:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(250, 112, 154, 0.4);
+        background: linear-gradient(135deg, #e8618a 0%, #f0d938 100%);
+    }
+    
+    /* Animations */
+    @keyframes scaleIn {
+        from {
+            transform: scale(0);
+            opacity: 0;
+        }
+        to {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+    
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+        20%, 40%, 60%, 80% { transform: translateX(5px); }
+    }
+    
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+    
+    /* Fix z-index cho modal */
+    .modal {
+        z-index: 1055 !important;
+    }
+    
+    .modal-backdrop {
+        z-index: 1050 !important;
+    }
+    
+    /* Đảm bảo multiple modals không conflict */
+    .modal.show {
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    /* Prevent body scroll khi modal mở */
+    body.modal-open {
+        overflow: hidden !important;
+    }
+    
+    /* User Row Highlight Animation */
+    .user-row {
+        transition: all 0.3s ease;
+        scroll-margin-top: 100px; /* Offset cho header khi scroll */
+    }
+    
+    .user-row.highlight {
+        background: linear-gradient(135deg, #fff3cd 0%, #fffaeb 100%) !important;
+        transform: scale(1.02);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3) !important;
+    }
+    
+    @keyframes highlightPulse {
+        0%, 100% {
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+        50% {
+            box-shadow: 0 12px 35px rgba(102, 126, 234, 0.5);
+        }
+    }
+    
+    .user-row.highlight {
+        animation: highlightPulse 1.5s ease-in-out;
     }

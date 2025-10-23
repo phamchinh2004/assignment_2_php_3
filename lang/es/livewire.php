@@ -1,7 +1,7 @@
 <?php
 return [
     "VuiLongNhapTinNhan" => "Por favor, ingresa un mensaje.",
-    "TinNhanKhongDuocVuotQua200KyTu" => "El mensaje no debe exceder los 200 caracteres.",
+    "TinNhanKhongDuocVuotQua500KyTu" => "El mensaje no debe exceder los 500 caracteres.",
     "ChiChapNhanTepHinhAnh" => "El mensaje no debe exceder ",
 
 ];

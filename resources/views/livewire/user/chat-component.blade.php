@@ -33,7 +33,7 @@
         </div>
 
         <!-- Danh sách tin nhắn -->
-        <div class="p-3 position-relative" style="height: 300px; overflow-y: auto; background: #f8f9fa;"
+        <div class="p-3 position-relative" style="height: 300px; overflow-y: auto; overflow-x: hidden; background: #f8f9fa;"
             id="chat-messages-container">
             <!-- Loading indicator cho load more -->
             @if($isLoading)
@@ -78,10 +78,10 @@
 
                 @if($isCurrentUser)
                     <!-- Tin nhắn của user -->
-                    <div class="d-flex justify-content-end mb-3" wire:key="msg-{{ is_array($msg) ? $msg['id'] : $msg->id }}">
-                        <div class="d-flex align-items-end" style="max-width: 100%;">
-                            <div class="me-2" style="display: flex; flex-direction: column; align-items: flex-end;">
-                                <div class="message-bubble text-start" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-size: 14px; line-height: 1.4; word-wrap: break-word; overflow-wrap: break-word; white-space: pre-line; display: inline-block; padding: 6px 12px; margin: 0; {{ $type === 'text' ? 'width: fit-content; max-width: 100%;' : 'width: 200px; max-width: 200px;' }} {{ $type === 'text' ? 'border-radius: 16px;' : 'border-radius: 15px;' }}">@if($type === 'image')<img src="{{ Storage::url($imagePath) }}" alt="Sent image" class="img-fluid rounded" style="width: 100%; max-width: 200px; max-height: 200px; cursor: pointer;" onclick="openImageModal(this.src)">@else{{ trim($message) }}@endif</div>
+                    <div class="d-flex justify-content-end mb-3" wire:key="msg-{{ is_array($msg) ? $msg['id'] : $msg->id }}" style="min-width: 0;">
+                        <div class="d-flex align-items-end" style="max-width: 90%; min-width: 0;">
+                            <div class="me-2" style="display: flex; flex-direction: column; align-items: flex-end; min-width: 0; max-width: 100%;">
+                                <div class="message-bubble text-start" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-size: 13px; line-height: 1.4; word-wrap: break-word; overflow-wrap: break-word; word-break: break-word; white-space: pre-line; display: inline-block; padding: 6px 12px; margin: 0; {{ $type === 'text' ? 'width: fit-content; max-width: 100%;' : 'width: 200px; max-width: 200px;' }} {{ $type === 'text' ? 'border-radius: 16px;' : 'border-radius: 15px;' }}">@if($type === 'image')<img src="{{ Storage::url($imagePath) }}" alt="Sent image" class="img-fluid rounded" style="width: 100%; max-width: 200px; max-height: 200px; cursor: pointer;" onclick="openImageModal(this.src)">@else{{ trim($message) }}@endif</div>
                                 <div class="text-end mt-1 d-flex align-items-center justify-content-end gap-1" style="font-size: 10px; color: #6c757d;">
                                     <span>{{ \Carbon\Carbon::parse($createdAt)->setTimezone('Asia/Ho_Chi_Minh')->format('d/m/Y H:i') }}</span>
                                     <span data-message-id="{{ $messageId }}" data-seen-status="{{ $isRead ? 'true' : 'false' }}">
@@ -99,12 +99,12 @@
                     </div>
                 @else
                     <!-- Tin nhắn của support -->
-                    <div class="d-flex justify-content-start mb-3" wire:key="msg-{{ is_array($msg) ? $msg['id'] : $msg->id }}">
-                        <div class="d-flex align-items-end" style="max-width: 100%;">
+                    <div class="d-flex justify-content-start mb-3" wire:key="msg-{{ is_array($msg) ? $msg['id'] : $msg->id }}" style="min-width: 0;">
+                        <div class="d-flex align-items-end" style="max-width: 90%; min-width: 0;">
                             <img src="https://ui-avatars.com/api/?name=Support&background=28a745&color=ffffff&size=28&rounded=true&bold=true"
                                 alt="Support" class="rounded-circle flex-shrink-0" width="28" height="28">
-                            <div class="ms-2" style="display: flex; flex-direction: column; align-items: flex-start;">
-                                <div class="message-bubble rounded-4 position-relative member-message text-start" style="transition: all 0.2s ease; border: 1px solid #e9ecef; display: inline-block; background: white; line-height: 1.4; padding: 6px 12px; margin: 0; {{ $type === 'text' ? 'width: fit-content; max-width: 100%;' : 'width: 200px; max-width: 200px;' }} word-wrap: break-word; overflow-wrap: break-word; white-space: pre-line;">@if($type === 'image')<img src="{{ Storage::url($imagePath) }}" alt="Received image" class="img-fluid rounded" style="width: 100%; max-width: 200px; max-height: 200px; cursor: pointer;" onclick="openImageModal(this.src)">@else{{ trim($message) }}@endif</div>
+                            <div class="ms-2" style="display: flex; flex-direction: column; align-items: flex-start; min-width: 0; max-width: 100%;">
+                                <div class="message-bubble rounded-4 position-relative member-message text-start" style="transition: all 0.2s ease; border: 1px solid #e9ecef; display: inline-block; background: white; font-size: 13px; line-height: 1.4; padding: 6px 12px; margin: 0; {{ $type === 'text' ? 'width: fit-content; max-width: 100%;' : 'width: 200px; max-width: 200px;' }} word-wrap: break-word; overflow-wrap: break-word; word-break: break-word; white-space: pre-line;">@if($type === 'image')<img src="{{ Storage::url($imagePath) }}" alt="Received image" class="img-fluid rounded" style="width: 100%; max-width: 200px; max-height: 200px; cursor: pointer;" onclick="openImageModal(this.src)">@else{{ trim($message) }}@endif</div>
                                 <div class="mt-1 ps-2" style="font-size: 10px; color: #6c757d;text-align:left;">
                                     {{__('home.HoTro') . \Carbon\Carbon::parse($createdAt)->setTimezone('Asia/Ho_Chi_Minh')->format('d/m/Y H:i') }}
                                 </div>
@@ -172,7 +172,7 @@
                 <textarea wire:model="newMessage" class="form-control border-0 bg-transparent"
                     placeholder="{{__('home.NhapTinNhanCuaBan')}}" id="chat-input-field" autocomplete="off"
                     maxlength="{{ $maxMessageLength }}" rows="1"
-                    style="font-size: 14px; resize: none; overflow-y: hidden; max-height: 100px; padding: 5px 0; line-height: 1.5;"
+                    style="font-size: 13px; resize: none; overflow-y: hidden; max-height: 100px; padding: 5px 0; line-height: 1.5;"
                     x-on:input="
                         $el.style.height = 'auto';
                         $el.style.height = Math.min($el.scrollHeight, 100) + 'px';

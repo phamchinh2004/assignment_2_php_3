@@ -25,6 +25,11 @@ class Message extends Model
         'updated_at' => 'datetime',
     ];
 
+    /**
+     * Tự động cập nhật updated_at của conversation khi message thay đổi
+     */
+    protected $touches = ['conversation'];
+
     public function conversation()
     {
         return $this->belongsTo(Conversation::class);

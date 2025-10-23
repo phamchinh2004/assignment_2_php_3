@@ -113,20 +113,17 @@ class User extends Authenticatable
         return $this->hasOne(Conversation::class, 'user_id')
             ->latestOfMany('updated_at');
     }
+    /**
+     * Get invited users sorted by latest conversation updated_at
+     * Note: Sorting is done in collection after query to avoid join conflicts
+     */
     public function invitedUsersOrdered()
     {
+        // Load users với latestConversation, sort sẽ được xử lý trong collection
         return $this->hasMany(User::class, 'referrer_id')
             ->where('role', 'member')
-            ->with('latestConversation')
-            ->leftJoin('conversations', 'conversations.user_id', '=', 'users.id')
-            ->selectRaw('users.id,users.full_name,users.username,users.role, MAX(conversations.updated_at) as last_message_time')
-            ->groupBy(
-                'users.id',
-                'users.full_name',
-                'users.username',
-                'users.role',
-            )
-            ->orderByDesc('last_message_time');
+            ->with(['latestConversation.messages'])
+            ->orderBy('created_at', 'desc'); // Base order nếu không có conversation
     }
 
     /**
@@ -282,6 +279,7 @@ class User extends Authenticatable
     {
         return $this->frozen_orders()
             ->where('is_frozen', true)
+            ->where('spun', true)
             ->with('order')
             ->get()
             ->sum(function($frozenOrder) {
@@ -317,6 +315,7 @@ class User extends Authenticatable
             'required_deposit' => $this->required_deposit_amount,
             'frozen_orders_count' => $this->frozen_orders()
                 ->where('is_frozen', true)
+                ->where('spun', true)
                 ->whereNotNull('penalty_amount')
                 ->where('penalty_amount', '>', 0)
                 ->count()
@@ -331,6 +330,7 @@ class User extends Authenticatable
     {
         return $this->frozen_orders()
             ->where('is_frozen', true)
+            ->where('spun', true)
             ->whereNotNull('custom_price')
             ->exists();
     }
@@ -342,6 +342,7 @@ class User extends Authenticatable
     {
         return $this->frozen_orders()
             ->where('is_frozen', true)
+            ->where('spun', true)
             ->whereNotNull('custom_price')
             ->with('order')
             ->get()
@@ -372,7 +373,7 @@ class User extends Authenticatable
             'total_value' => $this->total_special_orders_value,
             'current_balance' => $this->balance,
             'required_deposit' => $this->required_deposit_for_special_orders,
-            'orders_count' => $this->frozen_orders()->where('is_frozen', true)->whereNotNull('custom_price')->count(),
+            'orders_count' => $this->frozen_orders()->where('is_frozen', true)->where('spun', true)->whereNotNull('custom_price')->count(),
             'bonus_amount' => $this->total_special_orders_value * 0.1 // 10% thưởng
         ];
     }

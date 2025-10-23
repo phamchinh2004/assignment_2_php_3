@@ -22,6 +22,18 @@
     <!-- Notification library -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.css" rel="stylesheet" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet" />
+    
+    <style>
+        /* Làm toastr notification có thể click được */
+        #toast-container > div {
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+        
+        #toast-container > div:hover {
+            transform: scale(1.02);
+        }
+    </style>
 
     <!-- Slimselect -->
     <link href="https://unpkg.com/slim-select@latest/dist/slimselect.css" rel="stylesheet">
@@ -174,10 +186,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.js.map"></script>
     <!-- Notification function -->
     <script>
-        function notification(type, data, title, timeOut = "10000") {
+        function notification(type, data, title, timeOut = "10000", url = null) {
             $(document).ready();
             $(function() {
-                Command: toastr[type](data, title);
                 toastr.options = {
                     closeButton: true,
                     debug: false,
@@ -185,7 +196,7 @@
                     progressBar: true,
                     positionClass: "toast-top-right",
                     preventDuplicates: true,
-                    onclick: null,
+                    onclick: url ? function() { window.location.href = url; } : null,
                     showDuration: "300",
                     hideDuration: "1000",
                     timeOut: timeOut,
@@ -195,6 +206,8 @@
                     showMethod: "fadeIn",
                     hideMethod: "fadeOut",
                 };
+                
+                Command: toastr[type](data, title);
             });
         };
         const csrf = "{{ csrf_token() }}";
@@ -287,7 +300,7 @@
         }
 
         // Function hiển thị desktop notification
-        function showDesktopNotification(title, body, icon = '/images/logo.png', soundFile = 'notification.mp3') {
+        function showDesktopNotification(title, body, icon = '/images/logo.png', soundFile = 'notification.mp3', chatUrl = null) {
             // Kiểm tra browser support
             if (!("Notification" in window)) {
                 console.log("Browser không hỗ trợ Desktop Notifications");
@@ -298,13 +311,13 @@
 
             // Nếu đã có permission
             if (Notification.permission === "granted") {
-                createNotification(title, body, icon, soundFile);
+                createNotification(title, body, icon, soundFile, chatUrl);
             } 
             // Nếu chưa từ chối, yêu cầu permission
             else if (Notification.permission !== "denied") {
                 Notification.requestPermission().then(permission => {
                     if (permission === "granted") {
-                        createNotification(title, body, icon, soundFile);
+                        createNotification(title, body, icon, soundFile, chatUrl);
                     } else {
                         // Nếu từ chối, vẫn phát âm thanh
                         playNotificationSound(soundFile);
@@ -318,7 +331,7 @@
         }
 
         // Function tạo notification
-        function createNotification(title, body, icon, soundFile = 'notification.mp3') {
+        function createNotification(title, body, icon, soundFile = 'notification.mp3', chatUrl = null) {
             const notification = new Notification(title, {
                 body: body,
                 icon: icon,
@@ -328,9 +341,12 @@
                 silent: true // Không dùng âm thanh mặc định, chúng ta tự phát
             });
 
-            // Click notification để focus window
+            // Click notification để chuyển đến chat
             notification.onclick = function() {
                 window.focus();
+                if (chatUrl) {
+                    window.location.href = chatUrl;
+                }
                 notification.close();
             };
 
@@ -369,9 +385,12 @@
                                     : "Đã gửi hình ảnh";
                                 const title = e.message.sender.full_name + ' đã gửi tin nhắn';
                                 
-                                // Hiển thị cả toastr và desktop notification
-                                notification('success', messageText, title, 10000);
-                                showDesktopNotification(title, messageText, '/images/logo.png', 'notification.mp3');
+                                // Tạo URL chuyển đến chat với user đó
+                                const chatUrl = '{{ route("chat-panel") }}#user-' + e.message.sender_id;
+                                
+                                // Hiển thị cả toastr và desktop notification (có thể click để chuyển đến chat)
+                                notification('success', messageText, title, 10000, chatUrl);
+                                showDesktopNotification(title, messageText, '/images/logo.png', 'notification.mp3', chatUrl);
                             }
                         })
                         .listen('.StaffLocked', function(e) {

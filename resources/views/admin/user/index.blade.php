@@ -66,7 +66,7 @@ Danh sách người dùng
                             }
                         }
                         @endphp
-                        <tr>
+                        <tr id="user-{{ $item->id }}" class="user-row">
                             <td class="text-center">
                                 <span class="badge badge-primary-modern text-dark">{{$index+1}}</span>
                             </td>
@@ -169,6 +169,12 @@ Danh sách người dùng
                             </td>
                             <td>
                                 <div class="action-container">
+                                    <a href="{{ route('chat-panel') }}#user-{{ $item->id }}" 
+                                       class="btn-action btn-info-modern"
+                                       title="Nhắn tin">
+                                        <i class="fas fa-comment-dots"></i>
+                                    </a>
+                                    
                                     @if($item->status=="activated")
                                     <a href="{{ route('user.change.status',['user'=>$item->id]) }}" 
                                        class="btn-action btn-danger-modern" 
@@ -225,4 +231,167 @@ Danh sách người dùng
     </div>
 </div>
 <!-- /.container-fluid -->
+
+<!-- Modal Cộng Tiền -->
+<div class="modal fade" id="depositModal" tabindex="-1" aria-labelledby="depositModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content deposit-modal">
+            <div class="modal-header-gradient">
+                <h5 class="modal-title" id="depositModalLabel">
+                    <i class="fas fa-wallet me-2"></i>Nạp tiền cho khách hàng
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <!-- User Info -->
+                <div class="user-info-card mb-4">
+                    <div class="d-flex align-items-center">
+                        <div class="user-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="mb-1 user-name" id="modalUserName">---</h6>
+                            <p class="mb-0 text-muted small">
+                                <span id="modalUserUsername">---</span> • 
+                                Số dư hiện tại: <strong class="text-primary" id="modalUserBalance">0$</strong>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Amount Input -->
+                <div class="mb-4">
+                    <label for="depositAmount" class="form-label fw-semibold">
+                        <i class="fas fa-dollar-sign text-success me-1"></i>Số tiền nạp (USD)
+                    </label>
+                    <div class="input-group input-group-lg">
+                        <span class="input-group-text bg-light">
+                            <i class="fas fa-money-bill-wave text-success"></i>
+                        </span>
+                        <input type="number" 
+                               class="form-control form-control-lg" 
+                               id="depositAmount" 
+                               placeholder="Nhập số tiền (VD: 100)" 
+                               min="0" 
+                               step="0.01"
+                               autocomplete="off">
+                        <span class="input-group-text bg-light">$</span>
+                    </div>
+                    <div class="mt-2 amount-preview" id="amountPreview"></div>
+                </div>
+
+                <!-- Deposit Type Toggle -->
+                <div class="mb-4">
+                    <label class="form-label fw-semibold mb-3">
+                        <i class="fas fa-tags text-info me-1"></i>Loại nạp tiền
+                    </label>
+                    <div class="deposit-type-toggle">
+                        <input type="radio" class="btn-check" name="depositType" id="depositTypeReal" value="real" checked>
+                        <label class="btn btn-outline-success" for="depositTypeReal">
+                            <i class="fas fa-credit-card me-2"></i>
+                            <div>
+                                <div class="fw-bold">Tiền nạp thực</div>
+                                <small class="d-block">Khách hàng nạp</small>
+                            </div>
+                        </label>
+
+                        <input type="radio" class="btn-check" name="depositType" id="depositTypeBonus" value="bonus">
+                        <label class="btn btn-outline-warning" for="depositTypeBonus">
+                            <i class="fas fa-gift me-2"></i>
+                            <div>
+                                <div class="fw-bold">Tiền thưởng</div>
+                                <small class="d-block">Hệ thống tặng</small>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Summary Card -->
+                <div class="summary-card">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-muted">Số dư hiện tại:</span>
+                        <strong id="summaryCurrentBalance">0$</strong>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-muted">Số tiền nạp:</span>
+                        <strong class="text-success" id="summaryDepositAmount">+0$</strong>
+                    </div>
+                    <hr class="my-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="fw-bold">Số dư sau nạp:</span>
+                        <strong class="text-primary fs-5" id="summaryNewBalance">0$</strong>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 pt-0 px-4 pb-4">
+                <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Hủy
+                </button>
+                <button type="button" class="btn btn-success-gradient px-4" id="confirmDepositBtn">
+                    <i class="fas fa-check me-2"></i>Xác nhận nạp tiền
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Xác nhận -->
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content confirm-modal">
+            <div class="modal-body text-center p-4">
+                <div class="confirm-icon mb-3">
+                    <i class="fas fa-question-circle"></i>
+                </div>
+                <h5 class="mb-3 fw-bold" id="confirmTitle">Xác nhận nạp tiền</h5>
+                <p class="text-muted mb-4" id="confirmMessage">Bạn chắc chắn muốn thực hiện?</p>
+                <div class="d-flex gap-2 justify-content-center">
+                    <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Hủy
+                    </button>
+                    <button type="button" class="btn btn-primary-gradient px-4" id="confirmYesBtn">
+                        <i class="fas fa-check me-2"></i>Xác nhận
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Thành công -->
+<div class="modal fade" id="successModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content success-modal">
+            <div class="modal-body text-center p-4">
+                <div class="success-icon mb-3">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <h5 class="mb-3 fw-bold text-success">Thành công!</h5>
+                <p class="text-muted mb-4" id="successMessage">Nạp tiền thành công</p>
+                <button type="button" class="btn btn-success-gradient px-4" id="successOkBtn">
+                    <i class="fas fa-check me-2"></i>Đồng ý
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Lỗi -->
+<div class="modal fade" id="errorModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content error-modal">
+            <div class="modal-body text-center p-4">
+                <div class="error-icon mb-3">
+                    <i class="fas fa-exclamation-circle"></i>
+                </div>
+                <h5 class="mb-3 fw-bold text-danger">Lỗi!</h5>
+                <p class="text-muted mb-4" id="errorMessage">Có lỗi xảy ra</p>
+                <button type="button" class="btn btn-danger-gradient px-4" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Đóng
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @endsection
