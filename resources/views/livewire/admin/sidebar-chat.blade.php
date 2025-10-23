@@ -60,17 +60,21 @@
                         </div>
                         <div class="flex-grow-1 min-width-0">
                             <div class="d-flex align-items-center justify-content-between mb-1">
-                                <div class="{{ $hasUnread ? 'fw-bold' : 'fw-semibold' }} text-dark text-truncate">
+                                <div class="{{ $hasUnread ? 'fw-bold' : 'fw-semibold' }} text-dark text-truncate" style="font-size: 13px;">
                                     @if($hasPenalty)
                                         <i class="fas fa-exclamation-triangle text-warning me-1" title="Đang bị phạt"></i>
                                     @endif
-                                    {{ $conversation->user->full_name . " (" . $conversation->user->username . ")"}}
+                                    {{ $conversation->user->full_name }}
                                 </div>
                                 @if($hasUnread)
-                                    <span class="badge bg-danger rounded-pill ms-2" style="font-size: 10px;">
+                                    <span class="badge bg-danger rounded-pill ms-2" style="font-size: 9px;">
                                         {{ $unreadCount > 99 ? '99+' : $unreadCount }}
                                     </span>
                                 @endif
+                            </div>
+                            <div class="text-muted small text-truncate mb-1" style="font-size: 10px;">
+                                <i class="fas fa-user me-1" style="font-size: 8px;"></i>
+                                {{ $conversation->user->username }}
                             </div>
                             <div class="{{ $hasUnread ? 'fw-bold' : '' }} text-muted small text-truncate d-flex align-items-center mb-1">
                                 @if($conversation->messages->last())
@@ -118,8 +122,8 @@
                                 {{ substr($staff['full_name'], 0, 1) }}
                             </div>
                             <div class="flex-grow-1">
-                                <div class="fw-semibold text-dark">{{ $staff['full_name'] }}</div>
-                                <div class="text-muted" style="font-size: 12px;">
+                                <div class="fw-semibold text-dark" style="font-size: 13px;">{{ $staff['full_name'] }}</div>
+                                <div class="text-muted" style="font-size: 11px;">
                                     <i class="fas fa-users me-1"></i>{{ count($staff['invited_users']) }} khách hàng
                                 </div>
                             </div>
@@ -175,20 +179,20 @@
                                             </div>
                                             <div class="flex-grow-1 min-width-0">
                                                 <div class="d-flex align-items-center justify-content-between mb-1">
-                                                    <div class="{{ $userHasUnread ? 'fw-bold' : 'fw-semibold' }} text-dark text-truncate">
+                                                    <div class="{{ $userHasUnread ? 'fw-bold' : 'fw-semibold' }} text-dark text-truncate" style="font-size: 13px;">
                                                         @if($userHasPenalty)
                                                             <i class="fas fa-exclamation-triangle text-warning me-1" title="Đang bị phạt"></i>
                                                         @endif
                                                         {{ $user['full_name'] }}
                                                     </div>
                                                     @if($userHasUnread)
-                                                        <span class="badge bg-danger rounded-pill ms-2" style="font-size: 10px;">
+                                                        <span class="badge bg-danger rounded-pill ms-2" style="font-size: 9px;">
                                                             {{ $userUnreadCount > 99 ? '99+' : $userUnreadCount }}
                                                         </span>
                                                     @endif
                                                 </div>
-                                                <div class="text-muted small text-truncate mb-1" style="font-size: 11px;">
-                                                    <i class="fas fa-user me-1" style="font-size: 9px;"></i>
+                                                <div class="text-muted small text-truncate mb-1" style="font-size: 10px;">
+                                                    <i class="fas fa-user me-1" style="font-size: 8px;"></i>
                                                     {{ $user['username'] }}
                                                 </div>
                                                 <div class="{{ $userHasUnread ? 'fw-bold' : '' }} text-muted small text-truncate d-flex align-items-center mb-1">
@@ -262,22 +266,26 @@
                     </div>
                     <div class="flex-grow-1 min-width-0">
                         <div class="d-flex align-items-center justify-content-between mb-1">
-                            <div class="{{ $hasUnreadStaff ? 'fw-bold' : 'fw-semibold' }} text-dark text-truncate">
+                            <div class="{{ $hasUnreadStaff ? 'fw-bold' : 'fw-semibold' }} text-dark text-truncate" style="font-size: 13px;">
                                 @if($hasPenaltyStaff)
                                     <i class="fas fa-exclamation-triangle text-warning me-1" title="Đang bị phạt"></i>
                                 @endif
-                                {{ $conversation->user->full_name . " (" . $conversation->user->username . ")"}}
+                                {{ $conversation->user->full_name }}
                             </div>
                             @if($hasUnreadStaff)
-                                <span class="badge bg-danger rounded-pill ms-2" style="font-size: 10px;">
+                                <span class="badge bg-danger rounded-pill ms-2" style="font-size: 9px;">
                                     {{ $unreadCountStaff > 99 ? '99+' : $unreadCountStaff }}
                                 </span>
                             @endif
                         </div>
+                        <div class="text-muted small text-truncate mb-1" style="font-size: 10px;">
+                            <i class="fas fa-user me-1" style="font-size: 8px;"></i>
+                            {{ $conversation->user->username }}
+                        </div>
                         <div class="{{ $hasUnreadStaff ? 'fw-bold' : '' }} text-muted small text-truncate d-flex align-items-center mb-1">
                             @if($conversation->messages->last())
                                 <i class="fas fa-comment-dots me-1" style="font-size: 10px;"></i>
-                                {{ Str::limit(trim($conversation->messages->last()->message) ?: "Hình ảnh", 30) }}
+                                {{ Str::limit(trim($conversation->messages->last()->message) ?: "Hình ảnh", 20) }}
                             @else
                                 <i class="fas fa-clock me-1" style="font-size: 10px;"></i>
                                 Chưa có tin nhắn
