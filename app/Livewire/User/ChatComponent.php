@@ -203,12 +203,25 @@ class ChatComponent extends Component
                 'image_path' => $imagePath,
             ]);
 
-            $imageMessage->load('sender');
-            $messages[] = $this->formatMessage($imageMessage);
+            $messages[] = [
+                'id' => $imageMessage->id,
+                'message' => $imageMessage->message,
+                'type' => $imageMessage->type,
+                'image_path' => $imageMessage->image_path,
+                'sender_id' => $userId,
+                'conversation_id' => $conversationId,
+                'is_read' => false,
+                'created_at' => $imageMessage->created_at,
+                'sender' => [
+                    'id' => $userId,
+                    'full_name' => $userName,
+                    'role' => 'user',
+                ]
+            ];
             $template_message_for_notification = "Đã gửi hình ảnh";
             
-            // Broadcast ngay (cần để người khác thấy)
-            broadcast(new MessageSent($imageMessage))->toOthers();
+            // Broadcast qua job (không block response)
+            \App\Jobs\BroadcastMessageSent::dispatch($imageMessage->id);
         }
 
         // XỬ LÝ TEXT (nếu có) - Insert DB đồng bộ
@@ -221,12 +234,25 @@ class ChatComponent extends Component
                 'image_path' => null,
             ]);
             
-            $textMessage->load('sender');
-            $messages[] = $this->formatMessage($textMessage);
+            $messages[] = [
+                'id' => $textMessage->id,
+                'message' => $textMessage->message,
+                'type' => $textMessage->type,
+                'image_path' => $textMessage->image_path,
+                'sender_id' => $userId,
+                'conversation_id' => $conversationId,
+                'is_read' => false,
+                'created_at' => $textMessage->created_at,
+                'sender' => [
+                    'id' => $userId,
+                    'full_name' => $userName,
+                    'role' => 'user',
+                ]
+            ];
             $template_message_for_notification = Str::limit($messageText, 30, '...');
             
-            // Broadcast ngay
-            broadcast(new MessageSent($textMessage))->toOthers();
+            // Broadcast qua job (không block response)
+            \App\Jobs\BroadcastMessageSent::dispatch($textMessage->id);
         }
 
         // Update conversation

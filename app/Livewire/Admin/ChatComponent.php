@@ -560,13 +560,10 @@ class ChatComponent extends Component
             $this->image = null;
             $this->dispatch('reset-message-input');
             $this->dispatch('scroll-to-bottom');
-            
-            // Broadcast trong background (không đợi kết quả)
-            dispatch(function() use ($message) {
-                broadcast(new MessageSent($message))->toOthers();
-            })->afterResponse();
-            
             $this->dispatch('refresh-conversations');
+            
+            // Dispatch broadcast job - Chỉ pass ID, không query trong constructor
+            \App\Jobs\BroadcastMessageSent::dispatch($message->id);
         } catch (\Throwable $e) {
             logger('Send message failed:', ['error' => $e->getMessage()]);
             session()->flash('error', 'Không thể gửi tin nhắn. Vui lòng thử lại.');

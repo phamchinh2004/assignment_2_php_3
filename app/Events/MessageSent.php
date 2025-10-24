@@ -21,7 +21,6 @@ class MessageSent implements ShouldBroadcast, ShouldQueue
     public function __construct(Message $message)
     {
         $this->message = $message->load('sender', 'conversation');
-        \Log::debug('MessageSent event constructed', ['message_id' => $message->id]);
     }
 
     public function broadcastOn()
