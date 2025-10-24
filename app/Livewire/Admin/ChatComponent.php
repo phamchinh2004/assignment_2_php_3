@@ -584,11 +584,18 @@ class ChatComponent extends Component
             return;
         }
 
-        if (
-            (int) $this->selectedConversationId === (int) $message['conversation_id'] &&
-            (int) $message['sender_id'] !== Auth::id()
-        ) {
-            // Nếu $this->messages là mảng thường
+        // Không xử lý tin nhắn của chính mình (đã được thêm trong sendMessage)
+        if ((int) $message['sender_id'] === Auth::id()) {
+            // Chỉ cập nhật sidebar
+            $this->loadConversations();
+            if (Auth::user()->role === 'admin') {
+                $this->loadStaffUsersAlternative();
+            }
+            return;
+        }
+
+        // Tin nhắn thuộc conversation đang mở
+        if ((int) $this->selectedConversationId === (int) $message['conversation_id']) {
             if (is_array($this->messages)) {
                 // Kiểm tra trùng ID
                 $ids = array_column($this->messages, 'id');
@@ -608,13 +615,18 @@ class ChatComponent extends Component
                 }
             }
         } else {
+            // Tin nhắn KHÔNG thuộc conversation đang mở - hiển thị notification
+            // Kiểm tra tồn tại sender info trước khi truy cập
+            $senderName = $message['sender']['full_name'] ?? 'Người dùng';
+            
             $this->dispatch('swal', [
                 'type' => 'warning',
-                'title' => $message['sender']['full_name'],
+                'title' => $senderName,
                 'text' => $message['type'] === "text" ? Str::limit($message['message'], 30, '...') : "Đã gửi hình ảnh"
             ]);
         }
 
+        // Cập nhật sidebar
         $this->loadConversations();
         if (Auth::user()->role === 'admin') {
             $this->loadStaffUsersAlternative();
