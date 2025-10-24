@@ -43,6 +43,7 @@ return [
     "HeThongDangQuaTai" => "시스템이 과부하 상태입니다!",
     "VuiLongLienHeCskhDeNapTien" => "입금을 위해 고객센터에 문의하세요!",
     "Ok" => "확인",
+    "successText" => "배포 완료!",
     // 주문
     "CoLoiXayRa" => "아직 부스나 회전 과정이 없습니다!",
     "LoiKhongTimThayDuLieu" => "데이터를 찾을 수 없습니다",

@@ -43,6 +43,7 @@ return [
     "HeThongDangQuaTai" => "¡El sistema está sobrecargado!",
     "VuiLongLienHeCskhDeNapTien" => "¡Por favor contacta con atención al cliente para depositar!",
     "Ok" => "Entendido",
+    "successText" => "Distribución exitosa!",
     // đơn hàng
     "CoLoiXayRa" => "¡Aún no tienes un puesto ni un proceso de giro!",
     "LoiKhongTimThayDuLieu" => "Error: Datos no encontrados",

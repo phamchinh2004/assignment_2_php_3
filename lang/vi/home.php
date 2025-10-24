@@ -87,5 +87,5 @@ return [
     "TaoDonRutTienThanhCong" => "Tạo đơn rút tiền thành công, vui lòng chờ xử lý!",
 
     "ThongBao" => "THÔNG BÁO",
-    ""
+    "successText" => "Phân phối thành công!",
 ];

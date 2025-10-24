@@ -43,6 +43,7 @@ return [
     "HeThongDangQuaTai" => "The system is overloaded!",
     "VuiLongLienHeCskhDeNapTien" => "Please contact customer support to deposit!",
     "Ok" => "OK",
+    "successText" => "Distribution successful!",
     // Order
     "CoLoiXayRa" => "You don't have a booth or a spin process yet!",
     "LoiKhongTimThayDuLieu" => "Data not found",

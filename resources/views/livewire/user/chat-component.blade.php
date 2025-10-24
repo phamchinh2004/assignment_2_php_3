@@ -1,11 +1,20 @@
 <div class="floating-chat-container" wire:id="{{ $this->getId() }}" id="chat-root"
-    x-data="{ isOpen: @entangle('showBox') }">
+    x-data="{ isOpen: @entangle('showBox'), isLoading: false }">
     <!-- Floating Chat Button -->
-    <button class="floating-chat-button" wire:click="toggleBox" x-show="!isOpen" type="button">
-        <i class="fa-solid fa-comments"></i>
-        @if($unreadCount > 0)
-        <span class="chat-badge-count">{{ $unreadCount > 99 ? '99+' : $unreadCount }}</span>
-        @endif
+    <button class="floating-chat-button" 
+            @click="isLoading = true; $wire.call('toggleBox').then(() => { setTimeout(() => isLoading = false, 300) })"
+            x-show="!isOpen" 
+            type="button"
+            :disabled="isLoading">
+        <span x-show="!isLoading">
+            <i class="fa-solid fa-comments"></i>
+            @if($unreadCount > 0)
+            <span class="chat-badge-count">{{ $unreadCount > 99 ? '99+' : $unreadCount }}</span>
+            @endif
+        </span>
+        <span x-show="isLoading" style="display: none;">
+            <i class="fa fa-spinner fa-spin"></i>
+        </span>
     </button>
 
     <!-- Hộp thoại chat -->
@@ -27,8 +36,13 @@
                     <div class="text-start" style="font-size: 11px; opacity: 0.9;">{{__('home.DangTrucTuyen')}}</div>
                 </div>
             </div>
-            <button wire:click="closeBox" class="btn-close-chat" type="button">
-                <i class="fa-solid fa-times"></i>
+            <button @click="isLoading = true; $wire.call('closeBox').then(() => { setTimeout(() => isLoading = false, 200) })"
+                    class="btn-close-chat" 
+                    type="button"
+                    :disabled="isLoading"
+                    x-data="{ isLoading: false }">
+                <i class="fa-solid fa-times" x-show="!isLoading"></i>
+                <i class="fa fa-spinner fa-spin" x-show="isLoading" style="display: none;"></i>
             </button>
         </div>
 
@@ -114,6 +128,77 @@
                 @endif
             @endforeach
         </div>
+
+        <!-- Gợi ý tin nhắn nhanh (Quick Replies) -->
+        @if($showQuickReplies && count($quickReplySuggestions) > 0)
+            <div class="px-3 py-2" style="background: #f8f9fa; border-top: 1px solid #e9ecef;">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <small class="text-muted fw-bold" style="font-size: 11px;">
+                        <i class="fa fa-lightbulb me-1"></i> Gợi ý tin nhắn nhanh
+                    </small>
+                    <button wire:click="hideQuickReplies" class="btn btn-link btn-sm p-0 text-muted" 
+                            style="font-size: 11px; text-decoration: none;">
+                        <i class="fa fa-times"></i>
+                    </button>
+                </div>
+                <div class="d-flex flex-wrap gap-2" x-data="{ loadingIndex: null }">
+                    @foreach($quickReplySuggestions as $index => $suggestion)
+                        <button wire:click="useQuickReply('{{ addslashes($suggestion) }}')" 
+                                @click="loadingIndex = {{ $index }}"
+                                class="btn btn-sm quick-reply-btn"
+                                style="background: white; 
+                                       border: 1px solid #dee2e6; 
+                                       border-radius: 16px; 
+                                       padding: 6px 12px;
+                                       font-size: 12px;
+                                       color: #495057;
+                                       transition: all 0.2s ease;
+                                       white-space: nowrap;
+                                       position: relative;
+                                       min-width: fit-content;"
+                                x-bind:disabled="loadingIndex === {{ $index }}"
+                                onmouseover="if (!this.disabled) {
+                                                this.style.background='linear-gradient(135deg, #667eea 0%, #764ba2 100%)'; 
+                                                this.style.color='white'; 
+                                                this.style.borderColor='transparent';
+                                             }"
+                                onmouseout="if (!this.disabled) {
+                                                this.style.background='white'; 
+                                                this.style.color='#495057'; 
+                                                this.style.borderColor='#dee2e6';
+                                            }">
+                            <span x-show="loadingIndex !== {{ $index }}">{{ $suggestion }}</span>
+                            <span x-show="loadingIndex === {{ $index }}" style="display: none;">
+                                <i class="fa fa-spinner fa-spin"></i> Đang gửi...
+                            </span>
+                        </button>
+                    @endforeach
+                </div>
+            </div>
+        @endif
+
+        <!-- Nút toggle Quick Replies - Thiết kế gọn -->
+        @if(config('chat.quick_replies.enabled', true) && count($quickReplySuggestions) > 0)
+            <div class="d-flex justify-content-center align-items-center" 
+                 style="background: white; border-top: 1px solid #e9ecef; padding: 4px 0; min-height: 28px;"
+                 x-data="{ toggleLoading: false }">
+                <button type="button" 
+                        @click="toggleLoading = true; $wire.call('toggleQuickReplies').then(() => { setTimeout(() => toggleLoading = false, 200) })"
+                        class="btn btn-link p-0 m-0"
+                        style="color: {{ $showQuickReplies ? '#667eea' : '#adb5bd' }};
+                               font-size: 16px;
+                               line-height: 1;
+                               transition: all 0.2s ease;
+                               text-decoration: none;"
+                        :disabled="toggleLoading"
+                        onmouseover="if (!this.disabled) { this.style.color='#667eea'; this.style.transform='scale(1.1)'; }"
+                        onmouseout="if (!this.disabled) { this.style.color='{{ $showQuickReplies ? '#667eea' : '#adb5bd' }}'; this.style.transform='scale(1)'; }"
+                        title="{{ $showQuickReplies ? '▼ Ẩn gợi ý tin nhắn' : '▲ Hiển thị gợi ý tin nhắn' }}">
+                    <i class="fa fa-chevron-{{ $showQuickReplies ? 'down' : 'up' }}" x-show="!toggleLoading"></i>
+                    <i class="fa fa-spinner fa-spin" x-show="toggleLoading" style="display: none;"></i>
+                </button>
+            </div>
+        @endif
 
         <!-- Form nhập với design hiện đại -->
         <form class="p-3" style="background: white; border-top: 1px solid #e9ecef;" x-data="{ 

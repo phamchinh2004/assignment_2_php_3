@@ -34,6 +34,9 @@ class ChatComponent extends Component
     public $isLoading = false;
     public $maxMessageLength = 500;
     public $unreadCount = 0;
+    public $showQuickReplies = false;
+    public $quickReplySuggestions = [];
+    public $quickReplyLoading = false;
 
     protected $listeners = [
         'message-received' => 'messageReceived',
@@ -64,6 +67,7 @@ class ChatComponent extends Component
 
         $this->loadLatestMessages();
         $this->loadUnreadCount();
+        $this->loadQuickReplies();
         $this->dispatch('join-conversation-channel', conversationId: $this->conversation->id);
     }
 
@@ -246,6 +250,9 @@ class ChatComponent extends Component
         $user = Auth::user()->load('conversation');
         event(new UserSentMessage($userName, $template_message_for_notification, $user));
         $this->checkAndSendEmailNotification($template_message_for_notification);
+        
+        // Kiểm tra và gửi tin nhắn chào tự động nếu đã lâu không nhắn
+        $this->sendAutoReplyIfNeeded();
     }
 
     public function messageReceived($message)
@@ -390,6 +397,214 @@ class ChatComponent extends Component
     public function getRemainingCharacters()
     {
         return $this->maxMessageLength - strlen($this->newMessage);
+    }
+
+    /**
+     * Load danh sách gợi ý tin nhắn nhanh
+     */
+    public function loadQuickReplies()
+    {
+        if (!config('chat.quick_replies.enabled', true)) {
+            $this->showQuickReplies = false;
+            return;
+        }
+
+        // Lấy ngôn ngữ hiện tại
+        $currentLocale = app()->getLocale();
+        $allSuggestions = config('chat.quick_replies.suggestions', []);
+        
+        // Lấy gợi ý theo ngôn ngữ
+        $this->quickReplySuggestions = $allSuggestions[$currentLocale] ?? $allSuggestions['vi'] ?? [];
+        
+        // Kiểm tra có nên hiển thị gợi ý không
+        $this->showQuickReplies = $this->shouldShowQuickReplies();
+    }
+
+    /**
+     * Kiểm tra có nên hiển thị gợi ý tin nhắn không
+     */
+    protected function shouldShowQuickReplies()
+    {
+        $config = config('chat.quick_replies.show_when', []);
+        
+        // Nếu chat trống (chưa có tin nhắn từ user)
+        if ($config['chat_empty'] ?? true) {
+            $userMessageCount = Message::where('conversation_id', $this->conversation->id)
+                ->where('sender_id', Auth::id())
+                ->count();
+            
+            if ($userMessageCount === 0) {
+                return true;
+            }
+        }
+        
+        // Nếu đã lâu không nhắn (X giờ)
+        $afterHours = $config['after_hours'] ?? 2;
+        $lastUserMessage = Message::where('conversation_id', $this->conversation->id)
+            ->where('sender_id', Auth::id())
+            ->orderBy('created_at', 'desc')
+            ->first();
+        
+        if ($lastUserMessage) {
+            $hoursSinceLastMessage = $lastUserMessage->created_at->diffInHours(now());
+            if ($hoursSinceLastMessage >= $afterHours) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
+    /**
+     * Sử dụng tin nhắn gợi ý nhanh
+     */
+    public function useQuickReply($message)
+    {
+        try {
+            // Bật loading spinner
+            $this->quickReplyLoading = true;
+            
+            // Xóa emoji và khoảng trắng thừa nếu cần
+            $this->newMessage = trim($message);
+            
+            // Tự động gửi tin nhắn
+            $this->sendMessage();
+            
+            // Ẩn gợi ý sau khi gửi thành công
+            $this->showQuickReplies = false;
+            
+        } catch (\Exception $e) {
+            Log::error('Lỗi khi sử dụng quick reply: ' . $e->getMessage());
+            $this->addError('quickReply', 'Có lỗi xảy ra, vui lòng thử lại.');
+        } finally {
+            // Tắt loading spinner
+            $this->quickReplyLoading = false;
+        }
+    }
+
+    /**
+     * Đóng/ẩn gợi ý tin nhắn
+     */
+    public function hideQuickReplies()
+    {
+        $this->showQuickReplies = false;
+    }
+
+    /**
+     * Toggle (mở/đóng) gợi ý tin nhắn
+     */
+    public function toggleQuickReplies()
+    {
+        if (!config('chat.quick_replies.enabled', true)) {
+            return;
+        }
+
+        if ($this->showQuickReplies) {
+            // Đang mở → đóng lại
+            $this->showQuickReplies = false;
+        } else {
+            // Đang đóng → mở ra và load lại gợi ý
+            $this->loadQuickReplies();
+            // Luôn hiển thị khi user click vào nút
+            $this->showQuickReplies = true;
+        }
+    }
+
+    /**
+     * Gửi tin nhắn chào tự động nếu đã lâu không có tin nhắn từ staff
+     */
+    protected function sendAutoReplyIfNeeded()
+    {
+        try {
+            // Kiểm tra tính năng có được bật không
+            if (!config('chat.auto_reply.enabled', true)) {
+                return;
+            }
+
+            // Thời gian timeout (giờ) từ config
+            $timeoutHours = config('chat.auto_reply.timeout_hours', 1);
+            
+            // Lấy tin nhắn gần nhất từ staff trong conversation này
+            $lastStaffMessage = Message::where('conversation_id', $this->conversation->id)
+                ->where('sender_id', '!=', Auth::id())
+                ->whereHas('sender', function ($query) {
+                    $query->whereIn('role', ['admin', 'staff']);
+                })
+                ->orderBy('created_at', 'desc')
+                ->first();
+            
+            // Kiểm tra có cần gửi auto-reply không
+            $shouldSendAutoReply = false;
+            
+            if (!$lastStaffMessage) {
+                // Chưa có tin nhắn nào từ staff → gửi auto-reply
+                $shouldSendAutoReply = true;
+            } else {
+                // Kiểm tra thời gian tin nhắn cuối từ staff
+                $hoursSinceLastMessage = $lastStaffMessage->created_at->diffInHours(now());
+                
+                if ($hoursSinceLastMessage >= $timeoutHours) {
+                    $shouldSendAutoReply = true;
+                }
+            }
+            
+            // Gửi tin nhắn chào tự động nếu cần
+            if ($shouldSendAutoReply) {
+                // Lấy ngôn ngữ hiện tại của user (từ session hoặc config)
+                $currentLocale = app()->getLocale();
+                $defaultLocale = config('chat.auto_reply.default_language', 'vi');
+                
+                // Lấy nội dung tin nhắn theo ngôn ngữ
+                $messages = config('chat.auto_reply.messages', []);
+                $autoReplyMessage = $messages[$currentLocale] ?? $messages[$defaultLocale] ?? $messages['vi'];
+                
+                // Lấy staff_id từ conversation để làm người gửi
+                $staffId = $this->conversation->staff_id;
+                
+                // Tạo tin nhắn tự động
+                $autoMessage = Message::create([
+                    'conversation_id' => $this->conversation->id,
+                    'sender_id' => $staffId,
+                    'message' => $autoReplyMessage,
+                    'type' => 'text',
+                    'image_path' => null,
+                    'is_read' => false, // User chưa đọc
+                ]);
+                
+                $autoMessage->load('sender');
+                
+                // Thêm vào UI
+                if (!$this->chatMessages instanceof Collection) {
+                    $this->chatMessages = collect($this->chatMessages);
+                }
+                
+                $formattedMessage = $this->formatMessage($autoMessage);
+                $this->chatMessages = $this->chatMessages->push($formattedMessage);
+                
+                // Broadcast để staff cũng thấy tin nhắn này
+                broadcast(new MessageSent($autoMessage))->toOthers();
+                
+                // Dispatch event để scroll xuống
+                $this->dispatch('scroll-to-bottom');
+                
+                Log::info('Đã gửi tin nhắn chào tự động', [
+                    'conversation_id' => $this->conversation->id,
+                    'user_id' => Auth::id(),
+                    'staff_id' => $staffId,
+                    'locale' => $currentLocale,
+                    'hours_since_last_message' => $lastStaffMessage ? $lastStaffMessage->created_at->diffInHours(now()) : null,
+                ]);
+            }
+            
+        } catch (\Exception $e) {
+            // Log lỗi nhưng không làm gián đoạn việc gửi tin nhắn
+            Log::error('Lỗi gửi tin nhắn chào tự động: ' . $e->getMessage(), [
+                'conversation_id' => $this->conversation->id ?? null,
+                'user_id' => Auth::id(),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+        }
     }
 
     /**

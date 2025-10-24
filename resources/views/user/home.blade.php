@@ -16,6 +16,7 @@
         vuiLongLienHeCskhDeNapTien: @json(__('home.VuiLongLienHeCskhDeNapTien')),
         MatKhauXacNhanKhongKhop: @json(__('home.MatKhauXacNhanKhongKhop')),
         SoTaiKhoanPhaiLaSo: @json(__('home.SoTaiKhoanPhaiLaSo')),
+        successText: @json(__('home.successText')),
     };
 </script>
 @vite('resources/js/user/home.js')

@@ -43,6 +43,7 @@ return [
     "HeThongDangQuaTai" => "システムが過負荷状態です！",
     "VuiLongLienHeCskhDeNapTien" => "入金するにはカスタマーサポートに連絡してください！",
     "Ok" => "了解",
+    "successText" => "配布に成功しました！",
     // Đơn hàng
     "CoLoiXayRa" => "まだブースやスピンの進行がありません！",
     "LoiKhongTimThayDuLieu" => "データが見つかりません",
