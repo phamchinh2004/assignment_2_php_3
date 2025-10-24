@@ -560,10 +560,19 @@ class ChatComponent extends Component
             $this->image = null;
             $this->dispatch('reset-message-input');
             $this->dispatch('scroll-to-bottom');
-            $this->loadConversations();
-            if (Auth::user()->role === 'admin') {
-                $this->loadStaffUsersAlternative();
+            
+            // Chỉ update timestamp của conversation hiện tại (nhanh hơn nhiều)
+            if ($this->selectedConversation) {
+                $this->selectedConversation->touch();
             }
+            
+            // Reload conversations và staff trong background (không block UI)
+            // Comment lại để tăng tốc độ gửi tin nhắn
+            // $this->loadConversations();
+            // if (Auth::user()->role === 'admin') {
+            //     $this->loadStaffUsersAlternative();
+            // }
+            
             $this->dispatch('refresh-conversations');
         } catch (\Throwable $e) {
             logger('Send message failed:', ['error' => $e->getMessage()]);
