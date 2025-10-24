@@ -156,7 +156,8 @@
                                        white-space: nowrap;
                                        position: relative;
                                        min-width: fit-content;"
-                                x-bind:disabled="loadingIndex === {{ $index }}"
+                                x-bind:disabled="loadingIndex !== null"
+                                x-bind:style="loadingIndex !== null && loadingIndex !== {{ $index }} ? 'opacity: 0.5; cursor: not-allowed;' : ''"
                                 onmouseover="if (!this.disabled) {
                                                 this.style.background='linear-gradient(135deg, #667eea 0%, #764ba2 100%)'; 
                                                 this.style.color='white'; 
@@ -405,13 +406,15 @@
                 .listen('.MessageSent', (e) => {
                     // console.log('New message at User:', e.message);
                     const message = e.message;
-                    playNotificationSound();
+                    
+                    // CHỈ phát âm thanh và xử lý khi NHẬN tin nhắn (không phải tin nhắn của mình)
                     if (message.sender_id !== currentUserId) {
+                        playNotificationSound();
                         const root = document.getElementById('chat-root');
                         const component = Livewire.find(root.getAttribute('wire:id'));
                         component.dispatch('message-received', e);
                     } else {
-                        console.log('Ignoring own message');
+                        console.log('Ignoring own message - không phát âm thanh');
                     }
                 })
                 .listen('.MessageRead', (e) => {

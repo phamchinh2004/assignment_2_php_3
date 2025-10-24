@@ -25,6 +25,38 @@ document.addEventListener('livewire:initialized', () => {
                     });
                 }
             }
+        } else if (hash && hash.startsWith('#conversation-')) {
+            const conversationId = hash.replace('#conversation-', '');
+            
+            // Tìm Livewire component
+            const chatRoot = document.getElementById('chat-root');
+            if (chatRoot) {
+                const component = window.Livewire.find(chatRoot.getAttribute('wire:id'));
+                
+                if (component) {
+                    // Show loading spinner
+                    const spinner = document.getElementById('chat-loading-spinner');
+                    if (spinner) {
+                        spinner.style.display = 'flex';
+                        setTimeout(() => spinner.style.opacity = '1', 10);
+                    }
+                    
+                    // Gọi method selectConversation
+                    component.call('selectConversation', conversationId).then(() => {
+                        console.log('✅ Auto-selected conversation:', conversationId);
+                        
+                        // Đợi một chút rồi scroll vào conversation
+                        setTimeout(() => {
+                            highlightSelectedConversation();
+                        }, 500);
+                        
+                        // Clear hash để tránh reload lại
+                        history.replaceState(null, null, ' ');
+                    }).catch(error => {
+                        console.error('❌ Error selecting conversation:', error);
+                    });
+                }
+            }
         }
     }
     

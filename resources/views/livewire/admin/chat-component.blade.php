@@ -11,6 +11,17 @@
             to { transform: rotate(360deg); }
         }
         
+        @keyframes pulse {
+            0%, 100% { 
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.7);
+            }
+            50% { 
+                transform: scale(1.05);
+                box-shadow: 0 0 20px 10px rgba(102, 126, 234, 0.3);
+            }
+        }
+        
         .spinner-border {
             display: inline-block;
             width: 3rem;
@@ -285,21 +296,21 @@
                             </div>
                             <div x-show="generalMsgOpen" x-transition class="flex-column gap-1" style="display: flex;">
                                 @php
-                                    $quickMessageGeneral1 = "Xin chào, tôi có thể giúp gì cho bạn?";
-                                    $quickMessageGeneral2 = "Chào bạn! Nếu bạn có bất kỳ thắc mắc nào, vui lòng cho tôi biết.";
-                                    $quickMessageGeneral3 = "Cảm ơn bạn đã liên hệ. Tôi sẽ hỗ trợ bạn ngay bây giờ.";
+                                    $quickMessageGeneral1 = "👋 Xin chào, tôi có thể giúp gì cho bạn?";
+                                    $quickMessageGeneral2 = "💬 Chào bạn! Nếu bạn có bất kỳ thắc mắc nào, vui lòng cho tôi biết.";
+                                    $quickMessageGeneral3 = "🙏 Cảm ơn bạn đã liên hệ. Tôi sẽ hỗ trợ bạn ngay bây giờ.";
                                 @endphp
                                 
                                 <button type="button" class="btn btn-outline-secondary btn-sm text-start" style="font-size: 9px; white-space: normal;" onclick='copyQuickMessage(`{{ $quickMessageGeneral1 }}`)' title="Click để sao chép">
-                                    👋 {{ $quickMessageGeneral1 }}
+                                    {{ $quickMessageGeneral1 }}
                                 </button>
                                 
                                 <button type="button" class="btn btn-outline-secondary btn-sm text-start" style="font-size: 9px; white-space: normal;" onclick='copyQuickMessage(`{{ $quickMessageGeneral2 }}`)' title="Click để sao chép">
-                                    💬 {{ $quickMessageGeneral2 }}
+                                    {{ $quickMessageGeneral2 }}
                                 </button>
                                 
                                 <button type="button" class="btn btn-outline-secondary btn-sm text-start" style="font-size: 9px; white-space: normal;" onclick='copyQuickMessage(`{{ $quickMessageGeneral3 }}`)' title="Click để sao chép">
-                                    🙏 {{ $quickMessageGeneral3 }}
+                                    {{ $quickMessageGeneral3 }}
                                 </button>
                             </div>
                         </div>
@@ -630,6 +641,19 @@
     let hasMoreMessages = true;
     let currentPage = 1;
 
+    // Notification Sound Function
+    function playNotificationSound() {
+        try {
+            const audio = new Audio('/audio/notification.mp3');
+            audio.volume = 0.5;
+            audio.play().catch(error => {
+                console.log('Không thể phát âm thanh thông báo:', error);
+            });
+        } catch (error) {
+            console.log('Lỗi khi phát âm thanh:', error);
+        }
+    }
+
     // Loading Spinner Functions
     function showChatLoadingSpinner() {
         const spinner = document.getElementById('chat-loading-spinner');
@@ -654,6 +678,49 @@
     }
 
     document.addEventListener('livewire:initialized', () => {
+        // Kiểm tra nếu đã khởi tạo rồi thì bỏ qua
+        if (window.chatComponentInitialized) {
+            console.log('⚠️ Chat component đã được khởi tạo rồi, bỏ qua');
+            return;
+        }
+        window.chatComponentInitialized = true;
+        console.log('✅ Khởi tạo chat component');
+
+        // Hàm scroll to bottom (với force để đảm bảo scroll được thực hiện)
+        function scrollToBottom(behavior = 'smooth', force = false) {
+            const container = document.getElementById('messages-container');
+            if (container) {
+                const doScroll = () => {
+                    const scrollHeight = container.scrollHeight;
+                    const clientHeight = container.clientHeight;
+                    const maxScroll = scrollHeight - clientHeight;
+                    
+                    console.log('📜 Scrolling to bottom:', {
+                        scrollHeight: scrollHeight,
+                        clientHeight: clientHeight,
+                        maxScroll: maxScroll,
+                        currentScroll: container.scrollTop,
+                        behavior: behavior
+                    });
+                    
+                    container.scrollTo({
+                        top: scrollHeight,
+                        behavior: behavior
+                    });
+                };
+                
+                // Scroll ngay lập tức
+                doScroll();
+                
+                // Scroll lại sau 100ms để đảm bảo DOM đã render xong
+                if (force) {
+                    setTimeout(doScroll, 100);
+                    setTimeout(doScroll, 300);
+                }
+            } else {
+                console.error('❌ Không tìm thấy messages-container');
+            }
+        }
 
         // Hide spinner when conversation loaded
         Livewire.on('conversation-selected', () => {
@@ -675,6 +742,94 @@
             }, 300);
         });
 
+        // Listen to scroll-to-bottom event
+        Livewire.on('scroll-to-bottom', () => {
+            console.log('🎯 Received scroll-to-bottom event from backend');
+            scrollToBottom('smooth', true);
+        });
+
+        // Listen to chat notification event (clickable notification)
+        Livewire.on('chat-notification', (data) => {
+            console.log('🔔 Frontend received chat-notification event:', data);
+            
+            const eventData = Array.isArray(data) ? data[0] : data;
+            const { conversationId, userId, staffId, senderName, message } = eventData;
+            
+            console.log('📱 Hiển thị toastr cho conversation:', conversationId);
+            
+            // Phát âm thanh thông báo
+            console.log('🔊 Phát âm thanh thông báo');
+            playNotificationSound();
+            
+            // Hiển thị notification bằng toastr có thể click
+            const root = document.getElementById('chat-root');
+            const component = Livewire.find(root.getAttribute('wire:id'));
+            
+            toastr.options = {
+                closeButton: true,
+                progressBar: true,
+                positionClass: "toast-top-right",
+                timeOut: "8000",
+                extendedTimeOut: "2000",
+                showMethod: "fadeIn",
+                hideMethod: "fadeOut",
+                onclick: function() {
+                    // Click để mở conversation với logic expand staff
+                    showChatLoadingSpinner();
+                    component.call('openConversationFromNotification', conversationId, userId, staffId);
+                }
+            };
+            
+            // Sử dụng toastr.success() để có nền màu xanh success
+            toastr.success(message, '💬 ' + senderName);
+        });
+
+        // Listen to scroll-to-conversation event
+        Livewire.on('scroll-to-conversation', (data) => {
+            const eventData = Array.isArray(data) ? data[0] : data;
+            const { conversationId, isStaffConversation } = eventData;
+            
+            // Đợi DOM update sau khi expand
+            setTimeout(() => {
+                // Tìm conversation item theo conversationId
+                let conversationItem = null;
+                
+                if (isStaffConversation) {
+                    // Tìm trong danh sách staff users
+                    const allConversationItems = document.querySelectorAll('.conversation-item');
+                    allConversationItems.forEach(item => {
+                        // Check nếu item này được selected (có background xanh)
+                        if (item.classList.contains('bg-primary')) {
+                            conversationItem = item;
+                        }
+                    });
+                } else {
+                    // Tìm trong danh sách "Tin nhắn của tôi"
+                    const allConversationItems = document.querySelectorAll('.conversation-item');
+                    allConversationItems.forEach(item => {
+                        if (item.classList.contains('bg-primary')) {
+                            conversationItem = item;
+                        }
+                    });
+                }
+                
+                if (conversationItem) {
+                    // Scroll đến conversation item
+                    conversationItem.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center'
+                    });
+                    
+                    // Thêm hiệu ứng pulse để highlight
+                    conversationItem.style.animation = 'pulse 1.5s ease-in-out 2';
+                    
+                    setTimeout(() => {
+                        conversationItem.style.animation = '';
+                    }, 3000);
+                }
+            }, 500);
+        });
+
         // Load more messages when scrolling to top
         // Single scroll listener - sử dụng event delegation
         document.addEventListener('scroll', (e) => {
@@ -687,25 +842,49 @@
         }, true);
 
         // Listen MessageSent event trên staff channel để update sidebar khi có tin nhắn mới
-        // (Notification sound và popup đã được xử lý ở master.blade.php)
         @if(auth()->user()->role === 'admin' || auth()->user()->role === 'staff')
             const staffChannel = `staff.{{ auth()->id() }}`;
+            const currentUserId = {{ auth()->id() }};
+            
             window.Echo.private(staffChannel)
                 .listen('.MessageSent', (e) => {
-                    console.log('New message on staff channel:', e.message);
+                    console.log('👤 Staff channel - New message:', e.message.id);
+                    
+                    // Bỏ qua tin nhắn của chính mình
+                    if (e.message.sender_id === currentUserId) {
+                        return;
+                    }
                     
                     const root = document.getElementById('chat-root');
                     const component = Livewire.find(root.getAttribute('wire:id'));
                     
-                    // Nếu tin nhắn không phải từ conversation đang mở, reload sidebar
-                    const currentConvId = component.get('selectedConversationId');
-                    if (currentConvId != e.message.conversation_id) {
-                        // Reload conversations và staff users để cập nhật sidebar
-                        component.call('loadConversations');
-                        @if(auth()->user()->role === 'admin')
-                            component.call('loadStaffUsersAlternative');
-                        @endif
+                    // Lấy selectedConversationId từ component
+                    const selectedConversationId = component.get('selectedConversationId');
+                    
+                    console.log('🔍 Staff channel checking:', {
+                        messageConversationId: e.message.conversation_id,
+                        selectedConversationId: selectedConversationId,
+                        isCurrentConversation: selectedConversationId && selectedConversationId == e.message.conversation_id
+                    });
+                    
+                    // Nếu tin nhắn thuộc conversation đang focus
+                    // → KHÔNG làm gì cả, để conversation channel xử lý toàn bộ
+                    // → (thêm tin nhắn, scroll, đánh dấu đã đọc, update sidebar)
+                    if (selectedConversationId && selectedConversationId == e.message.conversation_id) {
+                        console.log('⏭️ Conversation đang focus, bỏ qua staff channel - để conversation channel xử lý');
+                        // KHÔNG reload sidebar để tránh mất focus
+                        // Conversation channel sẽ xử lý tất cả
+                        return;
                     }
+                    
+                    // Nếu tin nhắn KHÔNG thuộc conversation đang focus
+                    // → Reload sidebar và gọi messageReceived() để hiển thị notification
+                    console.log('📢 Conversation khác, gọi messageReceived()');
+                    component.call('loadConversations');
+                    @if(auth()->user()->role === 'admin')
+                        component.call('loadStaffUsersAlternative');
+                    @endif
+                    component.call('messageReceived', e.message);
                 })
                 .listen('.UserJoinChat', (e) => {
                     // Update sidebar khi user join chat
@@ -723,24 +902,94 @@
 
         // Join conversation channel
         Livewire.on('join-conversation-channel', (data) => {
+            const newChannel = `chat.conversation.${data.conversationId}`;
+            
+            console.log('🔄 Joining conversation channel:', newChannel);
 
             // Leave previous channel if exists
             if (currentChannel) {
+                console.log('⬅️ Leaving previous channel:', currentChannel);
                 window.Echo.leave(currentChannel);
             }
 
-            // Join new channel
-            currentChannel = `chat.conversation.${data.conversationId}`;
+            // Update current channel
+            currentChannel = newChannel;
 
+            console.log('✅ Successfully joined conversation channel:', currentChannel);
+            
             window.Echo.private(currentChannel)
                 .listen('.MessageSent', (e) => {
-                    // console.log('New message at Admin:', e.message);
+                    console.log('📨 📨 📨 CONVERSATION CHANNEL - New message:', e.message.id, 'on channel:', currentChannel);
 
-                    // Âm thanh đã được phát bởi global listener trong master.blade.php
-                    // Chỉ cần dispatch event để update UI
+                    // Conversation channel CHỈ xử lý UI cho tin nhắn trong conversation đang mở
+                    // KHÔNG gọi messageReceived() để tránh duplicate với staff channel
+                    
+                    const message = e.message;
+                    const currentUserId = {{ auth()->id() }};
+                    
+                    // Bỏ qua tin nhắn của chính mình (đã được thêm trong sendMessage)
+                    if (message.sender_id === currentUserId) {
+                        console.log('⏭️ Bỏ qua tin nhắn của chính mình');
+                        return;
+                    }
+                    
+                    console.log('🔊 Phát âm thanh thông báo cho admin');
+                    // Phát âm thanh thông báo khi nhận tin nhắn
+                    playNotificationSound();
+                    
                     const root = document.getElementById('chat-root');
                     const component = Livewire.find(root.getAttribute('wire:id'));
-                    component.dispatch('message-received', e);
+                    
+                    // Thêm tin nhắn trực tiếp vào messages array trong Livewire
+                    let currentMessages = component.get('messages');
+                    
+                    // Validate currentMessages là array
+                    if (!Array.isArray(currentMessages)) {
+                        console.error('❌ currentMessages không phải array:', currentMessages);
+                        currentMessages = [];
+                    }
+                    
+                    console.log('📝 Current messages count:', currentMessages.length);
+                    
+                    // Kiểm tra xem message đã tồn tại chưa
+                    const messageIds = currentMessages.map(m => m.id);
+                    if (!messageIds.includes(message.id)) {
+                        console.log('✅ Thêm tin nhắn mới (ID:', message.id, ') và scroll xuống');
+                        
+                        // Tự động đánh dấu đã đọc vì đang mở conversation
+                        message.is_read = true;
+                        
+                        // Thêm message vào array
+                        currentMessages.push(message);
+                        component.set('messages', currentMessages);
+                        
+                        console.log('📝 New messages count:', currentMessages.length);
+                        
+                        // Đợi Livewire render xong DOM trước khi scroll
+                        // Sử dụng requestAnimationFrame để đảm bảo DOM đã được update
+                        console.log('🎨 Đang chờ Livewire render xong...');
+                        
+                        // Scroll nhiều lần với delay để đảm bảo DOM render xong
+                        requestAnimationFrame(() => {
+                            console.log('🎨 Frame 1: Bắt đầu scroll');
+                            scrollToBottom('smooth', true);
+                        });
+                        
+                        setTimeout(() => {
+                            console.log('🎨 Delay 100ms: Scroll lại');
+                            scrollToBottom('smooth', true);
+                        }, 100);
+                        
+                        setTimeout(() => {
+                            console.log('🎨 Delay 300ms: Scroll cuối cùng');
+                            scrollToBottom('smooth', true);
+                        }, 300);
+                        
+                        // Gọi backend để đánh dấu đã đọc
+                        component.call('markSingleMessageAsRead', message.id, message.conversation_id);
+                    } else {
+                        console.log('⚠️ Tin nhắn đã tồn tại (ID:', message.id, '), bỏ qua');
+                    }
                 })
                 .listen('.MessageRead', (e) => {
                     // console.log('Message read:', e);

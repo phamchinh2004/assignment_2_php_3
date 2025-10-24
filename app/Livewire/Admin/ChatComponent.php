@@ -186,6 +186,17 @@ class ChatComponent extends Component
 
     public function selectConversation($conversationId)
     {
+        logger('🎯 selectConversation called', [
+            'conversationId' => $conversationId,
+            'previousConversationId' => $this->selectedConversationId
+        ]);
+        
+        // Nếu conversation đã được chọn rồi → KHÔNG làm gì cả
+        if ($this->selectedConversationId == $conversationId) {
+            logger('⏭️ Conversation already selected, skipping');
+            return;
+        }
+        
         // Reset state trước khi chọn conversation mới
         $this->messages = [];
         $this->selectedConversationId = $conversationId;
@@ -193,12 +204,15 @@ class ChatComponent extends Component
         $this->hasMoreMessages = true;
 
         $this->loadMessages();
+        logger('📚 Loaded messages', ['count' => count($this->messages)]);
+        
         $this->markMessagesAsRead($conversationId);
         
         // Chỉ cập nhật unread count cho conversation này, không reload toàn bộ sidebar
         // Sidebar sẽ tự cập nhật qua WebSocket events khi có tin nhắn mới
         $this->updateConversationUnreadCount($conversationId);
         
+        logger('📡 Dispatching join-conversation-channel', ['conversationId' => $conversationId]);
         $this->dispatch('join-conversation-channel', conversationId: $conversationId);
         $this->dispatch('conversation-selected');
     }
@@ -475,35 +489,101 @@ class ChatComponent extends Component
         }
         $this->loadStaffUsersAlternative();
     }
+    
+    public function openConversationFromNotification($conversationId, $userId, $staffId)
+    {
+        $currentUserId = Auth::id();
+        
+        logger('🔔 openConversationFromNotification called', [
+            'conversationId' => $conversationId,
+            'userId' => $userId,
+            'staffId' => $staffId,
+            'currentUserId' => $currentUserId,
+            'isAdminConversation' => $staffId === $currentUserId
+        ]);
+        
+        // Nếu staffId khác admin_id → Expand staff section
+        if ($staffId && $staffId !== $currentUserId) {
+            logger('📂 Expanding staff section', ['staffId' => $staffId]);
+            // Expand staff nếu chưa expand
+            if (!in_array($staffId, $this->expandedStaff)) {
+                $this->expandedStaff[] = $staffId;
+            }
+            $this->loadStaffUsersAlternative();
+        } else {
+            logger('👤 Admin conversation - không cần expand staff');
+        }
+        
+        // Chọn conversation
+        logger('🎯 Calling selectConversation', ['conversationId' => $conversationId]);
+        $this->selectConversation($conversationId);
+        
+        // Dispatch event để scroll và highlight
+        $this->dispatch('scroll-to-conversation', [
+            'conversationId' => $conversationId,
+            'staffId' => $staffId,
+            'isStaffConversation' => $staffId !== $currentUserId
+        ]);
+    }
 
     public function selectUserForChat($userId, $staffId = null)
     {
+        $currentUser = Auth::user();
+        
+        // Nếu là admin và không truyền staffId, tìm staff đã mời user này
+        if ($currentUser->role === 'admin' && !$staffId) {
+            $member = User::find($userId);
+            if ($member && $member->referrer_id) {
+                $staffId = $member->referrer_id;
+            } else {
+                // Nếu user không có referrer, không cho phép chat
+                $this->dispatch('swal', [
+                    'type' => 'warning',
+                    'title' => 'Không thể mở chat',
+                    'text' => 'Người dùng này chưa được staff nào mời.'
+                ]);
+                return;
+            }
+        }
+        
         if ($staffId && !User::find($staffId)?->invitedUsers->contains('id', $userId)) {
             abort(403, 'Không được phép truy cập người dùng này.');
         }
 
-        $user = Auth::user();
-        $actualStaffId = $staffId ?? $user->id;
+        $actualStaffId = $staffId ?? $currentUser->id;
 
         // Kiểm tra quyền truy cập
-        if ($user->role === 'staff' && $actualStaffId !== $user->id) {
+        if ($currentUser->role === 'staff' && $actualStaffId !== $currentUser->id) {
             return;
         }
 
         // Reset state trước
         $this->messages = [];
         
-        // Tìm hoặc tạo conversation
-        $conversation = Conversation::firstOrCreate([
-            'user_id' => $userId,
-            'staff_id' => $actualStaffId
-        ]);
-        
-        // Nếu tạo mới conversation, cần reload sidebar để hiển thị
-        if ($conversation->wasRecentlyCreated) {
-            $this->loadConversations();
-            if (Auth::user()->role === 'admin') {
-                $this->loadStaffUsersAlternative();
+        // Admin: CHỈ TÌM conversation hiện có, KHÔNG TẠO MỚI
+        if ($currentUser->role === 'admin') {
+            $conversation = Conversation::where('user_id', $userId)
+                ->where('staff_id', $actualStaffId)
+                ->first();
+            
+            if (!$conversation) {
+                $this->dispatch('swal', [
+                    'type' => 'info',
+                    'title' => 'Chưa có cuộc trò chuyện',
+                    'text' => 'Người dùng này chưa nhắn tin với staff.'
+                ]);
+                return;
+            }
+        } else {
+            // Staff: Được phép tạo conversation mới
+            $conversation = Conversation::firstOrCreate([
+                'user_id' => $userId,
+                'staff_id' => $actualStaffId
+            ]);
+            
+            // Nếu tạo mới conversation, cần reload sidebar để hiển thị
+            if ($conversation->wasRecentlyCreated) {
+                $this->loadConversations();
             }
         }
 
@@ -576,13 +656,40 @@ class ChatComponent extends Component
 
     public function messageReceived($message)
     {
+        logger('🔔 messageReceived called', [
+            'message_id' => $message['id'] ?? 'unknown',
+            'conversation_id' => $message['conversation_id'] ?? 'unknown',
+            'selectedConversationId' => $this->selectedConversationId
+        ]);
+        
         if (
             !is_array($message) ||
             !isset($message['id'], $message['conversation_id'], $message['sender_id'])
         ) {
-            logger('Message không hợp lệ (Admin):', ['message' => $message]);
+            logger('❌ Message không hợp lệ (Admin):', ['message' => $message]);
             return;
         }
+
+        // KIỂM TRA DUPLICATE: Sử dụng session để cache (tốt hơn property vì shared across requests)
+        $messageId = $message['id'];
+        $processedIds = session()->get('chat.processed_message_ids', []);
+        
+        if (in_array($messageId, $processedIds)) {
+            logger('⏭️ Message đã được xử lý, bỏ qua:', ['message_id' => $messageId, 'cache' => $processedIds]);
+            return;
+        }
+        
+        // Đánh dấu message đã được xử lý
+        $processedIds[] = $messageId;
+        logger('✅ Message đánh dấu đã xử lý:', ['message_id' => $messageId]);
+        
+        // Giới hạn cache không quá 50 messages
+        if (count($processedIds) > 50) {
+            $processedIds = array_slice($processedIds, -50);
+        }
+        
+        // Lưu lại vào session
+        session()->put('chat.processed_message_ids', $processedIds);
 
         // Không xử lý tin nhắn của chính mình (đã được thêm trong sendMessage)
         if ((int) $message['sender_id'] === Auth::id()) {
@@ -595,11 +702,24 @@ class ChatComponent extends Component
         }
 
         // Tin nhắn thuộc conversation đang mở
+        logger('🔍 Checking if message belongs to current conversation', [
+            'selectedConversationId' => $this->selectedConversationId,
+            'message_conversation_id' => $message['conversation_id'],
+            'matches' => (int) $this->selectedConversationId === (int) $message['conversation_id']
+        ]);
+        
         if ((int) $this->selectedConversationId === (int) $message['conversation_id']) {
+            logger('✅ Tin nhắn thuộc conversation đang mở', [
+                'message_id' => $message['id'],
+                'current_messages_count' => count($this->messages)
+            ]);
+            
             if (is_array($this->messages)) {
                 // Kiểm tra trùng ID
                 $ids = array_column($this->messages, 'id');
                 if (!in_array($message['id'], $ids)) {
+                    logger('➕ Thêm tin nhắn mới vào backend', ['message_id' => $message['id']]);
+                    
                     // Tự động đánh dấu tin nhắn là đã đọc vì conversation đang được mở
                     $this->markSingleMessageAsRead($message['id'], $message['conversation_id']);
                     
@@ -611,18 +731,41 @@ class ChatComponent extends Component
                     $tempMessages[] = $message;
                     $this->messages = $tempMessages;
                     
+                    logger('📜 Dispatching scroll-to-bottom event', [
+                        'new_messages_count' => count($this->messages)
+                    ]);
                     $this->dispatch('scroll-to-bottom');
+                } else {
+                    logger('⚠️ Tin nhắn đã tồn tại trong backend, bỏ qua', ['message_id' => $message['id']]);
                 }
             }
         } else {
-            // Tin nhắn KHÔNG thuộc conversation đang mở - hiển thị notification
+            logger('📢 Tin nhắn KHÔNG phải conversation đang mở → hiển thị notification', [
+                'message_id' => $message['id'],
+                'conversation_id' => $message['conversation_id']
+            ]);
+            
+            // Tin nhắn KHÔNG thuộc conversation đang mở - hiển thị notification có thể click
             // Kiểm tra tồn tại sender info trước khi truy cập
             $senderName = $message['sender']['full_name'] ?? 'Người dùng';
+            $messagePreview = $message['type'] === "text" ? Str::limit($message['message'], 30, '...') : "Đã gửi hình ảnh";
             
-            $this->dispatch('swal', [
-                'type' => 'warning',
-                'title' => $senderName,
-                'text' => $message['type'] === "text" ? Str::limit($message['message'], 30, '...') : "Đã gửi hình ảnh"
+            // Tìm thông tin về user và staff để quyết định cách mở conversation
+            $conversation = Conversation::with(['user', 'staff'])->find($message['conversation_id']);
+            $userId = $conversation->user_id ?? null;
+            $staffId = $conversation->staff_id ?? null;
+            
+            logger('💬 Dispatching chat-notification event', [
+                'conversationId' => $message['conversation_id'],
+                'senderName' => $senderName
+            ]);
+            
+            $this->dispatch('chat-notification', [
+                'conversationId' => $message['conversation_id'],
+                'userId' => $userId,
+                'staffId' => $staffId,
+                'senderName' => $senderName,
+                'message' => $messagePreview
             ]);
         }
 
@@ -637,7 +780,7 @@ class ChatComponent extends Component
     /**
      * Đánh dấu một tin nhắn cụ thể là đã đọc
      */
-    private function markSingleMessageAsRead($messageId, $conversationId)
+    public function markSingleMessageAsRead($messageId, $conversationId)
     {
         $message = Message::find($messageId);
         if ($message && !$message->is_read) {

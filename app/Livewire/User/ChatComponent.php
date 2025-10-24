@@ -587,33 +587,18 @@ class ChatComponent extends Component
                 // Lấy staff_id từ conversation để làm người gửi
                 $staffId = $this->conversation->staff_id;
                 
-                // Tạo tin nhắn tự động
-                $autoMessage = Message::create([
-                    'conversation_id' => $this->conversation->id,
-                    'sender_id' => $staffId,
-                    'message' => $autoReplyMessage,
-                    'type' => 'text',
-                    'image_path' => null,
-                    'is_read' => false, // User chưa đọc
-                ]);
+                // Dispatch job để GỬI TIN NHẮN TỰ ĐỘNG SAU 3 GIÂY
+                // Delay để đảm bảo tin nhắn user được INSERT VÀ BROADCAST trước
+                \App\Jobs\SendAutoReplyMessage::dispatch(
+                    $this->conversation->id,
+                    $staffId,
+                    $autoReplyMessage,
+                    Auth::id(),
+                    $currentLocale,
+                    $lastStaffMessage ? $lastStaffMessage->created_at->diffInHours(now()) : null
+                )->delay(now()->addSeconds(3));
                 
-                $autoMessage->load('sender');
-                
-                // Thêm vào UI
-                if (!$this->chatMessages instanceof Collection) {
-                    $this->chatMessages = collect($this->chatMessages);
-                }
-                
-                $formattedMessage = $this->formatMessage($autoMessage);
-                $this->chatMessages = $this->chatMessages->push($formattedMessage);
-                
-                // Broadcast để staff cũng thấy tin nhắn này
-                broadcast(new MessageSent($autoMessage))->toOthers();
-                
-                // Dispatch event để scroll xuống
-                $this->dispatch('scroll-to-bottom');
-                
-                Log::info('Đã gửi tin nhắn chào tự động', [
+                Log::info('Đã đưa tin nhắn chào tự động vào queue', [
                     'conversation_id' => $this->conversation->id,
                     'user_id' => Auth::id(),
                     'staff_id' => $staffId,

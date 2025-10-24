@@ -380,13 +380,20 @@
                         .listen('.MessageSent', function(e) {
                             // Chỉ show notification nếu không phải tin nhắn của mình
                             if (e.message && e.message.sender_id !== {{ auth()->id() }}) {
+                                // Kiểm tra xem đang ở trang chat hay không
+                                const isOnChatPage = window.location.pathname.includes('/admin/chat-panel');
+                                
+                                // Nếu đang ở trang chat → KHÔNG làm gì (để chat-component xử lý)
+                                if (isOnChatPage) {
+                                    return;
+                                }
+                                
+                                // Chỉ xử lý khi KHÔNG ở trang chat
                                 const messageText = e.message.type === "text" 
                                     ? (e.message.message.length > 30 ? e.message.message.substring(0, 30) + '...' : e.message.message)
                                     : "Đã gửi hình ảnh";
                                 const title = e.message.sender.full_name + ' đã gửi tin nhắn';
-                                
-                                // Tạo URL chuyển đến chat với user đó
-                                const chatUrl = '{{ route("chat-panel") }}#user-' + e.message.sender_id;
+                                const chatUrl = '{{ route("chat-panel") }}#conversation-' + e.message.conversation_id;
                                 
                                 // Hiển thị cả toastr và desktop notification (có thể click để chuyển đến chat)
                                 notification('success', messageText, title, 10000, chatUrl);
