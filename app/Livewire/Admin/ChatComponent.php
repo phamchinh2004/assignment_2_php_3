@@ -516,6 +516,9 @@ class ChatComponent extends Component
 
         try {
             $imagePath = null;
+            $userId = Auth::id();
+            $userName = Auth::user()->full_name;
+            $userRole = Auth::user()->role;
 
             // Nếu có ảnh
             if ($this->image) {
@@ -524,54 +527,44 @@ class ChatComponent extends Component
 
             $message = Message::create([
                 'conversation_id' => $this->selectedConversation->id,
-                'sender_id' => Auth::id(),
+                'sender_id' => $userId,
                 'message' => trim($this->messageText),
                 'image_path' => $imagePath,
                 'type' => $imagePath ? 'image' : 'text'
             ]);
-            $message->load('sender');
-            // Conversation tự động được touch qua $touches trong Message model
-
+            
+            // Format message cho UI (không cần load sender - dùng data có sẵn)
             $messageArray = [
                 'id' => $message->id,
                 'message' => $message->message,
                 'image_path' => $message->image_path,
                 'type' => $message->type,
-                'sender_id' => $message->sender_id,
+                'sender_id' => $userId,
                 'conversation_id' => $message->conversation_id,
-                'is_read' => $message->is_read ?? false,
+                'is_read' => false,
                 'created_at' => $message->created_at,
                 'sender' => [
-                    'id' => $message->sender->id,
-                    'full_name' => $message->sender->full_name,
-                    'role' => $message->sender->role,
+                    'id' => $userId,
+                    'full_name' => $userName,
+                    'role' => $userRole,
                 ]
             ];
 
-            // Thêm tin nhắn mới và force Livewire detect change bằng cách reassign
+            // Thêm tin nhắn mới vào UI
             $tempMessages = $this->messages;
             $tempMessages[] = $messageArray;
             $this->messages = $tempMessages;
-            
-            broadcast(new MessageSent($message))->toOthers();
 
-            // Reset
+            // Reset ngay lập tức
             $this->messageText = '';
             $this->image = null;
             $this->dispatch('reset-message-input');
             $this->dispatch('scroll-to-bottom');
             
-            // Chỉ update timestamp của conversation hiện tại (nhanh hơn nhiều)
-            if ($this->selectedConversation) {
-                $this->selectedConversation->touch();
-            }
-            
-            // Reload conversations và staff trong background (không block UI)
-            // Comment lại để tăng tốc độ gửi tin nhắn
-            // $this->loadConversations();
-            // if (Auth::user()->role === 'admin') {
-            //     $this->loadStaffUsersAlternative();
-            // }
+            // Broadcast trong background (không đợi kết quả)
+            dispatch(function() use ($message) {
+                broadcast(new MessageSent($message))->toOthers();
+            })->afterResponse();
             
             $this->dispatch('refresh-conversations');
         } catch (\Throwable $e) {
