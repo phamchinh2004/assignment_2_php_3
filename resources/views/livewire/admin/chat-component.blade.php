@@ -943,9 +943,16 @@
                     // Thêm tin nhắn trực tiếp vào messages array trong Livewire
                     let currentMessages = component.get('messages');
                     
+                    // Convert Proxy/Object thành array nếu cần
+                    if (currentMessages && typeof currentMessages === 'object' && !Array.isArray(currentMessages)) {
+                        console.log('🔄 Converting Proxy/Object to Array');
+                        // Convert object/proxy thành array bằng Object.values()
+                        currentMessages = Object.values(currentMessages);
+                    }
+                    
                     // Validate currentMessages là array
                     if (!Array.isArray(currentMessages)) {
-                        console.error('❌ currentMessages không phải array:', currentMessages);
+                        console.error('❌ currentMessages vẫn không phải array sau convert:', currentMessages);
                         currentMessages = [];
                     }
                     
