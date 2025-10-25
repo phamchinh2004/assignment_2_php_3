@@ -48,13 +48,22 @@ jobs:
             # Laravel operations
             echo "?? Running Laravel commands..."
             sudo -u apache php artisan migrate --force
-
+            
             sudo -u apache php artisan route:clear
             sudo -u apache php artisan config:clear
             sudo -u apache php artisan config:cache
             sudo -u apache php artisan cache:clear
             sudo -u apache php artisan view:clear
             sudo -u apache php artisan view:cache
+            
+            # Update supervisor queue config
+            sudo cp queue.ini /etc/supervisord.d/laravel-queue.ini
+            sudo supervisorctl reread
+            sudo supervisorctl update
+            
+            # Restart queue workers
+            sudo -u apache php artisan queue:restart
+            sudo supervisorctl restart laravel-queue:*
             
             # Set permissions
             echo "?? Setting permissions..."
