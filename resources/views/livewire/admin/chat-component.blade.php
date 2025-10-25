@@ -904,7 +904,7 @@
         Livewire.on('join-conversation-channel', (data) => {
             const newChannel = `chat.conversation.${data.conversationId}`;
             
-            console.log('🔄 Joining conversation channel:', newChannel);
+            console.log('🔄 🔄 🔄 Joining conversation channel:', newChannel, 'Data:', data);
 
             // Leave previous channel if exists
             if (currentChannel) {
@@ -918,6 +918,12 @@
             console.log('✅ Successfully joined conversation channel:', currentChannel);
             
             window.Echo.private(currentChannel)
+                .subscribed(() => {
+                    console.log('🎉 SUBSCRIBED to conversation channel:', currentChannel);
+                })
+                .error((error) => {
+                    console.error('❌ ERROR joining conversation channel:', currentChannel, error);
+                })
                 .listen('.MessageSent', (e) => {
                     console.log('📨 📨 📨 CONVERSATION CHANNEL - New message:', e.message.id, 'on channel:', currentChannel);
 
@@ -1224,7 +1230,6 @@
                     openZoomModal(this.src);
                 };
             });
-            console.log('✅ Click events attached');
         }
 
         attachImageClickEvents();
