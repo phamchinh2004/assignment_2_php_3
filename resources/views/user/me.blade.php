@@ -52,7 +52,7 @@
             </div>
 
             <!-- Balance Statistics -->
-            <div class="balance-stats">
+            <!-- <div class="balance-stats">
                 <div class="stat-item">
                     <div class="stat-icon deposit">
                         <i class="fas fa-plus-circle"></i>
@@ -80,7 +80,7 @@
                         <span class="stat-value profit-value">{{format_money($user->profit)}}</span>
                     </div>
                 </div>
-            </div>
+            </div> -->
 
             <!-- Action Buttons -->
             <div class="balance-actions">
@@ -122,7 +122,7 @@
             </div>
 
             <!-- Explanation Section -->
-            <div class="balance-explanation">
+            <!-- <div class="balance-explanation">
                 <div class="explanation-item">
                     <i class="fas fa-info-circle"></i>
                     <span>{{__('me.LoiNhuanGiaiThich')}}</span>
@@ -131,7 +131,7 @@
                     <i class="fas fa-calculator"></i>
                     <span>{{__('me.CongThucTinh')}}: {{format_money($user->total_withdraw)}} - {{format_money($user->total_deposit)}} = {{format_money($user->profit)}}</span>
                 </div>
-            </div>
+            </div> -->
         </div>
     </div>
     <!-- Menu Blocks Section -->

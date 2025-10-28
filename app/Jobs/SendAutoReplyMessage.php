@@ -50,8 +50,9 @@ class SendAutoReplyMessage implements ShouldQueue
             'is_read' => false,
         ]);
         
-        // Broadcast ngay sau khi insert
-        broadcast(new MessageSent($autoMessage))->toOthers();
+        // Broadcast đến TẤT CẢ (bao gồm cả staff) vì đây là auto-reply không qua UI
+        // Staff cần nhận event này để hiển thị tin nhắn auto-reply trong conversation đang mở
+        broadcast(new MessageSent($autoMessage));
         
         Log::info('Đã gửi tin nhắn chào tự động', [
             'conversation_id' => $this->conversationId,

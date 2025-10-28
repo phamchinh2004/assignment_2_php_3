@@ -8,11 +8,10 @@ use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PresenceChannel;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class MessageSent implements ShouldBroadcast, ShouldQueue
+class MessageSent implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
@@ -37,8 +36,11 @@ class MessageSent implements ShouldBroadcast, ShouldQueue
             $broadcastedIds[] = $this->message->conversation->staff_id;
         }
         
-        // Broadcast đến tất cả admin (trừ người đã nhận ở trên)
-        $admins = \App\Models\User::where('role', 'admin')->pluck('id');
+        // Broadcast đến tất cả admin (trừ người đã nhận ở trên) - Cache 5 phút
+        $admins = \Illuminate\Support\Facades\Cache::remember('admin_ids', 300, function () {
+            return \App\Models\User::where('role', 'admin')->pluck('id')->toArray();
+        });
+        
         foreach ($admins as $adminId) {
             if (!in_array($adminId, $broadcastedIds)) {
                 $channels[] = new PrivateChannel('staff.' . $adminId);

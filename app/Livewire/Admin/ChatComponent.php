@@ -32,6 +32,7 @@ class ChatComponent extends Component
     public $messagesPerPage = 20; // Tăng số tin nhắn mỗi lần tải
     public $currentPage = 1;
     public $hasMoreMessages = true;
+    public $isLoading = false; // Loading state cho load more button
     public $searchTerm = '';
     public $maxMessageLength = 1000;
     public $staffUsersUpdateKey = 0; // Key để force re-render
@@ -202,6 +203,7 @@ class ChatComponent extends Component
         $this->selectedConversationId = $conversationId;
         $this->currentPage = 1;
         $this->hasMoreMessages = true;
+        $this->isLoading = false;
 
         $this->loadMessages();
         logger('📚 Loaded messages', ['count' => count($this->messages)]);
@@ -457,25 +459,32 @@ class ChatComponent extends Component
 
         $this->hasMoreMessages = $hasMore;
 
-        if (!$hasMore) {
-            $this->dispatch('no-more-messages');
-        }
-
         // Dispatch event để JavaScript biết đã load xong
         $this->dispatch('messages-loaded', ['hasMore' => $hasMore, 'totalLoaded' => count($this->messages)]);
     }
 
-    public function loadMoreMessages($page)
+    public function loadMoreMessages($page = null)
     {
+        // Nếu không truyền page, tự động tăng currentPage
+        if ($page === null) {
+            $page = $this->currentPage + 1;
+        }
+        
         Log::info('loadMoreMessages called', ['page' => $page, 'hasMore' => $this->hasMoreMessages]);
 
         if (!$this->hasMoreMessages || !$this->selectedConversation) {
             Log::info('Cannot load more messages', ['hasMore' => $this->hasMoreMessages, 'hasConversation' => !!$this->selectedConversation]);
+            $this->isLoading = false;
             return;
         }
 
+        $this->isLoading = true;
         $this->currentPage = $page;
         $this->loadMessages($page);
+        $this->isLoading = false;
+        
+        // Dispatch event để JavaScript biết đã load xong
+        $this->dispatch('messages-loaded-complete');
     }
 
     public function toggleStaffExpansion($staffId)
@@ -690,16 +699,6 @@ class ChatComponent extends Component
         
         // Lưu lại vào session
         session()->put('chat.processed_message_ids', $processedIds);
-
-        // Không xử lý tin nhắn của chính mình (đã được thêm trong sendMessage)
-        if ((int) $message['sender_id'] === Auth::id()) {
-            // Chỉ cập nhật sidebar
-            $this->loadConversations();
-            if (Auth::user()->role === 'admin') {
-                $this->loadStaffUsersAlternative();
-            }
-            return;
-        }
 
         // Tin nhắn thuộc conversation đang mở
         logger('🔍 Checking if message belongs to current conversation', [
