@@ -3,7 +3,7 @@ return [
     "HeThongPhanPhoi" => "Distribution System",
     "DangCapNhat" => "Updating...",
     "LoiNhuan" => "Profit",
-    "Nhap" => "Enter",
+    "Nhap" => "Spin",
     "TongPhanPhoi" => "Total Distribution",
     "TongSoDu" => "Total Balance",
     "PhanPhoiHomNay" => "Today's Distribution",

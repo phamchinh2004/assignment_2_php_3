@@ -3,7 +3,7 @@ return [
     "HeThongPhanPhoi" => "配布システム",
     "DangCapNhat" => "更新中...",
     "LoiNhuan" => "利益",
-    "Nhap" => "入力",
+    "Nhap" => "回す",
     "TongPhanPhoi" => "総配布",
     "TongSoDu" => "合計残高",
     "PhanPhoiHomNay" => "本日の配布",

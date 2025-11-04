@@ -3,7 +3,7 @@ return [
     "HeThongPhanPhoi" => "Hệ thống phân phối",
     "DangCapNhat" => "Đang cập nhật...",
     "LoiNhuan" => "Lợi nhuận",
-    "Nhap" => "Nhập",
+    "Nhap" => "Quay",
     "TongPhanPhoi" => "Tổng phân phối",
     "TongSoDu" => "Tổng số dư",
     "PhanPhoiHomNay" => "Phân phối hôm nay",

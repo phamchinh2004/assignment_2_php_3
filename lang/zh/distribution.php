@@ -3,7 +3,7 @@ return [
     "HeThongPhanPhoi" => "分发系统",
     "DangCapNhat" => "正在更新...",
     "LoiNhuan" => "利润",
-    "Nhap" => "输入",
+    "Nhap" => "旋转",
     "TongPhanPhoi" => "总分发量",
     "TongSoDu" => "总余额",
     "PhanPhoiHomNay" => "今日分发",
