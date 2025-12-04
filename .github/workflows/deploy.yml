@@ -1,4 +1,4 @@
-name: Deploy Laravel App
+name: Deploy Laravel App 
 on:
   push:
     branches:
