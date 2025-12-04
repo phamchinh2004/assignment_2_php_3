@@ -8,10 +8,11 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout source code
         uses: actions/checkout@v3
-        
+
       - name: Deploy to server
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -26,11 +27,11 @@ jobs:
             echo "🚀 Starting deployment..."
             cd $APP_DIR
 
-            echo "🧹 Fixing permissions before deploy..."
+            echo "🧹 Fixing permissions..."
             sudo chown -R apache:apache $APP_DIR
 
-            echo "📥 Fetching latest code..."
-            sudo -u apache git fetch origin main
+            echo "📥 Pulling code..."
+            sudo -u apache git fetch --all
             sudo -u apache git reset --hard origin/main
             sudo -u apache git clean -fd
 
@@ -38,9 +39,15 @@ jobs:
             sudo chown -R apache:apache vendor composer.lock composer.json || true
             sudo -u apache /usr/local/bin/composer install --no-dev --optimize-autoloader
 
-            echo "🎨 Building frontend..."
-            sudo chown -R apache:apache node_modules package.json package-lock.json || true
-            sudo -u apache npm install --no-optional
+            echo "🎨 Building frontend (full clean)..."
+            sudo rm -rf node_modules package-lock.json
+            sudo chown -R apache:apache $APP_DIR
+            
+            # NÊN thêm export PATH để tránh lỗi npm chạy sai node binary
+            export PATH=$PATH:/usr/local/bin
+
+            sudo -u apache npm install --legacy-peer-deps
+            sudo -u apache npm rebuild
             sudo -u apache npm run build
 
             echo "🧭 Running Laravel tasks..."
@@ -48,7 +55,7 @@ jobs:
             sudo -u apache php artisan optimize:clear
             sudo -u apache php artisan optimize
 
-            echo "📌 Updating supervisor..."
+            echo "📌 Updating supervisor (reload queue worker)..."
             sudo cp queue.ini /etc/supervisord.d/laravel-queue.ini
             sudo supervisorctl reread
             sudo supervisorctl update
