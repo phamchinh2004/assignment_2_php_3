@@ -95,13 +95,13 @@ Route::middleware(['role:admin'])->group(function () {
     Route::get('detail', [StatisticalController::class, 'getRevenueDetail'])
         ->name('api.revenue.detail');
 
-    // Xuất Excel báo cáo doanh thu
+    // Xuất Excel báo cáo doanh thu (route dành cho admin, tránh trùng với API)
     Route::get('export', [StatisticalController::class, 'exportRevenue'])
-        ->name('api.revenue.export');
-
-    // Lấy biểu đồ doanh thu theo thời gian
+        ->name('admin.revenue.export');
+    
+    // Lấy biểu đồ doanh thu theo thời gian (route dành cho admin, tránh trùng với API)
     Route::get('chart', [StatisticalController::class, 'getRevenueChart'])
-        ->name('api.revenue.chart');
+        ->name('admin.revenue.chart');
     Route::get('doanh-thu-tu-khach-hang', [StatisticalController::class, 'doanhThuTuKhachHang'])->name('doanh.thu.tu.khach.hang');
 });
 Route::get('doanh-thu-ban-than', [StatisticalController::class, 'doanhThuBanThan'])->name('doanh.thu.ban.than');
