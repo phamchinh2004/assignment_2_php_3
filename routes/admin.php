@@ -76,12 +76,6 @@ Route::middleware(['role:admin'])->group(function () {
     Route::get('tong-doanh-thu', [StatisticalController::class, 'tongDoanhThu'])->name('tong.doanh.thu');
     Route::get('statistical/revenue', [StatisticalController::class, 'tongDoanhThu'])->name('admin.statistical.revenue');
 
-    // Routes API có thể truy cập từ web
-    Route::get('api/revenue-data', [StatisticalController::class, 'getRevenueData'])->name('api.statistical.revenue');
-    Route::get('api/user-revenue-stats', [StatisticalController::class, 'getUserRevenueStats'])->name('api.statistical.user.revenue');
-    Route::get('api/transaction-status-stats', [StatisticalController::class, 'getTransactionStatusStats'])->name('api.statistical.transaction.status');
-    Route::get('api/export-revenue-data', [StatisticalController::class, 'exportRevenueData'])->name('api.statistical.export.revenue');
-
     // Route cho các trang thống kê khác
     Route::prefix('statistical')->name('admin.statistical.')->group(function () {
         Route::get('users', [StatisticalController::class, 'userStats'])->name('users');
