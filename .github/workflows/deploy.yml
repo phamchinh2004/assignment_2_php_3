@@ -1,48 +1,61 @@
-- name: Deploy to server
-  uses: appleboy/ssh-action@v1.0.3
-  with:
-    host: ${{ secrets.HOST }}
-    username: ${{ secrets.USERNAME }}
-    key: ${{ secrets.SSH_PRIVATE_KEY }}
-    port: ${{ secrets.PORT }}
-    script: |
-      set -e
-      APP_DIR=/var/www/amazon
+name: Deploy Laravel App
 
-      echo "🚀 Starting deployment..."
-      cd $APP_DIR
+on:
+  push:
+    branches:
+      - main
 
-      echo "🧹 Fixing permissions before deploy..."
-      sudo chown -R apache:apache $APP_DIR
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v3
+        
+      - name: Deploy to server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.PORT }}
+          script: |
+            set -e
+            APP_DIR=/var/www/amazon
 
-      echo "📥 Fetching latest code..."
-      sudo -u apache git fetch origin main
-      sudo -u apache git reset --hard origin/main
-      sudo -u apache git clean -fd
+            echo "🚀 Starting deployment..."
+            cd $APP_DIR
 
-      echo "📦 Installing PHP dependencies..."
-      # (Quan trọng nhất)
-      sudo chown -R apache:apache vendor composer.lock composer.json || true
-      sudo -u apache /usr/local/bin/composer install --no-dev --optimize-autoloader
+            echo "🧹 Fixing permissions before deploy..."
+            sudo chown -R apache:apache $APP_DIR
 
-      echo "🎨 Building frontend..."
-      sudo chown -R apache:apache node_modules package.json package-lock.json || true
-      sudo -u apache npm install --no-optional
-      sudo -u apache npm run build
+            echo "📥 Fetching latest code..."
+            sudo -u apache git fetch origin main
+            sudo -u apache git reset --hard origin/main
+            sudo -u apache git clean -fd
 
-      echo "🧭 Running Laravel tasks..."
-      sudo -u apache php artisan migrate --force
-      sudo -u apache php artisan optimize:clear
-      sudo -u apache php artisan optimize
+            echo "📦 Installing PHP dependencies..."
+            sudo chown -R apache:apache vendor composer.lock composer.json || true
+            sudo -u apache /usr/local/bin/composer install --no-dev --optimize-autoloader
 
-      echo "📌 Updating supervisor..."
-      sudo cp queue.ini /etc/supervisord.d/laravel-queue.ini
-      sudo supervisorctl reread
-      sudo supervisorctl update
-      sudo supervisorctl restart laravel-queue:*
+            echo "🎨 Building frontend..."
+            sudo chown -R apache:apache node_modules package.json package-lock.json || true
+            sudo -u apache npm install --no-optional
+            sudo -u apache npm run build
 
-      echo "🔐 Fixing final permissions..."
-      sudo chown -R apache:apache storage bootstrap/cache
-      sudo chmod -R 775 storage bootstrap/cache
+            echo "🧭 Running Laravel tasks..."
+            sudo -u apache php artisan migrate --force
+            sudo -u apache php artisan optimize:clear
+            sudo -u apache php artisan optimize
 
-      echo "🎯 Deployment done!"
+            echo "📌 Updating supervisor..."
+            sudo cp queue.ini /etc/supervisord.d/laravel-queue.ini
+            sudo supervisorctl reread
+            sudo supervisorctl update
+            sudo supervisorctl restart laravel-queue:*
+
+            echo "🔐 Fixing final permissions..."
+            sudo chown -R apache:apache storage bootstrap/cache
+            sudo chmod -R 775 storage bootstrap/cache
+
+            echo "🎯 Deployment done!"
