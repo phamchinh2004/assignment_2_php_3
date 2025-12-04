@@ -18,7 +18,6 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware(['role:staff|admin', 'checkBanned', 'auth'])->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('admin.dashboard');
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
     Route::middleware(['checkPermission:quan_ly_don_hang'])->group(function () {
         Route::get('/order/update-commission-percentage', [OrderController::class, 'orderUpdateCommissionPercentage'])->name('order.update.commission.percentage');
         Route::get('/order/change-status-order/{order}', [OrderController::class, 'changeStatusOrder'])->name('order.change.status');
