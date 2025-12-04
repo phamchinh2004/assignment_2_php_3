@@ -1,73 +1,48 @@
-name: Deploy Laravel App
-on:
-  push:
-    branches:
-      - main
+- name: Deploy to server
+  uses: appleboy/ssh-action@v1.0.3
+  with:
+    host: ${{ secrets.HOST }}
+    username: ${{ secrets.USERNAME }}
+    key: ${{ secrets.SSH_PRIVATE_KEY }}
+    port: ${{ secrets.PORT }}
+    script: |
+      set -e
+      APP_DIR=/var/www/amazon
 
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout source code
-        uses: actions/checkout@v3
-        
-      - name: Deploy to server
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.PORT }}
-          script: |
-            set -e
-            APP_DIR=/var/www/amazon 
-            SSH_KEY=$APP_DIR/.ssh/id_ed25519
-            
-            echo "?? Starting deployment..."
-            cd $APP_DIR
-            
-            # Pull code b?ng Apache user (s? d?ng HTTPS)
-            echo "?? Fetching latest code..."
-            sudo -u apache git fetch origin main
-            sudo -u apache git reset --hard origin/main
-            sudo -u apache git clean -fd
-            
-            # Composer install
-            echo "?? Installing dependencies..."
-            sudo -u apache /usr/local/bin/composer install --no-dev --optimize-autoloader
-            
-            # Frontend build - temporarily skip due to rollup issue
-            echo "?? Skipping frontend build (rollup issue)..."
-            # Complete clean install to fix rollup module issue
-            # rm -rf node_modules package-lock.json .npm .npmrc  
-            # npm cache clean --force
-            # npm install --no-optional
-            npm run build
-            # chown -R apache:apache node_modules public/build public/hot || true
-            
-            # Laravel operations
-            echo "?? Running Laravel commands..."
-            sudo -u apache php artisan migrate --force
-            
-            sudo -u apache php artisan route:clear
-            sudo -u apache php artisan config:clear
-            sudo -u apache php artisan config:cache
-            sudo -u apache php artisan cache:clear
-            sudo -u apache php artisan view:clear
-            sudo -u apache php artisan view:cache
-            
-            # Update supervisor queue config
-            sudo cp queue.ini /etc/supervisord.d/laravel-queue.ini
-            sudo supervisorctl reread
-            sudo supervisorctl update
-            
-            # Restart queue workers
-            sudo -u apache php artisan queue:restart
-            sudo supervisorctl restart laravel-queue:*
-            
-            # Set permissions
-            echo "?? Setting permissions..."
-            sudo chown -R apache:apache storage bootstrap/cache
-            sudo chmod -R 775 storage bootstrap/cache
-            
-            echo "? Deployment completed successfully!"
+      echo "🚀 Starting deployment..."
+      cd $APP_DIR
+
+      echo "🧹 Fixing permissions before deploy..."
+      sudo chown -R apache:apache $APP_DIR
+
+      echo "📥 Fetching latest code..."
+      sudo -u apache git fetch origin main
+      sudo -u apache git reset --hard origin/main
+      sudo -u apache git clean -fd
+
+      echo "📦 Installing PHP dependencies..."
+      # (Quan trọng nhất)
+      sudo chown -R apache:apache vendor composer.lock composer.json || true
+      sudo -u apache /usr/local/bin/composer install --no-dev --optimize-autoloader
+
+      echo "🎨 Building frontend..."
+      sudo chown -R apache:apache node_modules package.json package-lock.json || true
+      sudo -u apache npm install --no-optional
+      sudo -u apache npm run build
+
+      echo "🧭 Running Laravel tasks..."
+      sudo -u apache php artisan migrate --force
+      sudo -u apache php artisan optimize:clear
+      sudo -u apache php artisan optimize
+
+      echo "📌 Updating supervisor..."
+      sudo cp queue.ini /etc/supervisord.d/laravel-queue.ini
+      sudo supervisorctl reread
+      sudo supervisorctl update
+      sudo supervisorctl restart laravel-queue:*
+
+      echo "🔐 Fixing final permissions..."
+      sudo chown -R apache:apache storage bootstrap/cache
+      sudo chmod -R 775 storage bootstrap/cache
+
+      echo "🎯 Deployment done!"
