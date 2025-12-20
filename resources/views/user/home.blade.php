@@ -169,13 +169,13 @@
                     <div class="wheel-slice slice-1" data-prize="SH Mode">
                         <div class="slice-content">
                             <i class="fas fa-motorcycle"></i>
-                            <span>Xe SH</span>
+                            <span>SH Mode</span>
                         </div>
                     </div>
                     <div class="wheel-slice slice-2" data-prize="$100">
                         <div class="slice-content">
                             <i class="fas fa-dollar-sign"></i>
-                            <span>$100</span>
+                            <span>$200</span>
                         </div>
                     </div>
                     <div class="wheel-slice slice-3" data-prize="iPhone 17">
@@ -187,31 +187,31 @@
                     <div class="wheel-slice slice-4" data-prize="$500">
                         <div class="slice-content">
                             <i class="fas fa-dollar-sign"></i>
-                            <span>$500</span>
+                            <span>$20</span>
                         </div>
                     </div>
                     <div class="wheel-slice slice-5" data-prize="$1000">
                         <div class="slice-content">
                             <i class="fas fa-dollar-sign"></i>
-                            <span>$1000</span>
+                            <span>$100</span>
                         </div>
                     </div>
                     <div class="wheel-slice slice-6" data-prize="$50">
                         <div class="slice-content">
                             <i class="fas fa-dollar-sign"></i>
-                            <span>$50</span>
+                            <span>$5</span>
                         </div>
                     </div>
                     <div class="wheel-slice slice-7" data-prize="$10000">
                         <div class="slice-content">
                             <i class="fas fa-gem"></i>
-                            <span>$10000</span>
+                            <span>Chúc bạn may mắn lần sau</span>
                         </div>
                     </div>
                     <div class="wheel-slice slice-8" data-prize="$200">
                         <div class="slice-content">
                             <i class="fas fa-dollar-sign"></i>
-                            <span>$200</span>
+                            <span>$2</span>
                         </div>
                     </div>
                 </div>
