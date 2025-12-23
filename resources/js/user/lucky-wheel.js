@@ -9,20 +9,40 @@ document.addEventListener('DOMContentLoaded', function() {
     let isSpinning = false;
     let currentRotation = 0;
     
-    // Danh sách giải thưởng (8 phần)
+    // Danh sách giải thưởng (8 phần) khớp với HTML
     const prizes = [
-        { name: 'Xe SH Mode', icon: 'fas fa-motorcycle', index: 0, type: 'big' },
-        { name: '$100', icon: 'fas fa-dollar-sign', index: 1, type: 'small' },
-        { name: 'iPhone 17 Pro Max', icon: 'fab fa-apple', index: 2, type: 'big' },
-        { name: '$500', icon: 'fas fa-dollar-sign', index: 3, type: 'medium' },
-        { name: '$1000', icon: 'fas fa-dollar-sign', index: 4, type: 'big' },
-        { name: '$50', icon: 'fas fa-dollar-sign', index: 5, type: 'small' },
-        { name: '$10000', icon: 'fas fa-gem', index: 6, type: 'big' },
-        { name: '$200', icon: 'fas fa-dollar-sign', index: 7, type: 'small' }
+        { name: 'SH Mode', icon: 'fas fa-motorcycle', index: 0, tier: 'high' },
+        { name: '$2', icon: 'fas fa-dollar-sign', index: 1, tier: 'low' },
+        { name: 'Chúc bạn may mắn lần sau', icon: 'fas fa-gem', index: 2, tier: 'lose' },
+        { name: '$10', icon: 'fas fa-dollar-sign', index: 3, tier: 'mid' },
+        { name: '$2', icon: 'fas fa-dollar-sign', index: 4, tier: 'low' },
+        { name: '$5', icon: 'fas fa-dollar-sign', index: 5, tier: 'low' },
+        { name: 'Chúc bạn may mắn lần sau', icon: 'fas fa-gem', index: 6, tier: 'lose' },
+        { name: '$2', icon: 'fas fa-dollar-sign', index: 7, tier: 'low' }
     ];
     
-    // Lọc ra các giải thưởng nhỏ (chỉ cho phép trúng các giải này)
-    const allowedPrizes = prizes.filter(p => p.type === 'small'); // $50, $100, $200
+    // Tăng xác suất cho ô "Chúc bạn may mắn lần sau" và các ô tiền thấp
+    // Bỏ hoàn toàn các giải trị giá cao
+    const weightedPool = [
+        { ...prizes[1], weight: 4 }, // $2 (slice-2)
+        { ...prizes[4], weight: 4 }, // $2 (slice-5)
+        { ...prizes[7], weight: 4 }, // $2 (slice-8)
+        { ...prizes[5], weight: 3 }, // $5 (slice-6)
+        { ...prizes[3], weight: 1 }, // $10 (slice-4) - tỷ lệ thấp
+        { ...prizes[2], weight: 6 }, // Chúc bạn may mắn (slice-3)
+        { ...prizes[6], weight: 6 }  // Chúc bạn may mắn (slice-7)
+    ];
+    
+    function pickWeightedPrize() {
+        const totalWeight = weightedPool.reduce((sum, p) => sum + p.weight, 0);
+        const r = Math.random() * totalWeight;
+        let acc = 0;
+        for (const p of weightedPool) {
+            acc += p.weight;
+            if (r <= acc) return p;
+        }
+        return weightedPool[weightedPool.length - 1];
+    }
     
     // Hàm quay vòng
     window.spinWheel = async function() {
@@ -32,9 +52,8 @@ document.addEventListener('DOMContentLoaded', function() {
         spinButton.classList.add('spinning');
         spinButton.disabled = true;
         
-        // Random giải thưởng chỉ từ các giải nhỏ
-        const randomAllowedIndex = Math.floor(Math.random() * allowedPrizes.length);
-        const prize = allowedPrizes[randomAllowedIndex];
+        // Chọn giải thưởng theo trọng số (ưu tiên lose và tiền thấp)
+        const prize = pickWeightedPrize();
         const randomPrizeIndex = prize.index; // Lấy index thực tế trên vòng quay
         
         try {

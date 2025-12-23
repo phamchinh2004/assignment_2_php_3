@@ -149,7 +149,8 @@
     white-space: nowrap;
 }
 
-.slice-7 .slice-content span {
+.slice-7 .slice-content span,
+.slice-3 .slice-content span {
     font-size: 10px;
     white-space: wrap;
     word-wrap: break-word;
