@@ -815,50 +815,42 @@
         @endif
     </div>
 </div>
-<!-- Notification Overlay -->
-<div class="arround_notification">
-    <div class="notification-overlay" id="notificationOverlay">
-        <div class="notification-board">
-            <button class="close-btn" onclick="closeNotification()">
-                <i class="fas fa-times"></i>
-            </button>
-
-            <div class="notification-header">
-                <h1 class="notification-title">
-                    <i class="fas fa-bullhorn"></i> THÔNG BÁO
-                </h1>
-                <p class="notification-subtitle">Chương trình ưu đãi đặc biệt từ Amazon</p>
+<!-- Notification Modal -->
+<div class="modal fade" id="notificationModal" tabindex="-1" aria-labelledby="notificationModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content notification-board">
+            <div class="modal-header notification-header">
+                <div class="header-icon">🎊</div>
+                <h1 class="modal-title notification-title" id="notificationModalLabel">Chào Mừng Năm Mới 2026</h1>
+                <button type="button" class="btn-close btn-close-white" onclick="closeNotification()" aria-label="Close"></button>
             </div>
-
-            <div class="notification-body">
-                <div class="notification-item">
-                    <div class="notification-number">1</div>
-                    <p>Hệ thống Amazon đang tri ân khách hàng mới thưởng lớn cho các khách hàng đăng ký tài khoản tham gia gian hàng lần đầu.</p>
-                </div>
-
-                <div class="notification-item">
-                    <div class="notification-number">2</div>
-                    <div class="special-event">
-                        <div class="special-title">>>> Thông Báo Đặc Biệt <<< </div>
-                                <p><strong>Sự kiện mừng Giáng Sinh - Noel</strong></p>
-                                <p>Khi khách hàng tham gia sự kiện Noel đặc biệt, bạn có cơ hội nhận thưởng <span class="reward-amount">lên tới hàng triệu USD</span> cùng nhiều phần quà Giáng Sinh hấp dẫn!</p>
-                                <p>Chương trình chỉ diễn ra trong mùa lễ Giáng Sinh này, hãy nhanh tay tham gia để không bỏ lỡ cơ hội vàng.</p>
+            <div class="modal-body notification-body">
+                <div class="notification-content">
+                    <div class="content-item">
+                        <div class="item-icon">🎁</div>
+                        <div class="item-content">
+                            <h3>Ưu đãi cho khách hàng mới</h3>
+                            <p>Hệ thống Amazon đang tri ân khách hàng mới với phần thưởng lớn khi đăng ký tài khoản và tham gia gian hàng lần đầu.</p>
                         </div>
                     </div>
-                </div>
 
-                <div class="notification-footer">
-                    <div class="notification-options">
-                        <label class="checkbox-container">
-                            <input type="checkbox" id="dontShowAgain">
-                            <span class="checkmark"></span>
-                            Không hiển thị thông báo này nữa
-                        </label>
+                    <div class="special-announcement">
+                        <div class="announcement-badge">Sự Kiện Đặc Biệt</div>
+                        <h2>Sự kiện chào mừng năm mới 2026</h2>
+                        <p>Tham gia ngay để có cơ hội nhận thưởng <span class="reward-highlight">lên tới hàng triệu USD</span> cùng nhiều phần quà năm mới hấp dẫn!</p>
+                        <p class="announcement-note">📅 Chương trình chỉ diễn ra trong dịp năm mới 2026 này, hãy nhanh tay tham gia để không bỏ lỡ cơ hội vàng.</p>
                     </div>
-                    <button class="cta-button" onclick="participateEvent()">
-                        <i class="fas fa-gift"></i> Tham gia ngay
-                    </button>
                 </div>
+            </div>
+            <div class="modal-footer notification-footer">
+                <label class="checkbox-wrapper">
+                    <input type="checkbox" id="dontShowAgain">
+                    <span class="checkbox-label">Không hiển thị thông báo này nữa</span>
+                </label>
+                <button type="button" class="cta-button" onclick="participateEvent()">
+                    <i class="fas fa-gift"></i>
+                    <span>Tham gia ngay</span>
+                </button>
             </div>
         </div>
     </div>
