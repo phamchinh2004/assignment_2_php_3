@@ -13,7 +13,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('frozen_orders', function (Blueprint $table) {
+        if (!Schema::hasTable('frozen_orders')) {
+            Schema::create('frozen_orders', function (Blueprint $table) {
             $table->id();
             $table->foreignIdFor(User::class)->comment('Người dùng bị áp dụng giá giả');
             $table->foreignIdFor(Order::class)->comment('Đơn hàng bị đóng băng');
@@ -50,6 +51,7 @@ return new class extends Migration
             $table->decimal('penalty_amount', 10, 2)->nullable()->comment('Số tiền phạt (30% giá trị đơn hàng)');
             $table->timestamps();
         });
+        }
     }
 
     /**

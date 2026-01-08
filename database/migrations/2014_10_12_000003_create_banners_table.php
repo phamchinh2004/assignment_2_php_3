@@ -12,20 +12,25 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('banners', function (Blueprint $table) {
+        if (!Schema::hasTable('banners')) {
+            Schema::create('banners', function (Blueprint $table) {
             $table->id();
             $table->string('name')->nullable()->comment('Tên banner');
             $table->boolean(column: 'status')->default(1)->comment('Trạng thái kích hoạt, mặc định là 1 (đã được kích hoạt), 0 là bị khóa');
             $table->timestamps();
         });
 
+        }
+
         // Tạo bảng banner_images
-        Schema::create('banner_images', function (Blueprint $table) {
+        if (!Schema::hasTable('banner_images')) {
+            Schema::create('banner_images', function (Blueprint $table) {
             $table->id();
             $table->string('path')->comment('Đường dẫn hình ảnh');
             $table->foreignIdFor(Banner::class)->comment('Thuộc về banner nào');
             $table->timestamps();
         });
+        }
     }
 
     /**

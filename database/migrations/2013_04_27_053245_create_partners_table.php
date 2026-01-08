@@ -11,13 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('partners', function (Blueprint $table) {
-            $table->id();
-            $table->string('name')->comment('Tên đối tác');
-            $table->string('image')->comment('Hình ảnh đối tác');
-            $table->string('link')->comment('Link trang web đối tác');
-            $table->timestamps();
-        });
+        if (!Schema::hasTable('partners')) {
+            Schema::create('partners', function (Blueprint $table) {
+                $table->id();
+                $table->string('name')->comment('Tên đối tác');
+                $table->string('image')->comment('Hình ảnh đối tác');
+                $table->string('link')->comment('Link trang web đối tác');
+                $table->timestamps();
+            });
+        }
     }
 
     /**

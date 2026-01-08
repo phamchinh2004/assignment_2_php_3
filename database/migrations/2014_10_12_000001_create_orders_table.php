@@ -12,7 +12,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('orders', function (Blueprint $table) {
+        if (!Schema::hasTable('orders')) {
+            Schema::create('orders', function (Blueprint $table) {
             $table->id();
             $table->integer('index')->comment('Số thứ tự đơn hàng');
             $table->string('order_code')->nullable()->comment('Mã đơn hàng');
@@ -36,6 +37,7 @@ return new class extends Migration
             $table->string('api')->nullable()->comment('Chuỗi API để theo dõi đơn hàng trên nền tảng quản lý');
             $table->timestamps();
         });
+        }
     }
 
     /**

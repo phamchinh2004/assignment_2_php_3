@@ -12,7 +12,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('user_bans', function (Blueprint $table) {
+        if (!Schema::hasTable('user_bans')) {
+            Schema::create('user_bans', function (Blueprint $table) {
             $table->id();
             $table->string('reason')->comment('Lý do thay đổi trạng thái');
             $table->foreignIdFor(User::class)->comment('Xác định người dùng nào được thay đổi trạng thái')->constrained()->onDelete('cascade');
@@ -20,6 +21,7 @@ return new class extends Migration
             $table->tinyInteger(column: 'is_active')->default(1)->comment('Trạng thái hiệu lực, mặc định là 1 (có hiệu lực, 0 là không có hiệu lực)');
             $table->timestamps();
         });
+        }
     }
 
     /**

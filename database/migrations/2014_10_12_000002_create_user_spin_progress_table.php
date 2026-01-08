@@ -13,13 +13,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('user_spin_progresses', function (Blueprint $table) {
+        if (!Schema::hasTable('user_spin_progresses')) {
+            Schema::create('user_spin_progresses', function (Blueprint $table) {
             $table->id();
             $table->integer('current_spin')->default(0)->comment('Đã quay đến lượt thứ mấy của cấp này');
             $table->foreignIdFor(User::class)->comment('Xác định số lượt quay này của người dùng nào');
             $table->foreignIdFor(Rank::class)->comment('Xác định người dùng này đang ở rank nào');
             $table->timestamps();
         });
+        }
     }
 
     /**

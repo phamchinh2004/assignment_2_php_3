@@ -5,21 +5,22 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
     public function up(): void
     {
-        Schema::create('transaction_histories', function (Blueprint $table) {
-            $table->id();
-            $table->foreignIdFor(User::class)->comment('Xác định lịch sử này của người dùng nào!');
-            $table->double('value')->comment('Bao nhiêu tiền');
-            $table->enum('type', ['deposit', 'order', 'profit', 'withdraw', 'penalty'])->comment('Loại biến động nào!');
-            $table->string('note')->nullable()->comment('Ghi chú');
-            $table->timestamps();
-        });
+        if (!Schema::hasTable('transaction_histories')) {
+            Schema::create('transaction_histories', function (Blueprint $table) {
+                $table->id();
+                $table->foreignIdFor(User::class)->comment('Xác định lịch sử này của người dùng nào!');
+                $table->double('value')->comment('Bao nhiêu tiền');
+                $table->enum('type', ['deposit', 'order', 'profit', 'withdraw', 'penalty'])->comment('Loại biến động nào!');
+                $table->string('note')->nullable()->comment('Ghi chú');
+                $table->timestamps();
+            });
+        }
     }
 
     /**

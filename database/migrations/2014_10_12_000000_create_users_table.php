@@ -13,7 +13,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('users', function (Blueprint $table) {
+        if (!Schema::hasTable('users')) {
+            Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->string('avatar')->nullable()->comment('Ảnh đại diện');
             $table->string('full_name')->comment('Họ và tên');
@@ -43,6 +44,7 @@ return new class extends Migration
             $table->timestamp('last_seen')->nullable()->comment('Lần cuối user hoạt động');
             $table->timestamps();
         });
+        }
     }
 
     /**

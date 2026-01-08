@@ -11,7 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('ranks', function (Blueprint $table) {
+        if (!Schema::hasTable('ranks')) {
+            Schema::create('ranks', function (Blueprint $table) {
             $table->id();
             $table->string('image')->nullable()->comment('Hình ảnh cấp độ');
             $table->string('name')->comment('Tên cấp độ');
@@ -23,6 +24,7 @@ return new class extends Migration
             $table->double('maximum_withdrawal_amount')->default(100)->comment('Số tiền rút tối đa trong 1 lần rút');
             $table->timestamps();
         });
+        }
     }
 
     /**

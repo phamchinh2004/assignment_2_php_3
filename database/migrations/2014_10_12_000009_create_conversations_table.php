@@ -11,7 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('conversations', function (Blueprint $table) {
+        if (!Schema::hasTable('conversations')) {
+            Schema::create('conversations', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained();   // người dùng
             $table->foreignId('staff_id')->nullable()->constrained('users'); // nhân viên
@@ -19,8 +20,11 @@ return new class extends Migration
             $table->timestamps();
         });
 
+        }
+
         // Tạo bảng messages
-        Schema::create('messages', function (Blueprint $table) {
+        if (!Schema::hasTable('messages')) {
+            Schema::create('messages', function (Blueprint $table) {
             $table->id();
             $table->foreignId('conversation_id')->constrained();
             $table->foreignId('sender_id')->constrained('users');
@@ -30,6 +34,7 @@ return new class extends Migration
             $table->boolean('is_read')->default(false);
             $table->timestamps();
         });
+        }
     }
 
     /**

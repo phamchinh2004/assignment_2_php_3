@@ -13,7 +13,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('sections', function (Blueprint $table) {
+        if (!Schema::hasTable('sections')) {
+            Schema::create('sections', function (Blueprint $table) {
             $table->id();
             $table->string('name')->nullable()->comment('Tên section!');
             $table->string('code')->nullable()->comment('Mã section!');
@@ -22,8 +23,11 @@ return new class extends Migration
             $table->timestamps();
         });
 
+        }
+
         // Tạo bảng languages
-        Schema::create('languages', function (Blueprint $table) {
+        if (!Schema::hasTable('languages')) {
+            Schema::create('languages', function (Blueprint $table) {
             $table->id();
             $table->string('name')->comment('Tên đầy đủ của ngôn ngữ');
             $table->string('code')->unique()->comment('Mã ngôn ngữ');
@@ -31,14 +35,18 @@ return new class extends Migration
             $table->timestamps();
         });
 
+        }
+
         // Tạo bảng section_languages
-        Schema::create('section_languages', function (Blueprint $table) {
+        if (!Schema::hasTable('section_languages')) {
+            Schema::create('section_languages', function (Blueprint $table) {
             $table->id();
             $table->foreignIdFor(Section::class)->comment('Xác định là sections nào!');
             $table->foreignIdFor(Language::class)->comment('Xác định ngôn ngữ nào!');
             $table->text('content')->comment('Nội dung của ngôn ngữ này!');
             $table->timestamps();
         });
+        }
     }
 
     /**

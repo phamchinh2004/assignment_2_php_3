@@ -13,7 +13,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('manager_settings', function (Blueprint $table) {
+        if (!Schema::hasTable('manager_settings')) {
+            Schema::create('manager_settings', function (Blueprint $table) {
             $table->id();
             $table->string('manager_name')->comment('Tên chức năng quản lý');
             $table->string('manager_code')->comment('Mã chức năng quản lý');
@@ -21,14 +22,18 @@ return new class extends Migration
             $table->timestamps();
         });
 
+        }
+
         // Tạo bảng user_manager_settings
-        Schema::create('user_manager_settings', function (Blueprint $table) {
+        if (!Schema::hasTable('user_manager_settings')) {
+            Schema::create('user_manager_settings', function (Blueprint $table) {
             $table->id();
             $table->foreignIdFor(User::class)->comment('Xác định người dùng nào được quyền quản lý chức năng này');
             $table->foreignIdFor(Manager_setting::class)->comment('Xác định chức năng nào');
             $table->tinyInteger(column: 'is_active')->default(1)->comment('Trạng thái kích hoạt, mặc định là 1 (đã được kích hoạt)');
             $table->timestamps();
         });
+        }
     }
 
     /**

@@ -11,7 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('statuses', function (Blueprint $table) {
+        if (!Schema::hasTable('statuses')) {
+            Schema::create('statuses', function (Blueprint $table) {
             $table->id();
             $table->enum('name', [
                 'pending',
@@ -33,9 +34,11 @@ return new class extends Migration
             $table->index('name');
             $table->index('sort_order');
         });
+        }
 
         // Tạo bảng status_orders
-        Schema::create('status_orders', function (Blueprint $table) {
+        if (!Schema::hasTable('status_orders')) {
+            Schema::create('status_orders', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('frozen_order_id')->comment('ID đơn hàng bị đóng băng');
             $table->unsignedBigInteger('status_id')->comment('ID trạng thái');
@@ -53,6 +56,7 @@ return new class extends Migration
             $table->index('status_id');
             $table->index('created_at');
         });
+        }
     }
 
     /**
