@@ -14,38 +14,31 @@ class UserSentMessage implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-
     public $full_name;
     public $message;
-    public $user;
+    public $userId;
 
-    public function __construct($full_name, $message, $user = null)
+    public function __construct($full_name, $message, $userId = null)
     {
         $this->full_name = $full_name;
         $this->message = $message;
-        $this->user = $user;
+        $this->userId = $userId;
     }
 
     public function broadcastOn(): array
     {
-        // Reload user từ database nếu cần (sau khi deserialize từ queue)
-        if ($this->user) {
-            // Nếu user không tồn tại trong database, reload bằng ID
-            if (!$this->user->exists) {
-                $userId = $this->user->id ?? null;
-                if ($userId) {
-                    $this->user = \App\Models\User::find($userId);
-                }
-            }
-            
-            // Reload relationship conversation sau khi deserialize từ queue
-            if ($this->user && !$this->user->relationLoaded('conversation')) {
-                $this->user->load('conversation');
-            }
+        // Nếu không có userId, broadcast như cũ
+        if (!$this->userId) {
+            return [
+                new PrivateChannel("sent.message"),
+            ];
         }
+
+        // Reload user từ database (sau khi deserialize từ queue)
+        $user = \App\Models\User::with('conversation')->find($this->userId);
         
         // Nếu không có thông tin user hoặc conversation, broadcast như cũ
-        if (!$this->user || !$this->user->conversation) {
+        if (!$user || !$user->conversation) {
             return [
                 new PrivateChannel("sent.message"),
             ];
@@ -56,9 +49,9 @@ class UserSentMessage implements ShouldBroadcast
         
         try {
             // Broadcast đến người được assign conversation này (có thể là staff hoặc admin)
-            if ($this->user->conversation && $this->user->conversation->staff_id) {
-                $channels[] = new PrivateChannel('staff.' . $this->user->conversation->staff_id);
-                $broadcastedIds[] = $this->user->conversation->staff_id;
+            if ($user->conversation && $user->conversation->staff_id) {
+                $channels[] = new PrivateChannel('staff.' . $user->conversation->staff_id);
+                $broadcastedIds[] = $user->conversation->staff_id;
             }
             
             // Broadcast đến tất cả admin (trừ người đã nhận ở trên)
@@ -71,7 +64,7 @@ class UserSentMessage implements ShouldBroadcast
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error('UserSentMessage: Error in broadcastOn', [
                 'error' => $e->getMessage(),
-                'user_id' => $this->user->id ?? null
+                'user_id' => $this->userId
             ]);
             // Return fallback channel
             return [new PrivateChannel("sent.message")];

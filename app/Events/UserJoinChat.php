@@ -14,22 +14,30 @@ class UserJoinChat implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-
     public $username;
     public $full_name;
-    public $user;
+    public $userId;
 
-    public function __construct($username, $full_name, $user = null)
+    public function __construct($username, $full_name, $userId = null)
     {
         $this->username = $username;
         $this->full_name = $full_name;
-        $this->user = $user;
+        $this->userId = $userId;
     }
 
     public function broadcastOn(): array
     {
-        // Nếu không có thông tin user, broadcast như cũ
-        if (!$this->user || !$this->user->conversation) {
+        // Nếu không có userId, broadcast như cũ
+        if (!$this->userId) {
+            return [
+                new PrivateChannel("join.conversation"),
+            ];
+        }
+
+        // Reload user từ database (sau khi deserialize từ queue)
+        $user = \App\Models\User::with('conversation')->find($this->userId);
+        
+        if (!$user || !$user->conversation) {
             return [
                 new PrivateChannel("join.conversation"),
             ];
@@ -39,9 +47,9 @@ class UserJoinChat implements ShouldBroadcast
         $broadcastedIds = [];
         
         // Broadcast đến người được assign conversation này (có thể là staff hoặc admin)
-        if ($this->user->conversation->staff_id) {
-            $channels[] = new PrivateChannel('staff.' . $this->user->conversation->staff_id);
-            $broadcastedIds[] = $this->user->conversation->staff_id;
+        if ($user->conversation->staff_id) {
+            $channels[] = new PrivateChannel('staff.' . $user->conversation->staff_id);
+            $broadcastedIds[] = $user->conversation->staff_id;
         }
         
         // Broadcast đến tất cả admin (trừ người đã nhận ở trên)

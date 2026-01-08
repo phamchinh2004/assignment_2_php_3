@@ -16,15 +16,15 @@ class MessageRead implements ShouldBroadcast, ShouldQueue
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public $message;
+    public $messageId;
     public $conversationId;
 
     /**
      * Create a new event instance.
      */
-    public function __construct(Message $message, $conversationId)
+    public function __construct($messageId, $conversationId)
     {
-        $this->message = $message;
+        $this->messageId = $messageId;
         $this->conversationId = $conversationId;
     }
 
@@ -53,9 +53,20 @@ class MessageRead implements ShouldBroadcast, ShouldQueue
      */
     public function broadcastWith(): array
     {
+        // Reload message từ database (sau khi deserialize từ queue)
+        $message = Message::find($this->messageId);
+        
+        if (!$message) {
+            return [
+                'message_id' => $this->messageId,
+                'is_read' => false,
+                'read_at' => now()->toDateTimeString(),
+            ];
+        }
+        
         return [
-            'message_id' => $this->message->id,
-            'is_read' => $this->message->is_read,
+            'message_id' => $message->id,
+            'is_read' => $message->is_read ?? false,
             'read_at' => now()->toDateTimeString(),
         ];
     }
