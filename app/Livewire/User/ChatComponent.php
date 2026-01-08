@@ -273,8 +273,8 @@ class ChatComponent extends Component
         $this->dispatch('scroll-to-bottom');
         
         // Event và Email notification (đã dùng Queue, không block)
-        $user = Auth::user()->load('conversation');
-        event(new UserSentMessage($userName, $template_message_for_notification, $user));
+        $user = Auth::user();
+        event(new UserSentMessage($userName, $template_message_for_notification, $user->id));
         $this->checkAndSendEmailNotification($template_message_for_notification);
         
         // Kiểm tra và gửi tin nhắn chào tự động nếu đã lâu không nhắn
@@ -331,7 +331,7 @@ class ChatComponent extends Component
             $this->updateMessageReadStatus($messageId, true);
             
             // Broadcast event để người gửi biết tin nhắn đã được đọc
-            broadcast(new MessageRead($message, $this->conversation->id))->toOthers();
+            broadcast(new MessageRead($message->id, $this->conversation->id))->toOthers();
         }
     }
 
@@ -349,8 +349,8 @@ class ChatComponent extends Component
     {
         $this->showBox = !$this->showBox;
         if ($this->showBox) {
-            $user = Auth::user()->load('conversation');
-            event(new UserJoinChat($user->username, $user->full_name, $user));
+            $user = Auth::user();
+            event(new UserJoinChat($user->username, $user->full_name, $user->id));
             // Đánh dấu tin nhắn đã đọc khi mở chat box
             $this->markMessagesAsRead();
             // Reset unread count về 0
@@ -383,7 +383,7 @@ class ChatComponent extends Component
             $this->updateMessageReadStatus($message->id, true);
             
             // Broadcast event để người gửi biết tin nhắn đã được đọc
-            broadcast(new MessageRead($message, $this->conversation->id))->toOthers();
+            broadcast(new MessageRead($message->id, $this->conversation->id))->toOthers();
         }
     }
 

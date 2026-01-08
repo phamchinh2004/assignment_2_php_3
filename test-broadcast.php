@@ -43,7 +43,7 @@ echo "📝 Message: " . substr($message->message, 0, 50) . "...\n\n";
 // Test broadcast
 try {
     echo "📡 Broadcasting message...\n";
-    broadcast(new MessageSent($message));
+    broadcast(new MessageSent($message->id));
     echo "✅ Broadcast thành công!\n";
     
     // Kiểm tra queue

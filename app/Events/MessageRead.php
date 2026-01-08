@@ -2,7 +2,6 @@
 
 namespace App\Events;
 
-use App\Models\Message;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PresenceChannel;
@@ -16,15 +15,15 @@ class MessageRead implements ShouldBroadcast, ShouldQueue
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public $message;
+    public $messageId;
     public $conversationId;
 
     /**
      * Create a new event instance.
      */
-    public function __construct(Message $message, $conversationId)
+    public function __construct($messageId, $conversationId)
     {
-        $this->message = $message;
+        $this->messageId = $messageId;
         $this->conversationId = $conversationId;
     }
 
@@ -53,9 +52,12 @@ class MessageRead implements ShouldBroadcast, ShouldQueue
      */
     public function broadcastWith(): array
     {
+        // Load message từ database để lấy is_read status
+        $message = \App\Models\Message::find($this->messageId);
+        
         return [
-            'message_id' => $this->message->id,
-            'is_read' => $this->message->is_read,
+            'message_id' => $this->messageId,
+            'is_read' => $message ? ($message->is_read ?? false) : false,
             'read_at' => now()->toDateTimeString(),
         ];
     }

@@ -21,10 +21,8 @@ class HandleUserSentMessage
      */
     public function handle(UserSentMessage $event): void
     {
-        // Reload relationship conversation sau khi deserialize từ queue
-        // Đảm bảo relationship tồn tại khi broadcast
-        if ($event->user && !$event->user->relationLoaded('conversation')) {
-            $event->user->load('conversation');
-        }
+        // Event giờ chỉ truyền userId, không cần xử lý ở đây
+        // Relationship đã được load trong broadcastOn() của event UserSentMessage
+        // Listener này có thể để trống hoặc thêm logic khác nếu cần
     }
 }

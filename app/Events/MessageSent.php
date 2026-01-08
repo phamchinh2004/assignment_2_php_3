@@ -15,34 +15,32 @@ class MessageSent implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public $message;
+    public $messageId;
 
-    public function __construct(Message $message)
+    public function __construct($messageId)
     {
-        $this->message = $message->load('sender', 'conversation');
+        $this->messageId = $messageId;
     }
 
     public function broadcastOn()
     {
-        // Reload relationships sau khi deserialize từ queue
-        // Đảm bảo relationships tồn tại khi broadcast
-        if ($this->message && !$this->message->relationLoaded('sender')) {
-            $this->message->load('sender');
-        }
-        if ($this->message && !$this->message->relationLoaded('conversation')) {
-            $this->message->load('conversation');
+        // Load message từ database với relationships
+        $message = \App\Models\Message::with('sender', 'conversation')->find($this->messageId);
+        
+        if (!$message) {
+            return [];
         }
         
         $channels = [
-            new PrivateChannel('chat.conversation.' . $this->message->conversation_id)
+            new PrivateChannel('chat.conversation.' . $message->conversation_id)
         ];
         
         $broadcastedIds = []; // Tránh duplicate channels
         
         // Broadcast đến người được assign conversation này (có thể là staff hoặc admin)
-        if ($this->message->conversation && $this->message->conversation->staff_id) {
-            $channels[] = new PrivateChannel('staff.' . $this->message->conversation->staff_id);
-            $broadcastedIds[] = $this->message->conversation->staff_id;
+        if ($message->conversation && $message->conversation->staff_id) {
+            $channels[] = new PrivateChannel('staff.' . $message->conversation->staff_id);
+            $broadcastedIds[] = $message->conversation->staff_id;
         }
         
         // Broadcast đến tất cả admin (trừ người đã nhận ở trên) - Cache 5 phút
@@ -61,26 +59,28 @@ class MessageSent implements ShouldBroadcast
 
     public function broadcastWith()
     {
-        // Reload relationships nếu chưa được load (sau khi deserialize từ queue)
-        if ($this->message && !$this->message->relationLoaded('sender')) {
-            $this->message->load('sender');
+        // Load message từ database với relationships
+        $message = \App\Models\Message::with('sender', 'conversation')->find($this->messageId);
+        
+        if (!$message) {
+            return ['message' => null];
         }
         
         return [
             'message' => [
-                'id' => $this->message->id,
-                'message' => $this->message->message,
-                'image_path' => $this->message->image_path,
-                'type' => $this->message->type,
-                'sender_id' => $this->message->sender_id,
-                'conversation_id' => $this->message->conversation_id,
-                'is_read' => $this->message->is_read ?? false,
-                'created_at' => $this->message->created_at,
-                'sender' => [
-                    'id' => $this->message->sender->id,
-                    'full_name' => $this->message->sender->full_name,
-                    'role' => $this->message->sender->role,
-                ]
+                'id' => $message->id,
+                'message' => $message->message,
+                'image_path' => $message->image_path,
+                'type' => $message->type,
+                'sender_id' => $message->sender_id,
+                'conversation_id' => $message->conversation_id,
+                'is_read' => $message->is_read ?? false,
+                'created_at' => $message->created_at,
+                'sender' => $message->sender ? [
+                    'id' => $message->sender->id,
+                    'full_name' => $message->sender->full_name,
+                    'role' => $message->sender->role,
+                ] : null
             ]
         ];
     }

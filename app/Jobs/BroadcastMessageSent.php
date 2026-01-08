@@ -30,11 +30,7 @@ class BroadcastMessageSent implements ShouldQueue
      */
     public function handle(): void
     {
-        // Load message VÀ broadcast TRONG QUEUE WORKER (không block response)
-        $message = Message::find($this->messageId);
-        
-        if ($message) {
-            broadcast(new MessageSent($message))->toOthers();
-        }
+        // Broadcast với messageId (không cần query lại, event sẽ tự query)
+        broadcast(new MessageSent($this->messageId))->toOthers();
     }
 }
