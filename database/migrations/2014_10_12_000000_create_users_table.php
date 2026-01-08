@@ -26,6 +26,7 @@ return new class extends Migration
             $table->string('bank_name')->nullable()->comment('Tên ngân hàng');
             $table->string('account_number')->nullable()->comment('Số tài khoản');
             $table->double('balance')->default(0)->comment('Số dư tài khoản');
+            $table->double('frozen_balance')->default(0)->comment('Số dư đóng băng khi nhận đơn hàng đặc biệt');
             $table->string('transaction_password')->nullable()->comment('Mật khẩu giao dịch');
             $table->integer('distribution_today')->nullable()->default(0)->comment('Phân phối hôm nay');
             $table->double('todays_discount')->nullable()->default(0)->comment('Chiếu khấu hôm nay');
@@ -39,6 +40,7 @@ return new class extends Migration
             $table->boolean('clone_account')->default(0)->comment('Đây có phải tài khoản clone không');
             $table->timestamp('email_verified_at')->nullable()->comment('Email đã được xác minh lúc nào');
             $table->rememberToken();
+            $table->timestamp('last_seen')->nullable()->comment('Lần cuối user hoạt động');
             $table->timestamps();
         });
     }

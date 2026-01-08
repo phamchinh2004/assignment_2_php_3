@@ -5,12 +5,18 @@ return [
     "DuLieuNayDuocCungCap" => "Estos datos son proporcionados oficialmente por Mercado Libre",
     "TatCa" => "Todo",
     "ChoXuLy" => "Pendiente",
+    "DaXacNhan" => "Confirmado",
+    "DangChuanBi" => "Preparando",
+    "DangTrungChuyen" => "En Tránsito",
+    "DangVanChuyen" => "En Envío",
+    "DaGiaoHang" => "Entregado",
     "HoanThanh" => "Completado",
+    "DaHuy" => "Cancelado",
     "DongBang" => "Congelado",
 
     "ThoiGianDatPhanPhoi" => "Hora de distribución: ",
     "MaDonHang" => "Código de pedido: ",
-    "TongTienPhanPhoi" => "Monto total distribuido",
+    "TongTienDonHang" => "Monto total del pedido",
     "ChietKhau" => "Descuento",
     "HoaHong" => "Comisión",
     "DeSau" => "Guardar para más tarde",
@@ -29,4 +35,7 @@ return [
     "KhongTimThayLichSuDatHang" => "No se encontró el historial de pedidos, ¡inténtelo de nuevo!",
     "DonHangDaHoanThanh" => "¡El pedido ha sido completado!",
     "KhongTimThayDonHang" => "¡No se encontró el pedido!",
+    
+    "XacNhanDonHang" => "Confirmar Pedido",
+    "HuyDonHang" => "Cancelar Pedido",
 ];

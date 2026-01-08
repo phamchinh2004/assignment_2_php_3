@@ -3,7 +3,7 @@ return [
     "HeThongPhanPhoi" => "배포 시스템",
     "DangCapNhat" => "업데이트 중...",
     "LoiNhuan" => "수익",
-    "Nhap" => "돌리기",
+    "TimKiemDonHang" => "주문 검색",
     "TongPhanPhoi" => "총 배포",
     "TongSoDu" => "총 잔액",
     "PhanPhoiHomNay" => "오늘의 배포",

@@ -5,12 +5,18 @@ return [
     "DuLieuNayDuocCungCap" => "Dữ liệu này được cung cấp chính thức bởi Mercado Libre",
     "TatCa" => "Tất cả",
     "ChoXuLy" => "Chờ xử lý",
+    "DaXacNhan" => "Đã xác nhận",
+    "DangChuanBi" => "Đang chuẩn bị",
+    "DangTrungChuyen" => "Đang trung chuyển",
+    "DangVanChuyen" => "Đang vận chuyển",
+    "DaGiaoHang" => "Đã giao hàng",
     "HoanThanh" => "Hoàn Thành",
+    "DaHuy" => "Đã hủy",
     "DongBang" => "Đóng băng",
 
     "ThoiGianDatPhanPhoi" => "Thời gian đặt phân phối: ",
     "MaDonHang" => "Mã đơn hàng: ",
-    "TongTienPhanPhoi" => "Tổng tiền phân phối",
+    "TongTienDonHang" => "Tổng tiền đơn hàng",
     "ChietKhau" => "Chiết khấu",
     "HoaHong" => "Hoa hồng",
     "DeSau" => "Để sau",
@@ -29,4 +35,7 @@ return [
     "KhongTimThayLichSuDatHang" => "Không tìm thấy lịch sử đặt hàng, vui lòng thử lại!",
     "DonHangDaHoanThanh" => "Đơn hàng đã hoàn thành!",
     "KhongTimThayDonHang" => "Không tìm thấy đơn hàng!",
+    
+    "XacNhanDonHang" => "Xác nhận đơn hàng",
+    "HuyDonHang" => "Hủy đơn hàng",
 ];

@@ -1,0 +1,19 @@
+/* Styles for order status timing management */
+
+.table-responsive {
+    overflow-x: auto;
+}
+
+.form-control-sm {
+    min-width: 80px;
+}
+
+.badge {
+    font-size: 0.875rem;
+    padding: 0.35em 0.65em;
+}
+
+.custom-switch {
+    padding-left: 2.25rem;
+}
+

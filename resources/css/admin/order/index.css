@@ -19,6 +19,20 @@
 .tittle_column{
     text-align: center;
 }
+
+/* Cột thông tin đơn hàng rộng hơn (cột 5) */
+#dataTable_list_orders th:nth-child(5),
+#dataTable_list_orders td:nth-child(5) {
+    min-width: 300px;
+    width: 25%;
+}
+
+/* Cột trạng thái hẹp hơn (cột 6) */
+#dataTable_list_orders th:nth-child(6),
+#dataTable_list_orders td:nth-child(6) {
+    min-width: 120px;
+    width: 10%;
+}
 @media screen and (max-width: 768px) {
     .tittle_column {
         font-size: 9px;

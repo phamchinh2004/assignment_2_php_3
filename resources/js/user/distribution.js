@@ -257,43 +257,53 @@ document.addEventListener('DOMContentLoaded', function () {
                 })
         })
     }
-    // ==================================================Xử lý bấm nút phân phối==================================================
+    // ==================================================Xử lý bấm nút nhận đơn==================================================
     const btn_phan_phoi_ngay = document.getElementById('btn_phan_phoi_ngay');
-    btn_phan_phoi_ngay.addEventListener('click', async function () {
-        spinner.hidden = false;
-        let frozen_id = this.dataset.frozenId;
-        let isSpecialOrder = this.dataset.isSpecial === '1';
-        let result = await handle_distribution(frozen_id);
-        if (result.status === 200) {
-            const profit = result.profit;
-            const totalAmount = result.total_amount || 0;
-            const commission = result.commission || 0;
-            const penaltyAmount = result.penalty_amount || 0;
+    if (btn_phan_phoi_ngay) {
+        btn_phan_phoi_ngay.addEventListener('click', async function () {
+            spinner.hidden = false;
+            let frozen_id = this.dataset.frozenId;
             
-            // Hiển thị loading modal phân phối
-            showDistributionModal();
+            // Gọi API nhận đơn
+            let result = await handle_accept_order(frozen_id);
             
-            // Sau 1.5 giây đóng loading và hiển thị kết quả
-            setTimeout(() => {
-                closeDistributionModal();
+            if (result.status === 200) {
+                // Hiển thị thông báo thành công
+                notification('success', result.message, trans.ThanhCong);
+                
+                // Redirect đến trang order sau 1 giây
                 setTimeout(() => {
-                    showSuccessModal(profit, totalAmount, commission, penaltyAmount, isSpecialOrder);
-                    // Cập nhật tiến độ phân phối
-                    updateProgress();
-                    // Cập nhật stats cards
-                    updateStats(result);
-                }, 300);
-            }, 1500);
-        } else if (result.status === 409) {
-            notification('warning', result.message, trans.CanhBao);
-        } else {
-            notification('error', result.message, trans.Loi);
-        }
-        setTimeout(() => {
-            order_award.hidden = true;
-            spinner.hidden = true;
-        }, 2000);
-    })
+                    window.location.href = result.redirect || route_order;
+                }, 1000);
+            } else {
+                notification('error', result.message || 'Có lỗi xảy ra', trans.Loi);
+                spinner.hidden = true;
+            }
+        });
+    }
+    
+    // Hàm xử lý nhận đơn
+    async function handle_accept_order(frozen_id) {
+        return new Promise((resolve, reject) => {
+            fetch(route_accept_order, {
+                method: "POST",
+                headers: {
+                    'Content-Type': "application/json",
+                    'X-CSRF-TOKEN': csrf
+                },
+                body: JSON.stringify({
+                    frozen_id: frozen_id
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    resolve(data);
+                })
+                .catch(error => {
+                    reject(error);
+                });
+        });
+    }
     
     // Hàm hiển thị modal thành công với thiết kế đẹp
     function showSuccessModal(profit, totalAmount, commission, penaltyAmount = 0, isSpecialOrder = false) {
@@ -529,5 +539,135 @@ document.addEventListener('DOMContentLoaded', function () {
                     reject(error);
                 });
         })
+    }
+
+    // ============================================ Rút tiền từ số dư đóng băng ============================================
+    
+    // Mở modal rút tiền từ số dư đóng băng
+    window.openWithdrawFrozenModal = function() {
+        const modal = document.getElementById('withdrawFrozenModal');
+        if (modal) {
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+    }
+    
+    // Đóng modal rút tiền từ số dư đóng băng
+    window.closeWithdrawFrozenModal = function() {
+        const modal = document.getElementById('withdrawFrozenModal');
+        if (modal) {
+            modal.style.display = 'none';
+            document.body.style.overflow = 'auto';
+            // Reset form
+            document.getElementById('withdrawFrozenForm').reset();
+        }
+    }
+    
+    // Xử lý nút "Rút tất cả" - điền toàn bộ số dư đóng băng vào input
+    const btnWithdrawAll = document.getElementById('btn_withdraw_all_frozen');
+    if (btnWithdrawAll) {
+        btnWithdrawAll.addEventListener('click', function() {
+            const amountInput = document.getElementById('frozen_withdraw_amount');
+            const frozenBalanceInfo = document.querySelector('.frozen-balance-info');
+            
+            if (amountInput && frozenBalanceInfo) {
+                // Lấy giá trị từ data attribute và xử lý format
+                let frozenBalance = frozenBalanceInfo.getAttribute('data-frozen-balance');
+                // Loại bỏ dấu phẩy (thousand separator) nếu có
+                frozenBalance = frozenBalance.toString().replace(/,/g, '');
+                frozenBalance = parseFloat(frozenBalance) || 0;
+                
+                if (frozenBalance > 0) {
+                    // Set giá trị với 2 chữ số thập phân, dùng dấu chấm làm decimal separator
+                    amountInput.value = frozenBalance.toFixed(2);
+                    // Trigger input event để validate
+                    amountInput.dispatchEvent(new Event('input', { bubbles: true }));
+                    
+                    // Focus vào input để user có thể thấy giá trị đã được điền
+                    amountInput.focus();
+                    
+                    // Highlight input để user biết đã điền
+                    amountInput.style.borderColor = '#667eea';
+                    setTimeout(() => {
+                        amountInput.style.borderColor = '';
+                    }, 1000);
+                }
+            }
+        });
+    }
+
+    // Xử lý submit form rút tiền từ số dư đóng băng
+    const withdrawFrozenForm = document.getElementById('withdrawFrozenForm');
+    if (withdrawFrozenForm) {
+        withdrawFrozenForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Lấy giá trị và xử lý format số (loại bỏ dấu phẩy thousand separator)
+            let amountValue = document.getElementById('frozen_withdraw_amount').value;
+            // Loại bỏ tất cả dấu phẩy (thousand separator)
+            amountValue = amountValue.replace(/,/g, '');
+            
+            const amount = parseFloat(amountValue);
+            const transactionPassword = document.getElementById('frozen_transaction_password').value;
+            
+            if (!amount || amount <= 0 || isNaN(amount)) {
+                notification('error', 'Vui lòng nhập số tiền hợp lệ!', 'Lỗi!');
+                return;
+            }
+            
+            if (!transactionPassword) {
+                notification('error', 'Vui lòng nhập mật khẩu giao dịch!', 'Lỗi!');
+                return;
+            }
+            
+            // Disable button
+            const submitBtn = withdrawFrozenForm.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Đang xử lý...';
+            
+            fetch(route_handle_withdraw_frozen, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrf
+                },
+                body: JSON.stringify({
+                    amount: amount,
+                    transaction_password: transactionPassword
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 200) {
+                    notification('success', data.message, 'Thành công!');
+                    closeWithdrawFrozenModal();
+                    // Reload trang để cập nhật số dư
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                } else {
+                    notification('error', data.message, 'Lỗi!');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                notification('error', 'Có lỗi xảy ra khi rút tiền. Vui lòng thử lại!', 'Lỗi!');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            });
+        });
+    }
+    
+    // Đóng modal khi click bên ngoài
+    const withdrawFrozenModal = document.getElementById('withdrawFrozenModal');
+    if (withdrawFrozenModal) {
+        withdrawFrozenModal.addEventListener('click', function(e) {
+            if (e.target === withdrawFrozenModal) {
+                closeWithdrawFrozenModal();
+            }
+        });
     }
 })

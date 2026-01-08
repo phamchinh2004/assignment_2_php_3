@@ -340,6 +340,11 @@ class ChatComponent extends Component
         $this->showBox = false;
     }
 
+    public function toggleChatBox()
+    {
+        $this->toggleBox();
+    }
+
     public function toggleBox()
     {
         $this->showBox = !$this->showBox;

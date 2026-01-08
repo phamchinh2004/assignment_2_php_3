@@ -18,5 +18,8 @@ class DatabaseSeeder extends Seeder
         //     'name' => 'Test User',
         //     'email' => 'test@example.com',
         // ]);
+        
+        // Seed order status timings
+        $this->call(OrderStatusTimingSeeder::class);
     }
 }

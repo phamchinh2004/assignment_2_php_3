@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\StaffController;
 use App\Http\Controllers\Admin\StatisticalController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\TransactionHistoryController;
+use App\Http\Controllers\Admin\OrderReportController;
 use App\Http\Controllers\ConversationController;
 use App\Models\Language;
 use Illuminate\Support\Facades\Route;
@@ -20,8 +21,16 @@ Route::middleware(['role:staff|admin', 'checkBanned', 'auth'])->group(function (
     Route::get('/', [DashboardController::class, 'index'])->name('admin.dashboard');
     Route::middleware(['checkPermission:quan_ly_don_hang'])->group(function () {
         Route::get('/order/update-commission-percentage', [OrderController::class, 'orderUpdateCommissionPercentage'])->name('order.update.commission.percentage');
+        Route::get('/order/add-customer-info', [OrderController::class, 'addCustomerInfoToOrders'])->name('order.add.customer.info');
+        Route::get('/order/update-status-history', [OrderController::class, 'updateOrderStatusHistory'])->name('order.update.status.history');
         Route::get('/order/change-status-order/{order}', [OrderController::class, 'changeStatusOrder'])->name('order.change.status');
         Route::resource('order', OrderController::class);
+
+        // Danh sách đơn hàng bị báo cáo (đơn hàng ảo)
+        Route::get('/order-reports', [OrderReportController::class, 'index'])->name('order_reports.index');
+        Route::get('/order-reports/{orderReport}', [OrderReportController::class, 'show'])->name('order_reports.show');
+        Route::post('/order-reports/{orderReport}/confirm', [OrderReportController::class, 'confirm'])->name('order_reports.confirm');
+        Route::post('/order-reports/{orderReport}/cancel', [OrderReportController::class, 'cancel'])->name('order_reports.cancel');
     });
     Route::middleware(['checkPermission:quan_ly_cap_do'])->group(function () {
         Route::resource('rank', RankController::class);
@@ -48,6 +57,7 @@ Route::middleware(['role:staff|admin', 'checkBanned', 'auth'])->group(function (
     Route::post('/user/frozen-order/{user}', [UserController::class, 'frozenOrder'])->name('user.frozen.order');
     Route::delete('user/{user}/frozen-orders/{frozenOrder}', [UserController::class, 'unfrozenOrder'])->name('user.unfrozen.order');
     Route::put('user/{user}/frozen-orders/{frozenOrder}', [UserController::class, 'updateFrozenOrder'])->name('user.update.frozen.order');
+    Route::put('user/{user}/frozen-orders/{frozenOrder}/image', [UserController::class, 'updateOrderImage'])->name('user.update.frozen.order.image');
     // Route::get('/user/edit-frozen-order/{user}/{id}', [UserController::class, 'editFrozenOrderInterface'])->name('user.edit.frozen.order.interface');
     // Route::put('/user/edit-frozen-order/{user}/{id}', [UserController::class, 'updateFrozenOrder'])->name('user.update.frozen.order');
     Route::post('/user/plus-money', [UserController::class, 'plus_money'])->name('plus_money');
@@ -68,6 +78,12 @@ Route::middleware(['role:admin'])->group(function () {
     Route::resource('staffs', StaffController::class);
     Route::resource('manager_setting', ManagerSettingController::class);
     Route::resource('staff', StaffController::class);
+    
+    // Quản lý thời gian chuyển trạng thái đơn hàng
+    Route::get('/order-status-timing', [\App\Http\Controllers\Admin\OrderStatusTimingController::class, 'index'])->name('admin.order_status_timing.index');
+    Route::get('/order-status-timing/{orderStatusTiming}/edit', [\App\Http\Controllers\Admin\OrderStatusTimingController::class, 'edit'])->name('admin.order_status_timing.edit');
+    Route::put('/order-status-timing/{orderStatusTiming}', [\App\Http\Controllers\Admin\OrderStatusTimingController::class, 'update'])->name('admin.order_status_timing.update');
+    Route::post('/order-status-timing/update-multiple', [\App\Http\Controllers\Admin\OrderStatusTimingController::class, 'updateMultiple'])->name('admin.order_status_timing.update_multiple');
     Route::get('/staff/change-status/{id}', [StaffController::class, 'change_status_staff'])->name('staff.change.status');
     Route::get('/staff/edit-permissions/{id}', [StaffController::class, 'edit_permissions'])->name('staff.edit.permissions');
     Route::post('/staff/change-status-permission', [StaffController::class, 'change_status_permission'])->name('staff.change.status.permission');

@@ -16,6 +16,9 @@ class Kernel extends ConsoleKernel
         
         // Kiểm tra đơn hàng đặc biệt chưa phân phối mỗi phút
         $schedule->command('orders:check-special-reminder')->everyMinute();
+        
+        // Tự động chuyển trạng thái đơn hàng mỗi 5 phút
+        $schedule->command('orders:auto-process-status')->everyFiveMinutes();
     }
 
     /**

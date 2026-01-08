@@ -5,12 +5,18 @@ return [
     "DuLieuNayDuocCungCap" => "このデータはMercado Libreによって正式に提供されています",
     "TatCa" => "すべて",
     "ChoXuLy" => "処理待ち",
+    "DaXacNhan" => "確認済み",
+    "DangChuanBi" => "準備中",
+    "DangTrungChuyen" => "輸送中",
+    "DangVanChuyen" => "配送中",
+    "DaGiaoHang" => "配達済み",
     "HoanThanh" => "完了",
+    "DaHuy" => "キャンセル済み",
     "DongBang" => "凍結",
 
     "ThoiGianDatPhanPhoi" => "配布時間：",
     "MaDonHang" => "注文番号：",
-    "TongTienPhanPhoi" => "配布合計金額",
+    "TongTienDonHang" => "注文合計金額",
     "ChietKhau" => "手数料",
     "HoaHong" => "コミッション",
     "DeSau" => "後で保存",
@@ -29,4 +35,7 @@ return [
     "KhongTimThayLichSuDatHang" => "注文履歴が見つかりません。もう一度お試しください！",
     "DonHangDaHoanThanh" => "注文が完了しました！",
     "KhongTimThayDonHang" => "注文が見つかりません！",
+    
+    "XacNhanDonHang" => "注文を確認",
+    "HuyDonHang" => "注文をキャンセル",
 ];

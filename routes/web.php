@@ -47,8 +47,13 @@ Route::middleware(['role:member', 'checkBanned'])->group(function () {
     Route::get('/get-10-order-next', [HomeController::class, 'get_10_orders_next'])->name('get_10_orders_next');
     Route::get('/check-frozen-order', [HomeController::class, 'check_frozen_order'])->name('check_frozen_order');
     Route::post('/get-list-orders-by-tab', [OrderController::class, 'get_list_orders_by_tab'])->name(name: 'get_list_orders_by_tab');
-    Route::post('/handle-distribution', [OrderController::class, 'handle_distribution'])->name('handle_distribution');
+    Route::post('/accept-order', [OrderController::class, 'handle_accept_order'])->name('accept_order');
+    Route::get('/order/{frozen_order}', [OrderController::class, 'show'])->name('order.show');
+    Route::post('/order/{frozen_order}/confirm', [OrderController::class, 'confirm_order'])->name('order.confirm');
+    Route::post('/order/{frozen_order}/cancel', [OrderController::class, 'cancel_order'])->name('order.cancel');
+    Route::post('/order/{frozen_order}/report', [OrderController::class, 'report_order'])->name('order.report');
     Route::post('/handle-withdraw', [HomeController::class, 'handle_withdraw'])->name('handle_withdraw');
+    Route::post('/handle-withdraw-frozen', [HomeController::class, 'handle_withdraw_frozen'])->name('handle_withdraw_frozen');
     Route::post('/bank_link', [HomeController::class, 'bank_link'])->name('bank_link');
     Route::post('change-password', [LoginController::class, 'change_password'])->name('change_password');
     Route::post('change-transaction-password', [LoginController::class, 'change_transaction_password'])->name('change_transaction_password');

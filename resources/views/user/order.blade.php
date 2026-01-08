@@ -4,10 +4,11 @@
 @endsection
 @section('script-libs')
 <script>
-    const trans = {
+    // Định nghĩa các biến global trước khi load script
+    window.trans = {
         ThoiGianDatPhanPhoi: @json(__('order.ThoiGianDatPhanPhoi')),
         MaDonHang: @json(__('order.MaDonHang')),
-        TongTienPhanPhoi: @json(__('order.TongTienPhanPhoi')),
+        TongTienDonHang: @json(__('order.TongTienDonHang')),
         ChietKhau: @json(__('order.ChietKhau')),
         SoTienHoanNhap: @json(__('order.SoTienHoanNhap')),
         PhanPhoiNgay: @json(__('order.PhanPhoiNgay')),
@@ -22,7 +23,11 @@
         SoDuHienTai: @json(__('order.SoDuHienTai')),
         PhanPhoiThanhCong2: @json(__('home.PhanPhoiThanhCong2')),
     };
-    const userBalance = @json($user->balance ?? 0);
+    window.userBalance = @json($user->balance ?? 0);
+    window.route_order = "{{ route('order') }}";
+    window.route_get_list_orders_by_tab = "{{ route('get_list_orders_by_tab') }}";
+    window.route_accept_order = "{{ route('accept_order') }}";
+    window.csrf = "{{ csrf_token() }}";
 </script>
 @vite('resources/js/user/order.js')
 @endsection
@@ -57,10 +62,13 @@
     </div>
 </div>
 
-<!-- Modern Tab Navigation -->
+<!-- Modern Tab Navigation with Horizontal Scroll -->
 <div class="tab-navigation-wrapper">
     <div class="tab-navigation-container">
-        <div class="tab-navigation">
+        <button class="tab-scroll-btn tab-scroll-left" id="tabScrollLeft" aria-label="Scroll left">
+            <i class="fas fa-chevron-left"></i>
+        </button>
+        <div class="tab-navigation" id="tabNavigation">
             <button data-tab="tat-ca" class="tab-btn cspt">
                 <i class="fas fa-list"></i>
                 <span class="btn_status_text" id="btn_tat_ca">{{__('order.TatCa')}}</span>
@@ -69,15 +77,42 @@
                 <i class="fas fa-clock"></i>
                 <span class="btn_status_text" id="btn_cho_xu_ly">{{__('order.ChoXuLy')}}</span>
             </button>
+            <button data-tab="da-xac-nhan" class="tab-btn cspt">
+                <i class="fas fa-check"></i>
+                <span class="btn_status_text" id="btn_da_xac_nhan">{{__('order.DaXacNhan')}}</span>
+            </button>
+            <button data-tab="dang-chuan-bi" class="tab-btn cspt">
+                <i class="fas fa-box"></i>
+                <span class="btn_status_text" id="btn_dang_chuan_bi">{{__('order.DangChuanBi')}}</span>
+            </button>
+            <button data-tab="dang-trung-chuyen" class="tab-btn cspt">
+                <i class="fas fa-truck"></i>
+                <span class="btn_status_text" id="btn_dang_trung_chuyen">{{__('order.DangTrungChuyen')}}</span>
+            </button>
+            <button data-tab="dang-van-chuyen" class="tab-btn cspt">
+                <i class="fas fa-shipping-fast"></i>
+                <span class="btn_status_text" id="btn_dang_van_chuyen">{{__('order.DangVanChuyen')}}</span>
+            </button>
+            <button data-tab="da-giao-hang" class="tab-btn cspt">
+                <i class="fas fa-check-double"></i>
+                <span class="btn_status_text" id="btn_da_giao_hang">{{__('order.DaGiaoHang')}}</span>
+            </button>
             <button data-tab="hoan-thanh" class="tab-btn cspt">
                 <i class="fas fa-check-circle"></i>
                 <span class="btn_status_text" id="btn_hoan_thanh">{{__('order.HoanThanh')}}</span>
+            </button>
+            <button data-tab="da-huy" class="tab-btn cspt">
+                <i class="fas fa-times-circle"></i>
+                <span class="btn_status_text" id="btn_da_huy">{{__('order.DaHuy')}}</span>
             </button>
             <button data-tab="dong-bang" class="tab-btn cspt">
                 <i class="fas fa-snowflake"></i>
                 <span class="btn_status_text" id="btn_dong_bang">{{__('order.DongBang')}}</span>
             </button>
         </div>
+        <button class="tab-scroll-btn tab-scroll-right" id="tabScrollRight" aria-label="Scroll right">
+            <i class="fas fa-chevron-right"></i>
+        </button>
     </div>
 </div>
 

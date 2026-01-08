@@ -195,8 +195,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.js.map"></script>
     @vite('resources/js/general.js')
     @vite('resources/js/user/footer-active.js')
-    @yield('script-libs')
-    @stack('scripts')
+    
     <script>
         const spinner = document.getElementById('spinner');
 
@@ -207,8 +206,10 @@
         const route_get_10_orders_next = "{{ route('get_10_orders_next') }}";
         const route_check_frozen_order = "{{ route('check_frozen_order') }}";
         const route_get_list_orders_by_tab = "{{ route('get_list_orders_by_tab') }}";
-        const route_handle_distribution = "{{ route('handle_distribution') }}";
+        const route_accept_order = "{{ route('accept_order') }}";
+        const route_order = "{{ route('order') }}";
         const route_handle_withdraw = "{{ route('handle_withdraw') }}";
+        const route_handle_withdraw_frozen = "{{ route('handle_withdraw_frozen') }}";
         const route_bank_link = "{{ route('bank_link') }}";
 
         const route_change_password = "{{ route('change_password') }}";
@@ -301,6 +302,8 @@
             @endauth
         });
     </script>
+    @yield('script-libs')
+    @stack('scripts')    
     @vite('resources/js/user/notification.js')
     @livewireScripts
 </body>

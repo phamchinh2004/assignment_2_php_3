@@ -72,25 +72,25 @@
             </div>
         </div>
         
-        <!-- Tổng nạp tiền -->
+        <!-- Hoa hồng tạm tính -->
         <div class="stat-card deposit-card">
             <div class="stat-icon">
                 <i class="fa-solid fa-money-bill-trend-up"></i>
             </div>
             <div class="stat-content">
-                <div class="stat-label">{{__('balance_fluctuation.TongNapTien')}}</div>
-                <div class="stat-value">${{ number_format($stats['total_deposit'], 2) }}</div>
+                <div class="stat-label">Hoa hồng tạm tính</div>
+                <div class="stat-value text-warning">${{ number_format($stats['pending_commission'], 2) }}</div>
             </div>
         </div>
         
-        <!-- Tổng rút tiền -->
+        <!-- Số đơn hàng đã hoàn thành -->
         <div class="stat-card withdraw-card">
             <div class="stat-icon">
-                <i class="fa-solid fa-hand-holding-dollar"></i>
+                <i class="fa-solid fa-check-circle"></i>
             </div>
             <div class="stat-content">
-                <div class="stat-label">{{__('balance_fluctuation.TongRutTien')}}</div>
-                <div class="stat-value">${{ number_format($stats['total_withdraw'], 2) }}</div>
+                <div class="stat-label">Số đơn hàng đã hoàn thành</div>
+                <div class="stat-value">{{ number_format($stats['completed_orders_count']) }}</div>
             </div>
         </div>
     </div>

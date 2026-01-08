@@ -55,7 +55,7 @@
         <span class="btn-icon">
             <i class="fas fa-box-open"></i>
         </span>
-        <span class="btn-text">{{__('distribution.Nhap')}}</span>
+        <span class="btn-text">{{__('distribution.TimKiemDonHang')}}</span>
         <span class="btn-shine"></span>
     </button>
     
@@ -158,7 +158,7 @@
                         <div class="summary-row">
                             <span class="summary-label">
                                 <i class="fas fa-money-bill-wave"></i>
-                                {{__('order.TongTienPhanPhoi')}}
+                                {{__('order.TongTienDonHang')}}
                             </span>
                             <span class="summary-value" id="order_details_end_value_total_price">10.000$</span>
                         </div>
@@ -199,7 +199,7 @@
                     <button class="btn-process-modern" id="btn_phan_phoi_ngay">
                         <span class="btn-shine-effect"></span>
                         <i class="fas fa-bolt"></i>
-                        <span>{{__('order.PhanPhoiNgay')}}</span>
+                        <span>Nhận đơn</span>
                     </button>
                 </div>
             </div>
@@ -242,7 +242,7 @@
             </div>
         </div>
 
-        <!-- Chiết khấu hôm nay -->
+        <!-- Hoa hồng dự tính hôm nay -->
         <div class="stat-card commission-card">
             <div class="stat-icon-wrapper">
                 <div class="stat-icon">
@@ -250,11 +250,27 @@
                 </div>
             </div>
             <div class="stat-info">
-                <h4 class="stat-label">{{__('distribution.ChietKhauHomNay')}}</h4>
+                <h4 class="stat-label">{{__('distribution.HoaHongDuTinhHomNay')}}</h4>
                 <p class="stat-value">${{format_money($todays_discount)}}</p>
             </div>
             <div class="stat-trend positive">
                 <i class="fas fa-arrow-trend-up"></i>
+            </div>
+        </div>
+
+        <!-- Hoa hồng đã được cộng hôm nay -->
+        <div class="stat-card commission-added-card">
+            <div class="stat-icon-wrapper">
+                <div class="stat-icon">
+                    <i class="fas fa-coins"></i>
+                </div>
+            </div>
+            <div class="stat-info">
+                <h4 class="stat-label">Hoa hồng đã được cộng hôm nay</h4>
+                <p class="stat-value">${{format_money($today_commission_added ?? 0)}}</p>
+            </div>
+            <div class="stat-trend positive">
+                <i class="fas fa-check-circle"></i>
             </div>
         </div>
 
@@ -268,6 +284,11 @@
             <div class="stat-info">
                 <h4 class="stat-label">{{__('distribution.SoDuDongBang')}}</h4>
                 <p class="stat-value">${{format_money($frozen_price!=null?$frozen_price:0)}}</p>
+                @if($frozen_price > 0)
+                <button class="btn-withdraw-frozen mt-2" onclick="openWithdrawFrozenModal()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 12px; cursor: pointer; transition: all 0.3s;">
+                    <i class="fas fa-money-bill-wave me-1"></i> Rút tiền
+                </button>
+                @endif
             </div>
             <div class="stat-trend frozen">
                 <i class="fas fa-lock"></i>
@@ -472,6 +493,78 @@
                 <span>Hoàn tất</span>
                 <i class="fas fa-arrow-right"></i>
             </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Rút tiền từ số dư đóng băng -->
+<div id="withdrawFrozenModal" class="modal-overlay" style="display: none;">
+    <div class="modal-container" style="max-width: 500px;">
+        <div class="modal-header">
+            <h3 class="modal-title">
+                <i class="fas fa-snowflake me-2"></i>
+                Rút tiền từ số dư đóng băng
+            </h3>
+            <button class="modal-close" onclick="closeWithdrawFrozenModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div class="modal-body">
+            <div class="frozen-balance-info mb-3" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 15px; border-radius: 10px; color: white;" data-frozen-balance="{{$frozen_price!=null?$frozen_price:0}}">
+                <div style="font-size: 14px; opacity: 0.9;">Số dư đóng băng hiện có</div>
+                <div style="font-size: 24px; font-weight: bold;">${{format_money($frozen_price!=null?$frozen_price:0)}}</div>
+            </div>
+            
+            <form id="withdrawFrozenForm">
+                <div class="form-group mb-3">
+                    <label class="form-label">
+                        <i class="fas fa-dollar-sign me-1"></i>
+                        Số tiền muốn rút
+                    </label>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="number" 
+                               id="frozen_withdraw_amount" 
+                               name="amount" 
+                               class="form-control" 
+                               placeholder="Nhập số tiền muốn rút"
+                               step="0.0000001"
+                               min="0"
+                               required
+                               style="flex: 1;">
+                        <button type="button" 
+                                id="btn_withdraw_all_frozen" 
+                                class="btn-withdraw-all"
+                                style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 12px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: all 0.3s;">
+                            <i class="fas fa-coins me-1"></i>Rút tất cả
+                        </button>
+                    </div>
+                    <small class="form-text text-muted">Số tiền tối đa: ${{format_money($frozen_price!=null?$frozen_price:0)}}</small>
+                </div>
+                
+                <div class="form-group mb-3">
+                    <label class="form-label">
+                        <i class="fas fa-unlock-alt me-1"></i>
+                        Mật khẩu giao dịch
+                    </label>
+                    <input type="password" 
+                           id="frozen_transaction_password" 
+                           name="transaction_password" 
+                           class="form-control" 
+                           placeholder="Nhập mật khẩu giao dịch"
+                           required>
+                </div>
+                
+                <div class="alert alert-info" style="background: #e3f2fd; border-left: 4px solid #2196f3; padding: 12px;">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <small>Bạn chỉ có thể rút tiền từ số dư đóng băng sau khi đã hoàn thành đơn hàng đặc biệt. Vui lòng hoàn thành đơn hàng đặc biệt trước khi rút tiền.</small>
+                </div>
+                
+                <button type="submit" class="btn-submit-frozen" style="width: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                    <i class="fas fa-money-bill-wave me-2"></i>
+                    Xác nhận rút tiền
+                </button>
+            </form>
         </div>
     </div>
 </div>

@@ -14,35 +14,113 @@ function formatDateTime(dateString) {
     return `${day}/${month}/${year} ${hours}:${minutes}`;
 }
 
+// Helper để lấy biến global với fallback
+function getGlobalVar(name, defaultValue = null) {
+    if (typeof window !== 'undefined' && typeof window[name] !== 'undefined') {
+        return window[name];
+    }
+    if (typeof eval(name) !== 'undefined') {
+        return eval(name);
+    }
+    return defaultValue;
+}
+
+// Đảm bảo các biến được truy cập đúng cách
+const trans = getGlobalVar('trans', {});
+const userBalance = getGlobalVar('userBalance', 0);
+const route_order = getGlobalVar('route_order', '');
+const route_get_list_orders_by_tab = getGlobalVar('route_get_list_orders_by_tab', '');
+const route_accept_order = getGlobalVar('route_accept_order', '');
+const csrf = getGlobalVar('csrf', document.querySelector('meta[name="csrf-token"]')?.content || '');
+
 window.addEventListener('DOMContentLoaded', function () {
     const tab = localStorage.getItem('tab_order') ?? "tat-ca";
 
-    if (tab === 'tat-ca') {
+    // Map tab names to button IDs
+    const tabMap = {
+        'tat-ca': 'btn_tat_ca',
+        'cho-xu-ly': 'btn_cho_xu_ly',
+        'da-xac-nhan': 'btn_da_xac_nhan',
+        'dang-chuan-bi': 'btn_dang_chuan_bi',
+        'dang-trung-chuyen': 'btn_dang_trung_chuyen',
+        'dang-van-chuyen': 'btn_dang_van_chuyen',
+        'da-giao-hang': 'btn_da_giao_hang',
+        'hoan-thanh': 'btn_hoan_thanh',
+        'da-huy': 'btn_da_huy',
+        'dong-bang': 'btn_dong_bang'
+    };
+
+    if (tabMap[tab]) {
+        activeTab(tabMap[tab]);
+    } else {
         activeTab('btn_tat_ca');
-    } else if (tab === 'cho-xu-ly') {
-        activeTab('btn_cho_xu_ly');
-    } else if (tab === 'hoan-thanh') {
-        activeTab('btn_hoan_thanh');
-    } else if (tab === 'dong-bang') {
-        activeTab('btn_dong_bang');
     }
+
     const btn_status = document.getElementsByClassName('tab-btn');
     for (const item of btn_status) {
         item.addEventListener('click', async function () {
-            if (item.dataset.tab === 'tat-ca') {
-                await activeTab('btn_tat_ca');
-            } else if (item.dataset.tab === 'cho-xu-ly') {
-                await activeTab('btn_cho_xu_ly');
-            } else if (item.dataset.tab === 'hoan-thanh') {
-                await activeTab('btn_hoan_thanh');
-            } else if (item.dataset.tab === 'dong-bang') {
-                await activeTab('btn_dong_bang');
+            const tabName = item.dataset.tab;
+            if (tabMap[tabName]) {
+                await activeTab(tabMap[tabName]);
             }
-
         })
     }
-    async function activeTab(btnId) {
+    // Xử lý scroll tab navigation
+    function initTabScroll() {
+        const tabNavigation = document.getElementById('tabNavigation');
+        const scrollLeftBtn = document.getElementById('tabScrollLeft');
+        const scrollRightBtn = document.getElementById('tabScrollRight');
 
+        if (!tabNavigation || !scrollLeftBtn || !scrollRightBtn) return;
+
+        function updateScrollButtons() {
+            const { scrollLeft, scrollWidth, clientWidth } = tabNavigation;
+            
+            // Ẩn/hiện nút trái
+            if (scrollLeft <= 0) {
+                scrollLeftBtn.classList.add('hidden');
+            } else {
+                scrollLeftBtn.classList.remove('hidden');
+            }
+
+            // Ẩn/hiện nút phải
+            if (scrollLeft + clientWidth >= scrollWidth - 5) { // -5 để tránh lỗi làm tròn
+                scrollRightBtn.classList.add('hidden');
+            } else {
+                scrollRightBtn.classList.remove('hidden');
+            }
+        }
+
+        // Scroll trái
+        scrollLeftBtn.addEventListener('click', () => {
+            tabNavigation.scrollBy({
+                left: -200,
+                behavior: 'smooth'
+            });
+        });
+
+        // Scroll phải
+        scrollRightBtn.addEventListener('click', () => {
+            tabNavigation.scrollBy({
+                left: 200,
+                behavior: 'smooth'
+            });
+        });
+
+        // Cập nhật khi scroll
+        tabNavigation.addEventListener('scroll', updateScrollButtons);
+        
+        // Cập nhật khi resize
+        window.addEventListener('resize', updateScrollButtons);
+        
+        // Kiểm tra ban đầu
+        updateScrollButtons();
+            }
+
+    // Khởi tạo scroll khi DOM ready
+    initTabScroll();
+
+    async function activeTab(btnId) {
         const buttons = document.querySelectorAll('.btn_status_text');
         buttons.forEach(btn => btn.classList.remove('active-tab'));
 
@@ -91,22 +169,104 @@ window.addEventListener('DOMContentLoaded', function () {
                     }
                     
                     order_item.id = frozen_order.id;
-                    let image_status = null;
-                    if (frozen_order.is_frozen == 1) {
-                        image_status = "images/nhan_cho_xu_ly.png";
-                    } else {
-                        image_status = "images/nhan_thanh_cong.png";
+                    
+                    // Hàm tạo badge trạng thái
+                    function getStatusBadge(status) {
+                        const statusConfig = {
+                            'pending': { 
+                                display: 'Chờ xử lý', 
+                                color: '#FF9800', 
+                                bgColor: '#FFF3E0',
+                                textColor: '#E65100'
+                            },
+                            'confirmed': { 
+                                display: 'Đã xác nhận', 
+                                color: '#2196F3', 
+                                bgColor: '#E3F2FD',
+                                textColor: '#1565C0'
+                            },
+                            'preparing': { 
+                                display: 'Đang chuẩn bị', 
+                                color: '#9C27B0', 
+                                bgColor: '#F3E5F5',
+                                textColor: '#6A1B9A'
+                            },
+                            'transit': { 
+                                display: 'Đang trung chuyển', 
+                                color: '#673AB7', 
+                                bgColor: '#EDE7F6',
+                                textColor: '#4A148C'
+                            },
+                            'shipping': { 
+                                display: 'Đang vận chuyển', 
+                                color: '#3F51B5', 
+                                bgColor: '#E8EAF6',
+                                textColor: '#1A237E'
+                            },
+                            'delivered': { 
+                                display: 'Đã giao hàng', 
+                                color: '#4CAF50', 
+                                bgColor: '#E8F5E9',
+                                textColor: '#1B5E20'
+                            },
+                            'completed': { 
+                                display: 'Hoàn thành', 
+                                color: '#8BC34A', 
+                                bgColor: '#F1F8E9',
+                                textColor: '#33691E'
+                            },
+                            'cancelled': { 
+                                display: 'Đã hủy', 
+                                color: '#F44336', 
+                                bgColor: '#FFEBEE',
+                                textColor: '#B71C1C'
+                            }
+                        };
+                        
+                        const config = statusConfig[status] || statusConfig['pending'];
+                        
+                        return `
+                            <span class="status-badge" style="
+                                background: ${config.bgColor};
+                                color: ${config.textColor};
+                                border: 2px solid ${config.color};
+                                padding: 6px 14px;
+                                border-radius: 20px;
+                                font-size: 12px;
+                                font-weight: 600;
+                                display: inline-flex;
+                                align-items: center;
+                                gap: 6px;
+                                white-space: nowrap;
+                                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                            ">
+                                <span style="
+                                    width: 8px;
+                                    height: 8px;
+                                    border-radius: 50%;
+                                    background: ${config.color};
+                                    display: inline-block;
+                                "></span>
+                                ${config.display}
+                            </span>
+                        `;
                     }
+                    
+                    // Lấy trạng thái hiện tại, mặc định là 'pending' nếu không có
+                    const currentStatus = frozen_order.status || 'pending';
+                    const statusBadgeHTML = getStatusBadge(currentStatus);
                     const price = frozen_order.custom_price != null ? frozen_order.custom_price / frozen_order.order.quantity : frozen_order.order.price;
+                    // Lấy commission_percentage: đơn đặc biệt từ frozen_order, đơn thường từ order
+                    const commission_percentage = frozen_order.commission_percentage != null ? frozen_order.commission_percentage : frozen_order.order.commission_percentage;
                     const order_details_price_formatted = format_currency(price);
                     const order_details_end_value_total_price_formatted = format_currency(frozen_order.order.quantity * price);
-                    const order_details_end_value_price_rose_formatted = format_currency((frozen_order.order.quantity * price) * frozen_order.order.commission_percentage);
-                    const order_details_end_value_total_formatted = format_currency((frozen_order.order.quantity * price) + ((frozen_order.order.quantity * price) * frozen_order.order.commission_percentage));
+                    const order_details_end_value_price_rose_formatted = format_currency((frozen_order.order.quantity * price) * (commission_percentage / 100));
+                    const order_details_end_value_total_formatted = format_currency((frozen_order.order.quantity * price) + ((frozen_order.order.quantity * price) * (commission_percentage / 100)));
                     
                     // Tính toán penalty nếu có
                     const penalty_amount = frozen_order.penalty_amount ? parseFloat(frozen_order.penalty_amount) : 0;
                     const penalty_amount_formatted = format_currency(penalty_amount);
-                    const total_after_penalty = ((frozen_order.order.quantity * price) + ((frozen_order.order.quantity * price) * frozen_order.order.commission_percentage)) - penalty_amount;
+                    const total_after_penalty = ((frozen_order.order.quantity * price) + ((frozen_order.order.quantity * price) * (commission_percentage / 100))) - penalty_amount;
                     const total_after_penalty_formatted = format_currency(total_after_penalty);
                     
                     // Tính số tiền cần nạp thêm cho đơn bị phạt
@@ -141,11 +301,14 @@ window.addEventListener('DOMContentLoaded', function () {
                                 <div class="countdown-container ${countdownClass}" data-deadline="${deadline.toISOString()}" data-order-id="${frozen_order.id}">
                                     <div class="countdown-icon">⏰</div>
                                     <div class="countdown-text">
-                                        <div class="countdown-label">Thời gian còn lại:</div>
+                                        <div class="countdown-label">Thời hạn xử lý đơn hàng:</div>
                                         <div class="countdown-timer">
                                             <span class="countdown-hours">${hours.toString().padStart(2, '0')}</span>:
                                             <span class="countdown-minutes">${minutes.toString().padStart(2, '0')}</span>:
                                             <span class="countdown-seconds">${seconds.toString().padStart(2, '0')}</span>
+                                        </div>
+                                        <div class="countdown-warning-text" style="font-size: 10px; margin-top: 4px; opacity: 0.8;">
+                                            Vui lòng xử lý đơn hàng trước hạn, nếu quá hạn sẽ bị phạt 30% tổng giá trị đơn hàng theo quy định của hệ thống.
                                         </div>
                                     </div>
                                 </div>`;
@@ -155,6 +318,9 @@ window.addEventListener('DOMContentLoaded', function () {
                                     <div class="countdown-icon">⚠️</div>
                                     <div class="countdown-text">
                                         <div class="countdown-label text-danger fw-bold">ĐÃ QUÁ HẠN!</div>
+                                        <div class="countdown-warning-text" style="font-size: 10px; margin-top: 4px; color: #dc3545;">
+                                            Đơn hàng đã quá hạn xử lý. Bạn sẽ bị phạt 30% tổng giá trị đơn hàng theo quy định của hệ thống.
+                                        </div>
                                     </div>
                                 </div>`;
                         }
@@ -166,7 +332,7 @@ window.addEventListener('DOMContentLoaded', function () {
                             <span class="order_code">${trans.MaDonHang} ${frozen_order.order.order_code}</span>
                             ${countdownHTML}
                             <div class="order_status">
-                                <img class="order_status_image" src="${image_status}" alt="">
+                                ${statusBadgeHTML}
                             </div>
                             ${isPenalized ? `<div class="penalty_badge">BỊ PHẠT</div>` : (isSpecialOrder ? `<div class="special_badge">✨ ĐẶC BIỆT</div>` : '')}
                         </div>
@@ -185,11 +351,11 @@ window.addEventListener('DOMContentLoaded', function () {
                         <table>
                             <tbody>
                                 <tr>
-                                    <td>${trans.TongTienPhanPhoi}</td>
+                                    <td>${trans.TongTienDonHang}</td>
                                     <th>${order_details_end_value_total_price_formatted}</th>
                                 </tr>
                                 <tr>
-                                    <td>${trans.ChietKhau}</td>
+                                    <td>${trans.ChietKhau} (${commission_percentage}%):</td>
                                     <th>${order_details_end_value_price_rose_formatted}</th>
                                 </tr>
                                 ${isPenalized ? `
@@ -234,9 +400,36 @@ window.addEventListener('DOMContentLoaded', function () {
                             <p class="mb-1"><strong>ℹ️ Lưu ý:</strong></p>
                             <p class="mb-0">• Đây là đơn hàng đặc biệt nhưng đã bị phạt do quá hạn. Bạn đã hoàn thành phân phối và đã bị xử lý tiền phạt.</p>
                         </div>` : ''}
-                        ${frozen_order.is_frozen == 1 ? `<div class="mt-2 d-flex justify-content-center">
-                            <button class="btn btn-outline-dark btn-sm btn_phan_phoi w-50 ${isPenalized ? 'penalty-btn' : (isSpecialOrder ? 'special-btn' : '')}">${trans.PhanPhoiNgay}</button>
-                        </div>`: ``}
+                        ${(() => {
+                            // Luôn hiển thị nút "Xem chi tiết" cho mọi trạng thái
+                            const currentStatus = frozen_order.status || 'pending';
+                            
+                            // Đơn pending: nút primary (cần hành động)
+                            if (currentStatus === 'pending') {
+                                return `
+                                    <div class="mt-2 d-flex justify-content-center gap-2">
+                                        <a href="${route_order}/${frozen_order.id}" class="btn btn-primary btn-sm w-50">
+                                            <i class="fas fa-eye me-2"></i>Xem chi tiết
+                                        </a>
+                                    </div>`;
+                            }
+                            
+                            // Tất cả các trạng thái khác: nút outline
+                            // Xác định class dựa trên trạng thái
+                            let btnClass = 'btn-outline-primary';
+                            if (currentStatus === 'cancelled') {
+                                btnClass = 'btn-outline-secondary'; // Màu xám cho đơn đã hủy
+                            } else if (currentStatus === 'completed') {
+                                btnClass = 'btn-outline-success'; // Màu xanh lá cho đơn hoàn thành
+                            }
+                            
+                            return `
+                                <div class="mt-2 d-flex justify-content-center">
+                                    <a href="${route_order}/${frozen_order.id}" class="btn ${btnClass} btn-sm w-50">
+                                        <i class="fas fa-eye me-2"></i>Xem chi tiết
+                                    </a>
+                                </div>`;
+                        })()}
                     `;
                     div_list_orders.appendChild(order_item);
                 }
@@ -248,10 +441,22 @@ window.addEventListener('DOMContentLoaded', function () {
                 `;
             }
             spinner.hidden = true;
+            
+            // Scroll tab được chọn vào view sau khi load xong
+            setTimeout(() => {
+                const activeBtn = document.querySelector('.tab-btn:has(.active-tab)');
+                if (activeBtn) {
+                    activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                }
+            }, 100);
         }
     }
     function load_orders(tabId) {
         return new Promise((resolve, reject) => {
+            if (!route_get_list_orders_by_tab) {
+                return reject(new Error('route_get_list_orders_by_tab is not defined'));
+            }
+            
             fetch(route_get_list_orders_by_tab, {
                 method: "POST",
                 headers: {
@@ -317,6 +522,9 @@ window.addEventListener('DOMContentLoaded', function () {
                     <div class="countdown-icon">⚠️</div>
                     <div class="countdown-text">
                         <div class="countdown-label text-danger fw-bold">ĐÃ QUÁ HẠN!</div>
+                        <div class="countdown-warning-text" style="font-size: 10px; margin-top: 4px; color: #dc3545;">
+                            Đơn hàng đã quá hạn xử lý. Bạn sẽ bị phạt 30% tổng giá trị đơn hàng theo quy định của hệ thống.
+                        </div>
                     </div>`;
             }
         });
@@ -325,80 +533,7 @@ window.addEventListener('DOMContentLoaded', function () {
     // Cập nhật countdown mỗi giây
     setInterval(updateCountdowns, 1000);
     
-    document.getElementById('list_orders').addEventListener('click', async function (e) {
-        if (e.target.classList.contains('btn_phan_phoi')) {
-            // Hiển thị modal loading phân phối
-            showDistributionModal();
-            
-            let frozen_id = e.target.closest('.order_item').id;
-            let result = await handle_distribution(frozen_id);
-            
-            // Đóng modal loading
-            closeDistributionModal();
-            
-            if (result.status === 200) {
-                const profit = result.profit;
-                const totalAmount = result.total_amount || 0;
-                const commission = result.commission || 0;
-                const penaltyAmount = result.penalty_amount || 0;
-                
-                // Hiển thị modal thành công với animation
-                showSuccessModal(profit, totalAmount, commission, penaltyAmount);
-                
-                // Refresh tab hiện tại
-                if (tab === 'tat-ca') {
-                    activeTab('btn_tat_ca');
-                } else if (tab === 'cho-xu-ly') {
-                    activeTab('btn_cho_xu_ly');
-                } else if (tab === 'hoan-thanh') {
-                    activeTab('btn_hoan_thanh');
-                } else if (tab === 'dong-bang') {
-                    activeTab('btn_dong_bang');
-                }
-                
-                // Cập nhật số dư
-                const so_du_user = document.getElementById('so_du_user');
-                so_du_user.innerHTML = trans.SoDuHienTai + format_currency(result.balance);
-            } else if (result.status === 409) {
-                // Refresh tab
-                if (tab === 'tat-ca') {
-                    activeTab('btn_tat_ca');
-                } else if (tab === 'cho-xu-ly') {
-                    activeTab('btn_cho_xu_ly');
-                } else if (tab === 'hoan-thanh') {
-                    activeTab('btn_hoan_thanh');
-                } else if (tab === 'dong-bang') {
-                    activeTab('btn_dong_bang');
-                }
-                notification('warning', result.message, trans.CanhBao);
-            } else {
-                notification('warning', result.message, trans.Loi);
-            }
-        }
-    });
-
-    function handle_distribution(frozen_id) {
-        return new Promise((resolve, reject) => {
-            fetch(route_handle_distribution, {
-                method: "POST",
-                headers: {
-                    'Content-Type': "application/json",
-                    'X-CSRF-TOKEN': csrf
-                },
-                body: JSON.stringify({
-                    frozen_id: frozen_id
-                })
-            })
-                .then(response => response.json())
-                .then(data => {
-                    return resolve(data);
-                })
-                .catch(error => {
-                    console.log(error);
-                    reject(error);
-                });
-        })
-    }
+    // Event listener cho nút phân phối đã được xóa vì giờ dùng link "Xem chi tiết" thay thế
 });
 
 // ======================= MODAL FUNCTIONS =======================

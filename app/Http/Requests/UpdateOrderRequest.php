@@ -27,6 +27,14 @@ class UpdateOrderRequest extends FormRequest
             'price' => 'required|numeric|min:0',
             'quantity' => 'required|integer|min:1',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
+            'customer_name' => 'nullable|string|max:255',
+            'customer_phone' => 'nullable|string|max:50',
+            'customer_address' => 'nullable|string|max:500',
+            'customer_note' => 'nullable|string|max:1000',
+            'is_paid' => 'nullable|boolean',
+            'payment_method' => 'nullable|in:COD,vnpay,momo,paypal,bank_transfer,other',
+            'partner_id' => 'nullable|exists:partners,id',
+            'api' => 'nullable|string|max:255',
         ];
     }
 }

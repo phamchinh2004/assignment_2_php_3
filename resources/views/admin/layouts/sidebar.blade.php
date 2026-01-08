@@ -120,6 +120,24 @@
             </div>
         </div> -->
     </li>
+
+    <!-- Đơn hàng bị báo cáo -->
+    <li class="nav-item">
+        <a class="nav-link collapsed" href="{{ route('order_reports.index') }}">
+            <i class="fa-solid fa-flag text-white"></i>
+            <span>Đơn hàng bị báo cáo</span>
+        </a>
+    </li>
+    
+    @if (Auth::user()->role === 'admin')
+    {{-- Cấu hình thời gian chuyển trạng thái đơn hàng --}}
+    <li class="nav-item">
+        <a class="nav-link collapsed" href="{{ route('admin.order_status_timing.index') }}" data-target="#collapseOrderTiming" aria-expanded="true" aria-controls="collapseOrderTiming">
+            <i class="fa-solid fa-clock text-white"></i>
+            <span>Cấu hình thời gian đơn hàng</span>
+        </a>
+    </li>
+    @endif
     <!-- Quản lý cấp độ -->
     <li class="nav-item">
         <a class="nav-link collapsed" href="{{ route('rank.index') }}" data-target="#collapseTwo" aria-expanded="true" aria-controls="collapseTwo">

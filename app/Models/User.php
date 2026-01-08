@@ -30,6 +30,7 @@ class User extends Authenticatable
         'bank_name',
         'account_number',
         'balance',
+        'frozen_balance',
         'transaction_password',
         'distribution_today',
         'todays_discount',
@@ -79,6 +80,65 @@ class User extends Authenticatable
     {
         return $this->hasMany(User::class, 'referrer_id');
     }
+    /**
+     * Tính số tiền hoa hồng tạm tính (từ các đơn hàng chưa completed)
+     */
+    public function getTemporaryCommissionAttribute()
+    {
+        $frozenOrders = $this->frozen_orders()
+            ->whereIn('status', ['pending', 'confirmed', 'preparing', 'transit', 'shipping', 'delivered'])
+            ->where('is_frozen', 1)
+            ->with('order')
+            ->get();
+        
+        $totalCommission = 0;
+        
+        foreach ($frozenOrders as $frozenOrder) {
+            $order = $frozenOrder->order;
+            if (!$order) continue;
+            
+            $totalPrice = $frozenOrder->custom_price 
+                ? $frozenOrder->custom_price 
+                : $order->price * $order->quantity;
+            
+            $commission = $totalPrice * ($order->commission_percentage / 100);
+            
+            // Trừ tiền phạt nếu có
+            $penaltyAmount = $frozenOrder->penalty_amount ?? 0;
+            $actualCommission = $commission - $penaltyAmount;
+            
+            $totalCommission += max(0, $actualCommission); // Đảm bảo không âm
+        }
+        
+        return $totalCommission;
+    }
+    
+    /**
+     * Tính hoa hồng thực nhận (từ các đơn đã completed)
+     */
+    public function getReceivedCommissionAttribute()
+    {
+        // Tính từ transaction_history với type = 'profit'
+        $totalProfit = Transaction_history::where('user_id', $this->id)
+            ->where('type', 'profit')
+            ->sum('value');
+        
+        // Trừ tiền phạt đã trừ
+        $totalPenalty = Transaction_history::where('user_id', $this->id)
+            ->where('type', 'penalty')
+            ->sum('value');
+        
+        return $totalProfit - $totalPenalty;
+    }
+    
+    /**
+     * Tính số tiền hoàn nhập (số dư + tiền hoa hồng tạm tính)
+     */
+    public function getAvailableBalanceAttribute()
+    {
+        return $this->balance + $this->temporary_commission;
+    }
+    
     public function rank()
     {
         return $this->belongsTo(Rank::class, 'rank_id');

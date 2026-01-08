@@ -841,7 +841,7 @@
                         <p class="announcement-note">📅 Chương trình chỉ diễn ra trong dịp năm mới 2026 này, hãy nhanh tay tham gia để không bỏ lỡ cơ hội vàng.</p>
                     </div>
                 </div>
-            </div>
+            </div>aZ
             <div class="modal-footer notification-footer">
                 <label class="checkbox-wrapper">
                     <input type="checkbox" id="dontShowAgain">

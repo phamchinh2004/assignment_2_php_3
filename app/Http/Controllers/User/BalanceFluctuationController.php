@@ -5,6 +5,7 @@ namespace App\Http\Controllers\User;
 use App\Http\Controllers\Controller;
 use App\Models\Transaction_history;
 use App\Models\Wallet_balance_history;
+use App\Models\Frozen_order;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -45,19 +46,48 @@ class BalanceFluctuationController extends Controller
         // Dữ liệu cho biểu đồ - số dư theo thời gian
         $chartData = $this->getBalanceChartData($user->id);
         
+        // Tính hoa hồng tạm tính: Tổng hoa hồng từ các đơn hàng đã completed nhưng chưa được cộng tiền
+        $pendingCommission = 0;
+        $completedOrders = Frozen_order::where('user_id', $user->id)
+            ->where('status', 'completed')
+            ->where(function($query) {
+                $query->where('commission_paid', false)
+                      ->orWhereNull('commission_paid');
+            })
+            ->with('order')
+            ->get();
+        
+        foreach ($completedOrders as $frozenOrder) {
+            if ($frozenOrder->order) {
+                // Tính tổng giá trị đơn hàng
+                $totalOrderValue = $frozenOrder->custom_price 
+                    ? $frozenOrder->custom_price 
+                    : ($frozenOrder->order->price * $frozenOrder->order->quantity);
+                
+                // Lấy phần trăm hoa hồng
+                $commissionPercentage = $frozenOrder->custom_price != null 
+                    ? ($frozenOrder->commission_percentage ?? $frozenOrder->order->commission_percentage ?? 0)
+                    : ($frozenOrder->order->commission_percentage ?? 0);
+                
+                // Tính hoa hồng
+                $commissionAmount = $totalOrderValue * ($commissionPercentage / 100);
+                $pendingCommission += $commissionAmount;
+            }
+        }
+        
+        // Số đơn hàng đã hoàn thành
+        $completedOrdersCount = Frozen_order::where('user_id', $user->id)
+            ->where('status', 'completed')
+            ->count();
+        
         // Thống kê tổng quan
         $stats = [
             'current_balance' => $user->balance,
             'total_profit' => Transaction_history::where('user_id', $user->id)
                 ->where('type', 'profit')
                 ->sum('value'),
-            'total_deposit' => Wallet_balance_history::where('user_id', $user->id)
-                ->where('type', 'deposit')
-                ->sum('value'),
-            'total_withdraw' => Wallet_balance_history::where('user_id', $user->id)
-                ->where('type', 'withdraw')
-                ->where('status', 'completed')
-                ->sum('value'),
+            'pending_commission' => $pendingCommission,
+            'completed_orders_count' => $completedOrdersCount,
             'total_orders' => Transaction_history::where('user_id', $user->id)
                 ->where('type', 'order')
                 ->count(),

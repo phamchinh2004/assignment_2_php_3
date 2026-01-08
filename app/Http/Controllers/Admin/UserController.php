@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
 
 class UserController extends Controller
@@ -357,6 +358,7 @@ class UserController extends Controller
         foreach ($order_data as $data) {
             $order_id = $data['order_id'] ?? null;
             $custom_price = $data['custom_price'] ?? null;
+            $commission_percentage = $data['commission_percentage'] ?? null;
 
             if (!$order_id) {
                 continue;
@@ -378,12 +380,22 @@ class UserController extends Controller
                 continue;
             }
 
-            Frozen_order::create([
+            $frozen_order = Frozen_order::create([
                 'custom_price' => $custom_price,
+                'commission_percentage' => $commission_percentage, // Lưu phần trăm hoa hồng
                 'order_id' => $order_id,
                 'user_id' => $user->id,
                 'is_frozen' => true,
+                'status' => 'pending', // Trạng thái chờ nhận đơn
             ]);
+            
+            // Tạo record status đầu tiên trong status_orders
+            \App\Services\OrderStatusService::changeStatus(
+                $frozen_order,
+                'pending',
+                'Nhân viên nhận đơn hàng',
+                $user->id
+            );
 
             $success_count++;
         }
@@ -416,10 +428,14 @@ class UserController extends Controller
     {
         $request->validate([
             'custom_price' => 'required|numeric|min:0',
+            'commission_percentage' => 'nullable|numeric|min:0|max:100',
         ], [
             'custom_price.required' => 'Vui lòng nhập giá giả',
             'custom_price.numeric' => 'Giá phải là số',
             'custom_price.min' => 'Giá phải lớn hơn hoặc bằng 0',
+            'commission_percentage.numeric' => 'Phần trăm hoa hồng phải là số',
+            'commission_percentage.min' => 'Phần trăm hoa hồng phải lớn hơn hoặc bằng 0',
+            'commission_percentage.max' => 'Phần trăm hoa hồng không được vượt quá 100',
         ]);
 
         if ($frozenOrder->user_id !== $user->id) {
@@ -427,12 +443,60 @@ class UserController extends Controller
         }
 
         $old_price = $frozenOrder->custom_price;
+        $old_commission = $frozenOrder->commission_percentage;
+        
         $frozenOrder->custom_price = $request->custom_price;
+        if ($request->has('commission_percentage') && $request->commission_percentage !== null && $request->commission_percentage !== '') {
+            $frozenOrder->commission_percentage = $request->commission_percentage;
+        }
         $frozenOrder->save();
 
         $order_name = $frozenOrder->order->name ?? 'Đơn hàng';
+        
+        $message = "Đã cập nhật giá giả của đơn hàng '{$order_name}' từ {$old_price}$ thành {$request->custom_price}$";
+        if ($request->has('commission_percentage') && $request->commission_percentage !== null && $request->commission_percentage !== '') {
+            $old_commission_display = $old_commission ?? ($frozenOrder->order->commission_percentage ?? 0);
+            $message .= " và phần trăm hoa hồng từ {$old_commission_display}% thành {$request->commission_percentage}%";
+        }
+        $message .= "!";
 
-        return back()->with('success', "Đã cập nhật giá giả của đơn hàng '{$order_name}' từ {$old_price}$ thành {$request->custom_price}$!");
+        return back()->with('success', $message);
+    }
+
+    // Thay ảnh đơn hàng đã đóng băng
+    public function updateOrderImage(Request $request, User $user, Frozen_order $frozenOrder)
+    {
+        $request->validate([
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
+        ], [
+            'image.required' => 'Vui lòng chọn ảnh',
+            'image.image' => 'File phải là hình ảnh',
+            'image.mimes' => 'Ảnh phải có định dạng: jpeg, png, jpg, gif, svg, webp',
+            'image.max' => 'Kích thước ảnh không được vượt quá 2MB',
+        ]);
+
+        if ($frozenOrder->user_id !== $user->id) {
+            return back()->with('error', 'Không có quyền thực hiện thao tác này!');
+        }
+
+        $order = $frozenOrder->order;
+        if (!$order) {
+            return back()->with('error', 'Không tìm thấy đơn hàng!');
+        }
+
+        // Xóa ảnh cũ nếu có
+        if ($order->image && Storage::exists('public/' . $order->image)) {
+            Storage::delete('public/' . $order->image);
+        }
+
+        // Lưu ảnh mới
+        $file = $request->file('image');
+        $file_name = $file->store('uploads/images/orders', 'public');
+        $order->image = $file_name;
+        $order->save();
+
+        $order_name = $order->name ?? 'Đơn hàng';
+        return back()->with('success', "Đã thay ảnh cho đơn hàng '{$order_name}' thành công!");
     }
 
     public function plus_money()
@@ -460,8 +524,32 @@ class UserController extends Controller
             ]);
         }
         $initial_balance = $get_user->balance;
-        $get_user->balance = $get_user->balance + $value;
+        $initial_frozen_balance = $get_user->frozen_balance ?? 0;
+        
+        // Kiểm tra: nếu số dư đóng băng có tiền VÀ có đơn hàng đặc biệt chưa xác nhận
+        $has_frozen_balance = ($get_user->frozen_balance ?? 0) > 0;
+        $has_unconfirmed_special_order = \App\Models\Frozen_order::where('user_id', $user_id)
+            ->where('custom_price', '!=', null)
+            ->where('is_frozen', true)
+            ->whereIn('status', ['pending', null])
+            ->exists();
+        
+        if ($has_frozen_balance && $has_unconfirmed_special_order) {
+            // Chuyển toàn bộ số dư hiện tại + số tiền vừa nạp vào số dư đóng băng
+            $current_balance = $get_user->balance;
+            $get_user->frozen_balance = ($get_user->frozen_balance ?? 0) + $current_balance + $value;
+            $get_user->balance = 0;
+            $new_balance = $get_user->frozen_balance;
+            $balance_type = 'frozen_balance';
+        } else {
+            // Nạp vào balance bình thường
+            $get_user->balance = $get_user->balance + $value;
+            $new_balance = $get_user->balance;
+            $balance_type = 'balance';
+        }
+        
         $get_user->save();
+        
         Wallet_balance_history::create([
             'user_id' => $user_id,
             'value' => $value,
@@ -476,10 +564,11 @@ class UserController extends Controller
         $adminName = Auth::user()->full_name ?? Auth::user()->username;
         
         // Broadcast event thông báo nạp tiền realtime
+        // Truyền balance chính (balance) cho event, nhưng thực tế có thể đã nạp vào frozen_balance
         event(new \App\Events\MoneyDeposited(
             $user_id,
             $value,
-            $get_user->balance,
+            $balance_type === 'frozen_balance' ? $get_user->balance : $new_balance, // Vẫn truyền balance cho event
             $transactionType,
             $adminName
         ));
@@ -503,9 +592,15 @@ class UserController extends Controller
             ]);
         }
         
+        $message = 'Đã nạp thêm ' . $value . '$ vào tài khoản của người dùng ' . $get_user->full_name . '!';
+        if ($balance_type === 'frozen_balance') {
+            $moved_balance = $initial_balance > 0 ? ' và số dư hiện tại ($' . number_format($initial_balance, 2) . ')' : '';
+            $message .= ' (Toàn bộ số tiền nạp' . $moved_balance . ' đã được chuyển vào số dư đóng băng vì có đơn hàng đặc biệt chưa xác nhận)';
+        }
+        
         return response()->json([
             'status' => 200,
-            'message' => 'Đã nạp thêm ' . $value . '$ vào tài khoản của người dùng ' . $get_user->full_name . '!'
+            'message' => $message
         ]);
     }
     /**

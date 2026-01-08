@@ -5,284 +5,16 @@
 
 @section('style-libs')
 <link href="{{ asset('theme/admin/vendor/datatables/dataTables.bootstrap4.min.css') }}" rel="stylesheet">
-<style>
-    .order-checkbox {
-        margin-right: 10px;
-    }
-
-    .order-item {
-        padding: 12px;
-        border-bottom: 1px solid #e3e6f0;
-        transition: all 0.2s;
-    }
-
-    .order-item:hover {
-        background-color: #f8f9fc;
-    }
-
-    .already-frozen {
-        background-color: #f8d7da;
-        color: #721c24;
-        opacity: 0.7;
-    }
-
-    .current-spin {
-        background-color: #d4edda;
-    }
-
-    .price-input-wrapper {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-top: 5px;
-    }
-
-    .price-input {
-        width: 150px;
-        padding: 5px 10px;
-        border: 1px solid #d1d3e2;
-        border-radius: 4px;
-        font-size: 14px;
-    }
-
-    .price-input:disabled {
-        background-color: #e9ecef;
-        cursor: not-allowed;
-    }
-
-    .order-content {
-        flex: 1;
-    }
-
-    .order-info {
-        display: flex;
-        align-items: flex-start;
-        gap: 10px;
-    }
-
-    .frozen-item {
-        padding: 15px;
-        border: 1px solid #e3e6f0;
-        border-radius: 8px;
-        margin-bottom: 10px;
-        background-color: #fff;
-        transition: all 0.2s;
-    }
-
-    .frozen-item:hover {
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    .frozen-item-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 10px;
-    }
-
-    .frozen-item-body {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-    }
-
-    .frozen-actions {
-        display: flex;
-        gap: 5px;
-    }
-
-    .edit-price-form {
-        display: none;
-        margin-top: 10px;
-        padding: 10px;
-        background-color: #f8f9fc;
-        border-radius: 5px;
-    }
-
-    .edit-price-form.active {
-        display: block;
-    }
-
-    .tab-content {
-        padding: 20px;
-    }
-
-    .nav-tabs .nav-link {
-        color: #4e73df;
-        font-weight: 600;
-    }
-
-    .nav-tabs .nav-link.active {
-        background-color: #4e73df;
-        color: white;
-    }
-
-    .badge-large {
-        font-size: 1rem;
-        padding: 8px 12px;
-    }
-</style>
+@vite('resources/css/admin/user/frozen_order.css')
 @endsection
 
 @section('script-libs')
 <script src="{{ asset('theme/admin/vendor/datatables/jquery.dataTables.min.js') }}"></script>
 <script src="{{ asset('theme/admin/vendor/datatables/dataTables.bootstrap4.min.js') }}"></script>
 <script src="{{ asset('theme/admin/js/demo/datatables-demo.js') }}"></script>
+@vite('resources/js/admin/user/frozen_order.js')
 <script>
     window.currentPermissionCode = "quan_ly_tat_ca_nguoi_dung";
-
-    document.addEventListener('DOMContentLoaded', function() {
-        const selectAllBtn = document.getElementById('select_all');
-        const deselectAllBtn = document.getElementById('deselect_all');
-        const applyAllPriceBtn = document.getElementById('apply_all_price');
-        const globalPriceInput = document.getElementById('global_price');
-        const checkboxes = document.querySelectorAll('.order-checkbox:not(:disabled)');
-        const form = document.getElementById('form');
-        const btnSubmit = document.getElementById('btn_submit');
-
-        // Chọn tất cả
-        if (selectAllBtn) {
-            selectAllBtn.addEventListener('click', function() {
-                checkboxes.forEach(cb => {
-                    cb.checked = true;
-                    togglePriceInput(cb);
-                });
-            });
-        }
-
-        // Bỏ chọn tất cả
-        if (deselectAllBtn) {
-            deselectAllBtn.addEventListener('click', function() {
-                checkboxes.forEach(cb => {
-                    cb.checked = false;
-                    togglePriceInput(cb);
-                });
-            });
-        }
-
-        // Áp dụng giá cho tất cả
-        if (applyAllPriceBtn) {
-            applyAllPriceBtn.addEventListener('click', function() {
-                const globalPrice = globalPriceInput.value;
-                if (!globalPrice) {
-                    alert('Vui lòng nhập giá trước!');
-                    return;
-                }
-
-                const checkedBoxes = document.querySelectorAll('.order-checkbox:checked');
-                if (checkedBoxes.length === 0) {
-                    alert('Vui lòng chọn ít nhất một đơn hàng!');
-                    return;
-                }
-
-                checkedBoxes.forEach(cb => {
-                    const orderId = cb.value;
-                    const priceInput = document.getElementById(`price_${orderId}`);
-                    if (priceInput && !priceInput.disabled) {
-                        priceInput.value = globalPrice;
-                    }
-                });
-
-                alert(`Đã áp dụng giá ${globalPrice}$ cho ${checkedBoxes.length} đơn hàng được chọn`);
-            });
-        }
-
-        // Toggle input giá
-        checkboxes.forEach(cb => {
-            cb.addEventListener('change', function() {
-                togglePriceInput(this);
-            });
-        });
-
-        function togglePriceInput(checkbox) {
-            const orderId = checkbox.value;
-            const priceInput = document.getElementById(`price_${orderId}`);
-            if (priceInput) {
-                priceInput.disabled = !checkbox.checked;
-                if (!checkbox.checked) {
-                    priceInput.value = '';
-                }
-            }
-        }
-
-        // Submit form đóng băng
-        if (btnSubmit) {
-            btnSubmit.addEventListener('click', function() {
-                const checkedBoxes = document.querySelectorAll('.order-checkbox:checked');
-                if (checkedBoxes.length === 0) {
-                    alert('Vui lòng chọn ít nhất một đơn hàng!');
-                    return;
-                }
-
-                let missingPrice = false;
-                checkedBoxes.forEach(cb => {
-                    const orderId = cb.value;
-                    const priceInput = document.getElementById(`price_${orderId}`);
-                    if (priceInput && !priceInput.value) {
-                        missingPrice = true;
-                    }
-                });
-
-                if (missingPrice) {
-                    if (!confirm('Một số đơn hàng chưa có giá giả. Bạn có muốn tiếp tục không?')) {
-                        return;
-                    }
-                }
-
-                if (confirm(`Bạn có chắc chắn muốn đóng băng ${checkedBoxes.length} đơn hàng?`)) {
-                    form.submit();
-                }
-            });
-        }
-
-        // Initialize
-        checkboxes.forEach(cb => {
-            togglePriceInput(cb);
-        });
-
-        // Xử lý nút sửa giá
-        document.querySelectorAll('.btn-edit-price').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const frozenId = this.dataset.frozenId;
-                const editForm = document.getElementById(`edit-form-${frozenId}`);
-                if (editForm) {
-                    editForm.classList.toggle('active');
-                }
-            });
-        });
-
-        // Xử lý nút hủy sửa
-        document.querySelectorAll('.btn-cancel-edit').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const frozenId = this.dataset.frozenId;
-                const editForm = document.getElementById(`edit-form-${frozenId}`);
-                if (editForm) {
-                    editForm.classList.remove('active');
-                }
-            });
-        });
-
-        // Xử lý nút hủy đóng băng
-        document.querySelectorAll('.btn-unfreeze').forEach(btn => {
-            btn.addEventListener('click', function(e) {
-                const orderName = this.dataset.orderName;
-                if (!confirm(`Bạn có chắc chắn muốn hủy đóng băng đơn hàng "${orderName}"?`)) {
-                    e.preventDefault();
-                }
-            });
-        });
-
-        // Xử lý submit form sửa giá
-        document.querySelectorAll('.form-edit-price').forEach(form => {
-            form.addEventListener('submit', function(e) {
-                const priceInput = this.querySelector('input[name="custom_price"]');
-                if (!priceInput.value || parseFloat(priceInput.value) < 0) {
-                    e.preventDefault();
-                    alert('Vui lòng nhập giá hợp lệ!');
-                }
-            });
-        });
-    });
 </script>
 @endsection
 
@@ -359,33 +91,6 @@
                 @csrf
                 @method('POST')
 
-                <!-- Áp dụng giá chung -->
-                <div class="card mb-3">
-                    <div class="card-header bg-info text-white">
-                        <h6 class="mb-0"><i class="fas fa-dollar-sign"></i> Áp dụng giá chung (tùy chọn)</h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="row align-items-end">
-                            <div class="col-md-6">
-                                <label for="global_price" class="font-weight-bold">Nhập giá giả chung ($)</label>
-                                <input
-                                    type="number"
-                                    id="global_price"
-                                    class="form-control"
-                                    placeholder="Ví dụ: 100"
-                                    step="0.01"
-                                    min="0">
-                                <small class="text-muted">Giá này sẽ được áp dụng cho tất cả đơn hàng được chọn</small>
-                            </div>
-                            <div class="col-md-6">
-                                <button type="button" class="btn btn-info" id="apply_all_price">
-                                    <i class="fas fa-check-circle"></i> Áp dụng cho các đơn đã chọn
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- Danh sách đơn hàng -->
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
@@ -402,12 +107,28 @@
                         </div>
                     </div>
                     <div class="card-body" style="max-height: 500px; overflow-y: auto;">
+                        @php
+                        // Tạo mảng map order_id với spun status từ frozen_orders_detail
+                        $frozen_spun_map = [];
+                        foreach ($frozen_orders_detail ?? [] as $frozen) {
+                            if ($frozen->spun) {
+                                $frozen_spun_map[$frozen->order_id] = true;
+                            }
+                        }
+                        @endphp
                         @if (!empty($list_orders) && $list_orders->count() > 0)
                         @foreach ($list_orders as $order)
                         @php
                         $is_frozen = in_array($order->id, $frozen_orders ?? []);
                         $is_current = $order->index == $progress->current_spin;
-                        $item_class = $is_frozen ? 'already-frozen' : ($is_current ? 'current-spin' : '');
+                        $is_frozen_and_spun = isset($frozen_spun_map[$order->id]);
+                        // Thêm current-spin nếu là đơn hàng hiện tại HOẶC đã đóng băng và người dùng đã quay tới
+                        $is_current_spin = $is_current || $is_frozen_and_spun;
+                        $item_class = $is_frozen ? 'already-frozen' : ($is_current_spin ? 'current-spin' : '');
+                        // Nếu đã đóng băng và đã quay tới, vẫn giữ class already-frozen nhưng thêm current-spin
+                        if ($is_frozen && $is_frozen_and_spun) {
+                            $item_class = 'already-frozen current-spin';
+                        }
                         @endphp
                         <div class="order-item {{ $item_class }}">
                             <div class="order-info">
@@ -429,6 +150,11 @@
                                                 @if ($is_current)
                                                 <span class="badge badge-success ml-2">
                                                     <i class="fas fa-sync-alt"></i> Đã quay đến đây
+                                                </span>
+                                                @endif
+                                                @if ($is_frozen_and_spun)
+                                                <span class="badge badge-warning ml-2">
+                                                    <i class="fas fa-sync-alt"></i> Đã quay đến đây (đã đóng băng)
                                                 </span>
                                                 @endif
                                                 @if ($is_frozen)
@@ -453,11 +179,29 @@
                                                 step="0.01"
                                                 min="0"
                                                 disabled>
+                                            <span class="text-muted">$</span>
+                                        </div>
+                                        <div class="price-input-wrapper mt-2">
+                                            <label for="commission_{{ $order->id }}" class="mb-0 text-muted" style="min-width: 80px;">
+                                                <i class="fas fa-percent"></i> Phần trăm hoa hồng:
+                                            </label>
+                                            <input
+                                                type="number"
+                                                name="order_data[{{ $order->id }}][commission_percentage]"
+                                                id="commission_{{ $order->id }}"
+                                                class="price-input"
+                                                placeholder="Nhập % (VD: 5)"
+                                                step="0.01"
+                                                min="0"
+                                                max="100"
+                                                value="10"
+                                                data-default-value="10"
+                                                disabled>
+                                            <span class="text-muted">%</span>
                                             <input
                                                 type="hidden"
                                                 name="order_data[{{ $order->id }}][order_id]"
                                                 value="{{ $order->id }}">
-                                            <span class="text-muted">$</span>
                                         </div>
                                         @endif
                                     </div>
@@ -493,10 +237,22 @@
                 <div class="card-body">
                     @if($frozen_orders_detail->count() > 0)
                     @foreach($frozen_orders_detail as $frozen)
-                    <div class="frozen-item">
+                    <div class="frozen-item {{ $frozen->spun ? 'current-spin' : '' }}">
                         <div class="d-flex flex-row">
                             <div class="pe-3">
                                 <img class="order_image" width="100x" height="100px" src="{{ Storage::url($frozen->order->image) }}" alt="">
+                                @if (!$frozen->spun)
+                                <div class="mt-2">
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-info btn-change-image w-100"
+                                        data-frozen-id="{{ $frozen->id }}"
+                                        data-order-id="{{ $frozen->order->id }}"
+                                        title="Thay ảnh">
+                                        <i class="fas fa-image"></i> Thay ảnh
+                                    </button>
+                                </div>
+                                @endif
                             </div>
                             <div class="w-100">
                                 <div class="frozen-item-header">
@@ -514,6 +270,7 @@
                                         </small>
                                     </div>
                                     <div class="frozen-actions">
+                                        @if (!$frozen->spun)
                                         <button
                                             type="button"
                                             class="btn btn-sm btn-warning btn-edit-price"
@@ -535,12 +292,21 @@
                                                 <i class="fas fa-unlock"></i> Hủy đóng băng
                                             </button>
                                         </form>
+                                        @else
+                                        <span class="text-muted">
+                                            <i class="fas fa-info-circle"></i> Không thể chỉnh sửa khi người dùng đã quay đến
+                                        </span>
+                                        @endif
                                     </div>
                                 </div>
                                 <div class="frozen-item-body">
                                     <span class="badge badge-info badge-large">
                                         <i class="fas fa-dollar-sign"></i>
                                         Giá giả: {{ format_money($frozen->custom_price ?? 0) }}$
+                                    </span>
+                                    <span class="badge badge-success badge-large ml-2">
+                                        <i class="fas fa-percent"></i>
+                                        Hoa hồng: {{ $frozen->commission_percentage ?? $frozen->order->commission_percentage ?? 0 }}%
                                     </span>
                                 </div>
                             </div>
@@ -555,7 +321,7 @@
                                 @csrf
                                 @method('PUT')
                                 <div class="row align-items-end">
-                                    <div class="col-md-6">
+                                    <div class="col-md-5">
                                         <label class="font-weight-bold">Giá giả mới ($)</label>
                                         <input
                                             type="number"
@@ -567,13 +333,66 @@
                                             required
                                             placeholder="Nhập giá mới">
                                     </div>
-                                    <div class="col-md-6">
+                                    <div class="col-md-5">
+                                        <label class="font-weight-bold">Phần trăm hoa hồng (%)</label>
+                                        <input
+                                            type="number"
+                                            name="commission_percentage"
+                                            class="form-control"
+                                            value="{{ $frozen->commission_percentage ?? $frozen->order->commission_percentage ?? '' }}"
+                                            step="0.01"
+                                            min="0"
+                                            max="100"
+                                            placeholder="Nhập % (VD: 5)">
+                                    </div>
+                                    <div class="col-md-2">
                                         <button type="submit" class="btn btn-success">
                                             <i class="fas fa-save"></i> Lưu
                                         </button>
                                         <button
                                             type="button"
                                             class="btn btn-secondary btn-cancel-edit"
+                                            data-frozen-id="{{ $frozen->id }}">
+                                            <i class="fas fa-times"></i> Hủy
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Form thay ảnh -->
+                        <div class="change-image-form" id="change-image-form-{{ $frozen->id }}">
+                            <form
+                                action="{{ route('user.update.frozen.order.image', ['user' => $user->id, 'frozenOrder' => $frozen->id]) }}"
+                                method="POST"
+                                enctype="multipart/form-data"
+                                class="form-change-image">
+                                @csrf
+                                @method('PUT')
+                                <div class="row align-items-end">
+                                    <div class="col-md-5">
+                                        <label class="font-weight-bold">Hình ảnh cũ</label>
+                                        <div class="mb-2">
+                                            <img src="{{ Storage::url($frozen->order->image) }}" alt="Ảnh cũ" style="max-width: 150px; max-height: 150px; border: 1px solid #ddd; border-radius: 4px;">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-5">
+                                        <label class="font-weight-bold">Chọn ảnh mới</label>
+                                        <input
+                                            type="file"
+                                            name="image"
+                                            class="form-control"
+                                            accept="image/*"
+                                            required>
+                                        <small class="text-muted">Chấp nhận: jpeg, png, jpg, gif, svg, webp (tối đa 2MB)</small>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <button type="submit" class="btn btn-success">
+                                            <i class="fas fa-save"></i> Lưu
+                                        </button>
+                                        <button
+                                            type="button"
+                                            class="btn btn-secondary btn-cancel-change-image"
                                             data-frozen-id="{{ $frozen->id }}">
                                             <i class="fas fa-times"></i> Hủy
                                         </button>

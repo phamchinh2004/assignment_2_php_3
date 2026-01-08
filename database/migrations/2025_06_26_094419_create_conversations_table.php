@@ -18,6 +18,18 @@ return new class extends Migration
             $table->enum('status', ['open', 'closed'])->default('open');
             $table->timestamps();
         });
+
+        // Tạo bảng messages
+        Schema::create('messages', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('conversation_id')->constrained();
+            $table->foreignId('sender_id')->constrained('users');
+            $table->text('message')->nullable();
+            $table->string('image_path')->nullable()->comment('Đường dẫn hình ảnh');
+            $table->enum('type', ['text', 'image'])->default('text');
+            $table->boolean('is_read')->default(false);
+            $table->timestamps();
+        });
     }
 
     /**
@@ -25,6 +37,7 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::dropIfExists('messages');
         Schema::dropIfExists('conversations');
     }
 };

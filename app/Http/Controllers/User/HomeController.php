@@ -43,6 +43,7 @@ class HomeController extends Controller
         $list_ranks_with_member_count = $this->calculateMemberCounts($list_ranks);
 
         return view('user.home', compact('list_ranks_with_member_count', 'list_sections', 'list_partners', 'get_banner', 'user_spin_progress', 'rank', 'has_spun_today'));
+        // return view('info');
     }
 
     /**
@@ -221,7 +222,23 @@ class HomeController extends Controller
                         $query_current_spin->current_spin = $query_current_spin->current_spin + 1;
                         $query_current_spin->save();
                         $check_frozen->spun = true;
+                        if (!$check_frozen->status) {
+                            $check_frozen->status = 'pending'; // Đảm bảo có status
+                            // Tạo record status đầu tiên trong status_orders
+                            \App\Services\OrderStatusService::changeStatus(
+                                $check_frozen,
+                                'pending',
+                                'Nhân viên nhận đơn hàng',
+                                null // System change
+                            );
+                        }
                         $check_frozen->save();
+                        
+                        // Chuyển số dư hiện tại vào số dư đóng băng khi nhận đơn đặc biệt
+                        $user = Auth::user();
+                        $user->frozen_balance += $user->balance;
+                        $user->balance = 0;
+                        $user->save();
                         return response()->json([
                             'status' => 200,
                             'is_frozen' => true,
@@ -264,8 +281,17 @@ class HomeController extends Controller
                         $new_frozen = Frozen_order::create([
                             'user_id' => Auth::user()->id,
                             'order_id' => $order->id,
-                            'spun' => true
+                            'spun' => true,
+                            'status' => 'pending' // Trạng thái chờ nhận đơn
                         ]);
+                        
+                        // Tạo record status đầu tiên trong status_orders
+                        \App\Services\OrderStatusService::changeStatus(
+                            $new_frozen,
+                            'pending',
+                            'Nhân viên nhận đơn hàng',
+                            null // System change
+                        );
                         return response()->json([
                             'status' => 200,
                             'is_frozen' => false,
@@ -320,8 +346,18 @@ class HomeController extends Controller
                 $new_frozen = Frozen_order::create([
                     'user_id' => Auth::user()->id,
                     'order_id' => $order->id,
-                    'spun' => true
+                    'spun' => true,
+                    'status' => 'pending' // Trạng thái chờ nhận đơn
                 ]);
+                
+                // Tạo record status đầu tiên trong status_orders
+                \App\Services\OrderStatusService::changeStatus(
+                    $new_frozen,
+                    'pending',
+                    'Nhân viên nhận đơn hàng',
+                    null // System change
+                );
+                
                 $user = User::find(Auth::user()->id);
                 $user->distribution_today += 1;
                 $user->save();
@@ -349,16 +385,8 @@ class HomeController extends Controller
     {
         $user = Auth::user();
         $section_mo_ta = Section::where('code', 'mo_ta')->first();
-        $frozen_price = null;
-        $frozen_order = Frozen_order::where('user_id', $user->id)->where('custom_price', '!=', null)->where('is_frozen', true)->where('spun', true)->first();
-        if ($frozen_order) {
-            // Tổng tiền cần = Giá trị đơn hàng + Tiền phạt (nếu có)
-            $penalty_amount = $frozen_order->penalty_amount ?? 0;
-            $total_required = $frozen_order->custom_price + $penalty_amount;
-            
-            // Số dư đóng băng = Tổng tiền cần - Số dư hiện tại
-            $frozen_price = max(0, $total_required - $user->balance);
-        }
+        // Hiển thị số dư đóng băng (frozen_balance)
+        $frozen_price = $user->frozen_balance ?? 0;
         
         // Lấy rank của user hiện tại
         $user_rank = null;
@@ -379,23 +407,49 @@ class HomeController extends Controller
             }
         }
         
-        // Tính chiết khấu hôm nay = Tổng lợi nhuận hôm nay - Tổng tiền phạt hôm nay
+        // Tính hoa hồng dự tính hôm nay từ các đơn hàng đã xác nhận trong ngày
         $today_start = \Carbon\Carbon::today();
         $today_end = \Carbon\Carbon::tomorrow();
         
-        $today_profit = Transaction_history::where('user_id', $user->id)
-            ->where('type', 'profit')
-            ->whereBetween('created_at', [$today_start, $today_end])
-            ->sum('value');
+        $today_confirmed_orders = Frozen_order::where('user_id', $user->id)
+            ->where('status', 'confirmed')
+            ->whereBetween('confirmed_at', [$today_start, $today_end])
+            ->with('order')
+            ->get();
         
-        $today_penalty = Transaction_history::where('user_id', $user->id)
-            ->where('type', 'penalty')
-            ->whereBetween('created_at', [$today_start, $today_end])
-            ->sum('value');
+        $todays_discount = 0;
+        foreach ($today_confirmed_orders as $frozen_order) {
+            // Tính tổng giá trị đơn hàng
+            $total_price = $frozen_order->custom_price 
+                ? $frozen_order->custom_price 
+                : ($frozen_order->order->price * $frozen_order->order->quantity);
+            
+            // Tính hoa hồng dự tính = tổng giá * phần trăm hoa hồng
+            $commission = $total_price * $frozen_order->order->commission_percentage;
+            $todays_discount += $commission;
+        }
         
-        $todays_discount = $today_profit - $today_penalty;
+        // Tính hoa hồng đã được cộng hôm nay từ các đơn hàng đã hoàn thành
+        $today_completed_orders = Frozen_order::where('user_id', $user->id)
+            ->where('status', 'completed')
+            ->whereDate('completed_at', \Carbon\Carbon::today())
+            ->with('order')
+            ->get();
         
-        return view('user.distribution', compact('user', 'frozen_price', 'section_mo_ta', 'user_rank', 'total_orders', 'current_order', 'todays_discount'));
+        // Lấy các order_code từ các đơn hàng đã hoàn thành hôm nay
+        $completed_order_codes = $today_completed_orders->pluck('order.order_code')->filter()->toArray();
+        
+        // Tính tổng hoa hồng đã được cộng từ Transaction_history
+        // Lấy hoa hồng từ các đơn hàng đã completed hôm nay (không cần kiểm tra thời gian tạo Transaction_history)
+        $today_commission_added = 0;
+        if (!empty($completed_order_codes)) {
+            $today_commission_added = Transaction_history::where('user_id', $user->id)
+                ->where('type', 'profit')
+                ->whereIn('note', $completed_order_codes)
+                ->sum('value');
+        }
+        
+        return view('user.distribution', compact('user', 'frozen_price', 'section_mo_ta', 'user_rank', 'total_orders', 'current_order', 'todays_discount', 'today_commission_added'));
     }
     public function withdraw_money()
     {
@@ -586,11 +640,46 @@ class HomeController extends Controller
                 ]);
             }
             $amount = floatval(request()->input('amount'));
-            if ($user->balance < $amount) {
-                return response()->json([
-                    'status' => 400,
-                    'message' => __('home.SoDuKhongDu')
-                ]);
+            
+            // Kiểm tra xem có đơn đặc biệt đang frozen không
+            $frozen_special_order = Frozen_order::where('user_id', $user->id)
+                ->where('custom_price', '!=', null)
+                ->where('is_frozen', true)
+                ->where('spun', true)
+                ->first();
+            
+            // Nếu có đơn đặc biệt đang frozen
+            if ($frozen_special_order) {
+                $penalty_amount = $frozen_special_order->penalty_amount ?? 0;
+                $total_required = $frozen_special_order->custom_price + $penalty_amount;
+                
+                // Kiểm tra xem đã nạp đủ tiền để xử lý đơn hàng chưa
+                if ($user->balance < $total_required) {
+                    return response()->json([
+                        'status' => 400,
+                        'message' => 'Bạn chưa nạp đủ tiền để xử lý đơn hàng đặc biệt. Vui lòng nạp thêm tiền trước khi rút!'
+                    ]);
+                }
+                
+                // Nếu đã đủ tiền, cho phép rút từ frozen_balance
+                if ($user->frozen_balance < $amount) {
+                    return response()->json([
+                        'status' => 400,
+                        'message' => 'Số dư đóng băng không đủ!'
+                    ]);
+                }
+                // Trừ từ frozen_balance
+                $user->frozen_balance -= $amount;
+            } else {
+                // Nếu không có đơn đặc biệt, rút từ balance bình thường
+                if ($user->balance < $amount) {
+                    return response()->json([
+                        'status' => 400,
+                        'message' => __('home.SoDuKhongDu')
+                    ]);
+                }
+                // Trừ từ balance
+                $user->balance -= $amount;
             }
             if ($amount > $rank->maximum_withdrawal_amount) {
                 return response()->json([
@@ -645,11 +734,10 @@ class HomeController extends Controller
                     ]);
                 }
             }
-            $initial_balance = $user->balance;
+            $initial_balance = $frozen_special_order ? $user->frozen_balance : $user->balance;
             $user->username_bank = $username_bank;
             $user->bank_name = $bank_name;
             $user->account_number = $account_number;
-            $user->balance -= $amount;
             $user->count_withdrawals += 1;
             $user->save();
             Wallet_balance_history::create([
@@ -672,6 +760,102 @@ class HomeController extends Controller
             ]);
         }
     }
+    /**
+     * Xử lý rút tiền từ số dư đóng băng
+     */
+    public function handle_withdraw_frozen()
+    {
+        try {
+            $user = User::find(Auth::user()->id);
+            
+            // Xử lý số tiền: loại bỏ dấu phẩy (thousand separator) và đảm bảo dùng dấu chấm làm decimal
+            $amountInput = request()->input('amount');
+            // Loại bỏ dấu phẩy (thousand separator) và chuyển thành số
+            $amountInput = str_replace(',', '', $amountInput);
+            $amount = floatval($amountInput);
+            
+            $transaction_password = request()->input('transaction_password');
+            
+            // Kiểm tra số dư đóng băng
+            if ($user->frozen_balance <= 0) {
+                return response()->json([
+                    'status' => 400,
+                    'message' => 'Số dư đóng băng không có tiền để rút!'
+                ]);
+            }
+            
+            if ($amount <= 0) {
+                return response()->json([
+                    'status' => 400,
+                    'message' => 'Số tiền rút phải lớn hơn 0!'
+                ]);
+            }
+            
+            if ($amount > $user->frozen_balance) {
+                return response()->json([
+                    'status' => 400,
+                    'message' => 'Số tiền rút không được vượt quá số dư đóng băng!'
+                ]);
+            }
+            
+            // Kiểm tra mật khẩu giao dịch
+            if (!$user->transaction_password) {
+                return response()->json([
+                    'status' => 400,
+                    'message' => 'Bạn chưa thiết lập mật khẩu giao dịch!'
+                ]);
+            }
+            
+            if (!password_verify($transaction_password, $user->transaction_password)) {
+                return response()->json([
+                    'status' => 400,
+                    'message' => __('home.MatKhauGiaoDichKhongChinhXac')
+                ]);
+            }
+            
+            // Kiểm tra xem có đơn đặc biệt đang frozen không
+            // Chỉ được rút tiền từ số dư đóng băng khi đã hoàn thành đơn hàng đặc biệt (không còn đơn đặc biệt nào đang frozen)
+            $frozen_special_order = Frozen_order::where('user_id', $user->id)
+                ->where('custom_price', '!=', null)
+                ->where('is_frozen', true)
+                ->where('spun', true)
+                ->first();
+            
+            // Nếu có đơn đặc biệt đang frozen, không cho rút
+            if ($frozen_special_order) {
+                return response()->json([
+                    'status' => 400,
+                    'message' => 'Bạn chỉ có thể rút tiền từ số dư đóng băng sau khi đã hoàn thành đơn hàng đặc biệt. Vui lòng hoàn thành đơn hàng đặc biệt trước!'
+                ]);
+            }
+            
+            // Thực hiện chuyển tiền từ frozen_balance về balance ngay lập tức
+            // Không cần tạo đơn rút tiền, không cần kiểm tra thông tin ngân hàng
+            $user->frozen_balance -= $amount;
+            $user->balance += $amount;
+            $user->save();
+            
+            return response()->json([
+                'status' => 200,
+                'message' => 'Rút tiền từ số dư đóng băng thành công! Số tiền đã được chuyển vào số dư của bạn.',
+                'frozen_balance' => $user->frozen_balance,
+                'balance' => $user->balance
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Lỗi rút tiền từ số dư đóng băng', [
+                'message' => $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => $e->getFile()
+            ]);
+            
+            return response()->json([
+                'status' => 500,
+                'message' => 'Có lỗi xảy ra: ' . $e->getMessage()
+            ]);
+        }
+    }
+
     /**
      * Show the form for creating a new resource.
      */

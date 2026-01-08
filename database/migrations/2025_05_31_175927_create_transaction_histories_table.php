@@ -16,7 +16,7 @@ return new class extends Migration
             $table->id();
             $table->foreignIdFor(User::class)->comment('Xác định lịch sử này của người dùng nào!');
             $table->double('value')->comment('Bao nhiêu tiền');
-            $table->enum('type', ['profit', 'order'])->comment('Loại biến động nào!');
+            $table->enum('type', ['deposit', 'order', 'profit', 'withdraw', 'penalty'])->comment('Loại biến động nào!');
             $table->string('note')->nullable()->comment('Ghi chú');
             $table->timestamps();
         });

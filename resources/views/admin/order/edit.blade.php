@@ -82,6 +82,96 @@ Chỉnh sửa đơn hàng
                 <small class="text-danger">{{ $message }}</small>
                 @enderror
             </div>
+            
+            <hr class="my-4">
+            <h5 class="mb-3">Thông tin khách hàng</h5>
+            
+            <div class="mt-2">
+                <label for="">Họ tên khách hàng</label>
+                <input type="text" name="customer_name" value="{{ old('customer_name',$order->customer_name) }}" class="form-control">
+                @error('customer_name')
+                <small class="text-danger">{{ $message }}</small>
+                @enderror
+            </div>
+            
+            <div class="mt-2">
+                <label for="">Số điện thoại</label>
+                <input type="text" name="customer_phone" value="{{ old('customer_phone',$order->customer_phone) }}" class="form-control" placeholder="+84 987654321">
+                @error('customer_phone')
+                <small class="text-danger">{{ $message }}</small>
+                @enderror
+            </div>
+            
+            <div class="mt-2">
+                <label for="">Địa chỉ nhận hàng</label>
+                <textarea name="customer_address" class="form-control" rows="3">{{ old('customer_address',$order->customer_address) }}</textarea>
+                @error('customer_address')
+                <small class="text-danger">{{ $message }}</small>
+                @enderror
+            </div>
+            
+            <div class="mt-2">
+                <label for="">Ghi chú từ khách hàng</label>
+                <textarea name="customer_note" class="form-control" rows="2">{{ old('customer_note',$order->customer_note) }}</textarea>
+                @error('customer_note')
+                <small class="text-danger">{{ $message }}</small>
+                @enderror
+            </div>
+            
+            <hr class="my-4">
+            <h5 class="mb-3">Thông tin thanh toán</h5>
+            
+            <div class="mt-2">
+                <label for="">Nền tảng bán hàng</label>
+                <select name="partner_id" class="form-control">
+                    <option value="">-- Chọn nền tảng --</option>
+                    @foreach($partners as $partner)
+                        <option value="{{ $partner->id }}" {{ old('partner_id', $order->partner_id) == $partner->id ? 'selected' : '' }}>
+                            {{ $partner->name }}
+                        </option>
+                    @endforeach
+                </select>
+                @error('partner_id')
+                <small class="text-danger">{{ $message }}</small>
+                @enderror
+            </div>
+            
+            <div class="mt-2">
+                <label for="">Hình thức thanh toán</label>
+                <select name="payment_method" class="form-control">
+                    <option value="">-- Chọn hình thức --</option>
+                    <option value="COD" {{ old('payment_method', $order->payment_method) == 'COD' ? 'selected' : '' }}>COD (Thanh toán khi nhận hàng)</option>
+                    <option value="vnpay" {{ old('payment_method', $order->payment_method) == 'vnpay' ? 'selected' : '' }}>VNPay</option>
+                    <option value="momo" {{ old('payment_method', $order->payment_method) == 'momo' ? 'selected' : '' }}>MoMo</option>
+                    <option value="paypal" {{ old('payment_method', $order->payment_method) == 'paypal' ? 'selected' : '' }}>PayPal</option>
+                    <option value="bank_transfer" {{ old('payment_method', $order->payment_method) == 'bank_transfer' ? 'selected' : '' }}>Chuyển khoản ngân hàng</option>
+                    <option value="other" {{ old('payment_method', $order->payment_method) == 'other' ? 'selected' : '' }}>Khác</option>
+                </select>
+                @error('payment_method')
+                <small class="text-danger">{{ $message }}</small>
+                @enderror
+            </div>
+            
+            <div class="mt-2">
+                <div class="form-check">
+                    <input type="checkbox" name="is_paid" value="1" class="form-check-input" id="is_paid" {{ old('is_paid', $order->is_paid) ? 'checked' : '' }}>
+                    <label class="form-check-label" for="is_paid">
+                        Đã thanh toán
+                    </label>
+                </div>
+                @error('is_paid')
+                <small class="text-danger">{{ $message }}</small>
+                @enderror
+            </div>
+            
+            <div class="mt-2">
+                <label for="">API String</label>
+                <input type="text" name="api" value="{{ old('api',$order->api) }}" class="form-control" placeholder="Chuỗi API để theo dõi đơn hàng">
+                @error('api')
+                <small class="text-danger">{{ $message }}</small>
+                @enderror
+            </div>
+            
             <div class="d-flex mt-3 justify-content-center">
                 <button class="btn btn-warning" type="button" id="btn_submit">Xong</button>
             </div>

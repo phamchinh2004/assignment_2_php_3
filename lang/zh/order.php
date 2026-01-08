@@ -5,12 +5,18 @@ return [
     "DuLieuNayDuocCungCap" => "该数据由 Mercado Libre 官方提供",
     "TatCa" => "全部",
     "ChoXuLy" => "待处理",
+    "DaXacNhan" => "已确认",
+    "DangChuanBi" => "准备中",
+    "DangTrungChuyen" => "中转中",
+    "DangVanChuyen" => "运输中",
+    "DaGiaoHang" => "已交付",
     "HoanThanh" => "已完成",
+    "DaHuy" => "已取消",
     "DongBang" => "冻结",
 
     "ThoiGianDatPhanPhoi" => "分发时间：",
     "MaDonHang" => "订单编号：",
-    "TongTienPhanPhoi" => "分发总金额",
+    "TongTienDonHang" => "订单总金额",
     "ChietKhau" => "折扣",
     "HoaHong" => "佣金",
     "DeSau" => "稍后保存",
@@ -29,4 +35,7 @@ return [
     "KhongTimThayLichSuDatHang" => "未找到订单历史，请重试！",
     "DonHangDaHoanThanh" => "订单已完成！",
     "KhongTimThayDonHang" => "未找到订单！",
+    
+    "XacNhanDonHang" => "确认订单",
+    "HuyDonHang" => "取消订单",
 ];

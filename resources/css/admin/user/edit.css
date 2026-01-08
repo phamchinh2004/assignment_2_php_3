@@ -102,17 +102,52 @@
         border-color: #667eea;
     }
 
-    .checkbox-card input[type="checkbox"] {
-        width: 20px;
-        height: 20px;
-        cursor: pointer;
+    .checkbox-card .d-flex {
+        align-items: center !important;
+        display: flex !important;
+        gap: 0;
     }
 
-    .checkbox-card label {
+    .checkbox-card input[type="checkbox"],
+    .checkbox-card .form-check-input {
+        width: 20px !important;
+        height: 20px !important;
+        cursor: pointer;
+        margin: 0 !important;
+        margin-right: 12px !important;
+        margin-left: 0 !important;
+        margin-top: 0 !important;
+        flex-shrink: 0;
+        vertical-align: middle;
+        position: static !important;
+        top: auto !important;
+    }
+
+    .checkbox-card input[type="checkbox"].me-3,
+    .checkbox-card .form-check-input.me-3 {
+        margin-right: 12px !important;
+        margin-left: 0 !important;
+        margin-top: 0 !important;
+    }
+
+    .checkbox-card label,
+    .checkbox-card .form-check-label {
         font-weight: 500;
         color: #495057;
         cursor: pointer;
-        margin: 0;
+        margin: 0 !important;
+        padding: 0 !important;
+        display: flex;
+        align-items: center;
+        flex: 1;
+        line-height: 1.5;
+    }
+
+    .checkbox-card label i,
+    .checkbox-card .form-check-label i {
+        margin-right: 8px;
+        display: inline-flex;
+        align-items: center;
     }
 
     .btn-submit {

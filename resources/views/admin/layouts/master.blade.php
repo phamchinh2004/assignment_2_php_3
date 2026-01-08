@@ -33,6 +33,59 @@
         #toast-container > div:hover {
             transform: scale(1.02);
         }
+        
+        /* Fix layout: Sidebar và Content chia đúng 100% màn hình */
+        #wrapper {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .sidebar {
+            position: fixed !important;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            overflow-y: auto;
+            overflow-x: hidden;
+            z-index: 1000;
+            transition: width 0.3s ease, margin-left 0.3s ease;
+        }
+        
+        body:not(.sidebar-toggled) .sidebar {
+            width: 14rem !important;
+        }
+        
+        #content-wrapper {
+            margin-left: 14rem;
+            width: calc(100% - 14rem);
+            height: 100vh;
+            overflow-y: auto;
+            overflow-x: hidden;
+            transition: margin-left 0.3s ease, width 0.3s ease;
+            box-sizing: border-box;
+        }
+        
+        body.sidebar-toggled #content-wrapper {
+            margin-left: 6.5rem !important;
+            width: calc(100% - 6.5rem) !important;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+            
+            .sidebar.toggled {
+                transform: translateX(0);
+            }
+            
+            #content-wrapper {
+                margin-left: 0 !important;
+                width: 100% !important;
+            }
+        }
     </style>
 
     <!-- Slimselect -->
@@ -252,6 +305,7 @@
 
     <!-- Link libs -->
     @vite('resources/js/general.js')
+    @vite('resources/js/admin/sidebar-focus.js')
     @yield('script-libs')
 
     <!-- Short notification commands -->

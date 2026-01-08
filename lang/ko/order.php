@@ -5,12 +5,18 @@ return [
     "DuLieuNayDuocCungCap" => "이 데이터는 Mercado Libre에서 공식적으로 제공됩니다",
     "TatCa" => "전체",
     "ChoXuLy" => "처리 대기 중",
+    "DaXacNhan" => "확인됨",
+    "DangChuanBi" => "준비 중",
+    "DangTrungChuyen" => "운송 중",
+    "DangVanChuyen" => "배송 중",
+    "DaGiaoHang" => "배달 완료",
     "HoanThanh" => "완료됨",
+    "DaHuy" => "취소됨",
     "DongBang" => "동결됨",
 
     "ThoiGianDatPhanPhoi" => "배포 시간: ",
     "MaDonHang" => "주문 번호: ",
-    "TongTienPhanPhoi" => "총 배포 금액",
+    "TongTienDonHang" => "총 주문 금액",
     "ChietKhau" => "수수료",
     "HoaHong" => "커미션",
     "DeSau" => "나중에 저장",
@@ -29,4 +35,7 @@ return [
     "KhongTimThayLichSuDatHang" => "주문 내역을 찾을 수 없습니다. 다시 시도해주세요!",
     "DonHangDaHoanThanh" => "주문이 완료되었습니다!",
     "KhongTimThayDonHang" => "주문을 찾을 수 없습니다!",
+    
+    "XacNhanDonHang" => "주문 확인",
+    "HuyDonHang" => "주문 취소",
 ];

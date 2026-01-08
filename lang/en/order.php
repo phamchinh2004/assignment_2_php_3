@@ -5,12 +5,18 @@ return [
     "DuLieuNayDuocCungCap" => "This data is officially provided by Mercado Libre",
     "TatCa" => "All",
     "ChoXuLy" => "Pending",
+    "DaXacNhan" => "Confirmed",
+    "DangChuanBi" => "Preparing",
+    "DangTrungChuyen" => "In Transit",
+    "DangVanChuyen" => "Shipping",
+    "DaGiaoHang" => "Delivered",
     "HoanThanh" => "Completed",
+    "DaHuy" => "Cancelled",
     "DongBang" => "Frozen",
 
     "ThoiGianDatPhanPhoi" => "Distribution time: ",
     "MaDonHang" => "Order code: ",
-    "TongTienPhanPhoi" => "Total distribution amount",
+    "TongTienDonHang" => "Total order amount",
     "ChietKhau" => "Commission",
     "HoaHong" => "Commission",
     "DeSau" => "Save for later",
@@ -29,4 +35,7 @@ return [
     "KhongTimThayLichSuDatHang" => "Order history not found, please try again!",
     "DonHangDaHoanThanh" => "Order has been completed!",
     "KhongTimThayDonHang" => "Order not found!",
+    
+    "XacNhanDonHang" => "Confirm Order",
+    "HuyDonHang" => "Cancel Order",
 ];
