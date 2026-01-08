@@ -31,8 +31,8 @@ return new class extends Migration
             $table->enum('payment_method', ['COD', 'vnpay', 'momo', 'paypal', 'bank_transfer', 'other'])->nullable()->comment('Hình thức thanh toán');
             $table->tinyInteger(column: 'status')->default(1)->comment('Trạng thái kích hoạt, mặc định là 1 (đã được kích hoạt), 0 là bị khóa');
             $table->foreignIdFor(Rank::class)->comment('Đơn hàng này thuộc rank nào');
-            // ID nền tảng bán hàng
-            $table->foreignId('partner_id')->nullable()->constrained('partners')->onDelete('set null')->comment('ID nền tảng bán hàng (Shopee, Lazada, TikTok Shop, ...)');
+            // ID nền tảng bán hàng (tạo cột trước, thêm foreign key constraint sau khi bảng partners được tạo)
+            $table->unsignedBigInteger('partner_id')->nullable()->comment('ID nền tảng bán hàng (Shopee, Lazada, TikTok Shop, ...)');
             $table->string('api')->nullable()->comment('Chuỗi API để theo dõi đơn hàng trên nền tảng quản lý');
             $table->timestamps();
         });
