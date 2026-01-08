@@ -45,7 +45,28 @@ sudo -u apache php artisan tinker --execute="
 echo 'Broadcast Driver: ' . config('broadcasting.default') . PHP_EOL;
 echo 'Reverb Host: ' . config('broadcasting.connections.reverb.options.host') . PHP_EOL;
 echo 'Reverb Port: ' . config('broadcasting.connections.reverb.options.port') . PHP_EOL;
+echo 'Reverb Scheme: ' . config('broadcasting.connections.reverb.options.scheme') . PHP_EOL;
 "
+
+echo ""
+echo "🔟 Kiểm tra chi tiết Failed Job (lấy 1 job gần nhất):"
+cd $APP_DIR
+FAILED_JOB_ID=$(sudo -u apache php artisan queue:failed --json 2>/dev/null | jq -r '.[0].id' 2>/dev/null)
+if [ -n "$FAILED_JOB_ID" ] && [ "$FAILED_JOB_ID" != "null" ]; then
+    echo "   Job ID: $FAILED_JOB_ID"
+    sudo -u apache php artisan queue:failed $FAILED_JOB_ID
+else
+    echo "   ⚠️  Không có failed job hoặc không thể lấy thông tin"
+fi
+
+echo ""
+echo "1️⃣1️⃣ Test kết nối đến Reverb server:"
+if timeout 3 curl -s http://127.0.0.1:6001 > /dev/null 2>&1; then
+    echo "   ✅ Có thể kết nối đến http://127.0.0.1:6001"
+else
+    echo "   ❌ KHÔNG thể kết nối đến http://127.0.0.1:6001"
+    echo "   ⚠️  Đây có thể là nguyên nhân lỗi!"
+fi
 
 echo ""
 echo "✅ Hoàn tất debug!"
