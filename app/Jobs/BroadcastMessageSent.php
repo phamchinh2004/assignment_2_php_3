@@ -34,7 +34,7 @@ class BroadcastMessageSent implements ShouldQueue
         $message = Message::find($this->messageId);
         
         if ($message) {
-            broadcast(new MessageSent($message->id))->toOthers();
+            broadcast(new MessageSent($message))->toOthers();
         }
     }
 }
