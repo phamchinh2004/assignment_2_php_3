@@ -51,6 +51,7 @@ jobs:
 
             echo "🧭 Running Laravel tasks..."
             sudo -u apache php artisan migrate --force
+            sudo -u apache php artisan db:seed --force
             sudo -u apache php artisan optimize:clear
             sudo -u apache php artisan optimize
 

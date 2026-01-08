@@ -19,6 +19,9 @@ class DatabaseSeeder extends Seeder
         //     'email' => 'test@example.com',
         // ]);
         
+        // Seed statuses first (required for order status timings)
+        $this->call(StatusSeeder::class);
+        
         // Seed order status timings
         $this->call(OrderStatusTimingSeeder::class);
     }

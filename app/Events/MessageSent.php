@@ -24,6 +24,15 @@ class MessageSent implements ShouldBroadcast
 
     public function broadcastOn()
     {
+        // Reload relationships sau khi deserialize từ queue
+        // Đảm bảo relationships tồn tại khi broadcast
+        if ($this->message && !$this->message->relationLoaded('sender')) {
+            $this->message->load('sender');
+        }
+        if ($this->message && !$this->message->relationLoaded('conversation')) {
+            $this->message->load('conversation');
+        }
+        
         $channels = [
             new PrivateChannel('chat.conversation.' . $this->message->conversation_id)
         ];
@@ -52,6 +61,11 @@ class MessageSent implements ShouldBroadcast
 
     public function broadcastWith()
     {
+        // Reload relationships nếu chưa được load (sau khi deserialize từ queue)
+        if ($this->message && !$this->message->relationLoaded('sender')) {
+            $this->message->load('sender');
+        }
+        
         return [
             'message' => [
                 'id' => $this->message->id,

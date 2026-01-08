@@ -28,6 +28,12 @@ class UserSentMessage implements ShouldBroadcast
 
     public function broadcastOn(): array
     {
+        // Reload relationship conversation sau khi deserialize từ queue
+        // Đảm bảo relationship tồn tại khi broadcast
+        if ($this->user && !$this->user->relationLoaded('conversation')) {
+            $this->user->load('conversation');
+        }
+        
         // Nếu không có thông tin user, broadcast như cũ
         if (!$this->user || !$this->user->conversation) {
             return [
