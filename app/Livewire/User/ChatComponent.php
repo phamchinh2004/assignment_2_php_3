@@ -350,7 +350,8 @@ class ChatComponent extends Component
         $this->showBox = !$this->showBox;
         if ($this->showBox) {
             $user = Auth::user();
-            event(new UserJoinChat($user->username, $user->full_name, $user->id));
+            // Broadcast trực tiếp không qua queue để tránh lỗi socket ID
+            broadcast(new UserJoinChat($user->username, $user->full_name, $user->id));
             // Đánh dấu tin nhắn đã đọc khi mở chat box
             $this->markMessagesAsRead();
             // Reset unread count về 0
