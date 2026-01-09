@@ -43,6 +43,29 @@
             
             return false;
         }
+
+        function handleUpdateCommissionPaid(event, element) {
+            event.preventDefault();
+            
+            const confirmed = confirm('Bạn có chắc chắn muốn cập nhật trạng thái đã thanh toán hoa hồng? Hành động này sẽ cập nhật commission_paid = 1 cho tất cả các đơn hàng đã completed trong bảng frozen_orders.');
+            
+            if (confirmed) {
+                // Hiển thị spinner
+                const spinner = document.getElementById('spinner');
+                if (spinner) {
+                    spinner.hidden = false;
+                }
+                
+                // Disable link để tránh click nhiều lần
+                element.style.pointerEvents = 'none';
+                element.style.opacity = '0.6';
+                
+                // Redirect đến route
+                window.location.href = element.href;
+            }
+            
+            return false;
+        }
     </script>
 @endsection
 
@@ -97,6 +120,11 @@
                             id="update_status_history"
                             onclick="return handleUpdateStatusHistory(event, this);">
                             <i class="fas fa-history mr-2"></i>Cập nhật trạng thái đơn hàng
+                        </a>
+                        <a class="dropdown-item" href="{{ route('order.update.commission.paid') }}"
+                            id="update_commission_paid"
+                            onclick="return handleUpdateCommissionPaid(event, this);">
+                            <i class="fas fa-check-circle mr-2"></i>Cập nhật trạng thái đã thanh toán hoa hồng
                         </a>
                     </div>
                 </div>

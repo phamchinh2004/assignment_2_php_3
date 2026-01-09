@@ -16,7 +16,7 @@ return new class extends Migration {
                 $table->unsignedBigInteger('frozen_order_id')->comment('ID frozen order bị báo cáo');
                 $table->unsignedBigInteger('order_id')->nullable()->comment('ID order gốc (để join nhanh)');
                 $table->unsignedBigInteger('reported_by')->comment('ID người báo cáo (nhân viên)');
-                $table->text('reason')->nullable()->comment('Lý do báo cáo đơn hàng ảo');
+                $table->text('reason')->nullable()->comment('Lý do báo cáo đơn hàng');
                 $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending')->comment('pending: chờ xử lý; approved: admin xác nhận đơn ảo (hủy đơn); rejected: admin xác nhận đơn thật (xác nhận đơn)');
                 $table->unsignedBigInteger('resolved_by')->nullable()->comment('ID admin xử lý');
                 $table->text('resolved_note')->nullable()->comment('Ghi chú xử lý của admin');

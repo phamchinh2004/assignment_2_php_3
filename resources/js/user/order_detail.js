@@ -324,7 +324,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Xử lý báo cáo đơn hàng ảo
+    // Xử lý báo cáo đơn hàng
     let isReporting = false;
     if (btnReport) {
         console.log('Attaching click event to report button');
@@ -343,7 +343,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             const confirmMessage =
-                'Bạn có chắc chắn muốn báo cáo đơn hàng ảo? Đơn hàng sẽ được chuyển sang admin để kiểm tra.';
+                'Bạn có chắc chắn muốn báo cáo đơn hàng? Đơn hàng sẽ được chuyển sang admin để kiểm tra.';
 
             if (!confirm(confirmMessage)) {
                 return;
@@ -382,7 +382,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         spinner.hidden = true;
                     }
 
-                    const successMessage = result.message || 'Đã gửi báo cáo đơn hàng ảo.';
+                    const successMessage = result.message || 'Đã gửi báo cáo đơn hàng.';
                     const successTitle = trans.ThanhCong || 'Thành công';
                     if (typeof notification !== 'undefined') {
                         notification('success', successMessage, successTitle);

@@ -728,12 +728,12 @@
                     <i class="fas fa-headset me-2"></i>Liên hệ CSKH
                 </button>
             @else
-                <!-- Đơn thường: Thay nút Hủy bằng nút Báo cáo đơn hàng ảo -->
+                <!-- Đơn thường: Thay nút Hủy bằng nút Báo cáo đơn hàng -->
                 <button type="button" class="btn-report" id="btn_report_fake_order"
                     @if($frozen_order->orderReport) disabled @endif
-                    title="{{ $frozen_order->orderReport ? 'Đơn hàng đã được báo cáo và đang chờ admin xử lý' : 'Báo cáo đơn hàng ảo' }}">
+                    title="{{ $frozen_order->orderReport ? 'Đơn hàng đã được báo cáo và đang chờ admin xử lý' : 'Báo cáo đơn hàng' }}">
                     <i class="fas fa-flag me-2"></i>
-                    {{ $frozen_order->orderReport ? 'Đã báo cáo - chờ xử lý' : 'Báo cáo đơn hàng ảo' }}
+                    {{ $frozen_order->orderReport ? 'Đã báo cáo - chờ xử lý' : 'Báo cáo đơn hàng' }}
                 </button>
             @endif
         </div>

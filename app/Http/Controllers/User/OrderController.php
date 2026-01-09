@@ -589,7 +589,7 @@ class OrderController extends Controller
     }
 
     /**
-     * Báo cáo đơn hàng ảo (đẩy sang admin để duyệt)
+     * Báo cáo đơn hàng (đẩy sang admin để duyệt)
      */
     public function report_order(Request $request, Frozen_order $frozen_order)
     {
@@ -637,7 +637,7 @@ class OrderController extends Controller
             'status' => 'pending',
         ]);
 
-        Log::info('Báo cáo đơn hàng ảo', [
+        Log::info('Báo cáo đơn hàng', [
             'frozen_order_id' => $frozen_order->id,
             'order_id' => $frozen_order->order_id,
             'reported_by' => Auth::id(),
@@ -646,7 +646,7 @@ class OrderController extends Controller
 
         return response()->json([
             'status' => 200,
-            'message' => 'Đã gửi báo cáo đơn hàng ảo. Admin sẽ kiểm tra và xử lý.',
+            'message' => 'Đã gửi báo cáo đơn hàng. Admin sẽ kiểm tra và xử lý.',
         ]);
     }
 

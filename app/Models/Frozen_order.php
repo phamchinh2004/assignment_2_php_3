@@ -66,7 +66,7 @@ class Frozen_order extends Model
     }
 
     /**
-     * Báo cáo đơn hàng ảo (nếu có)
+     * Báo cáo đơn hàng (nếu có)
      */
     public function orderReport()
     {

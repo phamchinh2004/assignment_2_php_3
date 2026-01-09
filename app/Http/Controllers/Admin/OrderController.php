@@ -264,6 +264,67 @@ class OrderController extends Controller
     }
 
     /**
+     * Cập nhật trạng thái đã thanh toán hoa hồng (commission_paid = 1) 
+     * cho các đơn hàng đã completed trong bảng frozen_orders
+     */
+    public function updateCommissionPaid()
+    {
+        try {
+            // Tìm các frozen_orders đã completed nhưng chưa được đánh dấu là đã thanh toán hoa hồng
+            $completedOrders = Frozen_order::where(function($query) {
+                $query->where('status', 'completed')
+                      ->orWhereNotNull('completed_at');
+            })
+            ->where('commission_paid', false)
+            ->with('order')
+            ->get();
+
+            if ($completedOrders->isEmpty()) {
+                return redirect()->route('order.index')->with('info', 'Không có đơn hàng nào cần cập nhật trạng thái đã thanh toán hoa hồng!');
+            }
+
+            $countUpdated = 0;
+
+            foreach ($completedOrders as $frozenOrder) {
+                try {
+                    // Cập nhật commission_paid = 1
+                    $frozenOrder->commission_paid = true;
+                    $frozenOrder->save();
+
+                    $countUpdated++;
+
+                    Log::info('Đã cập nhật trạng thái đã thanh toán hoa hồng', [
+                        'frozen_order_id' => $frozenOrder->id,
+                        'order_id' => $frozenOrder->order_id,
+                        'order_code' => $frozenOrder->order->order_code ?? 'N/A',
+                        'user_id' => $frozenOrder->user_id
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error('Lỗi khi cập nhật trạng thái đã thanh toán hoa hồng', [
+                        'frozen_order_id' => $frozenOrder->id,
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString()
+                    ]);
+                    // Tiếp tục xử lý đơn hàng tiếp theo
+                    continue;
+                }
+            }
+
+            if ($countUpdated > 0) {
+                return redirect()->route('order.index')->with('success', "Đã cập nhật trạng thái đã thanh toán hoa hồng cho {$countUpdated} đơn hàng thành công!");
+            } else {
+                return redirect()->route('order.index')->with('error', 'Không thể cập nhật trạng thái đã thanh toán hoa hồng cho bất kỳ đơn hàng nào!');
+            }
+        } catch (\Exception $e) {
+            Log::error('Lỗi khi cập nhật trạng thái đã thanh toán hoa hồng (tổng thể)', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return redirect()->route('order.index')->with('error', 'Có lỗi xảy ra khi cập nhật trạng thái đã thanh toán hoa hồng: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * Show the form for creating a new resource.
      */
     public function create()

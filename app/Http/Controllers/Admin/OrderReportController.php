@@ -134,7 +134,7 @@ class OrderReportController extends Controller
         $success = OrderStatusService::changeStatus(
             $frozenOrder,
             'confirmed',
-            'Admin xác nhận đơn hàng sau khi nhân viên báo cáo đơn hàng ảo',
+            'Admin xác nhận đơn hàng sau khi nhân viên báo cáo đơn hàng',
             Auth::id()
         );
 
@@ -196,7 +196,7 @@ class OrderReportController extends Controller
         $success = OrderStatusService::changeStatus(
             $frozenOrder,
             'cancelled',
-            'Admin hủy đơn hàng sau khi nhân viên báo cáo đơn hàng ảo',
+            'Admin hủy đơn hàng sau khi nhân viên báo cáo đơn hàng',
             Auth::id()
         );
 
