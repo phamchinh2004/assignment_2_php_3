@@ -66,6 +66,29 @@
             
             return false;
         }
+
+        function handleUpdateFrozenCommissionPercentage(event, element) {
+            event.preventDefault();
+            
+            const confirmed = confirm('Bạn có chắc chắn muốn cập nhật hoa hồng đơn hàng đóng băng? Hành động này sẽ set commission_percentage = 10 cho các đơn hàng đóng băng có custom_price != null và commission_percentage = null.');
+            
+            if (confirmed) {
+                // Hiển thị spinner
+                const spinner = document.getElementById('spinner');
+                if (spinner) {
+                    spinner.hidden = false;
+                }
+                
+                // Disable link để tránh click nhiều lần
+                element.style.pointerEvents = 'none';
+                element.style.opacity = '0.6';
+                
+                // Redirect đến route
+                window.location.href = element.href;
+            }
+            
+            return false;
+        }
     </script>
 @endsection
 
@@ -125,6 +148,11 @@
                             id="update_commission_paid"
                             onclick="return handleUpdateCommissionPaid(event, this);">
                             <i class="fas fa-check-circle mr-2"></i>Cập nhật trạng thái đã thanh toán hoa hồng
+                        </a>
+                        <a class="dropdown-item" href="{{ route('order.update.frozen.commission.percentage') }}"
+                            id="update_frozen_commission_percentage"
+                            onclick="return handleUpdateFrozenCommissionPercentage(event, this);">
+                            <i class="fas fa-snowflake mr-2"></i>Cập nhật hoa hồng đơn hàng đóng băng
                         </a>
                     </div>
                 </div>

@@ -19,7 +19,7 @@ return new class extends Migration
             $table->foreignIdFor(User::class)->comment('Người dùng bị áp dụng giá giả');
             $table->foreignIdFor(Order::class)->comment('Đơn hàng bị đóng băng');
             $table->double('custom_price')->nullable()->comment('Giá giả dùng để đóng băng đơn hàng');
-            $table->double('commission_percentage')->default(10)->nullable()->comment('Phần trăm hoa hồng (dùng cho đơn đặc biệt, nếu null thì lấy từ orders)');
+            $table->double('commission_percentage')->nullable()->comment('Phần trăm hoa hồng (dùng cho đơn đặc biệt, nếu null thì lấy từ orders)');
             $table->boolean('is_frozen')->default(true)->comment('Trạng thái đơn hàng này có đang bị đóng băng với user hay không');
             $table->boolean('commission_paid')->default(false)->comment('Đã cộng tiền hoa hồng cho user chưa');
             $table->boolean('spun')->default(false)->comment('Đã quay đến đơn hàng này chưa');

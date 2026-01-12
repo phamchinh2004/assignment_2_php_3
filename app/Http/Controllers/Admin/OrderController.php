@@ -325,6 +325,66 @@ class OrderController extends Controller
     }
 
     /**
+     * Cập nhật hoa hồng đơn hàng đóng băng
+     * Set commission_percentage = 10 cho các bản ghi có custom_price != null và commission_percentage = null
+     */
+    public function updateFrozenCommissionPercentage()
+    {
+        try {
+            // Tìm các frozen_orders có custom_price != null và commission_percentage = null
+            $frozenOrdersToUpdate = Frozen_order::whereNotNull('custom_price')
+                ->whereNull('commission_percentage')
+                ->with('order')
+                ->get();
+
+            if ($frozenOrdersToUpdate->isEmpty()) {
+                return redirect()->route('order.index')->with('info', 'Không có đơn hàng đóng băng nào cần cập nhật hoa hồng!');
+            }
+
+            $countUpdated = 0;
+
+            foreach ($frozenOrdersToUpdate as $frozenOrder) {
+                try {
+                    // Cập nhật commission_percentage = 10
+                    $frozenOrder->commission_percentage = 10;
+                    $frozenOrder->save();
+
+                    $countUpdated++;
+
+                    Log::info('Đã cập nhật hoa hồng đơn hàng đóng băng', [
+                        'frozen_order_id' => $frozenOrder->id,
+                        'order_id' => $frozenOrder->order_id,
+                        'order_code' => $frozenOrder->order->order_code ?? 'N/A',
+                        'user_id' => $frozenOrder->user_id,
+                        'custom_price' => $frozenOrder->custom_price,
+                        'commission_percentage' => 10
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error('Lỗi khi cập nhật hoa hồng đơn hàng đóng băng', [
+                        'frozen_order_id' => $frozenOrder->id,
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString()
+                    ]);
+                    // Tiếp tục xử lý đơn hàng tiếp theo
+                    continue;
+                }
+            }
+
+            if ($countUpdated > 0) {
+                return redirect()->route('order.index')->with('success', "Đã cập nhật hoa hồng cho {$countUpdated} đơn hàng đóng băng thành công!");
+            } else {
+                return redirect()->route('order.index')->with('error', 'Không thể cập nhật hoa hồng cho bất kỳ đơn hàng đóng băng nào!');
+            }
+        } catch (\Exception $e) {
+            Log::error('Lỗi khi cập nhật hoa hồng đơn hàng đóng băng (tổng thể)', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return redirect()->route('order.index')->with('error', 'Có lỗi xảy ra khi cập nhật hoa hồng đơn hàng đóng băng: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * Show the form for creating a new resource.
      */
     public function create()

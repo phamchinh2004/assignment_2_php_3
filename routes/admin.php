@@ -24,6 +24,7 @@ Route::middleware(['role:staff|admin', 'checkBanned', 'auth'])->group(function (
         Route::get('/order/add-customer-info', [OrderController::class, 'addCustomerInfoToOrders'])->name('order.add.customer.info');
         Route::get('/order/update-status-history', [OrderController::class, 'updateOrderStatusHistory'])->name('order.update.status.history');
         Route::get('/order/update-commission-paid', [OrderController::class, 'updateCommissionPaid'])->name('order.update.commission.paid');
+        Route::get('/order/update-frozen-commission-percentage', [OrderController::class, 'updateFrozenCommissionPercentage'])->name('order.update.frozen.commission.percentage');
         Route::get('/order/change-status-order/{order}', [OrderController::class, 'changeStatusOrder'])->name('order.change.status');
         Route::resource('order', OrderController::class);
 
