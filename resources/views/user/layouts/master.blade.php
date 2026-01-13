@@ -240,7 +240,7 @@
             });
         };
         // Định dạng tiền tệ
-        function format_currency(currency, min = 2, max = 2) {
+        function format_currency(currency, min = 2, max = 4) {
             return new Intl.NumberFormat('en-US', {
                 style: 'currency',
                 currency: 'USD',
