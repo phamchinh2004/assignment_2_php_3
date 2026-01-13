@@ -46,10 +46,10 @@ class BalanceFluctuationController extends Controller
         // Dữ liệu cho biểu đồ - số dư theo thời gian
         $chartData = $this->getBalanceChartData($user->id);
         
-        // Tính hoa hồng tạm tính: Tổng hoa hồng từ các đơn hàng đã completed nhưng chưa được cộng tiền
+        // Tính hoa hồng tạm tính: Tổng hoa hồng từ các đơn hàng chưa hoàn thành nhưng đã có trạng thái xác nhận
         $pendingCommission = 0;
         $completedOrders = Frozen_order::where('user_id', $user->id)
-            ->where('status', 'completed')
+            ->whereIn('status', ['confirmed', 'preparing', 'transit', 'shipping', 'delivered'])
             ->where(function($query) {
                 $query->where('commission_paid', false)
                       ->orWhereNull('commission_paid');
