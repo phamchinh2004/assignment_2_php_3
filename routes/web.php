@@ -58,6 +58,7 @@ Route::middleware(['role:member', 'checkBanned'])->group(function () {
     Route::post('change-password', [LoginController::class, 'change_password'])->name('change_password');
     Route::post('change-transaction-password', [LoginController::class, 'change_transaction_password'])->name('change_transaction_password');
     Route::post('/reset-transaction-password', [LoginController::class, 'reset_transaction_password'])->name('reset_transaction_password');
+    Route::post('/warehouse-address', [MeController::class, 'updateWarehouseAddress'])->name('warehouse_address.update');
     Route::post('/upload-avatar', [MeController::class, 'upload_avatar'])->name('upload_avatar');
     Route::post('/spin-lucky-wheel', [HomeController::class, 'spinLuckyWheel'])->name('spin_lucky_wheel');
 });

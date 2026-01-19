@@ -28,4 +28,12 @@ return [
     "BiCam" => "Bị cấm",
     "LoiNhuanGiaiThich" => "Lợi nhuận = Tổng rút - Tổng nạp",
     "CongThucTinh" => "Công thức tính",
+    "TieuDeModalDiaChiKho" => "Địa chỉ kho",
+    "KhuVuc" => "Khu vực",
+    "NhapKhuVuc" => "Nhập khu vực (vd: Toàn cầu, Nhật Bản, Trung Quốc...)",
+    "DiaChiHienTai" => "Địa chỉ hiện tại",
+    "NhapDiaChiHienTai" => "Nhập địa chỉ kho của bạn",
+    "Luu" => "Lưu",
+    "Dong" => "Đóng",
+    "CapNhatDiaChiKhoThanhCong" => "Cập nhật địa chỉ kho thành công",
 ];

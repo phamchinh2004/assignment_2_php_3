@@ -7,6 +7,7 @@ use App\Models\Rank;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 class MeController extends Controller
 {
@@ -222,6 +223,23 @@ class MeController extends Controller
     public function update(Request $request, string $id)
     {
         //
+    }
+
+    /**
+     * Cập nhật địa chỉ kho cho user hiện tại.
+     */
+    public function updateWarehouseAddress(Request $request)
+    {
+        $user = Auth::user();
+
+        $validated = $request->validate([
+            'warehouse_area' => ['required', 'string', 'max:191'],
+            'warehouse_address' => ['required', 'string', 'max:1000'],
+        ]);
+
+        $user->update($validated);
+
+        return redirect()->route('me')->with('success', __('me.CapNhatDiaChiKhoThanhCong'));
     }
 
     /**

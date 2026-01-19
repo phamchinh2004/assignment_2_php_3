@@ -41,6 +41,8 @@ class User extends Authenticatable
         'referrer_id',
         'register_ip',
         'clone_account',
+        'warehouse_area',
+        'warehouse_address',
         'last_seen'
     ];
 

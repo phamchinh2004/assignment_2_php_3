@@ -153,7 +153,7 @@
             </a>
         </div>
         <div class="col-6 col-md-4 col-lg-3 col-xl-2">
-            <a href="" class="block_item">
+            <a href="javascript:void(0)" class="block_item" data-bs-toggle="modal" data-bs-target="#warehouseAddressModal">
                 <div class="d-flex justify-content-center mb-2">
                     <img class="image_block_item" src="{{ asset('images/me/image_3.png') }}" alt="Địa chỉ kho">
                 </div>
@@ -229,6 +229,38 @@
     <!-- Logout Section -->
     <div class="d-flex justify-content-center py-4">
         <a onclick="log_out()" class="btn btn-dark">{{__('me.DangXuat')}}</a>
+    </div>
+</div>
+
+<!-- Warehouse Address Modal -->
+<div class="modal fade" id="warehouseAddressModal" tabindex="-1" aria-labelledby="warehouseAddressLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="warehouseAddressLabel">{{ __('me.TieuDeModalDiaChiKho') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ route('warehouse_address.update') }}">
+                @csrf
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label required" for="warehouse_area">{{ __('me.KhuVuc') }}</label>
+                        <input type="text" class="form-control" id="warehouse_area" name="warehouse_area"
+                               placeholder="{{ __('me.NhapKhuVuc') }}"
+                               value="{{ old('warehouse_area', $user->warehouse_area) }}" required maxlength="191">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label required" for="warehouse_address">{{ __('me.DiaChiHienTai') }}</label>
+                        <textarea class="form-control" id="warehouse_address" name="warehouse_address" rows="3"
+                                  placeholder="{{ __('me.NhapDiaChiHienTai') }}" required maxlength="1000">{{ old('warehouse_address', $user->warehouse_address) }}</textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ __('me.Dong') }}</button>
+                    <button type="submit" class="btn btn-primary">{{ __('me.Luu') }}</button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 @endsection
