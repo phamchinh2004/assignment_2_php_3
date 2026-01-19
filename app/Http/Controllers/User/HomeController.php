@@ -52,27 +52,27 @@ class HomeController extends Controller
     private function calculateMemberCounts($ranks)
     {
         $ranks_with_count = collect();
-        
+
         foreach ($ranks as $index => $rank) {
             // Số liệu thực từ database
             $real_member_count = User::where('rank_id', $rank->id)->count();
-            
+
             // Số liệu ảo dựa trên logic phân cấp
             // Gian hàng cấp thấp (dễ nâng cấp) có nhiều thành viên hơn
             // Gian hàng cấp cao (khó nâng cấp) có ít thành viên hơn
             $virtual_member_count = $this->getVirtualMemberCount($index, count($ranks));
-            
+
             // Tổng số thành viên = số thực + số ảo
             $total_member_count = $real_member_count + $virtual_member_count;
-            
+
             // Làm tròn số liệu và thêm dấu "+" nếu cần
             $formatted_count = $this->formatMemberCount($total_member_count, $real_member_count);
-            
+
             // Thêm thuộc tính user_count vào rank
             $rank->user_count = $formatted_count;
             $ranks_with_count->push($rank);
         }
-        
+
         return $ranks_with_count;
     }
 
@@ -85,7 +85,7 @@ class HomeController extends Controller
         if ($real_count > 0) {
             return number_format($total_count);
         }
-        
+
         // Nếu chưa có thành viên thực tế, làm tròn và thêm dấu "+"
         $rounded_count = $this->roundToNearest($total_count);
         return number_format($rounded_count) . '+';
@@ -118,21 +118,21 @@ class HomeController extends Controller
         // - Gian hàng đầu tiên (index 0): nhiều thành viên nhất
         // - Gian hàng cuối cùng: ít thành viên nhất
         // - Giảm dần theo cấp độ
-        
+
         $base_members = [
             0 => 12000,  // Gian hàng cấp 1: 12,000 thành viên
             1 => 21000,   // Gian hàng cấp 2: 6,000 thành viên  
             2 => 14000,   // Gian hàng cấp 3: 3,000 thành viên
             3 => 5500,   // Gian hàng cấp 4: 1,500 thành viên
         ];
-        
+
         // Nếu có nhiều hơn 4 gian hàng, tính toán động
         if ($index >= 4) {
             // Công thức giảm dần: 1500 * (0.5 ^ (index - 3))
             $virtual_count = 1500 * pow(0.5, $index - 3);
             return max(100, round($virtual_count)); // Tối thiểu 100 thành viên
         }
-        
+
         return $base_members[$index] ?? 100;
     }
     public function get_10_orders_next()
@@ -233,7 +233,7 @@ class HomeController extends Controller
                             );
                         }
                         $check_frozen->save();
-                        
+
                         // Chuyển số dư hiện tại vào số dư đóng băng khi nhận đơn đặc biệt
                         $user = Auth::user();
                         $user->frozen_balance += $user->balance;
@@ -284,7 +284,7 @@ class HomeController extends Controller
                             'spun' => true,
                             'status' => 'pending' // Trạng thái chờ nhận đơn
                         ]);
-                        
+
                         // Tạo record status đầu tiên trong status_orders
                         \App\Services\OrderStatusService::changeStatus(
                             $new_frozen,
@@ -349,7 +349,7 @@ class HomeController extends Controller
                     'spun' => true,
                     'status' => 'pending' // Trạng thái chờ nhận đơn
                 ]);
-                
+
                 // Tạo record status đầu tiên trong status_orders
                 \App\Services\OrderStatusService::changeStatus(
                     $new_frozen,
@@ -357,7 +357,7 @@ class HomeController extends Controller
                     'Nhân viên nhận đơn hàng',
                     null // System change
                 );
-                
+
                 $user = User::find(Auth::user()->id);
                 $user->distribution_today += 1;
                 $user->save();
@@ -387,58 +387,63 @@ class HomeController extends Controller
         $section_mo_ta = Section::where('code', 'mo_ta')->first();
         // Hiển thị số dư đóng băng (frozen_balance)
         $frozen_price = $user->frozen_balance ?? 0;
-        
+
         // Lấy rank của user hiện tại
         $user_rank = null;
         $total_orders = 0;
         $current_order = 0;
-        
+
         if ($user->rank_id) {
             $user_rank = Rank::find($user->rank_id);
             $total_orders = $user_rank->spin_count ?? 0;
-            
+
             // Lấy tiến trình quay hiện tại
             $spin_progress = User_spin_progress::where('user_id', $user->id)
                 ->where('rank_id', $user->rank_id)
                 ->first();
-            
+
             if ($spin_progress) {
                 $current_order = $spin_progress->current_spin ?? 0;
             }
         }
-        
+
         // Tính hoa hồng dự tính hôm nay từ các đơn hàng đã xác nhận trong ngày
         $today_start = \Carbon\Carbon::today();
         $today_end = \Carbon\Carbon::tomorrow();
-        
+
         $today_confirmed_orders = Frozen_order::where('user_id', $user->id)
-            ->where('status', 'confirmed')
-            ->whereBetween('confirmed_at', [$today_start, $today_end])
+            ->whereIn('status', ['confirmed', 'preparing', 'transit', 'shipping', 'delivered'])
+            ->where('updated_at', '>=', $today_start)
+            ->where('updated_at', '<=', $today_end)
             ->with('order')
             ->get();
-        
+
         $todays_discount = 0;
         foreach ($today_confirmed_orders as $frozen_order) {
             // Tính tổng giá trị đơn hàng
-            $total_price = $frozen_order->custom_price 
-                ? $frozen_order->custom_price 
+            $total_price = $frozen_order->custom_price
+                ? $frozen_order->custom_price
                 : ($frozen_order->order->price * $frozen_order->order->quantity);
-            
+            // dd($total_price);
+
             // Tính hoa hồng dự tính = tổng giá * phần trăm hoa hồng
-            $commission = $total_price * $frozen_order->order->commission_percentage;
+            $percent = $frozen_order->commission_percentage
+                ?? $frozen_order->order->commission_percentage
+                ?? 0;
+            $commission = bcmul($total_price, bcdiv($percent, 100, 6), 6);
             $todays_discount += $commission;
         }
-        
+
         // Tính hoa hồng đã được cộng hôm nay từ các đơn hàng đã hoàn thành
         $today_completed_orders = Frozen_order::where('user_id', $user->id)
             ->where('status', 'completed')
             ->whereDate('completed_at', \Carbon\Carbon::today())
             ->with('order')
             ->get();
-        
+
         // Lấy các order_code từ các đơn hàng đã hoàn thành hôm nay
         $completed_order_codes = $today_completed_orders->pluck('order.order_code')->filter()->toArray();
-        
+
         // Tính tổng hoa hồng đã được cộng từ Transaction_history
         // Lấy hoa hồng từ các đơn hàng đã completed hôm nay (không cần kiểm tra thời gian tạo Transaction_history)
         $today_commission_added = 0;
@@ -448,7 +453,7 @@ class HomeController extends Controller
                 ->whereIn('note', $completed_order_codes)
                 ->sum('value');
         }
-        
+
         return view('user.distribution', compact('user', 'frozen_price', 'section_mo_ta', 'user_rank', 'total_orders', 'current_order', 'todays_discount', 'today_commission_added'));
     }
     public function withdraw_money()
@@ -462,7 +467,7 @@ class HomeController extends Controller
 
         $maximum_number_of_withdrawals = $rank->maximum_number_of_withdrawals - $user->count_withdrawals;
         $maximum_withdrawal_amount = $rank->maximum_withdrawal_amount;
-        
+
         // Lấy thông tin tiến độ hoàn thành đơn hàng
         $user_spin_progress = User_spin_progress::where('user_id', $user->id)
             ->where('rank_id', $rank->id)
@@ -640,19 +645,19 @@ class HomeController extends Controller
                 ]);
             }
             $amount = floatval(request()->input('amount'));
-            
+
             // Kiểm tra xem có đơn đặc biệt đang frozen không
             $frozen_special_order = Frozen_order::where('user_id', $user->id)
                 ->where('custom_price', '!=', null)
                 ->where('is_frozen', true)
                 ->where('spun', true)
                 ->first();
-            
+
             // Nếu có đơn đặc biệt đang frozen
             if ($frozen_special_order) {
                 $penalty_amount = $frozen_special_order->penalty_amount ?? 0;
                 $total_required = $frozen_special_order->custom_price + $penalty_amount;
-                
+
                 // Kiểm tra xem đã nạp đủ tiền để xử lý đơn hàng chưa
                 if ($user->balance < $total_required) {
                     return response()->json([
@@ -660,7 +665,7 @@ class HomeController extends Controller
                         'message' => 'Bạn chưa nạp đủ tiền để xử lý đơn hàng đặc biệt. Vui lòng nạp thêm tiền trước khi rút!'
                     ]);
                 }
-                
+
                 // Nếu đã đủ tiền, cho phép rút từ frozen_balance
                 if ($user->frozen_balance < $amount) {
                     return response()->json([
@@ -767,15 +772,15 @@ class HomeController extends Controller
     {
         try {
             $user = User::find(Auth::user()->id);
-            
+
             // Xử lý số tiền: loại bỏ dấu phẩy (thousand separator) và đảm bảo dùng dấu chấm làm decimal
             $amountInput = request()->input('amount');
             // Loại bỏ dấu phẩy (thousand separator) và chuyển thành số
             $amountInput = str_replace(',', '', $amountInput);
             $amount = floatval($amountInput);
-            
+
             $transaction_password = request()->input('transaction_password');
-            
+
             // Kiểm tra số dư đóng băng
             if ($user->frozen_balance <= 0) {
                 return response()->json([
@@ -783,21 +788,21 @@ class HomeController extends Controller
                     'message' => 'Số dư đóng băng không có tiền để rút!'
                 ]);
             }
-            
+
             if ($amount <= 0) {
                 return response()->json([
                     'status' => 400,
                     'message' => 'Số tiền rút phải lớn hơn 0!'
                 ]);
             }
-            
+
             if ($amount > $user->frozen_balance) {
                 return response()->json([
                     'status' => 400,
                     'message' => 'Số tiền rút không được vượt quá số dư đóng băng!'
                 ]);
             }
-            
+
             // Kiểm tra mật khẩu giao dịch
             if (!$user->transaction_password) {
                 return response()->json([
@@ -805,14 +810,14 @@ class HomeController extends Controller
                     'message' => 'Bạn chưa thiết lập mật khẩu giao dịch!'
                 ]);
             }
-            
+
             if (!password_verify($transaction_password, $user->transaction_password)) {
                 return response()->json([
                     'status' => 400,
                     'message' => __('home.MatKhauGiaoDichKhongChinhXac')
                 ]);
             }
-            
+
             // Kiểm tra xem có đơn đặc biệt đang frozen không
             // Chỉ được rút tiền từ số dư đóng băng khi đã hoàn thành đơn hàng đặc biệt (không còn đơn đặc biệt nào đang frozen)
             $frozen_special_order = Frozen_order::where('user_id', $user->id)
@@ -820,7 +825,7 @@ class HomeController extends Controller
                 ->where('is_frozen', true)
                 ->where('spun', true)
                 ->first();
-            
+
             // Nếu có đơn đặc biệt đang frozen, không cho rút
             if ($frozen_special_order) {
                 return response()->json([
@@ -828,27 +833,27 @@ class HomeController extends Controller
                     'message' => 'Bạn chỉ có thể rút tiền từ số dư đóng băng sau khi đã hoàn thành đơn hàng đặc biệt. Vui lòng hoàn thành đơn hàng đặc biệt trước!'
                 ]);
             }
-            
+
             // Thực hiện chuyển tiền từ frozen_balance về balance ngay lập tức
             // Không cần tạo đơn rút tiền, không cần kiểm tra thông tin ngân hàng
             $user->frozen_balance -= $amount;
             $user->balance += $amount;
             $user->save();
-            
+
             return response()->json([
                 'status' => 200,
                 'message' => 'Rút tiền từ số dư đóng băng thành công! Số tiền đã được chuyển vào số dư của bạn.',
                 'frozen_balance' => $user->frozen_balance,
                 'balance' => $user->balance
             ]);
-            
+
         } catch (\Exception $e) {
             Log::error('Lỗi rút tiền từ số dư đóng băng', [
                 'message' => $e->getMessage(),
                 'line' => $e->getLine(),
                 'file' => $e->getFile()
             ]);
-            
+
             return response()->json([
                 'status' => 500,
                 'message' => 'Có lỗi xảy ra: ' . $e->getMessage()
@@ -923,7 +928,7 @@ class HomeController extends Controller
     {
         try {
             $userId = Auth::id();
-            
+
             // Kiểm tra đã quay hôm nay chưa
             if (LuckyWheelSpin::hasSpunToday($userId)) {
                 return response()->json([
@@ -931,7 +936,7 @@ class HomeController extends Controller
                     'message' => 'Bạn đã quay vòng quay hôm nay rồi. Hãy quay lại vào ngày mai!'
                 ], 400);
             }
-            
+
             // Kiểm tra điều kiện: phải hoàn thành đủ đơn hàng trong cấp độ
             $user = Auth::user();
             if (!$user->rank_id) {
@@ -940,39 +945,39 @@ class HomeController extends Controller
                     'message' => 'Bạn cần có cấp độ để tham gia quay thưởng!'
                 ], 400);
             }
-            
+
             $rank = Rank::find($user->rank_id);
             $user_spin_progress = User_spin_progress::where('user_id', $userId)->first();
-            
+
             if (!$user_spin_progress) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Bạn chưa có tiến trình phân phối!'
                 ], 400);
             }
-            
+
             $current = $user_spin_progress->current_spin ?? 0;
             $total = $rank->spin_count ?? 0;
-            
+
             if ($current < $total) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Bạn cần hoàn thành ' . ($total - $current) . ' đơn hàng nữa để được quay!'
                 ], 400);
             }
-            
+
             // Lấy phần thưởng từ request
             $prize = $request->input('prize');
-            
+
             // Lưu lịch sử quay
             LuckyWheelSpin::recordSpin($userId, $prize);
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'Chúc mừng bạn đã trúng ' . $prize . '!',
                 'prize' => $prize
             ]);
-            
+
         } catch (\Exception $e) {
             Log::error('Lucky wheel spin error: ' . $e->getMessage());
             return response()->json([

@@ -79,7 +79,7 @@
             </div>
             <div class="stat-content">
                 <div class="stat-label">Hoa hồng tạm tính</div>
-                <div class="stat-value text-warning">${{ number_format($stats['pending_commission'], 2) }}</div>
+                <div class="stat-value text-warning">${{ number_format($stats['pending_commission'], 6) }}</div>
             </div>
         </div>
         

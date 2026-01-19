@@ -21,12 +21,12 @@ class BalanceFluctuationController extends Controller
     {
         $tab = request()->get('tab', 'overview');
         $user = Auth::user();
-        
+
         // Lấy dữ liệu theo tab
         $list_distribution = null;
         $list_deposit = null;
         $list_withdraw = null;
-        
+
         if ($tab === "distribution") {
             $list_distribution = Transaction_history::where('user_id', $user->id)
                 ->orderByDesc('created_at')
@@ -42,44 +42,43 @@ class BalanceFluctuationController extends Controller
                 ->orderByDesc('created_at')
                 ->get();
         }
-        
+
         // Dữ liệu cho biểu đồ - số dư theo thời gian
         $chartData = $this->getBalanceChartData($user->id);
-        
-        // Tính hoa hồng tạm tính: Tổng hoa hồng từ các đơn hàng chưa hoàn thành nhưng đã có trạng thái xác nhận
+
         $pendingCommission = 0;
-        $completedOrders = Frozen_order::where('user_id', $user->id)
+
+        $orders = Frozen_order::query()
+            ->where('user_id', $user->id)
             ->whereIn('status', ['confirmed', 'preparing', 'transit', 'shipping', 'delivered'])
-            ->where(function($query) {
-                $query->where('commission_paid', false)
-                      ->orWhereNull('commission_paid');
-            })
+            ->where('commission_paid', 0)
             ->with('order')
             ->get();
-        
-        foreach ($completedOrders as $frozenOrder) {
-            if ($frozenOrder->order) {
-                // Tính tổng giá trị đơn hàng
-                $totalOrderValue = $frozenOrder->custom_price 
-                    ? $frozenOrder->custom_price 
-                    : ($frozenOrder->order->price * $frozenOrder->order->quantity);
-                
-                // Lấy phần trăm hoa hồng
-                $commissionPercentage = $frozenOrder->custom_price != null 
-                    ? ($frozenOrder->commission_percentage ?? $frozenOrder->order->commission_percentage ?? 0)
-                    : ($frozenOrder->order->commission_percentage ?? 0);
-                
-                // Tính hoa hồng
-                $commissionAmount = $totalOrderValue * ($commissionPercentage / 100);
-                $pendingCommission += $commissionAmount;
-            }
+
+        foreach ($orders as $item) {
+            if (!$item->order)
+                continue;
+
+            $price = $item->custom_price
+                ?? ($item->order->price * $item->order->quantity);
+
+            $percent = $item->commission_percentage
+                ?? $item->order->commission_percentage
+                ?? 0;
+
+            $pendingCommission += bcmul(
+                $price,
+                bcdiv($percent, 100, 6),
+                6
+            );
+            // dd($pendingCommission);
         }
-        
+
         // Số đơn hàng đã hoàn thành
         $completedOrdersCount = Frozen_order::where('user_id', $user->id)
             ->where('status', 'completed')
             ->count();
-        
+
         // Thống kê tổng quan
         $stats = [
             'current_balance' => $user->balance,
@@ -92,17 +91,17 @@ class BalanceFluctuationController extends Controller
                 ->where('type', 'order')
                 ->count(),
         ];
-        
+
         return view('user.balance_fluctuation', compact(
-            'list_distribution', 
-            'list_deposit', 
+            'list_distribution',
+            'list_deposit',
             'list_withdraw',
             'chartData',
             'stats',
             'tab'
         ));
     }
-    
+
     /**
      * Lấy dữ liệu biểu đồ số dư theo thời gian
      */
@@ -110,50 +109,50 @@ class BalanceFluctuationController extends Controller
     {
         // Lấy tất cả giao dịch ảnh hưởng đến số dư
         $transactions = collect();
-        
+
         // Lấy deposits
         $deposits = Wallet_balance_history::where('user_id', $userId)
             ->where('type', 'deposit')
             ->select('value', 'created_at', DB::raw("'deposit' as trans_type"))
             ->get();
-        
+
         // Lấy withdraws
         $withdraws = Wallet_balance_history::where('user_id', $userId)
             ->where('type', 'withdraw')
             ->where('status', 'completed')
             ->select('value', 'created_at', DB::raw("'withdraw' as trans_type"))
             ->get();
-        
+
         // Lấy transactions (profit/order)
         $transHistory = Transaction_history::where('user_id', $userId)
             ->select('value', 'created_at', 'type as trans_type')
             ->get();
-        
+
         // Merge và sắp xếp theo thời gian
         $allTransactions = $deposits
             ->concat($withdraws)
             ->concat($transHistory)
             ->sortBy('created_at')
             ->values();
-        
+
         // Tính số dư tại mỗi thời điểm
         $balanceHistory = [];
         $currentBalance = 0;
-        
+
         foreach ($allTransactions as $trans) {
             if ($trans->trans_type === 'deposit' || $trans->trans_type === 'profit') {
                 $currentBalance += $trans->value;
             } else if ($trans->trans_type === 'withdraw' || $trans->trans_type === 'order' || $trans->trans_type === 'penalty') {
                 $currentBalance -= $trans->value;
             }
-            
+
             $balanceHistory[] = [
                 'date' => Carbon::parse($trans->created_at)->format('Y-m-d H:i'),
                 'balance' => round($currentBalance, 2),
                 'type' => $trans->trans_type
             ];
         }
-        
+
         // Thêm điểm hiện tại
         $user = User::find($userId);
         if (count($balanceHistory) === 0 || end($balanceHistory)['balance'] !== $user->balance) {
@@ -163,7 +162,7 @@ class BalanceFluctuationController extends Controller
                 'type' => 'current'
             ];
         }
-        
+
         return $balanceHistory;
     }
 
