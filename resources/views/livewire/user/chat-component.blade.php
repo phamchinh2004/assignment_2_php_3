@@ -257,7 +257,7 @@
 
                 <textarea wire:model="newMessage" class="form-control border-0 bg-transparent"
                     placeholder="{{__('home.NhapTinNhanCuaBan')}}" id="chat-input-field" autocomplete="off"
-                    maxlength="{{ $maxMessageLength }}" rows="1"
+                    rows="1"
                     style="font-size: 13px; resize: none; overflow-y: hidden; max-height: 100px; padding: 5px 0; line-height: 1.5;"
                     x-on:input="
                         $el.style.height = 'auto';
@@ -286,14 +286,10 @@
                 </button>
             </div>
 
-            <!-- Hiển thị số ký tự còn lại và lỗi -->
+            <!-- Hướng dẫn phím tắt -->
             <div class="d-flex justify-content-between align-items-center mt-2">
                 <div style="font-size: 11px; color: #6c757d;">
                     Enter: Gửi tin nhắn | Shift+Enter: Xuống dòng
-                </div>
-                <div style="font-size: 11px;"
-                    class="{{ $this->getRemainingCharacters() < 20 ? 'text-warning' : 'text-muted' }}">
-                    {{ $this->getRemainingCharacters() }}/{{ $maxMessageLength }}
                 </div>
             </div>
 

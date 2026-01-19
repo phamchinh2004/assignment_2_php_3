@@ -32,7 +32,7 @@ class ChatComponent extends Component
     public $offset = 0;
     public $hasMoreMessages = true;
     public $isLoading = false;
-    public $maxMessageLength = 500;
+    public $maxMessageLength = null;
     public $unreadCount = 0;
     public $showQuickReplies = false;
     public $quickReplySuggestions = [];
@@ -44,7 +44,7 @@ class ChatComponent extends Component
     ];
 
     protected $rules = [
-        'newMessage' => 'nullable|string|max:500',
+        'newMessage' => 'nullable|string',
         'selectedImage' => 'nullable|image', // 5MB
     ];
 
@@ -428,7 +428,8 @@ class ChatComponent extends Component
 
     public function getRemainingCharacters()
     {
-        return $this->maxMessageLength - strlen($this->newMessage);
+        // Không giới hạn ký tự nên luôn trả về null
+        return null;
     }
 
     /**
