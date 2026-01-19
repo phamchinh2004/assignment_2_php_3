@@ -475,3 +475,16 @@
     background: #555;
 }
 
+/* Image modal must stay above floating chat */
+#imageModal.modal {
+    z-index: 11000 !important;
+}
+
+#imageModal .modal-dialog {
+    z-index: 11001 !important;
+}
+
+/* .modal-backdrop.image-modal-backdrop {
+    z-index: 10990 !important;
+} */
+

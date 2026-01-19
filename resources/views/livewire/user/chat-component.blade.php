@@ -452,4 +452,21 @@
 
         // Không cần event listener nữa - Alpine.js đã xử lý
     });
+
+    // Ensure image modal/backdrop sit above floating chat
+    document.addEventListener('DOMContentLoaded', () => {
+        const modalEl = document.getElementById('imageModal');
+        if (modalEl) {
+            modalEl.addEventListener('shown.bs.modal', () => {
+                document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+                    backdrop.classList.add('image-modal-backdrop');
+                });
+            });
+            modalEl.addEventListener('hidden.bs.modal', () => {
+                document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+                    backdrop.classList.remove('image-modal-backdrop');
+                });
+            });
+        }
+    });
 </script>
