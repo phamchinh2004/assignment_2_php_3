@@ -270,7 +270,7 @@
                                         </small>
                                     </div>
                                     <div class="frozen-actions">
-                                        @if (!$frozen->spun)
+                                        
                                         <button
                                             type="button"
                                             class="btn btn-sm btn-warning btn-edit-price"
@@ -292,11 +292,7 @@
                                                 <i class="fas fa-unlock"></i> Hủy đóng băng
                                             </button>
                                         </form>
-                                        @else
-                                        <span class="text-muted">
-                                            <i class="fas fa-info-circle"></i> Không thể chỉnh sửa khi người dùng đã quay đến
-                                        </span>
-                                        @endif
+                                        
                                     </div>
                                 </div>
                                 <div class="frozen-item-body">
