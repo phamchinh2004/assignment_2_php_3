@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,27 +15,32 @@
             background-color: #f3f4f6;
             line-height: 1.6;
         }
+
         .email-container {
             max-width: 600px;
             margin: 0 auto;
             background-color: #ffffff;
         }
+
         .header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             padding: 40px 20px;
             text-align: center;
         }
+
         .header h1 {
             color: #ffffff;
             margin: 0;
             font-size: 28px;
             font-weight: 700;
         }
+
         .header p {
             color: rgba(255, 255, 255, 0.9);
             margin: 10px 0 0 0;
             font-size: 16px;
         }
+
         .icon-box {
             background: rgba(255, 255, 255, 0.2);
             width: 80px;
@@ -46,14 +52,17 @@
             margin-bottom: 20px;
             font-size: 40px;
         }
+
         .content {
             padding: 40px 30px;
         }
+
         .greeting {
             font-size: 18px;
             color: #1f2937;
             margin-bottom: 20px;
         }
+
         .message-box {
             background: #f9fafb;
             border-left: 4px solid #10b981;
@@ -61,20 +70,24 @@
             margin: 20px 0;
             border-radius: 4px;
         }
+
         .message-box.bonus {
             border-left-color: #f59e0b;
         }
+
         .message-box h2 {
             color: #1f2937;
             font-size: 16px;
             margin: 0 0 10px 0;
             font-weight: 600;
         }
+
         .message-box p {
             color: #4b5563;
             margin: 5px 0;
             font-size: 14px;
         }
+
         .amount-display {
             text-align: center;
             padding: 30px 20px;
@@ -82,51 +95,62 @@
             border-radius: 8px;
             margin: 20px 0;
         }
+
         .amount-display.bonus {
             background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
         }
+
         .amount-label {
             font-size: 14px;
             color: #065f46;
             margin-bottom: 8px;
             font-weight: 500;
         }
+
         .amount-display.bonus .amount-label {
             color: #92400e;
         }
+
         .amount-value {
             font-size: 36px;
             font-weight: 700;
             color: #059669;
             margin: 0;
         }
+
         .amount-display.bonus .amount-value {
             color: #d97706;
         }
+
         .info-table {
             width: 100%;
             border-collapse: collapse;
             margin: 20px 0;
         }
+
         .info-table td {
             padding: 12px 0;
             border-bottom: 1px solid #e5e7eb;
             font-size: 14px;
         }
+
         .info-table td:first-child {
             color: #6b7280;
             width: 40%;
         }
+
         .info-table td:last-child {
             color: #1f2937;
             font-weight: 600;
             text-align: right;
         }
+
         .info-table tr:last-child td {
             border-bottom: none;
             padding-top: 20px;
             font-size: 16px;
         }
+
         .cta-button {
             display: inline-block;
             background: #10b981;
@@ -138,9 +162,11 @@
             font-size: 15px;
             margin: 20px 0;
         }
+
         .cta-button.bonus {
             background: #f59e0b;
         }
+
         .note-box {
             background: #eff6ff;
             border: 1px solid #bfdbfe;
@@ -148,11 +174,13 @@
             border-radius: 6px;
             margin: 20px 0;
         }
+
         .note-box p {
             color: #1e40af;
             margin: 5px 0;
             font-size: 13px;
         }
+
         .footer {
             background: #1f2937;
             color: #9ca3af;
@@ -160,13 +188,16 @@
             text-align: center;
             font-size: 13px;
         }
+
         .footer p {
             margin: 5px 0;
         }
+
         .footer a {
             color: #10b981;
             text-decoration: none;
         }
+
         .divider {
             height: 1px;
             background: #e5e7eb;
@@ -174,6 +205,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="email-container">
         <!-- Header -->
@@ -257,7 +289,7 @@
 
         <!-- Footer -->
         <div class="footer">
-            <p><strong>AmazonLogistics</strong></p>
+            <p><strong>Hệ thống của chúng tôi</strong></p>
             <p>Hệ thống phân phối đơn hàng tự động</p>
             <p style="margin-top: 15px;">
                 Website: <a href="{{ url('/') }}">{{ url('/') }}</a>
@@ -266,10 +298,10 @@
                 Email hỗ trợ: <a href="mailto:{{ config('mail.from.address') }}">{{ config('mail.from.address') }}</a>
             </p>
             <p style="margin-top: 15px; color: #6b7280; font-size: 12px;">
-                © {{ date('Y') }} AmazonLogistics. All rights reserved.
+                © {{ date('Y') }} Hệ thống của chúng tôi. All rights reserved.
             </p>
         </div>
     </div>
 </body>
-</html>
 
+</html>

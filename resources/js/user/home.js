@@ -1,3 +1,4 @@
+import SlimSelect from 'slim-select';
 document.addEventListener("DOMContentLoaded", function () {
     // Chỉnh nút theo kích cỡ màn hình
     if (window.innerWidth <= 768) {
@@ -183,9 +184,8 @@ document.addEventListener("DOMContentLoaded", function () {
                     </div>
                     <div>
                         <div class="user-phone fw-bold text-dark mb-1" style="font-size: 14px;">${phone}</div>
-                        <div class="success-text text-muted" style="font-size: 12px;">${
-                            trans.successText
-                        }</div>
+                        <div class="success-text text-muted" style="font-size: 12px;">${trans.successText
+            }</div>
                     </div>
                 </div>
                 <div class="d-flex align-items-center">
@@ -551,7 +551,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const bankModalElement = document.getElementById("bankLinkModal");
         const notificationModalElement = document.getElementById("notificationModal");
         const username_bank_input = document.getElementById("username_bank_input");
-        
+
         if (!username_bank_input.value && bankModalElement) {
             // Kiểm tra xem notification modal có đang hiển thị không
             const showBankModal = () => {
@@ -562,7 +562,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     console.error("Error showing bank modal:", error);
                 }
             };
-            
+
             // Kiểm tra sau 3 giây để đảm bảo notification modal đã được xử lý
             setTimeout(() => {
                 if (notificationModalElement) {

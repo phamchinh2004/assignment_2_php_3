@@ -29,7 +29,6 @@
 .background-blur {
     width: 100%;
     height: 100%;
-    background: url('../images/login_and_register/background_1.jpg') repeat;
     background-position: center;
     background-size: cover;
     filter: blur(6px);
