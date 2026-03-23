@@ -31,9 +31,9 @@ class OrderStatusTiming extends Model
     public function getMinTimeInMinutes(): int
     {
         return match($this->time_unit) {
-            'minutes' => $this->min_time,
-            'hours' => $this->min_time * 60,
-            'days' => $this->min_time * 24 * 60,
+            'minutes', 'Phút' => $this->min_time,
+            'hours', 'Giờ' => $this->min_time * 60,
+            'days', 'Ngày' => $this->min_time * 24 * 60,
             default => $this->min_time,
         };
     }
@@ -44,9 +44,9 @@ class OrderStatusTiming extends Model
     public function getMaxTimeInMinutes(): int
     {
         return match($this->time_unit) {
-            'minutes' => $this->max_time,
-            'hours' => $this->max_time * 60,
-            'days' => $this->max_time * 24 * 60,
+            'minutes', 'Phút' => $this->max_time,
+            'hours', 'Giờ' => $this->max_time * 60,
+            'days', 'Ngày' => $this->max_time * 24 * 60,
             default => $this->max_time,
         };
     }

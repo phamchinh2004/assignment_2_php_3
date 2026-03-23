@@ -1,9 +1,9 @@
 <div id="chat-root">
-    <div class="floating-chat-container" x-data="{ isOpen: @entangle('showBox'), isLoading: false }">
+    <div class="floating-chat-container" x-data="{ isOpen: @entangle('showBox'), isLoading: false, showQuick: @entangle('showQuickReplies') }">
         <!-- Floating Chat Button -->
         <button class="floating-chat-button"
-            @click="isLoading = true; $wire.call('toggleBox').then(() => { setTimeout(() => isLoading = false, 300) })"
-            x-show="!isOpen" type="button" :disabled="isLoading">
+            @click="isOpen = true; $wire.call('toggleBox', true)"
+            x-show="!isOpen" type="button">
             <span x-show="!isLoading">
                 <i class="fa-solid fa-comments"></i>
                 @if($unreadCount > 0)
@@ -36,37 +36,16 @@
                     </div>
                 </div>
                 <button
-                    @click="isLoading = true; $wire.call('closeBox').then(() => { setTimeout(() => isLoading = false, 200) })"
-                    class="btn-close-chat" type="button" :disabled="isLoading" x-data="{ isLoading: false }">
-                    <i class="fa-solid fa-times" x-show="!isLoading"></i>
-                    <i class="fa fa-spinner fa-spin" x-show="isLoading" style="display: none;"></i>
+                    @click="isOpen = false; $wire.call('toggleBox', false)"
+                    class="btn-close-chat" type="button">
+                    <i class="fa-solid fa-times"></i>
                 </button>
             </div>
 
-            <!-- Danh sách tin nhắn -->
+            <!-- Danh sách tin nhắn: Dùng column-reverse để neo tin nhắn mới nhất xuống đáy tự động -->
             <div class="p-3 position-relative"
-                style="height: 300px; overflow-y: auto; overflow-x: hidden; background: #f8f9fa;"
+                style="height: 300px; overflow-y: auto; overflow-x: hidden; background: #f8f9fa; display: flex; flex-direction: column-reverse;"
                 id="chat-messages-container">
-                <!-- Loading indicator cho load more -->
-                @if($isLoading)
-                    <div class="text-center py-2" id="loading-indicator">
-                        <div class="spinner-border spinner-border-sm text-primary" role="status">
-                            <span class="visually-hidden">{{__('home.DangTai')}}</span>
-                        </div>
-                        <small class="text-muted ms-2">{{__('home.DangTaiTinNhanCu')}}</small>
-                    </div>
-                @endif
-
-                <!-- Nút load more messages -->
-                @if($hasMoreMessages && !$isLoading)
-                    <div class="text-center py-2">
-                        <button onclick="loadMoreMessagesManual()" class="btn btn-sm btn-outline-primary rounded-pill">
-                            <i class="fa fa-chevron-up me-1"></i>
-                            {{__('home.TaiTinNhanCuHon')}}
-                        </button>
-                    </div>
-                @endif
-
                 @if($chatMessages->count() == 0)
                     <div class="text-center text-muted py-3">
                         <i class="fa fa-comments fa-2x mb-2"></i>
@@ -74,103 +53,133 @@
                     </div>
                 @endif
 
-                @foreach ($chatMessages as $msg)
-                    @php
-                        $isCurrentUser = (is_array($msg) ? $msg['sender_id'] : $msg->sender_id) === auth()->id();
-                        $message = is_array($msg) ? $msg['message'] : $msg->message;
-                        $type = is_array($msg) ? $msg['type'] : $msg->type;
-                        $imagePath = is_array($msg) ? $msg['image_path'] : $msg->image_path;
-                        $createdAt = is_array($msg) ? $msg['created_at'] : $msg->created_at;
-                        $messageId = is_array($msg) ? $msg['id'] : $msg->id;
-                        $isRead = is_array($msg) ? ($msg['is_read'] ?? false) : ($msg->is_read ?? false);
-                        $senderName = is_array($msg)
-                            ? ($msg['sender']['full_name'] ?? 'User')
-                            : ($msg->sender->full_name ?? 'User');
-                    @endphp
+                <div style="display: flex; flex-direction: column-reverse; width: 100%;">
+                    @foreach ($chatMessages as $msg)
+                        @php
+                            $isCurrentUser = (is_array($msg) ? $msg['sender_id'] : $msg->sender_id) === auth()->id();
+                            $message = is_array($msg) ? $msg['message'] : $msg->message;
+                            $type = is_array($msg) ? $msg['type'] : $msg->type;
+                            $imagePath = is_array($msg) ? $msg['image_path'] : $msg->image_path;
+                            $createdAt = is_array($msg) ? $msg['created_at'] : $msg->created_at;
+                            $messageId = is_array($msg) ? $msg['id'] : $msg->id;
+                            $isRead = is_array($msg) ? ($msg['is_read'] ?? false) : ($msg->is_read ?? false);
+                            $senderName = is_array($msg)
+                                ? ($msg['sender']['full_name'] ?? 'User')
+                                : ($msg->sender->full_name ?? 'User');
+                        @endphp
 
-                    @if($isCurrentUser)
-                        <!-- Tin nhắn của user -->
-                        <div class="d-flex justify-content-end mb-3" wire:key="msg-{{ is_array($msg) ? $msg['id'] : $msg->id }}"
-                            style="min-width: 0;">
-                            <div class="d-flex align-items-end" style="max-width: 90%; min-width: 0;">
-                                <div class="me-2"
-                                    style="display: flex; flex-direction: column; align-items: flex-end; min-width: 0; max-width: 100%;">
-                                    <div class="message-bubble text-start"
-                                        style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-size: 13px; line-height: 1.4; word-wrap: break-word; overflow-wrap: break-word; word-break: break-word; white-space: pre-line; display: inline-block; padding: 6px 12px; margin: 0; {{ $type === 'text' ? 'width: fit-content; max-width: 100%;' : 'width: 200px; max-width: 200px;' }} {{ $type === 'text' ? 'border-radius: 16px;' : 'border-radius: 15px;' }}">@if($type === 'image')<img src="{{ Storage::url($imagePath) }}" alt="Sent image" class="img-fluid rounded" style="width: 100%; max-width: 200px; max-height: 200px; cursor: pointer;" onclick="openImageModal(this.src)">@else{{ trim($message) }}@endif</div>
-                                    <div class="text-end mt-1 d-flex align-items-center justify-content-end gap-1"
-                                        style="font-size: 10px; color: #6c757d;">
-                                        <span>{{ \Carbon\Carbon::parse($createdAt)->setTimezone('Asia/Ho_Chi_Minh')->format('d/m/Y H:i') }}</span>
-                                        <span data-message-id="{{ $messageId }}"
-                                            data-seen-status="{{ $isRead ? 'true' : 'false' }}">
-                                            @if($isRead)
-                                                <i class="fas fa-check-double text-info" style="font-size: 10px;"
-                                                    title="Đã xem"></i>
-                                            @else
-                                                <i class="fas fa-check" style="font-size: 10px; color: #6c757d;" title="Đã gửi"></i>
-                                            @endif
-                                        </span>
+                        @if($isCurrentUser)
+                            <!-- Tin nhắn của user -->
+                            <div class="d-flex justify-content-end mb-3"
+                                wire:key="msg-{{ is_array($msg) ? $msg['id'] : $msg->id }}" style="min-width: 0;">
+                                <div class="d-flex align-items-end" style="max-width: 90%; min-width: 0;">
+                                    <div class="me-2"
+                                        style="display: flex; flex-direction: column; align-items: flex-end; min-width: 0; max-width: 100%;">
+                                        <div class="message-bubble text-start" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-size: 13px; line-height: 1.4; word-wrap: break-word; overflow-wrap: break-word; word-break: break-word; white-space: pre-line; display: inline-block; padding: 6px 12px; margin: 0; {{ $type === 'text' ? 'width: fit-content; max-width: 100%;' : 'width: 200px; max-width: 200px;' }} {{ $type === 'text' ? 'border-radius: 16px;' : 'border-radius: 15px;' }}">@if($type === 'image')<img src="{{ Storage::url($imagePath) }}" alt="Sent image"
+                                                class="img-fluid rounded"
+                                                style="width: 100%; max-width: 200px; max-height: 200px; cursor: pointer;"
+                                            onclick="openImageModal(this.src)">@else{{ trim($message) }}
+                                                @endif </div>
+                                        <div class="text-end mt-1 d-flex align-items-center justify-content-end gap-1"
+                                            style="font-size: 10px; color: #6c757d;">
+                                            <span>{{ \Carbon\Carbon::parse($createdAt)->setTimezone('Asia/Ho_Chi_Minh')->format('d/m/Y H:i') }}</span>
+                                            <span data-message-id="{{ $messageId }}"
+                                                data-seen-status="{{ $isRead ? 'true' : 'false' }}">
+                                                @if($isRead)
+                                                    <i class="fas fa-check-double text-info" style="font-size: 10px;"
+                                                        title="Đã xem"></i>
+                                                @else
+                                                    <i class="fas fa-check" style="font-size: 10px; color: #6c757d;"
+                                                        title="Đã gửi"></i>
+                                                @endif
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <img src="https://ui-avatars.com/api/?name={{ urlencode($senderName) }}&background=667eea&color=ffffff&size=28&rounded=true"
+                                        alt="You" class="rounded-circle flex-shrink-0" width="28" height="28">
+                                </div>
+                            </div>
+                        @else
+                            <!-- Tin nhắn của support -->
+                            <div class="d-flex justify-content-start mb-3"
+                                wire:key="msg-{{ is_array($msg) ? $msg['id'] : $msg->id }}" style="min-width: 0;">
+                                <div class="d-flex align-items-end" style="max-width: 90%; min-width: 0;">
+                                    <img src="https://ui-avatars.com/api/?name=Support&background=28a745&color=ffffff&size=28&rounded=true&bold=true"
+                                        alt="Support" class="rounded-circle flex-shrink-0" width="28" height="28">
+                                    <div class="ms-2"
+                                        style="display: flex; flex-direction: column; align-items: flex-start; min-width: 0; max-width: 100%;">
+                                        <div class="message-bubble rounded-4 position-relative member-message text-start"
+                                            style="transition: all 0.2s ease; border: 1px solid #e9ecef; display: inline-block; background: white; font-size: 13px; line-height: 1.4; padding: 6px 12px; margin: 0; {{ $type === 'text' ? 'width: fit-content; max-width: 100%;' : 'width: 200px; max-width: 200px;' }} word-wrap: break-word; overflow-wrap: break-word; word-break: break-word; white-space: pre-line;">@if($type === 'image')<img src="{{ Storage::url($imagePath) }}" alt="Received image"
+                                                class="img-fluid rounded"
+                                                style="width: 100%; max-width: 200px; max-height: 200px; cursor: pointer;"
+                                            onclick="openImageModal(this.src)">@else{{ trim($message) }}@endif</div>
+                                        <div class="mt-1 ps-2" style="font-size: 10px; color: #6c757d;text-align:left;">
+                                            {{__('home.HoTro') . \Carbon\Carbon::parse($createdAt)->setTimezone('Asia/Ho_Chi_Minh')->format('d/m/Y H:i') }}
+                                        </div>
                                     </div>
                                 </div>
-                                <img src="https://ui-avatars.com/api/?name={{ urlencode($senderName) }}&background=667eea&color=ffffff&size=28&rounded=true"
-                                    alt="You" class="rounded-circle flex-shrink-0" width="28" height="28">
                             </div>
+                        @endif
+                    @endforeach
+
+                    <!-- Nút load more messages: Đặt sau foreach để lật lên đỉnh -->
+                    @if($hasMoreMessages)
+                        <div class="text-center py-2 mb-2" wire:loading.remove wire:target="loadMoreMessages">
+                            <button onclick="loadMoreMessagesManual()" class="btn btn-sm btn-outline-primary rounded-pill">
+                                <i class="fa fa-chevron-up me-1"></i>
+                                {{__('home.TaiTinNhanCuHon')}}
+                            </button>
                         </div>
-                    @else
-                        <!-- Tin nhắn của support -->
-                        <div class="d-flex justify-content-start mb-3"
-                            wire:key="msg-{{ is_array($msg) ? $msg['id'] : $msg->id }}" style="min-width: 0;">
-                            <div class="d-flex align-items-end" style="max-width: 90%; min-width: 0;">
-                                <img src="https://ui-avatars.com/api/?name=Support&background=28a745&color=ffffff&size=28&rounded=true&bold=true"
-                                    alt="Support" class="rounded-circle flex-shrink-0" width="28" height="28">
-                                <div class="ms-2"
-                                    style="display: flex; flex-direction: column; align-items: flex-start; min-width: 0; max-width: 100%;">
-                                    <div class="message-bubble rounded-4 position-relative member-message text-start"
-                                        style="transition: all 0.2s ease; border: 1px solid #e9ecef; display: inline-block; background: white; font-size: 13px; line-height: 1.4; padding: 6px 12px; margin: 0; {{ $type === 'text' ? 'width: fit-content; max-width: 100%;' : 'width: 200px; max-width: 200px;' }} word-wrap: break-word; overflow-wrap: break-word; word-break: break-word; white-space: pre-line;">@if($type === 'image')<img src="{{ Storage::url($imagePath) }}" alt="Received image" class="img-fluid rounded" style="width: 100%; max-width: 200px; max-height: 200px; cursor: pointer;" onclick="openImageModal(this.src)">@else{{ trim($message) }}@endif</div>
-                                    <div class="mt-1 ps-2" style="font-size: 10px; color: #6c757d;text-align:left;">
-                                        {{__('home.HoTro') . \Carbon\Carbon::parse($createdAt)->setTimezone('Asia/Ho_Chi_Minh')->format('d/m/Y H:i') }}
-                                    </div>
-                                </div>
-                            </div>
+                        
+                        <div class="text-center py-2 mb-2" wire:loading wire:target="loadMoreMessages">
+                            <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                            <small class="text-muted ms-2">{{__('home.DangTaiTinNhanCu')}}</small>
                         </div>
                     @endif
-                @endforeach
+                </div><!-- End reverse wrapper -->
             </div>
 
             <!-- Gợi ý tin nhắn nhanh (Quick Replies) -->
-            @if($showQuickReplies && count($quickReplySuggestions) > 0)
-                <div class="px-3 py-2" style="background: #f8f9fa; border-top: 1px solid #e9ecef;">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <small class="text-muted fw-bold" style="font-size: 11px;">
-                            <i class="fa fa-lightbulb me-1"></i> Gợi ý tin nhắn nhanh
+            @if(config('chat.quick_replies.enabled', true) && count($quickReplySuggestions) > 0)
+                <div class="px-2 px-sm-3 py-2" style="background: #f8f9fa; border-top: 1px solid #e9ecef;"
+                     x-show="showQuick" x-transition:enter="transition ease-out duration-200"
+                     x-transition:enter-start="opacity-0 transform -translate-y-2"
+                     x-transition:enter-end="opacity-100 transform translate-y-0"
+                     x-transition:leave="transition ease-in duration-150"
+                     x-transition:leave-start="opacity-100 transform translate-y-0"
+                     x-transition:leave-end="opacity-0 transform -translate-y-2">
+                     <div class="d-flex justify-content-between align-items-center mb-2 px-1">
+                        <small class="text-muted fw-bold" style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px;">
+                            <i class="fa fa-lightbulb me-1 text-warning"></i> Gợi ý nhanh
                         </small>
                         <button wire:click="hideQuickReplies" class="btn btn-link btn-sm p-0 text-muted"
-                            style="font-size: 11px; text-decoration: none;">
+                            style="font-size: 14px; text-decoration: none; line-height: 1;">
                             <i class="fa fa-times"></i>
                         </button>
                     </div>
-                    <div class="d-flex flex-wrap gap-2" x-data="{ loadingIndex: null }">
+                    <div class="d-flex flex-wrap gap-2" x-data="{ loadingIndex: null }" x-on:message-sent.window="loadingIndex = null">
                         @foreach($quickReplySuggestions as $index => $suggestion)
                             <button wire:click="useQuickReply('{{ addslashes($suggestion) }}')"
                                 @click="loadingIndex = {{ $index }}" class="btn btn-sm quick-reply-btn" style="background: white; 
-                                               border: 1px solid #dee2e6; 
-                                               border-radius: 16px; 
-                                               padding: 6px 12px;
-                                               font-size: 12px;
-                                               color: #495057;
-                                               transition: all 0.2s ease;
-                                               white-space: nowrap;
-                                               position: relative;
-                                               min-width: fit-content;" x-bind:disabled="loadingIndex !== null"
+                                                               border: 1px solid #dee2e6; 
+                                                               border-radius: 16px; 
+                                                               padding: 6px 12px;
+                                                               font-size: 12px;
+                                                               color: #495057;
+                                                               transition: all 0.2s ease;
+                                                               white-space: nowrap;
+                                                               position: relative;
+                                                               min-width: fit-content;" x-bind:disabled="loadingIndex !== null"
                                 x-bind:style="loadingIndex !== null && loadingIndex !== {{ $index }} ? 'opacity: 0.5; cursor: not-allowed;' : ''"
                                 onmouseover="if (!this.disabled) {
-                                                        this.style.background='linear-gradient(135deg, #667eea 0%, #764ba2 100%)'; 
-                                                        this.style.color='white'; 
-                                                        this.style.borderColor='transparent';
-                                                     }" onmouseout="if (!this.disabled) {
-                                                        this.style.background='white'; 
-                                                        this.style.color='#495057'; 
-                                                        this.style.borderColor='#dee2e6';
-                                                    }">
+                                                                        this.style.background='linear-gradient(135deg, #667eea 0%, #764ba2 100%)'; 
+                                                                        this.style.color='white'; 
+                                                                        this.style.borderColor='transparent';
+                                                                     }" onmouseout="if (!this.disabled) {
+                                                                        this.style.background='white'; 
+                                                                        this.style.color='#495057'; 
+                                                                        this.style.borderColor='#dee2e6';
+                                                                    }">
                                 <span x-show="loadingIndex !== {{ $index }}">{{ $suggestion }}</span>
                                 <span x-show="loadingIndex === {{ $index }}" style="display: none;">
                                     <i class="fa fa-spinner fa-spin"></i> Đang gửi...
@@ -181,23 +190,22 @@
                 </div>
             @endif
 
-            <!-- Nút toggle Quick Replies - Thiết kế gọn -->
+            <!-- Nút toggle Quick Replies - Thiết kế gọn và căn giữa -->
             @if(config('chat.quick_replies.enabled', true) && count($quickReplySuggestions) > 0)
-                <div class="d-flex justify-content-center align-items-center"
-                    style="background: white; border-top: 1px solid #e9ecef; padding: 4px 0; min-height: 28px;"
-                    x-data="{ toggleLoading: false }">
+                <div class="text-center" style="background: #f8f9fa; border-top: 1px solid #e9ecef; line-height: 1;">
                     <button type="button"
-                        @click="toggleLoading = true; $wire.call('toggleQuickReplies').then(() => { setTimeout(() => toggleLoading = false, 200) })"
+                        @click="showQuick = !showQuick"
                         class="btn btn-link p-0 m-0" style="color: {{ $showQuickReplies ? '#667eea' : '#adb5bd' }};
-                                   font-size: 16px;
-                                   line-height: 1;
-                                   transition: all 0.2s ease;
-                                   text-decoration: none;" :disabled="toggleLoading"
-                        onmouseover="if (!this.disabled) { this.style.color='#667eea'; this.style.transform='scale(1.1)'; }"
-                        onmouseout="if (!this.disabled) { this.style.color='{{ $showQuickReplies ? '#667eea' : '#adb5bd' }}'; this.style.transform='scale(1)'; }"
+                                           font-size: 14px;
+                                           line-height: 1;
+                                           padding: 2px 10px;
+                                           transition: all 0.2s ease;
+                                           text-decoration: none;
+                                           display: inline-block;"
+                        onmouseover="this.style.color='#667eea'; this.style.transform='scale(1.2)';"
+                        onmouseout="this.style.color='{{ $showQuickReplies ? '#667eea' : '#adb5bd' }}'; this.style.transform='scale(1)';"
                         title="{{ $showQuickReplies ? '▼ Ẩn gợi ý tin nhắn' : '▲ Hiển thị gợi ý tin nhắn' }}">
-                        <i class="fa fa-chevron-{{ $showQuickReplies ? 'down' : 'up' }}" x-show="!toggleLoading"></i>
-                        <i class="fa fa-spinner fa-spin" x-show="toggleLoading" style="display: none;"></i>
+                        <i class="fa fa-chevron-{{ $showQuickReplies ? 'down' : 'up' }}"></i>
                     </button>
                 </div>
             @endif
@@ -248,19 +256,23 @@
                     </div>
                 @endif
 
-                <div class="d-flex align-items-end"
-                    style="background: #f8f9fa; border-radius: 20px; padding: 8px 16px;">
-                    <!-- Nút chọn ảnh -->
-                    <label for="image-upload" class="btn btn-link p-0 me-2"
-                        style="color: #667eea; font-size: 18px; cursor: pointer; flex-shrink: 0;">
+                <div class="d-flex align-items-center"
+                    style="background: #f8f9fa; border-radius: 25px; padding: 5px 15px; border: 1px solid #e9ecef;">
+                    <!-- Nút chọn ảnh: Hiện spinner khi đang upload ảnh -->
+                    <div wire:loading wire:target="selectedImage"
+                        class="me-2 spinner-border spinner-border-sm text-primary" style="width: 18px; height: 18px; flex-shrink: 0;">
+                    </div>
+                    <label for="image-upload" class="btn btn-link p-0 me-2 d-flex align-items-center justify-content-center" wire:loading.remove
+                        wire:target="selectedImage"
+                        style="color: #667eea; font-size: 20px; cursor: pointer; flex-shrink: 0; width: 30px; height: 30px;">
                         <i class="fa fa-image"></i>
                     </label>
                     <input type="file" wire:model="selectedImage" id="image-upload" accept="image/*"
                         style="display: none;">
 
-                    <textarea wire:model="newMessage" class="form-control border-0 bg-transparent"
+                    <textarea wire:model="newMessage" class="form-control border-0 bg-transparent flex-grow-1"
                         placeholder="{{__('home.NhapTinNhanCuaBan')}}" id="chat-input-field" autocomplete="off" rows="1"
-                        style="font-size: 13px; resize: none; overflow-y: hidden; max-height: 100px; padding: 5px 0; line-height: 1.5;"
+                        style="font-size: 13px; resize: none; overflow-y: hidden; max-height: 100px; padding: 8px 0; line-height: 1.5; box-shadow: none;"
                         x-on:input="
                         $el.style.height = 'auto';
                         $el.style.height = Math.min($el.scrollHeight, 100) + 'px';
@@ -280,8 +292,8 @@
                         }
                     "></textarea>
 
-                    <button type="submit" class="btn btn-link p-0 ms-2"
-                        style="color: #667eea; font-size: 18px; flex-shrink: 0;" x-bind:disabled="formSending">
+                    <button type="submit" class="btn btn-link p-0 ms-2 d-flex align-items-center justify-content-center"
+                        style="color: #667eea; font-size: 20px; flex-shrink: 0; width: 30px; height: 30px;" x-bind:disabled="formSending">
                         <i class="fa fa-paper-plane" x-show="!formSending"></i>
                         <i class="fa fa-spinner fa-spin" x-show="formSending" style="display: none;"></i>
                     </button>
@@ -385,16 +397,7 @@
         });
 
         Livewire.on('messages-loaded', () => {
-            const container = document.getElementById('chat-messages-container');
-            if (container) {
-                // Đợi DOM cập nhật hoàn toàn
-                setTimeout(() => {
-                    const newScrollHeight = container.scrollHeight;
-                    const scrollDiff = newScrollHeight - previousScrollHeight;
-                    // Đặt vị trí scroll = vị trí cũ + phần tin nhắn mới thêm vào
-                    container.scrollTop = previousScrollTop + scrollDiff;
-                }, 50);
-            }
+            // Với column-reverse, trình duyệt tự động neo vị trí scroll khi thêm phần tử vào "phần xa" (visual top)
             isLoadingMore = false;
         });
 
@@ -434,6 +437,27 @@
                             icon.title = 'Đã xem';
                         }
                     }
+                })
+                .listen('.ConversationRead', (e) => {
+                    // console.log('Conversation all read:', e);
+                    
+                    // Update Livewire backend
+                    const root = document.getElementById('chat-root');
+                    const component = Livewire.find(root.getAttribute('wire:id'));
+                    component.call('onConversationRead', e);
+
+                    // Cập nhật tất cả các tin nhắn của mình (người đang ngồi trước máy) sang Đã xem
+                    // Vì conversation_id đã khớp (nhờ listen đúng channel)
+                    const myMessages = document.querySelectorAll('[data-seen-status="false"]');
+                    myMessages.forEach(el => {
+                        el.setAttribute('data-seen-status', 'true');
+                        const icon = el.querySelector('i');
+                        if (icon) {
+                            icon.className = 'fas fa-check-double text-info';
+                            icon.style.fontSize = '10px';
+                            icon.title = 'Đã xem';
+                        }
+                    });
                 })
                 .error((error) => {
                     console.error('Echo error:', error);

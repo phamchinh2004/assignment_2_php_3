@@ -28,7 +28,7 @@ class ChatComponent extends Component
     public $showBox = false;
     public $conversation;
     public $currentChannel = null;
-    public $messagesPerLoad = 5;
+    public $messagesPerLoad = 10;
     public $offset = 0;
     public $hasMoreMessages = true;
     public $isLoading = false;
@@ -45,7 +45,7 @@ class ChatComponent extends Component
 
     protected $rules = [
         'newMessage' => 'nullable|string',
-        'selectedImage' => 'nullable|image', // 5MB
+        'selectedImage' => 'nullable|image', // Không giới hạn
     ];
 
     protected function messages()
@@ -59,10 +59,10 @@ class ChatComponent extends Component
     public function mount()
     {
         $referrerId = Auth::user()->referrer_id;
-        $admin = User::where('role', 'admin')->first();
+        $adminId = User::where('role', 'admin')->value('id');
         $this->conversation = Conversation::firstOrCreate(
             ['user_id' => Auth::user()->id],
-            ['staff_id' => $referrerId ?: $admin->id]
+            ['staff_id' => $referrerId ?: $adminId]
         );
 
         $this->loadLatestMessages();
@@ -85,11 +85,12 @@ class ChatComponent extends Component
     public function loadLatestMessages()
     {
         $messages = Message::where('conversation_id', $this->conversation->id)
-            ->with('sender')
+            ->with('sender:id,full_name,role')
+            ->select('id', 'message', 'type', 'image_path', 'sender_id', 'conversation_id', 'is_read', 'created_at')
             ->orderBy('created_at', 'desc')
             ->limit($this->messagesPerLoad)
             ->get()
-            ->reverse()
+            ->values()
             ->map(function ($message) {
                 return $this->formatMessage($message);
             });
@@ -110,18 +111,19 @@ class ChatComponent extends Component
         $this->isLoading = true;
 
         $olderMessages = Message::where('conversation_id', $this->conversation->id)
-            ->with('sender')
+            ->with('sender:id,full_name,role')
+            ->select('id', 'message', 'type', 'image_path', 'sender_id', 'conversation_id', 'is_read', 'created_at')
             ->orderBy('created_at', 'desc')
             ->offset($this->offset)
             ->limit($this->messagesPerLoad)
             ->get()
-            ->reverse()
+            ->values()
             ->map(function ($message) {
                 return $this->formatMessage($message);
             });
 
         if ($olderMessages->count() > 0) {
-            $this->chatMessages = $olderMessages->concat($this->chatMessages);
+            $this->chatMessages = $this->chatMessages->concat($olderMessages); // Append older messages to end of collection
             $this->offset += $olderMessages->count();
 
             $totalMessages = Message::where('conversation_id', $this->conversation->id)->count();
@@ -156,7 +158,7 @@ class ChatComponent extends Component
     public function updatedSelectedImage()
     {
         $this->validate([
-            'selectedImage' => 'image|max:5120'
+            'selectedImage' => 'image'
         ]);
     }
 
@@ -182,10 +184,10 @@ class ChatComponent extends Component
         $conversationId = $this->conversation->id;
         $userId = Auth::id();
         $userName = Auth::user()->full_name;
-        
+
         $messages = [];
         $template_message_for_notification = "";
-        
+
         // Prepare collection
         if (!$this->chatMessages instanceof Collection) {
             $this->chatMessages = collect($this->chatMessages);
@@ -219,7 +221,7 @@ class ChatComponent extends Component
                 ]
             ];
             $template_message_for_notification = "Đã gửi hình ảnh";
-            
+
             // Broadcast qua job (không block response)
             \App\Jobs\BroadcastMessageSent::dispatch($imageMessage->id);
         }
@@ -233,7 +235,7 @@ class ChatComponent extends Component
                 'type' => 'text',
                 'image_path' => null,
             ]);
-            
+
             $messages[] = [
                 'id' => $textMessage->id,
                 'message' => $textMessage->message,
@@ -250,19 +252,19 @@ class ChatComponent extends Component
                 ]
             ];
             $template_message_for_notification = Str::limit($messageText, 30, '...');
-            
+
             // Broadcast qua job (không block response)
             \App\Jobs\BroadcastMessageSent::dispatch($textMessage->id);
         }
 
         // Update conversation
         $this->conversation->touch();
-        
+
         // Add messages vào UI
         foreach ($messages as $message) {
-            $this->chatMessages = $this->chatMessages->push($message);
+            $this->chatMessages = $this->chatMessages->prepend($message); // Tin nhắn mới lên đầu (đáy visual)
         }
-        
+
         // Reset Livewire state (đồng bộ với frontend)
         $this->newMessage = '';
         $this->selectedImage = null;
@@ -271,12 +273,12 @@ class ChatComponent extends Component
         // Dispatch UI events
         $this->dispatch('message-sent');
         $this->dispatch('scroll-to-bottom');
-        
+
         // Event và Email notification (đã dùng Queue, không block)
         $user = Auth::user();
         event(new UserSentMessage($userName, $template_message_for_notification, $user->id));
         $this->checkAndSendEmailNotification($template_message_for_notification);
-        
+
         // Kiểm tra và gửi tin nhắn chào tự động nếu đã lâu không nhắn
         $this->sendAutoReplyIfNeeded();
     }
@@ -311,8 +313,8 @@ class ChatComponent extends Component
                     // Nếu chat box đóng, tăng số tin nhắn chưa đọc
                     $this->unreadCount++;
                 }
-                
-                $this->chatMessages = $this->chatMessages->push($message);
+
+                $this->chatMessages = $this->chatMessages->prepend($message); // Prepend for index 0 (newest at bottom)
                 $this->dispatch('scroll-to-bottom');
             }
         }
@@ -326,10 +328,10 @@ class ChatComponent extends Component
         $message = Message::find($messageId);
         if ($message && !$message->is_read) {
             $message->update(['is_read' => true]);
-            
+
             // Cập nhật trong $this->chatMessages collection để UI hiển thị đúng
             $this->updateMessageReadStatus($messageId, true);
-            
+
             // Broadcast event để người gửi biết tin nhắn đã được đọc
             broadcast(new MessageRead($message->id, $this->conversation->id))->toOthers();
         }
@@ -340,14 +342,14 @@ class ChatComponent extends Component
         $this->showBox = false;
     }
 
-    public function toggleChatBox()
+    public function toggleBox($isOpen = null)
     {
-        $this->toggleBox();
-    }
+        if ($isOpen !== null) {
+            $this->showBox = $isOpen;
+        } else {
+            $this->showBox = !$this->showBox;
+        }
 
-    public function toggleBox()
-    {
-        $this->showBox = !$this->showBox;
         if ($this->showBox) {
             $user = Auth::user();
             // Broadcast trực tiếp không qua queue để tránh lỗi socket ID
@@ -356,8 +358,6 @@ class ChatComponent extends Component
             $this->markMessagesAsRead();
             // Reset unread count về 0
             $this->unreadCount = 0;
-        }
-        if ($this->showBox) {
             $this->dispatch('scroll-to-bottom');
         }
     }
@@ -371,20 +371,29 @@ class ChatComponent extends Component
             return;
         }
 
-        // Lấy tất cả tin nhắn chưa đọc không phải của mình
-        $unreadMessages = $this->conversation->messages()
+        // Cập nhật tất cả tin nhắn chưa đọc sang đã đọc bằng 1 câu lệnh SQL duy nhất
+        $updatedCount = Message::where('conversation_id', $this->conversation->id)
             ->where('is_read', false)
             ->where('sender_id', '!=', Auth::id())
-            ->get();
+            ->update(['is_read' => true]);
 
-        foreach ($unreadMessages as $message) {
-            $message->update(['is_read' => true]);
-            
-            // Cập nhật trong $this->chatMessages collection để UI hiển thị đúng
-            $this->updateMessageReadStatus($message->id, true);
-            
-            // Broadcast event để người gửi biết tin nhắn đã được đọc
-            broadcast(new MessageRead($message->id, $this->conversation->id))->toOthers();
+        if ($updatedCount > 0) {
+            // Cập nhật trạng thái in-memory collection nếu cần
+            if ($this->chatMessages instanceof Collection) {
+                $this->chatMessages = $this->chatMessages->map(function($msg) {
+                    if (is_array($msg)) {
+                        if ($msg['sender_id'] != Auth::id()) {
+                            $msg['is_read'] = true;
+                        }
+                    } else if (isset($msg->sender_id) && $msg->sender_id != Auth::id()) {
+                        $msg->is_read = true;
+                    }
+                    return $msg;
+                });
+            }
+
+            // Gửi duy nhất 1 broadcast thay vì loop gửi N broadcast
+            broadcast(new \App\Events\ConversationRead($this->conversation->id, Auth::id()))->toOthers();
         }
     }
 
@@ -409,7 +418,7 @@ class ChatComponent extends Component
 
         // Convert to array để modify, sau đó convert lại thành collection
         $messages = $this->chatMessages->toArray();
-        
+
         foreach ($messages as &$message) {
             if (isset($message['id']) && $message['id'] == $messageId) {
                 $message['is_read'] = $isRead;
@@ -417,8 +426,27 @@ class ChatComponent extends Component
             }
         }
         unset($message); // Break reference
-        
+
         $this->chatMessages = collect($messages);
+    }
+
+    public function onConversationRead($data)
+    {
+        if (isset($data['conversation_id']) && $data['conversation_id'] == $this->conversation->id) {
+            // User thấy admin đã xem tin nhắn -> đánh dấu tất cả sang đã xem
+            if ($this->chatMessages instanceof Collection) {
+                $this->chatMessages = $this->chatMessages->map(function ($msg) {
+                    if (is_array($msg)) {
+                        if ($msg['sender_id'] == Auth::id()) {
+                            $msg['is_read'] = true;
+                        }
+                    } else if (isset($msg->sender_id) && $msg->sender_id == Auth::id()) {
+                        $msg->is_read = true;
+                    }
+                    return $msg;
+                });
+            }
+        }
     }
 
     public function scrollToBottom()
@@ -445,12 +473,14 @@ class ChatComponent extends Component
         // Lấy ngôn ngữ hiện tại
         $currentLocale = app()->getLocale();
         $allSuggestions = config('chat.quick_replies.suggestions', []);
-        
+
         // Lấy gợi ý theo ngôn ngữ
         $this->quickReplySuggestions = $allSuggestions[$currentLocale] ?? $allSuggestions['vi'] ?? [];
-        
-        // Kiểm tra có nên hiển thị gợi ý không
-        $this->showQuickReplies = $this->shouldShowQuickReplies();
+
+        // Nếu được gọi từ mount (chưa click manual), kiểm tra điều kiện auto-show
+        if (is_null($this->showQuickReplies) || $this->showQuickReplies === false) {
+            $this->showQuickReplies = $this->shouldShowQuickReplies();
+        }
     }
 
     /**
@@ -458,33 +488,28 @@ class ChatComponent extends Component
      */
     protected function shouldShowQuickReplies()
     {
+        if (!$this->conversation) return false;
+
         $config = config('chat.quick_replies.show_when', []);
-        
-        // Nếu chat trống (chưa có tin nhắn từ user)
-        if ($config['chat_empty'] ?? true) {
-            $userMessageCount = Message::where('conversation_id', $this->conversation->id)
-                ->where('sender_id', Auth::id())
-                ->count();
-            
-            if ($userMessageCount === 0) {
-                return true;
-            }
-        }
-        
-        // Nếu đã lâu không nhắn (X giờ)
-        $afterHours = $config['after_hours'] ?? 2;
+
+        // Lấy tin nhắn cuối của user để check cả 2 điều kiện trong 1 query
         $lastUserMessage = Message::where('conversation_id', $this->conversation->id)
             ->where('sender_id', Auth::id())
-            ->orderBy('created_at', 'desc')
+            ->select('id', 'created_at')
+            ->latest()
             ->first();
-        
-        if ($lastUserMessage) {
-            $hoursSinceLastMessage = $lastUserMessage->created_at->diffInHours(now());
-            if ($hoursSinceLastMessage >= $afterHours) {
-                return true;
-            }
+
+        // 1. Nếu chat trống (chưa có tin nhắn từ user)
+        if (!$lastUserMessage) {
+            return $config['chat_empty'] ?? true;
         }
-        
+
+        // 2. Nếu đã lâu không nhắn (X giờ)
+        $afterHours = $config['after_hours'] ?? 2;
+        if ($lastUserMessage->created_at->diffInHours(now()) >= $afterHours) {
+            return true;
+        }
+
         return false;
     }
 
@@ -496,16 +521,16 @@ class ChatComponent extends Component
         try {
             // Bật loading spinner
             $this->quickReplyLoading = true;
-            
+
             // Xóa emoji và khoảng trắng thừa nếu cần
             $this->newMessage = trim($message);
-            
+
             // Tự động gửi tin nhắn
             $this->sendMessage();
-            
+
             // Ẩn gợi ý sau khi gửi thành công
             $this->showQuickReplies = false;
-            
+
         } catch (\Exception $e) {
             Log::error('Lỗi khi sử dụng quick reply: ' . $e->getMessage());
             $this->addError('quickReply', 'Có lỗi xảy ra, vui lòng thử lại.');
@@ -528,18 +553,10 @@ class ChatComponent extends Component
      */
     public function toggleQuickReplies()
     {
-        if (!config('chat.quick_replies.enabled', true)) {
-            return;
-        }
+        $this->showQuickReplies = !$this->showQuickReplies;
 
-        if ($this->showQuickReplies) {
-            // Đang mở → đóng lại
-            $this->showQuickReplies = false;
-        } else {
-            // Đang đóng → mở ra và load lại gợi ý
+        if ($this->showQuickReplies && empty($this->quickReplySuggestions)) {
             $this->loadQuickReplies();
-            // Luôn hiển thị khi user click vào nút
-            $this->showQuickReplies = true;
         }
     }
 
@@ -556,44 +573,45 @@ class ChatComponent extends Component
 
             // Thời gian timeout (giờ) từ config
             $timeoutHours = config('chat.auto_reply.timeout_hours', 1);
-            
+
             // Lấy tin nhắn gần nhất từ staff trong conversation này
             $lastStaffMessage = Message::where('conversation_id', $this->conversation->id)
                 ->where('sender_id', '!=', Auth::id())
                 ->whereHas('sender', function ($query) {
                     $query->whereIn('role', ['admin', 'staff']);
                 })
+                ->select('id', 'created_at')
                 ->orderBy('created_at', 'desc')
                 ->first();
-            
+
             // Kiểm tra có cần gửi auto-reply không
             $shouldSendAutoReply = false;
-            
+
             if (!$lastStaffMessage) {
                 // Chưa có tin nhắn nào từ staff → gửi auto-reply
                 $shouldSendAutoReply = true;
             } else {
                 // Kiểm tra thời gian tin nhắn cuối từ staff
                 $hoursSinceLastMessage = $lastStaffMessage->created_at->diffInHours(now());
-                
+
                 if ($hoursSinceLastMessage >= $timeoutHours) {
                     $shouldSendAutoReply = true;
                 }
             }
-            
+
             // Gửi tin nhắn chào tự động nếu cần
             if ($shouldSendAutoReply) {
                 // Lấy ngôn ngữ hiện tại của user (từ session hoặc config)
                 $currentLocale = app()->getLocale();
                 $defaultLocale = config('chat.auto_reply.default_language', 'vi');
-                
+
                 // Lấy nội dung tin nhắn theo ngôn ngữ
                 $messages = config('chat.auto_reply.messages', []);
                 $autoReplyMessage = $messages[$currentLocale] ?? $messages[$defaultLocale] ?? $messages['vi'];
-                
+
                 // Lấy staff_id từ conversation để làm người gửi
                 $staffId = $this->conversation->staff_id;
-                
+
                 // Dispatch job để GỬI TIN NHẮN TỰ ĐỘNG SAU 3 GIÂY
                 // Delay để đảm bảo tin nhắn user được INSERT VÀ BROADCAST trước
                 \App\Jobs\SendAutoReplyMessage::dispatch(
@@ -604,7 +622,7 @@ class ChatComponent extends Component
                     $currentLocale,
                     $lastStaffMessage ? $lastStaffMessage->created_at->diffInHours(now()) : null
                 )->delay(now()->addSeconds(3));
-                
+
                 Log::info('Đã đưa tin nhắn chào tự động vào queue', [
                     'conversation_id' => $this->conversation->id,
                     'user_id' => Auth::id(),
@@ -613,7 +631,7 @@ class ChatComponent extends Component
                     'hours_since_last_message' => $lastStaffMessage ? $lastStaffMessage->created_at->diffInHours(now()) : null,
                 ]);
             }
-            
+
         } catch (\Exception $e) {
             // Log lỗi nhưng không làm gián đoạn việc gửi tin nhắn
             Log::error('Lỗi gửi tin nhắn chào tự động: ' . $e->getMessage(), [
@@ -634,47 +652,47 @@ class ChatComponent extends Component
             $currentUser = Auth::user();
             $emailsSent = [];
             $recipients = collect([]);
-            
+
             // 1. Lấy nhân viên mời (referrer) nếu có
             $referrer = null;
             if ($currentUser->referrer_id) {
                 $referrer = User::find($currentUser->referrer_id);
             }
-            
+
             // 2. Lấy admin (người có quyền cao nhất)
             $admin = User::where('role', 'admin')->first();
-            
+
             // LOGIC GỬI EMAIL:
             // - Nếu user CÓ referrer (được nhân viên mời):
             //   + Gửi cho referrer nếu offline
             //   + Gửi cho admin nếu offline (và admin khác referrer)
             // - Nếu user KHÔNG CÓ referrer:
             //   + Chỉ gửi cho admin nếu offline
-            
+
             if ($referrer) {
                 // User được mời bởi nhân viên
-                
+
                 // Gửi cho referrer nếu offline
                 if (!$referrer->isOnline()) {
                     $recipients->push($referrer);
                     $emailsSent[] = "Nhân viên: {$referrer->full_name} ({$referrer->email})";
                 }
-                
+
                 // Gửi cho admin nếu offline và admin khác referrer
                 if ($admin && !$admin->isOnline() && $admin->id !== $referrer->id) {
                     $recipients->push($admin);
                     $emailsSent[] = "Admin: {$admin->full_name} ({$admin->email})";
                 }
-                
+
             } else {
                 // User đăng ký không có ai mời → chỉ gửi cho admin
-                
+
                 if ($admin && !$admin->isOnline()) {
                     $recipients->push($admin);
                     $emailsSent[] = "Admin: {$admin->full_name} ({$admin->email})";
                 }
             }
-            
+
             // Nếu không có ai offline, không gửi email
             if ($recipients->isEmpty()) {
                 Log::info('Tất cả staff/admin đang online, không cần gửi email', [
@@ -684,7 +702,7 @@ class ChatComponent extends Component
                 ]);
                 return;
             }
-            
+
             // Dispatch email jobs vào queue (gửi bất đồng bộ để không block UI)
             foreach ($recipients as $recipient) {
                 SendChatNotificationEmail::dispatch(

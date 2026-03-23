@@ -502,6 +502,10 @@ class OrderController extends Controller
             $delayMinutes = rand(5, 10);
         }
 
+        // Đổi is_frozen = 0 khi đã xác nhận đơn hàng
+        $frozen_order->is_frozen = 0;
+        $frozen_order->save();
+
         try {
             PrepareOrder::dispatch($frozen_order->id)
                 ->delay(now()->addMinutes($delayMinutes));
@@ -514,10 +518,6 @@ class OrderController extends Controller
             // Trong môi trường dev (sync), job sẽ chạy ngay lập tức
             // Trong môi trường production (redis), cần đảm bảo Redis đang chạy
         }
-
-        // Đổi is_frozen = 0 khi đã xác nhận đơn hàng
-        $frozen_order->is_frozen = 0;
-        $frozen_order->save();
 
         // Refresh lại model để đảm bảo có dữ liệu mới nhất
         $frozen_order->refresh();

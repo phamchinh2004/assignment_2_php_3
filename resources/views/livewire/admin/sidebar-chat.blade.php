@@ -44,8 +44,7 @@
                     @endphp
                     <div wire:key="{{ $keyPrefix }}admin-conversation-{{ $conversation->id }}" class="conversation-item d-flex align-items-center p-3 rounded-3 mb-2 position-relative cursor-pointer {{ $bgClass }}"
                         style="cursor: pointer; transition: all 0.3s ease; border: 2px solid {{ $borderColor }};"
-                        wire:click="selectConversation({{ $conversation->id }})"
-                        onclick="showChatLoadingSpinner()">
+                        wire:click="selectConversation({{ $conversation->id }})">
                         <div class="avatar rounded-circle d-flex align-items-center justify-content-center text-white fw-bold me-3 position-relative"
                             style="width: 45px; height: 45px; font-size: 16px;">
                             @if($conversation->user->avatar && Storage::disk('public')->exists($conversation->user->avatar))
@@ -157,8 +156,7 @@
                                         <div wire:key="{{ $keyPrefix }}staff-{{ $staff['id'] }}-user-{{ $user['id'] }}-{{ $staffUsersUpdateKey }}" 
                                             class="conversation-item d-flex align-items-center p-3 rounded-3 mb-2 position-relative cursor-pointer {{ $bgClass }}"
                                             style="cursor: pointer; transition: all 0.3s ease; border: 2px solid {{ $borderColor }};"
-                                            wire:click="selectUserForChat({{ $user['id'] }}, {{ $staff['id'] }})"
-                                            onclick="showChatLoadingSpinner()">
+                                            wire:click="selectUserForChat({{ $user['id'] }}, {{ $staff['id'] }})">
                                             <div class="avatar rounded-circle d-flex align-items-center justify-content-center text-white fw-bold me-3 position-relative"
                                                 style="width: 45px; height: 45px; font-size: 16px;">
                                                 @if($user['avatar'] && Storage::disk('public')->exists($user['avatar']))
@@ -252,8 +250,7 @@
                 @endphp
                 <div wire:key="{{ $keyPrefix }}staff-conversation-{{ $conversation->id }}" class="conversation-item d-flex align-items-center p-3 rounded-3 mb-2 position-relative cursor-pointer {{ $bgClassStaff }}"
                     style="cursor: pointer; transition: all 0.3s ease; border: 2px solid {{ $borderColorStaff }};"
-                    wire:click="selectConversation({{ $conversation->id }})"
-                    onclick="showChatLoadingSpinner()">
+                    wire:click="selectConversation({{ $conversation->id }})">
                     <div class="avatar rounded-circle d-flex align-items-center justify-content-center text-white fw-bold me-3 position-relative"
                         style="width: 45px; height: 45px; font-size: 16px;">
                         @if($conversation->user->avatar && Storage::disk('public')->exists($conversation->user->avatar))

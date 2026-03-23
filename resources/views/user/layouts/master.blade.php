@@ -5,8 +5,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hệ thống</title>
-    <link rel="icon" href="{{ asset('images/logo.png') }}" type="image/x-icon">
-    <link rel="shortcut icon" href="{{ asset('images/logo.png') }}" type="image/x-icon">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <script>
         window.Laravel = {
@@ -14,6 +12,7 @@
         };
     </script>
     @vite(['resources/js/app.js', 'resources/css/app.css'])
+    <link rel="icon" href="data:,">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.css" rel="stylesheet" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet" />
 
@@ -41,7 +40,7 @@
         <footer>
             <div class="footer text-center w-100 m-0 d-flex align-items-center">
                 <a class="cspt footer-item text-dark text-decoration-none" href="{{ route('home') }}">
-                    <img width="16.5px" src="{{ asset('images/footer/home.png') }}" alt="">
+                    <i class="fa-solid fa-house"></i>
                     <div class="fw-bold text-footer">{{__('layout.TrangChu')}}</div>
                 </a>
                 <a class="cspt footer-item text-dark text-decoration-none" href="{{ route('order') }}?tab=tat-ca">
@@ -51,7 +50,7 @@
                 <a href="{{ route('distribution') }}"
                     class="d-flex footer-item justify-content-center align-items-center p-0 cspt text-dark text-decoration-none">
                     <div class="amazon_btn d-flex justify-content-center align-items-center">
-                        <img class="footer-logo" src="{{ asset('images/logo_2_white.webp') }}" alt="">
+                        <i class="fa-solid fa-box-open" style="font-size: 28px; color: white;"></i>
                     </div>
                 </a>
 

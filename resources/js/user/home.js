@@ -56,7 +56,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 lineStyle: "round",
                 hue: {
                     min: 0,
-                    max: 60, // Màu vàng, cam, đỏ cho năm mới
+                    max: 60, // Màu vàng, cam, đỏ cho đại lễ 30/4 - 1/5
                 },
                 delay: {
                     min: 15,
@@ -333,10 +333,10 @@ document.addEventListener("DOMContentLoaded", function () {
             notificationShown = true;
 
             // Bật pháo hoa khi hiển thị thông báo
-            startFireworks();
+            // startFireworks();
 
             // Thêm hiệu ứng âm thanh (tùy chọn)
-            playNotificationSound();
+            // playNotificationSound();
         }
     }
 

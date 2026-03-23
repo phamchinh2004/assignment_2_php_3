@@ -87,8 +87,12 @@ class CompleteOrder implements ShouldQueue
                     'frozen_order_id' => $this->frozenOrderId,
                     'remaining_minutes' => $remainingMinutes
                 ]);
-                CompleteOrder::dispatch($this->frozenOrderId)
-                    ->delay(now()->addMinutes($remainingMinutes));
+                
+                // Nếu đang dùng queue driver sync, không nên dispatch lại để tránh vòng lặp vô tận
+                if (config('queue.default') !== 'sync') {
+                    CompleteOrder::dispatch($this->frozenOrderId)
+                        ->delay(now()->addMinutes($remainingMinutes));
+                }
                 return;
             }
         }

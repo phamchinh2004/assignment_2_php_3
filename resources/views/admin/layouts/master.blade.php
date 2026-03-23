@@ -8,9 +8,8 @@
     <meta name="description" content="">
     <meta name="author" content="">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <link rel="icon" href="{{ asset('images/logo.png') }}" type="image/x-icon">
-    <link rel="shortcut icon" href="{{ asset('images/logo.png') }}" type="image/x-icon">
     <title>@yield('title')</title>
+    <link rel="icon" href="data:,">
 
     <!-- Custom fonts for this template-->
     <link href="{{ asset('theme/admin/vendor/fontawesome-free/css/all.min.css') }}" rel="stylesheet" type="text/css">

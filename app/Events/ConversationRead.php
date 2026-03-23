@@ -10,20 +10,20 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class MessageRead implements ShouldBroadcastNow
+class ConversationRead implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public $messageId;
     public $conversationId;
+    public $userId;
 
     /**
      * Create a new event instance.
      */
-    public function __construct($messageId, $conversationId)
+    public function __construct($conversationId, $userId)
     {
-        $this->messageId = $messageId;
         $this->conversationId = $conversationId;
+        $this->userId = $userId;
     }
 
     /**
@@ -43,7 +43,7 @@ class MessageRead implements ShouldBroadcastNow
      */
     public function broadcastAs(): string
     {
-        return 'MessageRead';
+        return 'ConversationRead';
     }
 
     /**
@@ -51,14 +51,10 @@ class MessageRead implements ShouldBroadcastNow
      */
     public function broadcastWith(): array
     {
-        // Load message từ database để lấy is_read status
-        $message = \App\Models\Message::find($this->messageId);
-
         return [
-            'message_id' => $this->messageId,
-            'is_read' => $message ? ($message->is_read ?? false) : false,
+            'conversation_id' => $this->conversationId,
+            'user_id' => $this->userId,
             'read_at' => now()->toDateTimeString(),
         ];
     }
 }
-
