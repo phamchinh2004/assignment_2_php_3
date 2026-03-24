@@ -523,7 +523,7 @@
                             <div class="message-item d-flex mb-3 {{ $containerClass }}"
                                 wire:key="message-{{ $message['id'] ?? $index }}" style="animation: slideIn 0.3s ease-out;">
                                 <div class="message-bubble rounded-4 px-3 py-2 position-relative {{ $bubbleClass }}"
-                                    style="max-width: 95%; transition: all 0.2s ease; border: 1px solid {{ $isCurrentUser ? 'transparent' : '#e9ecef' }}; overflow-wrap: break-word; word-break: break-word;">
+                                    style="max-width: 80%; transition: all 0.2s ease; border: 1px solid {{ $isCurrentUser ? 'transparent' : '#e9ecef' }}; overflow-wrap: break-word; word-break: break-word;">
 
                                     <!-- Hiển thị tên người gửi và role (chỉ với tin nhắn của người khác) -->
                                     @if(!$isCurrentUser)

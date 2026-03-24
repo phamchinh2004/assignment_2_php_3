@@ -56,7 +56,7 @@
                 <div style="display: flex; flex-direction: column-reverse; width: 100%;">
                     @foreach ($chatMessages as $msg)
                         @php
-                            $isCurrentUser = (is_array($msg) ? $msg['sender_id'] : $msg->sender_id) === auth()->id();
+                            $isCurrentUser = (is_array($msg) ? $msg['sender_id'] : $msg->sender_id) == auth()->id();
                             $message = is_array($msg) ? $msg['message'] : $msg->message;
                             $type = is_array($msg) ? $msg['type'] : $msg->type;
                             $imagePath = is_array($msg) ? $msg['image_path'] : $msg->image_path;

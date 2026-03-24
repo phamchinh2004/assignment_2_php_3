@@ -23,6 +23,8 @@ class Message extends Model
         'is_read' => 'boolean',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
+        'sender_id' => 'integer',
+        'conversation_id' => 'integer',
     ];
 
     /**

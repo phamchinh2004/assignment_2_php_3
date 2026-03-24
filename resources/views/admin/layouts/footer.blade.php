@@ -1,4 +1,4 @@
-<footer class="sticky-footer bg-white">
+<footer class="sticky-footer bg-white" style="display: none;">
     <div class="container my-auto">
         <div class="copyright text-center my-auto">
             <span>Copyright &copy; Đây là trang quản trị được tạo ra bởi thần đồng</span>

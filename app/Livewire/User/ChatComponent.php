@@ -297,7 +297,7 @@ class ChatComponent extends Component
 
         if (
             (int) $message['conversation_id'] === (int) $this->conversation->id &&
-            (int) $message['sender_id'] !== Auth::id()
+            (int) $message['sender_id'] != Auth::id()
         ) {
             if (!$this->chatMessages instanceof Collection) {
                 $this->chatMessages = collect($this->chatMessages);
