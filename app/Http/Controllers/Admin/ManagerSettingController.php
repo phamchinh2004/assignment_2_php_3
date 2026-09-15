@@ -46,14 +46,6 @@ class ManagerSettingController extends Controller
     }
 
     /**
-     * Display the specified resource.
-     */
-    public function show(Manager_setting $manager_setting)
-    {
-        //
-    }
-
-    /**
      * Show the form for editing the specified resource.
      */
     public function edit(Manager_setting $manager_setting)
@@ -73,13 +65,5 @@ class ManagerSettingController extends Controller
         $manager_setting->manager_name = $new_manager_name;
         $manager_setting->save();
         return redirect()->route('manager_setting.index')->with('success', 'Cập nhật chức năng thành công!');
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Manager_setting $manager_setting)
-    {
-        //
     }
 }

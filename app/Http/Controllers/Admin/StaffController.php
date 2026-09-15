@@ -150,15 +150,6 @@ class StaffController extends Controller
         }
         return redirect()->route('staff.index')->with('success', 'Tạo tài khoản nhân viên thành công!');
     }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
     /**
      * Show the form for editing the specified resource.
      */
@@ -202,13 +193,5 @@ class StaffController extends Controller
             }
         }
         return redirect()->route('staff.index')->with('success', 'Cập nhật tài khoản nhân viên thành công!');
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
     }
 }

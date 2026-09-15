@@ -55,14 +55,6 @@ class LanguageController extends Controller
     }
 
     /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
      * Show the form for editing the specified resource.
      */
     public function edit(Language $language)
@@ -96,13 +88,5 @@ class LanguageController extends Controller
         } catch (\Exception $e) {
             return back()->with('error', 'Có lỗi xảy ra: ' . $e->getMessage());
         }
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
     }
 }

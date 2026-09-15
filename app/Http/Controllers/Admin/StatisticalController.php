@@ -12,13 +12,6 @@ use Illuminate\Support\Facades\DB;
 
 class StatisticalController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
-    {
-        //
-    }
     public function tongDoanhThu()
     {
         return view('admin.statistical.tongDoanhThu');
@@ -582,10 +575,6 @@ class StatisticalController extends Controller
             ], 500);
         }
     }
-
-    /**
-     * API xuất Excel báo cáo doanh thu
-     */
 
     /**
      * API lấy biểu đồ doanh thu theo thời gian

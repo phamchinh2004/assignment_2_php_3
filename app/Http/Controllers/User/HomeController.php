@@ -120,10 +120,10 @@ class HomeController extends Controller
         // - Giảm dần theo cấp độ
 
         $base_members = [
-            0 => 12000,  // Gian hàng cấp 1: 12,000 thành viên
-            1 => 21000,   // Gian hàng cấp 2: 6,000 thành viên  
-            2 => 14000,   // Gian hàng cấp 3: 3,000 thành viên
-            3 => 5500,   // Gian hàng cấp 4: 1,500 thành viên
+            0 => 12000,
+            1 => 21000,
+            2 => 14000,
+            3 => 5500,
         ];
 
         // Nếu có nhiều hơn 4 gian hàng, tính toán động
@@ -698,17 +698,6 @@ class HomeController extends Controller
             }
             $transaction_password = request()->input('transaction_password');
             $confirm_transaction_password = request()->input('confirm_transaction_password');
-            // return response()->json([
-            //     'status' => 400,
-            //     'message' => 'Vui lòng nhập đầy đủ thông tin!',
-            //     'data' => [
-            //         'username_bank' => $username_bank,
-            //         'bank_name' => $bank_name,
-            //         'account_number' => $account_number,
-            //         'transaction_password' => $transaction_password,
-            //         'confirm_transaction_password' => $confirm_transaction_password,
-            //     ]
-            // ]);
             if (!$user->transaction_password) {
                 // Kiểm tra đã nhập đầy đủ chưa
                 if (!$transaction_password || !$confirm_transaction_password) {

@@ -767,13 +767,6 @@ class OrderController extends Controller
         
         return $apiString;
     }
-    /**
-     * Display the specified resource.
-     */
-    public function show(Order $order)
-    {
-        //
-    }
 
     /**
      * Show the form for editing the specified resource.
@@ -825,13 +818,5 @@ class OrderController extends Controller
         
         $order->update($data);
         return redirect()->route('order.index')->with('success', 'Cập nhật đơn hàng thành công!');
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Order $order)
-    {
-        //
     }
 }

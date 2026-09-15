@@ -143,12 +143,4 @@ class SectionController extends Controller
             return back()->with('error', 'Lỗi khi cập nhật: ' . $e->getMessage());
         }
     }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Section $section)
-    {
-        //
-    }
 }

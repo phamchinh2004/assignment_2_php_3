@@ -144,44 +144,4 @@ class TransactionHistoryController extends Controller
             return back()->with('success', 'Giao dịch không xác định!');
         }
     }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(StoreTransaction_historyRequest $request)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(Transaction_history $transaction_history)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Transaction_history $transaction_history)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(UpdateTransaction_historyRequest $request, Transaction_history $transaction_history)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Transaction_history $transaction_history)
-    {
-        //
-    }
 }

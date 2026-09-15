@@ -51,14 +51,6 @@ class PartnerController extends Controller
     }
 
     /**
-     * Display the specified resource.
-     */
-    public function show(Partner $partner)
-    {
-        //
-    }
-
-    /**
      * Show the form for editing the specified resource.
      */
     public function edit(Partner $partner)

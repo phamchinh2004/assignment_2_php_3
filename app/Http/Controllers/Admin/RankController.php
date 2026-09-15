@@ -43,14 +43,6 @@ class RankController extends Controller
     }
 
     /**
-     * Display the specified resource.
-     */
-    public function show(Rank $rank)
-    {
-        //
-    }
-
-    /**
      * Show the form for editing the specified resource.
      */
     public function edit(Rank $rank)
@@ -74,13 +66,5 @@ class RankController extends Controller
         }
         $rank->update($data);
         return redirect()->route('rank.index')->with('success', 'Cập nhật cấp độ thành công!');
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Rank $rank)
-    {
-        //
     }
 }
