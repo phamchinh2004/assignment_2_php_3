@@ -138,7 +138,7 @@
                                 <div class="d-flex align-items-end" style="max-width: 90%; min-width: 0;">
                                     <div class="me-2"
                                         style="display: flex; flex-direction: column; align-items: flex-end; min-width: 0; max-width: 100%;">
-                                        <div class="message-bubble text-start" style="background: linear-gradient(135deg, #000000 0%, #000000 100%); color: white; font-size: 13px; line-height: 1.4; word-wrap: break-word; overflow-wrap: break-word; word-break: break-word; white-space: pre-line; display: inline-block; padding: 6px 12px; margin: 0; {{ $type === 'text' ? 'width: fit-content; max-width: 100%;' : 'width: 200px; max-width: 200px;' }} {{ $type === 'text' ? 'border-radius: 16px;' : 'border-radius: 15px;' }}">@if($type === 'image')<img src="{{ Storage::url($imagePath) }}" alt="Sent image"
+                                        <div class="message-bubble text-start" style="background: linear-gradient(135deg, #000000 0%, #000000 100%); color: white; font-size: 13px; line-height: 1.4; word-wrap: break-word; overflow-wrap: break-word; word-break: break-word; white-space: pre-line; display: inline-block; padding: 6px 12px; margin: 0; {{ $type === 'text' ? 'width: fit-content; max-width: 100%;' : 'width: 200px; max-width: 200px;' }} {{ $type === 'text' ? 'border-radius: 16px;' : 'border-radius: 15px;' }}">@if($type === 'image')<img src="{{ Storage::disk('public')->url($imagePath) }}" alt="Sent image"
                                                 class="img-fluid rounded"
                                                 style="width: 100%; max-width: 200px; max-height: 200px; cursor: pointer;"
                                             onclick="openImageModal(this.src)">@else{{ trim($message) }}
@@ -172,7 +172,7 @@
                                     <div class="ms-2"
                                         style="display: flex; flex-direction: column; align-items: flex-start; min-width: 0; max-width: 100%;">
                                         <div class="message-bubble rounded-4 position-relative member-message text-start"
-                                            style="transition: all 0.2s ease; border: 1px solid #e9ecef; display: inline-block; background: white; font-size: 13px; line-height: 1.4; padding: 6px 12px; margin: 0; {{ $type === 'text' ? 'width: fit-content; max-width: 100%;' : 'width: 200px; max-width: 200px;' }} word-wrap: break-word; overflow-wrap: break-word; word-break: break-word; white-space: pre-line; color:black;">@if($type === 'image')<img src="{{ Storage::url($imagePath) }}" alt="Received image"
+                                            style="transition: all 0.2s ease; border: 1px solid #e9ecef; display: inline-block; background: white; font-size: 13px; line-height: 1.4; padding: 6px 12px; margin: 0; {{ $type === 'text' ? 'width: fit-content; max-width: 100%;' : 'width: 200px; max-width: 200px;' }} word-wrap: break-word; overflow-wrap: break-word; word-break: break-word; white-space: pre-line; color:black;">@if($type === 'image')<img src="{{ Storage::disk('public')->url($imagePath) }}" alt="Received image"
                                                 class="img-fluid rounded"
                                                 style="width: 100%; max-width: 200px; max-height: 200px; cursor: pointer;"
                                             onclick="openImageModal(this.src)">@else{{ trim($message) }}@endif</div>
@@ -308,7 +308,7 @@
                     <div class="mb-3 p-2 border rounded" style="background: #f8f9fa;">
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <small class="text-muted">Ảnh được chọn</small>
-                            <button type="button" wire:click="removeImage" class="btn btn-sm btn-outline-danger">
+                            <button type="button" wire:click="removeImage" @click="hasImage = false" class="btn btn-sm btn-outline-danger">
                                 <i class="fa fa-times"></i>
                             </button>
                         </div>
@@ -331,7 +331,7 @@
                         <i class="fa fa-image"></i>
                     </label>
                     <input type="file" wire:model="selectedImage" id="image-upload" accept="image/*"
-                        style="display: none;">
+                        style="display: none;" @change="hasImage = $event.target.files.length > 0">
 
                     <textarea wire:model="newMessage" class="form-control border-0 bg-transparent flex-grow-1"
                         placeholder="{{__('home.NhapTinNhanCuaBan')}}" id="chat-input-field" autocomplete="off" rows="1"

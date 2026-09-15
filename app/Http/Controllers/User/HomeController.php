@@ -459,7 +459,7 @@ class HomeController extends Controller
         $user = Auth::user();
         $rank = Rank::find($user->rank_id);
         if (!$rank) {
-            return redirect()->back()->with('error', 'Bạn chưa được gán cấp bậc. Vui lòng liên hệ quản trị viên.');
+            return redirect()->back()->with('error', 'Bạn chưa có gian hàng. Vui lòng liên hệ quản trị viên.');
         }
         $has_password = $user->transaction_password ? true : false;
 

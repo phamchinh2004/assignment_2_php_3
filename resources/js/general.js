@@ -272,7 +272,7 @@ window.change_password = async function () {
         spinner.hidden = true;
         return;
     }
-    const result = await change_password(present_password, password);
+    const result = await request_change_password(present_password, password, confirmPassword);
     if (result.status === 200) {
         notification('success', result.message, 'Successfully!');
         // Close modal
@@ -293,7 +293,7 @@ window.change_password = async function () {
         spinner.hidden = true;
     }
 }
-function change_password(present_password, new_password) {
+function request_change_password(present_password, new_password, confirm_password) {
     return new Promise((resolve, reject) => {
         $.ajax({
             url: route_change_password,
@@ -302,6 +302,7 @@ function change_password(present_password, new_password) {
                 _token: csrf,
                 present_password: present_password,
                 new_password: new_password,
+                confirm_new_password: confirm_password,
             },
             success: function (response) {
                 if (response.success == false) {

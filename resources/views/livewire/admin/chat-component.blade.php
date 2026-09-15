@@ -552,7 +552,7 @@
                                     <!-- Nội dung tin nhắn -->
                                     @if(isset($message['image_path']) && $message['image_path'])
                                         <div class="mb-2 panzoom-parent">
-                                            <img src="{{ asset('storage/' . $message['image_path']) }}" alt="Ảnh"
+                                            <img src="{{ Storage::disk('public')->url($message['image_path']) }}" alt="Ảnh"
                                                 class="img-fluid rounded zoomable-image" style="max-height: 200px; cursor: pointer;">
                                         </div>
                                     @elseif($message['message'])

@@ -801,7 +801,7 @@
             </div>
         </div>
         <!-- Notification Modal -->
-        <div class="modal fade" id="notificationModal" tabindex="-1" aria-labelledby="notificationModalLabel" aria-hidden="true"
+        <!-- <div class="modal fade" id="notificationModal" tabindex="-1" aria-labelledby="notificationModalLabel" aria-hidden="true"
             data-bs-backdrop="static" data-bs-keyboard="false">
             <div class="modal-dialog modal-dialog-centered modal-lg">
                 <div class="modal-content notification-board">
@@ -844,7 +844,7 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </div> -->
         <!-- Liên kết ngân hàng -->
         <input type="text" hidden value="{{ Auth::user()->username_bank ?: "" }}" id="username_bank_input">
         <div class="modal fade" id="bankLinkModal" tabindex="-1" aria-labelledby="bankLinkModalLabel" aria-hidden="true">

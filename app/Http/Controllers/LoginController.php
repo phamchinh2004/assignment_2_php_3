@@ -44,7 +44,9 @@ class LoginController extends Controller
         ]);
         $get_user_from_username = User::where('username', $request->username)->first();
         if (!$get_user_from_username) {
-            return back()->with('error', 'Sai tên đăng nhập hoặc mật khẩu!');
+            return back()
+                ->withInput($request->except('password'))
+                ->with('error', 'Sai tên đăng nhập hoặc mật khẩu!');
         } else {
             if (Auth::attempt($credentials, $request->boolean('remember_password'))) {
                 if ($get_user_from_username->status == "activated") {
@@ -69,7 +71,9 @@ class LoginController extends Controller
                 Auth::logout();
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();
-                return back()->with('error', 'Mật khẩu không chính xác!');
+                return back()
+                    ->withInput($request->except('password'))
+                    ->with('error', 'Mật khẩu không chính xác!');
             }
         }
     }
@@ -141,10 +145,23 @@ class LoginController extends Controller
         $request->session()->regenerateToken();
         return redirect()->route('login')->with('warning', 'Bạn đã bị khóa tài khoản!');
     }
-    public function change_password()
+    public function change_password(Request $request)
     {
-        $present_password = request()->input('present_password');
-        $new_password = request()->input('new_password');
+        $validated = $request->validate([
+            'present_password' => ['required', 'string'],
+            'new_password' => ['required', 'string', 'min:6', 'max:255'],
+            'confirm_new_password' => ['required', 'same:new_password'],
+        ], [
+            'present_password.required' => 'Vui lòng nhập mật khẩu hiện tại!',
+            'new_password.required' => 'Vui lòng nhập mật khẩu mới!',
+            'new_password.min' => 'Mật khẩu mới phải có ít nhất 6 ký tự!',
+            'new_password.max' => 'Mật khẩu mới không được vượt quá 255 ký tự!',
+            'confirm_new_password.required' => 'Vui lòng xác nhận mật khẩu mới!',
+            'confirm_new_password.same' => 'Mật khẩu mới không khớp!',
+        ]);
+
+        $present_password = $validated['present_password'];
+        $new_password = $validated['new_password'];
         if (Hash::check($present_password, Auth::user()->password)) {
             $user = User::find(Auth::user()->id);
             if ($user) {
@@ -242,7 +259,7 @@ class LoginController extends Controller
         ]);
 
         $email = $validated['email'];
-        $newPassword = Str::random(8);
+        $newPassword = random_int(100000, 999999);
         $user = User::where('email', $email)->first();
         $user->password = Hash::make($newPassword);
         $user->save();

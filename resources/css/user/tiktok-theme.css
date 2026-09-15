@@ -209,15 +209,6 @@ textarea {
     border-color: var(--tt-line);
 }
 
-.modal-content .form-control,
-.modal-content .form-select,
-.modal-content input,
-.modal-content select,
-.modal-content textarea {
-    background-color: #27272a;
-    color: #fff;
-}
-
 .btn-dark {
     background: #fff !important;
     border-color: #fff !important;
@@ -881,7 +872,7 @@ textarea:focus {
     color: #fff !important;
 } */
 
-.normal-title,
+/* .normal-title,
 .normal-message,
 .celebration-message,
 .congratulations-text,
@@ -896,7 +887,7 @@ textarea:focus {
 .modal-title,
 .form-label {
     color: #fff !important;
-}
+} */
 
 .summary-value,
 .summary-value-total,
