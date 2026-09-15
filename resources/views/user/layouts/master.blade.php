@@ -13,7 +13,6 @@
     </script>
     @vite(['resources/js/app.js', 'resources/css/app.css'])
     <link rel="icon" href="data:,">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.css" rel="stylesheet" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet" />
 
     @vite('resources/css/user.css')
@@ -21,6 +20,7 @@
     @vite('resources/css/user/notification.css')
     @vite('resources/css/floating-chat.css')
     @yield('css-libs')
+    @vite('resources/css/user/tiktok-theme.css')
     @livewireStyles
     <style>
         /* Smooth scroll for better UX */
@@ -50,7 +50,7 @@
                 <a href="{{ route('distribution') }}"
                     class="d-flex footer-item justify-content-center align-items-center p-0 cspt text-dark text-decoration-none">
                     <div class="amazon_btn d-flex justify-content-center align-items-center">
-                        <i class="fa-solid fa-box-open" style="font-size: 28px; color: white;"></i>
+                        <img class="footer-logo" src="{{ asset('images/home/section-4.1.png') }}" alt="Trang phân phối">
                     </div>
                 </a>
 
@@ -207,7 +207,6 @@
         crossorigin="anonymous"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.js.map"></script>
     @vite('resources/js/general.js')
     @vite('resources/js/user/footer-active.js')
 
@@ -279,7 +278,7 @@
             // ===== HỆ THỐNG NOTIFICATION =====
 
             // Function phát âm thanh notification
-            function playNotificationSound(soundFile = 'notification.mp3') {
+            function playNotificationSound(soundFile = 'notification_fb.mp3') {
                 try {
                     // Tạo audio element mới mỗi lần để tránh conflict
                     const audio = new Audio('/audio/' + soundFile);

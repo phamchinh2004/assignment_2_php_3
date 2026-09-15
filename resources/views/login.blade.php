@@ -4,11 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- <link rel="stylesheet" href="{{ asset('css/general.css') }}"> -->
     @vite ('resources/css/general.css')
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css">
 
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.css" rel="stylesheet" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet" />
     <title>Login</title>
     <style>
@@ -23,25 +21,27 @@
     <div class="background-overlay">
         <div class="background-blur"></div>
     </div>
-    <div class="d-flex flex-column align-items-center">
-        <!-- Nội dung đăng nhập -->
-        <div class="mt-5 pt-4 text-center">
-            <h2 class="text-white fw-bold">Cung Ứng <span class="text-warning">Toàn Cầu</span> 🌎 - Global Logistics
-            </h2>
-        </div>
-        <div class="title_gereral d-flex justify-content-center align-items-center">
-            <a class="fw-bold me-5 text-white cspt title-login">Đăng Nhập</a>
-            <a href="register" class="text-white cspt">Đăng Ký</a>
-        </div>
-        <form class="d-flex flex-column mt-4" id="form_login" method="post" action="{{ route('login_done') }}">
+    <main class="auth-page">
+        <section class="auth-card">
+            <img class="auth-brand-logo auth-logo" src="{{ asset('images/login_and_register/tiktok-shop.webp') }}"
+                alt="Cung Ứng Toàn Cầu - Global Logistics">
+            <nav class="auth-tabs" aria-label="Điều hướng tài khoản">
+                <a class="active" href="{{ route('login') }}">Đăng nhập</a>
+                <a href="{{ route('register') }}">Đăng ký</a>
+            </nav>
+            <div class="auth-heading">
+                <h1 class="auth-title">Chào mừng trở lại</h1>
+                <p class="auth-subtitle">Đăng nhập để tiếp tục quản lý tài khoản của bạn</p>
+            </div>
+        <form id="form_login" method="post" action="{{ route('login_done') }}">
             @csrf
             @method('POST')
-            <div>
-                <label for="" class="text-white">Tên đăng nhập</label>
-                <div class="position-relative w-auto">
-                    <i class="fa-solid fa-user position-absolute icon-input" style="top: 50%;"></i>
-                    <input class="form-control input-text" id="username_login" value="{{ old('username', "") }}"
-                        name="username" type="text" placeholder="Nhập tên tài khoản">
+            <div class="auth-field">
+                <label for="username_login" class="auth-label">Tên đăng nhập</label>
+                <div class="auth-input-wrap">
+                    <i class="fa-solid fa-user auth-input-icon" aria-hidden="true"></i>
+                    <input class="form-control auth-input" id="username_login" value="{{ old('username', "") }}"
+                        name="username" type="text" placeholder="Nhập tên tài khoản" autocomplete="username">
                 </div>
                 @error('username')
                     <span class="invalid-feedback">
@@ -49,14 +49,14 @@
                     </span>
                 @enderror
             </div>
-            <div class="mt-3">
-                <label for="" class="text-white">Mật khẩu</label>
-                <div class="position-relative w-auto">
-                    <i class="fa-solid fa-lock position-absolute icon-input"></i>
-                    <input class="form-control input-text" id="password_login" name="password"
-                        value="{{ old('password', "") }}" type="password" placeholder="Nhập mật khẩu">
-                    <i class="fa-regular fa-eye position-absolute cspt" id="show_password_login"></i>
-                    <i hidden class="fa-regular fa-eye-slash position-absolute cspt" id="hide_password_login"></i>
+            <div class="auth-field">
+                <label for="password_login" class="auth-label">Mật khẩu</label>
+                <div class="auth-input-wrap">
+                    <i class="fa-solid fa-lock auth-input-icon" aria-hidden="true"></i>
+                    <input class="form-control auth-input" id="password_login" name="password"
+                        value="{{ old('password', "") }}" type="password" placeholder="Nhập mật khẩu" autocomplete="current-password">
+                    <i class="fa-regular fa-eye auth-password-toggle cspt" id="show_password_login"></i>
+                    <i hidden class="fa-regular fa-eye-slash auth-password-toggle cspt" id="hide_password_login"></i>
                 </div>
                 @error('password')
                     <span class="invalid-feedback">
@@ -64,30 +64,29 @@
                     </span>
                 @enderror
             </div>
-            <div class="mt-3 d-flex justify-content-between align-items-center">
+            <div class="auth-helper d-flex justify-content-between align-items-center mt-2">
                 <div class="form-check">
-                    <input class="form-check-input p-2" name="remember_password" {{ old('remember_password') ? 'checked' : '' }} type="checkbox" value="" id="remember_password">
-                    <label class="form-check-label text-white" id="label_remember_password" for="remember_password">
+                    <input class="form-check-input p-2" name="remember_password" {{ old('remember_password') ? 'checked' : '' }} type="checkbox" value="1" id="remember_password">
+                    <label class="form-check-label" id="label_remember_password" for="remember_password">
                         Nhớ mật khẩu
                     </label>
                 </div>
-                <a href="{{ route('forgot_password') }}" class="text-white text-decoration-underline cspt"
+                <a href="{{ route('forgot_password') }}" class="cspt"
                     id="label_forgot_password">Quên mật khẩu?</a>
             </div>
-            <div class="mt-3 d-flex justify-content-center">
-                <button class="btn btn-warning fw-bold text-white w-100" id="login" type="button">Đăng nhập</button>
+            <div class="d-grid mt-4">
+                <button class="btn auth-submit" id="login" type="button">Đăng nhập <i class="fa-solid fa-arrow-right ms-2"></i></button>
             </div>
         </form>
-        <div class="mt-3">
-            <span class="text-white">Bạn chưa có tài khoản? <a href="register"
-                    class="fw-bold text-warning cspt text-decoration-underline">Đăng ký</a> ngay!</span>
+        <div class="auth-switch text-center mt-4">
+            Bạn chưa có tài khoản? <a href="{{ route('register') }}">Đăng ký ngay</a>
         </div>
-        <div class="mt-3 w-auto d-flex flex-row justify-content-center align-items-center">
-            <img width="40px" class="me-3 cspt" src="{{ asset('images/login_and_register/fb-logo.png') }}" alt="">
-            <img width="45px" class="cspt" src="{{ asset('images/login_and_register/gg-logo.png') }}" alt="">
+        <div class="auth-social">
+            <img class="cspt" src="{{ asset('images/login_and_register/fb-logo.png') }}" alt="Facebook">
+            <img class="cspt" src="{{ asset('images/login_and_register/gg-logo.png') }}" alt="Google">
         </div>
-
-    </div>
+        </section>
+    </main>
     <!-- SPINNER -->
     <div class="absolute-spinner" id="spinner" hidden>
         <div class="lds-spinner">
@@ -112,7 +111,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.js.map"></script>
     <script>
         const route_check_username = "{{ route('check_username') }}";
         const csrf = "{{ csrf_token() }}";

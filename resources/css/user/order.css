@@ -7,7 +7,7 @@
 
 /* ======================= HEADER SECTION ======================= */
 .order-header-wrapper {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #000000 0%, #000000 100%);
     padding: 32px 20px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
@@ -235,7 +235,7 @@
 }
 
 .tab-btn:has(.active-tab) {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #000000 0%, #000000 100%);
     border-color: #667eea;
     box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
 }
@@ -279,7 +279,7 @@
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(90deg, #667eea, #764ba2);
+    background: linear-gradient(90deg, #000000, #000000);
     opacity: 0;
     transition: opacity 0.3s ease;
 }

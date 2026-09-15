@@ -27,7 +27,7 @@ return [
     "TongRutTien" => "Tổng rút tiền",
     
     // Chart
-    "BieuDoSoDu" => "Biểu đồ số dư",
+    "BieuDoBienDongDongTien" => "Biểu đồ biến động dòng tiền",
     "TatCa" => "Tất cả",
     "Ngay" => "ngày",
     

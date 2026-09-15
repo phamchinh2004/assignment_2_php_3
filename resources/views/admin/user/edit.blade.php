@@ -4,15 +4,11 @@ Chỉnh sửa người dùng
 @endsection
 
 @section('style-libs')
-<link href="{{ asset('theme/admin/vendor/datatables/dataTables.bootstrap4.min.css') }}" rel="stylesheet">
 @vite('resources/css/admin/user/edit.css')
 @endsection
 
 @section('script-libs')
-<script src="{{ asset('theme/admin/vendor/datatables/jquery.dataTables.min.js') }}"></script>
-<script src="{{ asset('theme/admin/vendor/datatables/dataTables.bootstrap4.min.js') }}"></script>
 @vite('resources/js/admin/user/edit.js')
-<script src="{{ asset('theme/admin/js/demo/datatables-demo.js') }}"></script>
 <script>
     window.currentPermissionCode = "quan_ly_tat_ca_nguoi_dung";
 </script>

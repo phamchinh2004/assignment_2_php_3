@@ -57,7 +57,7 @@
             </div>
             <div class="stat-content">
                 <div class="stat-label">{{__('balance_fluctuation.SoDuHienTai')}}</div>
-                <div class="stat-value">${{ number_format($stats['current_balance'], 2) }}</div>
+                <div class="stat-value text-white">${{ number_format($stats['current_balance'], 2) }}</div>
             </div>
         </div>
         
@@ -90,7 +90,7 @@
             </div>
             <div class="stat-content">
                 <div class="stat-label">Số đơn hàng đã hoàn thành</div>
-                <div class="stat-value">{{ number_format($stats['completed_orders_count']) }}</div>
+                <div class="stat-value text-white">{{ number_format($stats['completed_orders_count']) }}</div>
             </div>
         </div>
     </div>
@@ -100,7 +100,7 @@
         <div class="chart-header">
             <h4 class="chart-title">
                 <i class="fa-solid fa-chart-line me-2"></i>
-                {{__('balance_fluctuation.BieuDoSoDu')}}
+                {{__('balance_fluctuation.BieuDoBienDongDongTien')}}
             </h4>
             <div class="time-filter">
                 <button class="filter-btn active" data-period="all">
@@ -139,7 +139,7 @@
                     <i class="fa-solid {{ $item->type === 'profit' ? 'fa-arrow-up' : 'fa-arrow-down' }}"></i>
                 </div>
                 <div class="transaction-info">
-                    <div class="transaction-type">
+                    <div class="transaction-type text-white">
                         @if($item->type === 'profit')
                             {{__('balance_fluctuation.LoiNhuan')}}
                         @elseif($item->type === 'order')

@@ -1,8 +1,71 @@
 <div id="chat-root">
-    <div class="floating-chat-container" x-data="{ isOpen: @entangle('showBox'), isLoading: false, showQuick: @entangle('showQuickReplies') }">
+    <div class="floating-chat-container" x-data="{
+        isOpen: @entangle('showBox'),
+        isLoading: false,
+        showQuick: @entangle('showQuickReplies'),
+        dragging: false,
+        moved: false,
+        offsetX: 0,
+        offsetY: 0,
+        startDrag(event) {
+            if (event.button !== undefined && event.button !== 0) return;
+            const rect = $el.getBoundingClientRect();
+            this.dragging = true;
+            this.moved = false;
+            this.offsetX = event.clientX - rect.left;
+            this.offsetY = event.clientY - rect.top;
+            $el.classList.add('is-dragging');
+            event.currentTarget.setPointerCapture?.(event.pointerId);
+        },
+        drag(event) {
+            if (!this.dragging) return;
+            this.moved = true;
+            const maxLeft = window.innerWidth - $el.offsetWidth;
+            const maxTop = window.innerHeight - $el.offsetHeight;
+            $el.style.setProperty('left', `${Math.max(0, Math.min(event.clientX - this.offsetX, maxLeft))}px`, 'important');
+            $el.style.setProperty('top', `${Math.max(0, Math.min(event.clientY - this.offsetY, maxTop))}px`, 'important');
+            $el.style.setProperty('right', 'auto', 'important');
+            $el.style.setProperty('bottom', 'auto', 'important');
+        },
+        endDrag() {
+            if (!this.dragging) return;
+            this.dragging = false;
+            $el.classList.remove('is-dragging');
+            const rect = $el.getBoundingClientRect();
+            const edgeInset = 16;
+            const left = rect.left + rect.width / 2 < window.innerWidth / 2
+                ? edgeInset
+                : window.innerWidth - rect.width - edgeInset;
+            const top = Math.max(edgeInset, Math.min(rect.top, window.innerHeight - rect.height - edgeInset));
+            $el.style.setProperty('left', `${left}px`, 'important');
+            $el.style.setProperty('top', `${top}px`, 'important');
+            $el.style.setProperty('right', 'auto', 'important');
+            $el.style.setProperty('bottom', 'auto', 'important');
+            localStorage.setItem('chatBubblePosition', JSON.stringify({ left, top }));
+            setTimeout(() => { this.moved = false; }, 0);
+        },
+        suppressClick(event) {
+            if (this.moved) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+        },
+        restorePosition() {
+            const saved = JSON.parse(localStorage.getItem('chatBubblePosition') || 'null');
+            if (!saved) return;
+            const edgeInset = 16;
+            const maxLeft = window.innerWidth - $el.offsetWidth - edgeInset;
+            const maxTop = window.innerHeight - $el.offsetHeight - edgeInset;
+            $el.style.setProperty('left', `${Math.max(edgeInset, Math.min(saved.left, maxLeft))}px`, 'important');
+            $el.style.setProperty('top', `${Math.max(edgeInset, Math.min(saved.top, maxTop))}px`, 'important');
+            $el.style.setProperty('right', 'auto', 'important');
+            $el.style.setProperty('bottom', 'auto', 'important');
+        }
+    }" x-init="restorePosition()" @pointermove.window="drag($event)" @pointerup.window="endDrag()">
         <!-- Floating Chat Button -->
         <button class="floating-chat-button"
-            @click="isOpen = true; $wire.call('toggleBox', true)"
+            @pointerdown="startDrag($event)"
+            @click="suppressClick($event); if (!moved) { isOpen = true; $wire.call('toggleBox', true) }"
             x-show="!isOpen" type="button">
             <span x-show="!isLoading">
                 <i class="fa-solid fa-comments"></i>
@@ -21,7 +84,7 @@
 
             <!-- Header với gradient -->
             <div class="p-3 d-flex justify-content-between align-items-center"
-                style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                style="background: linear-gradient(135deg, #000000 0%, #000000 100%); color: white;">
                 <div class="d-flex align-items-center">
                     <div class="position-relative">
                         <img src="https://ui-avatars.com/api/?name=Support&background=ffffff&color=667eea&size=32&rounded=true&bold=true"
@@ -75,7 +138,7 @@
                                 <div class="d-flex align-items-end" style="max-width: 90%; min-width: 0;">
                                     <div class="me-2"
                                         style="display: flex; flex-direction: column; align-items: flex-end; min-width: 0; max-width: 100%;">
-                                        <div class="message-bubble text-start" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-size: 13px; line-height: 1.4; word-wrap: break-word; overflow-wrap: break-word; word-break: break-word; white-space: pre-line; display: inline-block; padding: 6px 12px; margin: 0; {{ $type === 'text' ? 'width: fit-content; max-width: 100%;' : 'width: 200px; max-width: 200px;' }} {{ $type === 'text' ? 'border-radius: 16px;' : 'border-radius: 15px;' }}">@if($type === 'image')<img src="{{ Storage::url($imagePath) }}" alt="Sent image"
+                                        <div class="message-bubble text-start" style="background: linear-gradient(135deg, #000000 0%, #000000 100%); color: white; font-size: 13px; line-height: 1.4; word-wrap: break-word; overflow-wrap: break-word; word-break: break-word; white-space: pre-line; display: inline-block; padding: 6px 12px; margin: 0; {{ $type === 'text' ? 'width: fit-content; max-width: 100%;' : 'width: 200px; max-width: 200px;' }} {{ $type === 'text' ? 'border-radius: 16px;' : 'border-radius: 15px;' }}">@if($type === 'image')<img src="{{ Storage::url($imagePath) }}" alt="Sent image"
                                                 class="img-fluid rounded"
                                                 style="width: 100%; max-width: 200px; max-height: 200px; cursor: pointer;"
                                             onclick="openImageModal(this.src)">@else{{ trim($message) }}
@@ -109,7 +172,7 @@
                                     <div class="ms-2"
                                         style="display: flex; flex-direction: column; align-items: flex-start; min-width: 0; max-width: 100%;">
                                         <div class="message-bubble rounded-4 position-relative member-message text-start"
-                                            style="transition: all 0.2s ease; border: 1px solid #e9ecef; display: inline-block; background: white; font-size: 13px; line-height: 1.4; padding: 6px 12px; margin: 0; {{ $type === 'text' ? 'width: fit-content; max-width: 100%;' : 'width: 200px; max-width: 200px;' }} word-wrap: break-word; overflow-wrap: break-word; word-break: break-word; white-space: pre-line;">@if($type === 'image')<img src="{{ Storage::url($imagePath) }}" alt="Received image"
+                                            style="transition: all 0.2s ease; border: 1px solid #e9ecef; display: inline-block; background: white; font-size: 13px; line-height: 1.4; padding: 6px 12px; margin: 0; {{ $type === 'text' ? 'width: fit-content; max-width: 100%;' : 'width: 200px; max-width: 200px;' }} word-wrap: break-word; overflow-wrap: break-word; word-break: break-word; white-space: pre-line; color:black;">@if($type === 'image')<img src="{{ Storage::url($imagePath) }}" alt="Received image"
                                                 class="img-fluid rounded"
                                                 style="width: 100%; max-width: 200px; max-height: 200px; cursor: pointer;"
                                             onclick="openImageModal(this.src)">@else{{ trim($message) }}@endif</div>
@@ -125,7 +188,7 @@
                     <!-- Nút load more messages: Đặt sau foreach để lật lên đỉnh -->
                     @if($hasMoreMessages)
                         <div class="text-center py-2 mb-2" wire:loading.remove wire:target="loadMoreMessages">
-                            <button onclick="loadMoreMessagesManual()" class="btn btn-sm btn-outline-primary rounded-pill">
+                            <button onclick="loadMoreMessagesManual()" class="btn btn-sm btn-outline-dark rounded-pill">
                                 <i class="fa fa-chevron-up me-1"></i>
                                 {{__('home.TaiTinNhanCuHon')}}
                             </button>
@@ -172,7 +235,7 @@
                                                                min-width: fit-content;" x-bind:disabled="loadingIndex !== null"
                                 x-bind:style="loadingIndex !== null && loadingIndex !== {{ $index }} ? 'opacity: 0.5; cursor: not-allowed;' : ''"
                                 onmouseover="if (!this.disabled) {
-                                                                        this.style.background='linear-gradient(135deg, #667eea 0%, #764ba2 100%)'; 
+                                                                        this.style.background='linear-gradient(135deg, #000000 0%, #000000 100%)'; 
                                                                         this.style.color='white'; 
                                                                         this.style.borderColor='transparent';
                                                                      }" onmouseout="if (!this.disabled) {
@@ -195,15 +258,15 @@
                 <div class="text-center" style="background: #f8f9fa; border-top: 1px solid #e9ecef; line-height: 1;">
                     <button type="button"
                         @click="showQuick = !showQuick"
-                        class="btn btn-link p-0 m-0" style="color: {{ $showQuickReplies ? '#667eea' : '#adb5bd' }};
+                        class="btn btn-link p-0 m-0" style="color: {{ $showQuickReplies ? '#000000' : '#adb5bd' }};
                                            font-size: 14px;
                                            line-height: 1;
                                            padding: 2px 10px;
                                            transition: all 0.2s ease;
                                            text-decoration: none;
                                            display: inline-block;"
-                        onmouseover="this.style.color='#667eea'; this.style.transform='scale(1.2)';"
-                        onmouseout="this.style.color='{{ $showQuickReplies ? '#667eea' : '#adb5bd' }}'; this.style.transform='scale(1)';"
+                        onmouseover="this.style.color='#000000'; this.style.transform='scale(1.2)';"
+                        onmouseout="this.style.color='{{ $showQuickReplies ? '#000000' : '#adb5bd' }}'; this.style.transform='scale(1)';"
                         title="{{ $showQuickReplies ? '▼ Ẩn gợi ý tin nhắn' : '▲ Hiển thị gợi ý tin nhắn' }}">
                         <i class="fa fa-chevron-{{ $showQuickReplies ? 'down' : 'up' }}"></i>
                     </button>
@@ -264,7 +327,7 @@
                     </div>
                     <label for="image-upload" class="btn btn-link p-0 me-2 d-flex align-items-center justify-content-center" wire:loading.remove
                         wire:target="selectedImage"
-                        style="color: #667eea; font-size: 20px; cursor: pointer; flex-shrink: 0; width: 30px; height: 30px;">
+                        style="color: #000000; font-size: 20px; cursor: pointer; flex-shrink: 0; width: 30px; height: 30px;">
                         <i class="fa fa-image"></i>
                     </label>
                     <input type="file" wire:model="selectedImage" id="image-upload" accept="image/*"
@@ -293,7 +356,7 @@
                     "></textarea>
 
                     <button type="submit" class="btn btn-link p-0 ms-2 d-flex align-items-center justify-content-center"
-                        style="color: #667eea; font-size: 20px; flex-shrink: 0; width: 30px; height: 30px;" x-bind:disabled="formSending">
+                        style="color: #000000; font-size: 20px; flex-shrink: 0; width: 30px; height: 30px;" x-bind:disabled="formSending">
                         <i class="fa fa-paper-plane" x-show="!formSending"></i>
                         <i class="fa fa-spinner fa-spin" x-show="formSending" style="display: none;"></i>
                     </button>
@@ -405,7 +468,6 @@
         if (conversationId && window.Echo) {
             window.Echo.private(`chat.conversation.${conversationId}`)
                 .listen('.MessageSent', (e) => {
-                    // console.log('New message at User:', e.message);
                     const message = e.message;
 
                     // CHỈ phát âm thanh và xử lý khi NHẬN tin nhắn (không phải tin nhắn của mình)
@@ -419,7 +481,6 @@
                     }
                 })
                 .listen('.MessageRead', (e) => {
-                    // console.log('Message read:', e);
 
                     // Update Livewire property để giữ trạng thái khi re-render
                     const root = document.getElementById('chat-root');
@@ -439,7 +500,6 @@
                     }
                 })
                 .listen('.ConversationRead', (e) => {
-                    // console.log('Conversation all read:', e);
                     
                     // Update Livewire backend
                     const root = document.getElementById('chat-root');
@@ -458,6 +518,21 @@
                             icon.title = 'Đã xem';
                         }
                     });
+                })
+                .listen('.MessageUpdated', (e) => {
+                    const root = document.getElementById('chat-root');
+                    const component = Livewire.find(root.getAttribute('wire:id'));
+                    component.call('onMessageUpdated', e);
+                })
+                .listen('.MessageDeleted', (e) => {
+                    const root = document.getElementById('chat-root');
+                    const component = Livewire.find(root.getAttribute('wire:id'));
+                    component.call('onMessageDeleted', e);
+                })
+                .listen('.ConversationCleared', (e) => {
+                    const root = document.getElementById('chat-root');
+                    const component = Livewire.find(root.getAttribute('wire:id'));
+                    component.call('onConversationCleared', e);
                 })
                 .error((error) => {
                     console.error('Echo error:', error);

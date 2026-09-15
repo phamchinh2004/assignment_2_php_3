@@ -345,7 +345,7 @@
                                 </div>
                                 <div x-show="quickMsgOpen" x-transition class="flex-column gap-1" style="display: flex;">
                                     @php
-                                        $quickMessage5 = "VIB : 071679952" . PHP_EOL . "PHAM VAN HIEU";
+                                        $quickMessage5 = "VIB : 0987654321" . PHP_EOL . "PHAM VAN A";
                                         $quickMessage6 = "Sau khi giao dịch thành công, bạn vui lòng cung cấp hình ảnh để xác minh. Hiệu lực trong vòng 30 phút tính từ lúc cung cấp tài khoản ngân hàng. Xin Cảm Ơn!";
                                     @endphp
 
@@ -783,7 +783,7 @@
     // Notification Sound Function
     function playNotificationSound() {
         try {
-            const audio = new Audio('/audio/notification.mp3');
+            const audio = new Audio('/audio/notification_fb.mp3');
             audio.volume = 0.5;
             audio.play().catch(error => {
                 console.log('Không thể phát âm thanh thông báo:', error);
@@ -798,39 +798,16 @@
     document.addEventListener('livewire:initialized', () => {
         // Kiểm tra nếu đã khởi tạo rồi thì bỏ qua
         if (window.chatComponentInitialized) {
-            console.log('⚠️ Chat component đã được khởi tạo rồi, bỏ qua');
             return;
         }
         window.chatComponentInitialized = true;
-        console.log('✅ Khởi tạo chat component');
-
-        // Hàm scroll to bottom KHÔNG CÒN CẦN THIẾT nhờ CSS column-reverse!
-        // Vẫn giữ tên hàm nhưng không thực thi việc scroll xuống đáy nữa.
-        function scrollToBottom() {
-            // Do nothing, CSS takes care of it natively
-        }
-
-        // Reset any necessary state when conversation is selected if needed
-        Livewire.on('conversation-selected', () => {
-            // ...
-        });
-
-        // Listen to scroll-to-bottom event
-        Livewire.on('scroll-to-bottom', () => {
-            // Do nothing natively
-        });
 
         // Listen to chat notification event (clickable notification)
         Livewire.on('chat-notification', (data) => {
-            console.log('🔔 Frontend received chat-notification event:', data);
-
             const eventData = Array.isArray(data) ? data[0] : data;
             const { conversationId, userId, staffId, senderName, message } = eventData;
 
-            console.log('📱 Hiển thị toastr cho conversation:', conversationId);
-
             // Phát âm thanh thông báo
-            console.log('🔊 Phát âm thanh thông báo');
             playNotificationSound();
 
             // Hiển thị notification bằng toastr có thể click
@@ -908,26 +885,16 @@
 
             window.Echo.private(staffChannel)
                 .listen('.MessageSent', (e) => {
-                    console.log('👤 Staff channel - New message:', e.message.id, 'sender:', e.message.sender_id);
-
                     const root = document.getElementById('chat-root');
                     const component = Livewire.find(root.getAttribute('wire:id'));
 
                     // Lấy selectedConversationId từ component
                     const selectedConversationId = component.get('selectedConversationId');
 
-                    console.log('🔍 Staff channel checking:', {
-                        messageConversationId: e.message.conversation_id,
-                        selectedConversationId: selectedConversationId,
-                        isCurrentConversation: selectedConversationId && selectedConversationId == e.message.conversation_id,
-                        isMyMessage: e.message.sender_id === currentUserId
-                    });
-
                     // Nếu tin nhắn thuộc conversation đang focus
                     // → KHÔNG làm gì cả, để conversation channel xử lý toàn bộ
                     // → (thêm tin nhắn, scroll, đánh dấu đã đọc, update sidebar)
                     if (selectedConversationId && selectedConversationId == e.message.conversation_id) {
-                        console.log('⏭️ Conversation đang focus, bỏ qua staff channel - để conversation channel xử lý');
                         // KHÔNG reload sidebar để tránh mất focus
                         // Conversation channel sẽ xử lý tất cả (kể cả tin nhắn của mình chưa có trong UI)
                         return;
@@ -936,7 +903,6 @@
                     // Tin nhắn KHÔNG thuộc conversation đang focus
                     // Bỏ qua tin nhắn của chính mình (đã được thêm qua sendMessage và broadcast qua conversation channel)
                     if (e.message.sender_id === currentUserId) {
-                        console.log('⏭️ Tin nhắn của mình nhưng conversation khác đang focus - chỉ reload sidebar');
                         // Chỉ reload sidebar, không hiển thị notification
                         component.call('loadConversations');
                         @if(auth()->user()->role === 'admin')
@@ -947,7 +913,6 @@
 
                     // Tin nhắn của người khác và conversation khác
                     // → Reload sidebar và gọi messageReceived() để hiển thị notification
-                    console.log('📢 Tin nhắn của người khác, conversation khác - reload sidebar & notification');
                     component.call('loadConversations');
                     @if(auth()->user()->role === 'admin')
                         component.call('loadStaffUsersAlternative');
@@ -972,29 +937,19 @@
         Livewire.on('join-conversation-channel', (data) => {
             const newChannel = `chat.conversation.${data.conversationId}`;
 
-            console.log('🔄 🔄 🔄 Joining conversation channel:', newChannel, 'Data:', data);
-
             // Leave previous channel if exists
             if (currentChannel) {
-                console.log('⬅️ Leaving previous channel:', currentChannel);
                 window.Echo.leave(currentChannel);
             }
 
             // Update current channel
             currentChannel = newChannel;
 
-            console.log('✅ Successfully joined conversation channel:', currentChannel);
-
             window.Echo.private(currentChannel)
-                .subscribed(() => {
-                    console.log('🎉 SUBSCRIBED to conversation channel:', currentChannel);
-                })
                 .error((error) => {
                     console.error('❌ ERROR joining conversation channel:', currentChannel, error);
                 })
                 .listen('.MessageSent', (e) => {
-                    console.log('📨 CONVERSATION CHANNEL - New message:', e.message.id);
-
                     const message = e.message;
                     const currentUserId = {{ auth()->id() }};
 
@@ -1010,8 +965,6 @@
                     }
                 })
                 .listen('.MessageRead', (e) => {
-                    // console.log('Message read:', e);
-
                     // Update Livewire property để giữ trạng thái khi re-render
                     const root = document.getElementById('chat-root');
                     const component = Livewire.find(root.getAttribute('wire:id'));
@@ -1030,8 +983,6 @@
                     }
                 })
                 .listen('.ConversationRead', (e) => {
-                    console.log('Conversation read all:', e);
-                    
                     // Update Livewire backend
                     const root = document.getElementById('chat-root');
                     const component = Livewire.find(root.getAttribute('wire:id'));
@@ -1055,42 +1006,14 @@
                 });
         });
 
-        // Biến lưu trạng thái scroll khi tải thêm tin nhắn cũ
-        let previousScrollHeight = 0;
-        let isManualLoadingMore = false;
-
         window.loadMoreMessagesAdmin = function () {
             const container = document.getElementById('messages-container');
             if (container) {
-                isManualLoadingMore = true;
-                previousScrollHeight = container.scrollHeight;
-
                 const root = document.getElementById('chat-root');
                 const component = Livewire.find(root.getAttribute('wire:id'));
                 component.call('loadMoreMessages');
             }
         }
-
-        // Listen to event khi load messages hoàn tất (cả lần đầu và load more)
-        Livewire.on('messages-loaded', () => {
-            const container = document.getElementById('messages-container');
-            if (!container) return;
-
-            if (isManualLoadingMore) {
-                // Đợi Livewire xong xuôi
-                requestAnimationFrame(() => {
-                    // Trong layout column-reverse:
-                    // Thêm tin nhắn cũ (vào cuối mảng) sẽ làm phần tử dài ra "lên trên".
-                    // Ta không cần bù trừ ScrollTop nếu trình duyệt hỗ trợ overflow-anchor.
-                    // Nhưng để chắc chắn, ta giữ nguyên vị trí scroll cũ nếu nó bị nhảy.
-                    const newScrollHeight = container.scrollHeight;
-                    // Với column-reverse, trình duyệt hiện đại giữ scroll tại chỗ.
-                    // Nếu bị nhảy về 0 (đáy), ta cần can thiệp.
-                    console.log('🔄 Load more complete. Old height:', previousScrollHeight, 'New height:', newScrollHeight);
-                });
-                isManualLoadingMore = false;
-            }
-        });
     });
 
     document.addEventListener('DOMContentLoaded', function () {
@@ -1162,7 +1085,6 @@
             currentY = 0;
             updateTransform();
 
-            console.log('✅ Modal opened');
         }
 
         function closeZoomModal() {
@@ -1293,8 +1215,6 @@
         });
 
         Livewire.on('swal', (data) => {
-            console.log(data);
-
             swal({
                 icon: data[0].type || 'info',
                 title: data[0].title || '',

@@ -55,10 +55,10 @@
         <span class="btn-icon">
             <i class="fas fa-box-open"></i>
         </span>
-        <span class="btn-text">{{__('distribution.TimKiemDonHang')}}</span>
+        <span class="btn-text">{{__('distribution.NhanDonHang')}}</span>
         <span class="btn-shine"></span>
     </button>
-    
+    <p class="action-hint">{{__('distribution.TongPhanPhoi')}}</p>
     <!-- Progress Card -->
     @if($user_rank)
     <div class="progress-card-modern">
@@ -204,7 +204,7 @@
                 </div>
             </div>
         </div>
-    <p class="action-hint">{{__('distribution.TongPhanPhoi')}}</p>
+    
 </div>
 
 <!-- Statistics Cards -->
@@ -219,7 +219,7 @@
             </div>
             <div class="stat-info">
                 <h4 class="stat-label">{{__('distribution.TongSoDu')}}</h4>
-                <p class="stat-value">${{format_money($user->balance)}}</p>
+                <p class="stat-value text-white">${{format_money($user->balance)}}</p>
             </div>
             <div class="stat-trend">
                 <i class="fas fa-arrow-up"></i>
@@ -235,7 +235,7 @@
             </div>
             <div class="stat-info">
                 <h4 class="stat-label">{{__('distribution.PhanPhoiHomNay')}}</h4>
-                <p class="stat-value">+{{ $user->distribution_today!=null?$user->distribution_today:0 }}</p>
+                <p class="stat-value text-white">+{{ $user->distribution_today!=null?$user->distribution_today:0 }}</p>
             </div>
             <div class="stat-trend positive">
                 <i class="fas fa-chart-line"></i>
@@ -251,7 +251,7 @@
             </div>
             <div class="stat-info">
                 <h4 class="stat-label">{{__('distribution.HoaHongDuTinhHomNay')}}</h4>
-                <p class="stat-value">${{format_money($todays_discount)}}</p>
+                <p class="stat-value text-white">${{format_money($todays_discount)}}</p>
             </div>
             <div class="stat-trend positive">
                 <i class="fas fa-arrow-trend-up"></i>
@@ -267,7 +267,7 @@
             </div>
             <div class="stat-info">
                 <h4 class="stat-label">Hoa hồng đã được cộng hôm nay</h4>
-                <p class="stat-value">${{format_money($today_commission_added ?? 0)}}</p>
+                <p class="stat-value text-white">${{format_money($today_commission_added ?? 0)}}</p>
             </div>
             <div class="stat-trend positive">
                 <i class="fas fa-check-circle"></i>
@@ -283,9 +283,9 @@
             </div>
             <div class="stat-info">
                 <h4 class="stat-label">{{__('distribution.SoDuDongBang')}}</h4>
-                <p class="stat-value">${{format_money($frozen_price!=null?$frozen_price:0)}}</p>
+                <p class="stat-value text-white">${{format_money($frozen_price!=null?$frozen_price:0)}}</p>
                 @if($frozen_price > 0)
-                <button class="btn-withdraw-frozen mt-2" onclick="openWithdrawFrozenModal()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 12px; cursor: pointer; transition: all 0.3s;">
+                <button class="btn-withdraw-frozen mt-2" onclick="openWithdrawFrozenModal()" style="background: linear-gradient(135deg, #000000 0%, #000000 100%); color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 12px; cursor: pointer; transition: all 0.3s;">
                     <i class="fas fa-money-bill-wave me-1"></i> Rút tiền
                 </button>
                 @endif
@@ -511,7 +511,7 @@
         </div>
         
         <div class="modal-body">
-            <div class="frozen-balance-info mb-3" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 15px; border-radius: 10px; color: white;" data-frozen-balance="{{$frozen_price!=null?$frozen_price:0}}">
+            <div class="frozen-balance-info mb-3" style="background: linear-gradient(135deg, #000000 0%, #000000 100%); padding: 15px; border-radius: 10px; color: white;" data-frozen-balance="{{$frozen_price!=null?$frozen_price:0}}">
                 <div style="font-size: 14px; opacity: 0.9;">Số dư đóng băng hiện có</div>
                 <div style="font-size: 24px; font-weight: bold;">${{format_money($frozen_price!=null?$frozen_price:0)}}</div>
             </div>
@@ -535,7 +535,7 @@
                         <button type="button" 
                                 id="btn_withdraw_all_frozen" 
                                 class="btn-withdraw-all"
-                                style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 12px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: all 0.3s;">
+                                style="background: linear-gradient(135deg, #000000 0%, #000000 100%); color: white; border: none; padding: 12px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: all 0.3s;">
                             <i class="fas fa-coins me-1"></i>Rút tất cả
                         </button>
                     </div>
@@ -560,7 +560,7 @@
                     <small>Bạn chỉ có thể rút tiền từ số dư đóng băng sau khi đã hoàn thành đơn hàng đặc biệt. Vui lòng hoàn thành đơn hàng đặc biệt trước khi rút tiền.</small>
                 </div>
                 
-                <button type="submit" class="btn-submit-frozen" style="width: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                <button type="submit" class="btn-submit-frozen" style="width: 100%; background: linear-gradient(135deg, #000000 0%, #000000 100%); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer;">
                     <i class="fas fa-money-bill-wave me-2"></i>
                     Xác nhận rút tiền
                 </button>

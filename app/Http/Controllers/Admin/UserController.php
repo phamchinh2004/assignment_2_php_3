@@ -332,7 +332,6 @@ class UserController extends Controller
             ->where('custom_price', "!=", null)
             ->with('order')
             ->get();
-        // dd($frozen_orders_detail);
         $frozen_orders = $frozen_orders_detail->pluck('order_id')->toArray();
 
         return view('admin.user.frozen_order', compact('list_orders', 'progress', 'user', 'frozen_orders', 'frozen_orders_detail'));

@@ -101,7 +101,7 @@
 .balance-icon {
     width: 60px;
     height: 60px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #000000 0%, #000000 100%);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -155,76 +155,6 @@
     opacity: 0.9;
 }
 
-/* Balance Statistics */
-.balance-stats {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1rem;
-    margin-bottom: 2rem;
-}
-
-.stat-item {
-    background: rgba(255,255,255,0.05);
-    border-radius: 12px;
-    padding: 1rem;
-    text-align: center;
-    border: 1px solid rgba(255,255,255,0.1);
-    transition: all 0.3s ease;
-}
-
-.stat-item:hover {
-    background: rgba(255,255,255,0.08);
-    transform: translateY(-2px);
-}
-
-.stat-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto 0.5rem;
-    font-size: 1.1rem;
-}
-
-.stat-icon.deposit {
-    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-    color: white;
-}
-
-.stat-icon.withdraw {
-    background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-    color: white;
-}
-
-.stat-icon.profit {
-    background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
-    color: #333;
-}
-
-.stat-content {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-}
-
-.stat-label {
-    font-size: 0.8rem;
-    color: #a0a6b0;
-    opacity: 0.8;
-}
-
-.stat-value {
-    font-size: 1rem;
-    font-weight: 600;
-    color: #e0e6ed;
-}
-
-.profit-value {
-    color: #4ade80 !important;
-}
-
 /* Action Buttons */
 .balance-actions {
     display: flex;
@@ -275,7 +205,7 @@
 }
 
 .deposit-btn {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #000000 0%, #000000 100%);
     color: white;
     box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
 }
@@ -336,33 +266,6 @@
     border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
-/* Explanation Section */
-.balance-explanation {
-    margin-top: 1rem;
-    padding-top: 1rem;
-    border-top: 1px solid rgba(255,255,255,0.1);
-}
-
-.explanation-item {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 0.5rem;
-    font-size: 0.8rem;
-    color: #a0a6b0;
-}
-
-.explanation-item i {
-    color: #4ade80;
-    font-size: 0.9rem;
-}
-
-.explanation-item:last-child {
-    margin-bottom: 0;
-    font-size: 0.75rem;
-    opacity: 0.8;
-}
-
 /* Blocks Grid */
 .blocks {
     padding: 2rem 1rem;
@@ -392,7 +295,7 @@
 .block_item:hover {
     transform: translateY(-5px);
     box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    border-color: #007bff;
+    border-color: red;
     color: #007bff;
 }
 
@@ -477,15 +380,6 @@
     
     .balance-number {
         font-size: 2.5rem;
-    }
-    
-    .balance-stats {
-        grid-template-columns: 1fr;
-        gap: 0.75rem;
-    }
-    
-    .stat-item {
-        padding: 0.75rem;
     }
     
     .balance-actions {

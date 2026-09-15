@@ -14,6 +14,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const show_repassword_register = document.getElementById('show_repassword_register');
     const hide_repassword_register = document.getElementById('hide_repassword_register');
 
+    // Xóa dữ liệu ghi nhớ cũ từng lưu mật khẩu trong localStorage.
+    localStorage.removeItem('remember_password');
+    localStorage.removeItem('username');
+    localStorage.removeItem('password');
+
     function show_hide_input(status1, status2, type, value) {
         if (status1 && status2 && type) {
             status1.addEventListener('click', function () {
@@ -33,14 +38,6 @@ document.addEventListener('DOMContentLoaded', function () {
     show_hide_input(show_repassword_register, hide_repassword_register, repassword_register, 'text');
     show_hide_input(hide_repassword_register, show_repassword_register, repassword_register, 'password');
 
-
-    if (localStorage.getItem("remember_password") && localStorage.getItem("remember_password") === "true" && username_login) {
-        username_login.value = localStorage.getItem("username") || "";
-        password_login.value = localStorage.getItem("password") || "";
-        remember_checkbox.checked = true;
-        // const form_login = document.getElementById('form_login');
-        // form_login.submit();
-    }
 
     //Xử lý đăng ký tài khoản
     const register_btn = document.getElementById('register');
@@ -214,15 +211,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 spinner.hidden = true;
                 return;
             }
-            if (remember_checkbox.checked) {
-                localStorage.setItem("remember_password", "true");
-                localStorage.setItem("username", username_login.value);
-                localStorage.setItem("password", password_login.value);
-            } else {
-                localStorage.removeItem("remember_password");
-                localStorage.removeItem("username");
-                localStorage.removeItem("password");
-            }
             form_login.submit();
         } else {
             notification('warning', 'Vui lòng điền đầy đủ thông tin!', 'Cảnh báo!');
@@ -256,9 +244,6 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 window.log_out = function () {
-    localStorage.removeItem("remember_password");
-    localStorage.removeItem("username");
-    localStorage.removeItem("password");
     const form_logout = document.getElementById('form_logout');
     if (form_logout) {
         form_logout.submit();

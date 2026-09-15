@@ -196,7 +196,6 @@ class HomeController extends Controller
                 ->orderBy('orders.index', 'asc')
                 ->select('frozen_orders.*')
                 ->first();
-            // dd($check_frozen);
             if ($check_frozen) {
                 if ($check_frozen->custom_price) {
                     $order_special_id = $check_frozen->order_id;
@@ -424,7 +423,6 @@ class HomeController extends Controller
             $total_price = $frozen_order->custom_price
                 ? $frozen_order->custom_price
                 : ($frozen_order->order->price * $frozen_order->order->quantity);
-            // dd($total_price);
 
             // Tính hoa hồng dự tính = tổng giá * phần trăm hoa hồng
             $percent = $frozen_order->commission_percentage
@@ -890,38 +888,6 @@ class HomeController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
      * Xử lý quay vòng quay may mắn
      */
     public function spinLuckyWheel(Request $request)
@@ -987,11 +953,4 @@ class HomeController extends Controller
         }
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
-    }
 }

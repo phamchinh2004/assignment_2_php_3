@@ -449,6 +449,43 @@ class ChatComponent extends Component
         }
     }
 
+    public function onMessageUpdated($data)
+    {
+        $message = $data['message'] ?? null;
+        if (!$message || (int) ($message['conversation_id'] ?? 0) !== (int) $this->conversation->id) {
+            return;
+        }
+
+        $this->chatMessages = collect($this->chatMessages)->map(function ($currentMessage) use ($message) {
+            return (int) ($currentMessage['id'] ?? 0) === (int) $message['id']
+                ? $message
+                : $currentMessage;
+        });
+    }
+
+    public function onMessageDeleted($data)
+    {
+        if ((int) ($data['conversation_id'] ?? 0) !== (int) $this->conversation->id) {
+            return;
+        }
+
+        $this->chatMessages = collect($this->chatMessages)
+            ->reject(fn ($message) => (int) ($message['id'] ?? 0) === (int) ($data['message_id'] ?? 0))
+            ->values();
+    }
+
+    public function onConversationCleared($data)
+    {
+        if ((int) ($data['conversation_id'] ?? 0) !== (int) $this->conversation->id) {
+            return;
+        }
+
+        $this->chatMessages = collect();
+        $this->offset = 0;
+        $this->hasMoreMessages = false;
+        $this->unreadCount = 0;
+    }
+
     public function scrollToBottom()
     {
         $this->dispatch('scroll-to-bottom');

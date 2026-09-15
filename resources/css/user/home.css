@@ -19,7 +19,6 @@
     box-sizing: border-box;
     display: inline;
     background: linear-gradient(135deg, var(--amazon-orange) 0%, var(--amazon-orange-dark) 100%);
-    border-radius: 0 0 15px 15px;
     box-shadow: 0 4px 15px rgba(255, 149, 0, 0.3);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -40,10 +39,11 @@ marquee {
 
 .section-1 {
     padding-top: 90px;
+    padding-bottom: 10px;
     background: linear-gradient(135deg, var(--amazon-black) 0%, var(--amazon-black-light) 100%);
     border-radius: 20px;
     box-shadow: 0 10px 30px rgba(19, 25, 33, 0.3);
-    border: 2px solid var(--amazon-orange);
+    
 }
 
 .item-section-1 {
@@ -53,7 +53,7 @@ marquee {
 }
 
 .image-section-1 {
-    width: 80px;
+    width: 60px;
     transition: all 0.3s ease;
     filter: drop-shadow(0 5px 15px rgba(255, 149, 0, 0.4));
 }
@@ -66,8 +66,7 @@ marquee {
 .tittle-section-1 {
     font-weight: bold;
     font-size: 14px;
-    color: var(--amazon-white);
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    color: var(--amazon-black);
     transition: all 0.3s ease;
 }
 
@@ -81,12 +80,7 @@ marquee {
     position: relative;
     display: inline-block;
     padding: 15px 40px;
-    background: linear-gradient(135deg, var(--amazon-orange) 0%, var(--amazon-orange-dark) 100%);
     border-radius: 25px;
-    box-shadow:
-        0 8px 25px rgba(255, 149, 0, 0.4),
-        inset 0 2px 0 rgba(255, 255, 255, 0.2),
-        inset 0 -2px 0 rgba(0, 0, 0, 0.2);
     border: 3px solid var(--amazon-white);
     transform: skew(-5deg);
     margin-bottom: 20px;
@@ -99,7 +93,6 @@ marquee {
     left: -3px;
     right: -3px;
     bottom: -3px;
-    background: linear-gradient(135deg, var(--amazon-orange-light) 0%, var(--amazon-orange) 50%, var(--amazon-orange-dark) 100%);
     border-radius: 28px;
     z-index: -1;
     opacity: 0.7;
@@ -156,8 +149,6 @@ marquee {
     background: var(--amazon-off-white);
     border-radius: 20px;
     margin: 20px 10px;
-    box-shadow: 0 5px 20px rgba(19, 25, 33, 0.1);
-    border: 1px solid var(--amazon-border);
 }
 
 .section-4 {
@@ -168,7 +159,6 @@ marquee {
 .section-4-box-content {
     margin-top: 40px;
     border-radius: 30px;
-    border: 2px solid var(--amazon-orange);
     background: linear-gradient(135deg, var(--amazon-black) 0%, var(--amazon-black-light) 100%);
     padding: 30px 60px 30px 60px;
     width: auto;
@@ -199,7 +189,7 @@ marquee {
 .section-4-content:hover {
     background: rgba(255, 149, 0, 0.1);
     transform: scale(1.05);
-    border: 1px solid var(--amazon-orange);
+    border: 1px solid var(--amazon-white);
 }
 
 .section-4-content>img {
@@ -207,12 +197,10 @@ marquee {
     height: 70px;
     margin-bottom: 8px;
     transition: all 0.3s ease;
-    filter: drop-shadow(0 5px 15px rgba(255, 149, 0, 0.4));
 }
 
 .section-4-content:hover>img {
     transform: rotate(5deg) scale(1.1);
-    filter: drop-shadow(0 8px 25px rgba(255, 149, 0, 0.6));
 }
 
 .section-4-content>span {
@@ -241,7 +229,7 @@ marquee {
     border-radius: 20px;
     box-shadow: 0 10px 30px rgba(255, 149, 0, 0.1);
     transition: all 0.3s ease;
-    border: 2px solid var(--amazon-orange);
+    
     overflow: hidden;
 }
 
@@ -288,11 +276,11 @@ marquee {
     font-size: 20px;
     top: -17px;
     left: 10px;
-    background: linear-gradient(135deg, var(--amazon-orange) 0%, var(--amazon-orange-dark) 100%);
-    color: var(--amazon-white);
+    background: linear-gradient(135deg, var(--amazon-black) 0%, var(--amazon-black) 100%);
+    color: var(--amazon-black);
     padding: 10px 20px;
     font-weight: 700;
-    box-shadow: 0 4px 15px rgba(255, 149, 0, 0.3);
+    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3);
 }
 
 .section-6-box-content {
@@ -300,7 +288,7 @@ marquee {
     padding: 30px;
     background: var(--amazon-white);
     box-shadow: 0 10px 30px rgba(255, 149, 0, 0.1);
-    border: 2px solid var(--amazon-orange);
+    
     transition: all 0.3s ease;
 }
 
@@ -365,8 +353,6 @@ marquee {
         overflow: hidden;
     }
 
-    /* Remove old cac-doi-tac styling since we're using amazon-banner now */
-
     /* Desktop table styling */
     .table {
         display: table !important;
@@ -421,7 +407,7 @@ marquee {
     }
 
     .link-doi-tac {
-        background: linear-gradient(135deg, var(--amazon-orange) 0%, var(--amazon-orange-dark) 100%);
+        background: linear-gradient(135deg, var(--amazon-black) 0%, var(--amazon-black) 100%);
         color: var(--amazon-white) !important;
         border: none;
         padding: 8px 16px;
@@ -434,7 +420,7 @@ marquee {
 
     .link-doi-tac:hover {
         transform: scale(1.05);
-        box-shadow: 0 5px 15px rgba(255, 149, 0, 0.3);
+        box-shadow: 0 5px 15px rgba(255, 255, 255, 0.3);
         color: var(--amazon-white) !important;
     }
 
@@ -866,7 +852,7 @@ marquee {
         flex-direction: column;
         gap: 25px;
         background: linear-gradient(135deg, var(--amazon-black) 0%, var(--amazon-black-light) 100%);
-        border: 2px solid var(--amazon-orange);
+        
         box-shadow: 0 10px 30px rgba(255, 149, 0, 0.2);
     }
 
@@ -906,8 +892,8 @@ marquee {
     }
 
     .section-4-amazon-image {
-        border: 3px solid var(--amazon-orange);
-        box-shadow: 0 5px 15px rgba(255, 149, 0, 0.4);
+        border: 3px solid var(--amazon-black);
+        box-shadow: 0 5px 15px rgba(255, 255, 255, 0.4);
     }
 
     .section-4-content>span {
@@ -979,8 +965,6 @@ marquee {
         overflow: hidden;
     }
 
-    /* Remove old cac-doi-tac styling since we're using amazon-banner now */
-
     /* Card layout for partners on mobile */
     .partners-container {
         display: none;
@@ -998,7 +982,7 @@ marquee {
         border-radius: 15px;
         padding: 15px;
         box-shadow: 0 5px 15px rgba(255, 149, 0, 0.1);
-        border: 2px solid var(--amazon-orange);
+        
         transition: all 0.3s ease;
         text-align: center;
     }
@@ -1009,7 +993,7 @@ marquee {
     }
 
     .partner-number {
-        background: linear-gradient(135deg, var(--amazon-orange) 0%, var(--amazon-orange-dark) 100%);
+        background: linear-gradient(135deg, var(--amazon-black) 0%, var(--amazon-black) 100%);
         color: var(--amazon-white);
         width: 30px;
         height: 30px;
@@ -1039,7 +1023,7 @@ marquee {
     }
 
     .partner-link {
-        background: linear-gradient(135deg, var(--amazon-orange) 0%, var(--amazon-orange-dark) 100%);
+        background: linear-gradient(135deg, var(--amazon-black) 0%, var(--amazon-black) 100%);
         color: var(--amazon-white) !important;
         border: none;
         padding: 8px 16px;
@@ -1193,14 +1177,14 @@ marquee {
     /* Distribution items styling */
     .distribution-item {
         transition: all 0.3s ease;
-        border: 1px solid rgba(255, 149, 0, 0.2) !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
         background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%) !important;
     }
 
     .distribution-item:hover {
         transform: translateY(-3px);
         box-shadow: 0 10px 30px rgba(255, 149, 0, 0.2) !important;
-        border-color: #FF9500 !important;
+        border-color: #000000 !important;
     }
 
     .avatar-circle {
@@ -1233,10 +1217,6 @@ marquee {
 
     .tittle-section-1 {
         font-size: 9px;
-    }
-
-    .banner-image {
-        height: 150px !important;
     }
 
     /* Amazon Banner for extra small devices */
@@ -1599,7 +1579,6 @@ marquee {
     box-shadow: 0 15px 35px rgba(255, 149, 0, 0.2);
     transition: all 0.3s ease;
     object-fit: cover;
-    border: 3px solid var(--amazon-orange);
 }
 
 .banner-image:hover {
@@ -1610,7 +1589,7 @@ marquee {
 /* Carousel improvements - Amazon Theme */
 .carousel-control-prev,
 .carousel-control-next {
-    background: rgba(255, 149, 0, 0.8);
+    background: rgba(0, 0, 0, 0.8);
     border-radius: 50%;
     width: 50px;
     height: 50px;
@@ -1622,9 +1601,9 @@ marquee {
 
 .carousel-control-prev:hover,
 .carousel-control-next:hover {
-    background: var(--amazon-orange);
+    background: var(--amazon-black);
     transform: translateY(-50%) scale(1.1);
-    box-shadow: 0 5px 15px rgba(255, 149, 0, 0.4);
+    box-shadow: 0 5px 15px rgba(255, 255, 255, 0.4);
 }
 
 .carousel-indicators {
@@ -2112,7 +2091,7 @@ marquee {
 }
 
 .modal-content {
-    border: 2px solid var(--amazon-orange);
+    
     border-radius: 1rem;
     box-shadow: 0 10px 30px rgba(255, 149, 0, 0.2);
 }
@@ -2156,7 +2135,7 @@ marquee {
     padding: 25px;
     text-align: center;
     box-shadow: 0 5px 15px rgba(255, 149, 0, 0.1);
-    border: 2px solid var(--amazon-orange);
+    
     transition: all 0.3s ease;
 }
 
@@ -2173,7 +2152,7 @@ marquee {
 .stat-number {
     font-size: 2rem;
     font-weight: bold;
-    color: var(--amazon-orange);
+    color: var(--amazon-white);
     margin-bottom: 10px;
 }
 
@@ -2208,7 +2187,7 @@ marquee {
     background: var(--amazon-white);
     border-radius: 15px;
     box-shadow: 0 5px 15px rgba(255, 149, 0, 0.1);
-    border: 2px solid var(--amazon-orange);
+    
     transition: all 0.3s ease;
     gap: 15px;
 }
@@ -2302,7 +2281,7 @@ marquee {
     top: 0;
     bottom: 0;
     width: 2px;
-    background: var(--amazon-orange);
+    background: var(--amazon-black);
     transform: translateX(-50%);
 }
 
@@ -2314,7 +2293,7 @@ marquee {
 }
 
 .timeline-year {
-    background: var(--amazon-orange);
+    background: var(--amazon-black);
     color: white;
     padding: 10px 20px;
     border-radius: 25px;
@@ -2326,11 +2305,11 @@ marquee {
 }
 
 .timeline-content {
-    background: var(--amazon-white);
+    background: var(--amazon-black);
     padding: 20px;
     border-radius: 15px;
     box-shadow: 0 5px 15px rgba(255, 149, 0, 0.1);
-    border: 2px solid var(--amazon-orange);
+    
     margin-left: 60%;
     width: 40%;
 }
@@ -2421,8 +2400,8 @@ marquee {
     background: var(--amazon-white);
     border-radius: 20px;
     padding: 40px;
-    box-shadow: 0 10px 30px rgba(255, 149, 0, 0.15);
-    border: 2px solid var(--amazon-orange);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    
     position: relative;
     overflow: hidden;
     transform: translateY(0);
@@ -2431,7 +2410,7 @@ marquee {
 
 .testimonial-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 20px 40px rgba(255, 149, 0, 0.25);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
     border-color: var(--amazon-orange-light);
 }
 
@@ -2461,7 +2440,7 @@ marquee {
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(90deg, var(--amazon-orange) 0%, var(--amazon-orange-dark) 100%);
+    background: linear-gradient(90deg, var(--amazon-black) 0%, var(--amazon-black) 100%);
 }
 
 .testimonial-text {
@@ -2546,8 +2525,8 @@ marquee {
     height: 60px;
     border-radius: 50%;
     object-fit: cover;
-    border: 3px solid var(--amazon-orange);
-    box-shadow: 0 4px 15px rgba(255, 149, 0, 0.3);
+    border: 3px solid var(--amazon-black);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -2583,9 +2562,9 @@ marquee {
 
 .author-rank {
     font-weight: 600;
-    color: var(--amazon-orange);
+    color: red;
     font-size: 0.95rem;
-    background: linear-gradient(135deg, var(--amazon-orange) 0%, var(--amazon-orange-dark) 100%);
+    background: linear-gradient(135deg, var(--amazon-black) 0%, var(--amazon-black) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -2604,7 +2583,7 @@ marquee {
 }
 
 .testimonial-btn {
-    background: linear-gradient(135deg, var(--amazon-orange) 0%, var(--amazon-orange-dark) 100%);
+    background: linear-gradient(135deg, var(--amazon-black) 0%, var(--amazon-black) 100%);
     color: var(--amazon-white);
     border: none;
     border-radius: 50%;
@@ -2615,7 +2594,7 @@ marquee {
     justify-content: center;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 5px 15px rgba(255, 149, 0, 0.3);
+    box-shadow: 0 5px 15px white;
     font-size: 1rem;
     pointer-events: all;
     position: relative;
@@ -2641,7 +2620,7 @@ marquee {
 
 .testimonial-btn:hover {
     transform: scale(1.1);
-    box-shadow: 0 8px 25px rgba(255, 149, 0, 0.4);
+    box-shadow: 0 8px 25px rgba(255, 255, 255, 0.4);
 }
 
 .testimonial-btn:active {
@@ -2669,7 +2648,7 @@ marquee {
     width: 12px;
     height: 12px;
     border-radius: 50%;
-    background: rgba(255, 149, 0, 0.3);
+    background: rgba(255, 255, 254, 0.3);
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
@@ -2684,7 +2663,7 @@ marquee {
     transform: translate(-50%, -50%);
     width: 0;
     height: 0;
-    background: var(--amazon-orange);
+    background: var(--amazon-black);
     border-radius: 50%;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -3272,7 +3251,7 @@ marquee {
     height: 50px;
     border-radius: 50%;
     object-fit: cover;
-    border: 2px solid var(--amazon-orange);
+    
 }
 
 .author-name {
@@ -3310,7 +3289,7 @@ marquee {
     padding: 25px;
     text-align: center;
     box-shadow: 0 5px 15px rgba(255, 149, 0, 0.1);
-    border: 2px solid var(--amazon-orange);
+    
     transition: all 0.3s ease;
 }
 
@@ -3410,7 +3389,7 @@ marquee {
     }
     
     .timeline::before {
-        left: 20px;
+        left: 15px;
     }
     
     .timeline-item {
@@ -3429,6 +3408,7 @@ marquee {
     
     .timeline-item:nth-child(even) .timeline-content {
         margin-right: 0;
+        margin-left: 20px;
     }
     
     .testimonials-container {
@@ -3536,6 +3516,7 @@ marquee {
     .timeline-content {
         padding: 15px;
         font-size: 0.9rem;
+        margin-left: 20px;
     }
     
     .testimonial-item {
@@ -3575,12 +3556,12 @@ marquee {
     background: var(--amazon-white);
     border-radius: 20px;
     box-shadow: 0 10px 30px rgba(255, 149, 0, 0.1);
-    border: 2px solid var(--amazon-orange);
+    
     overflow: hidden;
 }
 
 .comparison-header {
-    background: linear-gradient(135deg, var(--amazon-orange) 0%, var(--amazon-orange-dark) 100%);
+    background: linear-gradient(135deg, var(--amazon-black) 0%, var(--amazon-black) 100%);
     color: var(--amazon-white);
     padding: 25px 30px;
     text-align: center;
@@ -3647,9 +3628,9 @@ marquee {
 }
 
 .table-row:hover {
-    background: linear-gradient(135deg, rgba(255, 149, 0, 0.1) 0%, rgba(255, 149, 0, 0.05) 100%);
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.1) 0%, rgba(255, 149, 0, 0.05) 100%);
     transform: scale(1.01);
-    box-shadow: 0 5px 15px rgba(255, 149, 0, 0.2);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
 }
 
 .table-row > div {
@@ -3778,7 +3759,7 @@ marquee {
 .count {
     font-size: 1.3rem;
     font-weight: 700;
-    color: var(--amazon-orange);
+    color: var(--amazon-black);
 }
 
 .label {
@@ -3795,14 +3776,14 @@ marquee {
 
 .value-amount .currency {
     font-size: 0.9rem;
-    color: #6f42c1;
+    color: red;
     font-weight: 600;
 }
 
 .value-amount .amount {
     font-size: 1.2rem;
     font-weight: 700;
-    color: #6f42c1;
+    color: red;
 }
 
 /* Responsive Design for Comparison Table */
@@ -4085,14 +4066,14 @@ marquee {
         background: var(--amazon-white);
         border-radius: 15px;
         box-shadow: 0 5px 15px rgba(255, 149, 0, 0.1);
-        border: 2px solid var(--amazon-orange);
+        
         overflow: hidden;
         transition: all 0.3s ease;
     }
     
     .table-row:hover {
         transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(255, 149, 0, 0.2);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
     }
     
     .table-row > div {
@@ -4111,7 +4092,7 @@ marquee {
     
     /* Rank column - Full width header */
     .col-rank {
-        background: linear-gradient(135deg, var(--amazon-orange) 0%, var(--amazon-orange-dark) 100%);
+        background: linear-gradient(135deg, var(--amazon-black) 0%, var(--amazon-black) 100%);
         color: var(--amazon-white);
         justify-content: center;
         padding: 20px;
@@ -4348,7 +4329,7 @@ marquee {
     width: 20px;
     height: 20px;
     background-color: var(--amazon-white);
-    border: 2px solid var(--amazon-orange);
+    
     border-radius: 4px;
     margin-right: 10px;
     position: relative;

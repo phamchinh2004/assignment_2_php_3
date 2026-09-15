@@ -36,13 +36,12 @@
 }
 
 .btn_tab:hover {
-    color: #667eea;
+    color: #000000;
     background: #f8f9fa;
 }
 
 .btn_tab.active {
-    color: #667eea;
-    border-bottom-color: #667eea;
+    color: #000000;
     font-weight: 600;
     background: #f5f7fa;
 }
@@ -106,7 +105,7 @@
 }
 
 .balance-card .stat-icon {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #000000 0%, #000000 100%);
     color: white;
 }
 
@@ -296,7 +295,7 @@
     display: block;
     text-align: center;
     padding: 12px;
-    color: #667eea;
+    color: #000000;
     font-weight: 600;
     text-decoration: none;
     border-radius: 8px;
@@ -306,7 +305,7 @@
 
 .view-all-link:hover {
     background: #f3f4f6;
-    color: #5568d3;
+    color: #000000;
 }
 
 /* ===== Transaction List Items (for tabs) ===== */
@@ -501,7 +500,7 @@
     transform: translate(-50%, -50%);
     font-size: 18px;
     font-weight: 700;
-    color: #1f2937;
+    color: #ffffff;
     margin: 0;
 }
 

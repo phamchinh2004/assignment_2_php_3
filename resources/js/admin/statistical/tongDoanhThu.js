@@ -189,7 +189,7 @@ class StatisticalDashboard {
             // const response = await fetch(`/admin/api/revenue-data?period=${this.currentPeriod}`);
             const startDate = $('#startDate').val();
             const endDate = $('#endDate').val();
-            let url = `/admin/api/revenue-data?period=${this.currentPeriod}`;
+            let url = `/api/statistical/revenue-data?period=${this.currentPeriod}`;
 
             if (startDate && endDate) {
                 url += `&start_date=${startDate}&end_date=${endDate}`;

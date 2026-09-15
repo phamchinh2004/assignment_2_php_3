@@ -27,7 +27,7 @@
             @endif
         </div>
         <div class="me_top_2 d-flex flex-column align-items-center text-center">
-            <h4 class="fw-bold mb-2">{{$user->full_name}}</h4>
+            <h4 class="fw-bold mb-2 text-dark">{{$user->full_name}}</h4>
             <span class="ma_moi">{{__('me.MaMoi').$user->referral_code}}</span>
         </div>
     </div>
@@ -38,7 +38,7 @@
             <div class="balance-main">
                 <div class="balance-header">
                     <div class="balance-icon">
-                        <i class="fas fa-wallet"></i>
+                        <i class="fas fa-wallet text-dark"></i>
                     </div>
                     <div class="balance-title">
                         <h4>{{__('me.SoDuTaiKhoan')}}</h4>
@@ -50,37 +50,6 @@
                     <span class="balance-currency">USD</span>
                 </div>
             </div>
-
-            <!-- Balance Statistics -->
-            <!-- <div class="balance-stats">
-                <div class="stat-item">
-                    <div class="stat-icon deposit">
-                        <i class="fas fa-plus-circle"></i>
-                    </div>
-                    <div class="stat-content">
-                        <span class="stat-label">{{__('me.TongNap')}}</span>
-                        <span class="stat-value">{{format_money($user->total_deposit ?? 0)}}</span>
-                    </div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-icon withdraw">
-                        <i class="fas fa-minus-circle"></i>
-                    </div>
-                    <div class="stat-content">
-                        <span class="stat-label">{{__('me.TongRut')}}</span>
-                        <span class="stat-value">{{format_money($user->total_withdraw ?? 0)}}</span>
-                    </div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-icon profit">
-                        <i class="fas fa-chart-line"></i>
-                    </div>
-                    <div class="stat-content">
-                        <span class="stat-label">{{__('me.LoiNhuan')}}</span>
-                        <span class="stat-value profit-value">{{format_money($user->profit)}}</span>
-                    </div>
-                </div>
-            </div> -->
 
             <!-- Action Buttons -->
             <div class="balance-actions">
@@ -121,17 +90,6 @@
                 </div>
             </div>
 
-            <!-- Explanation Section -->
-            <!-- <div class="balance-explanation">
-                <div class="explanation-item">
-                    <i class="fas fa-info-circle"></i>
-                    <span>{{__('me.LoiNhuanGiaiThich')}}</span>
-                </div>
-                <div class="explanation-item">
-                    <i class="fas fa-calculator"></i>
-                    <span>{{__('me.CongThucTinh')}}: {{format_money($user->total_withdraw)}} - {{format_money($user->total_deposit)}} = {{format_money($user->profit)}}</span>
-                </div>
-            </div> -->
         </div>
     </div>
     <!-- Menu Blocks Section -->
@@ -215,7 +173,7 @@
                         <button type="submit"
                             name="locale"
                             value="{{ $lang->code }}"
-                            class="dropdown-item d-flex align-items-center gap-2
+                            class="dropdown-item d-flex align-items-center gap-2 text-white
                        {{ App::getLocale() === $lang->code ? 'active fw-bold bg-light text-primary' : '' }}">
                             <img src="{{ Storage::url($lang->image) }}" width="20" height="20" class="rounded">
                             {{ $lang->name }}

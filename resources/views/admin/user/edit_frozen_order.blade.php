@@ -4,17 +4,10 @@ Cập nhật đóng băng đơn hàng
 @endsection
 
 @section('style-libs')
-<!-- Custom styles for this page -->
-<link href="{{ asset('theme/admin/vendor/datatables/dataTables.bootstrap4.min.css') }}" rel="stylesheet">
 @endsection
 
 @section('script-libs')
-<!-- Page level plugins -->
-<script src="{{ asset('theme/admin/vendor/datatables/jquery.dataTables.min.js') }}"></script>
-<script src="{{ asset('theme/admin/vendor/datatables/dataTables.bootstrap4.min.js') }}"></script>
 @vite('resources/js/admin/user/frozen_order.js')
-<!-- Page level custom scripts -->
-<script src="{{ asset('theme/admin/js/demo/datatables-demo.js') }}"></script>
 <script>
     window.currentPermissionCode = "quan_ly_tat_ca_nguoi_dung";
 </script>

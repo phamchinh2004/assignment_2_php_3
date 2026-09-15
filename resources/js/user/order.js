@@ -342,7 +342,7 @@ window.addEventListener('DOMContentLoaded', function () {
                             </div>
                             <div class="order_info_text p-3 w-100 d-flex flex-column">
                                 <span class="order_name">${frozen_order.order.name}</span>
-                                <div class="d-flex justify-content-between mt-2">
+                                <div class="d-flex justify-content-between mt-2 text-dark">
                                     <span>${order_details_price_formatted}</span>
                                     <span>x${frozen_order.order.quantity}</span>
                                 </div>

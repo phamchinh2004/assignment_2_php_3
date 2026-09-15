@@ -2,12 +2,12 @@
 
 .wheel-container-modern {
     max-width: 600px;
-    margin: 30px auto;
+    margin: auto;
     padding: 20px;
 }
 
 .wheel-status-card {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #000000 0%, #764ba2 100%);
     border-radius: 16px;
     padding: 20px;
     text-align: center;
@@ -64,7 +64,7 @@
     border-radius: 50%;
     overflow: hidden;
     box-shadow: 0 0 0 15px #fff,
-                0 0 0 20px #667eea,
+                0 0 0 20px #000000,
                 0 15px 50px rgba(0, 0, 0, 0.3);
     transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);
     margin: 0 auto;
@@ -235,7 +235,7 @@
 }
 
 .progress-item i {
-    color: #10b981;
+    color: #000000;
     font-size: 20px;
 }
 
@@ -245,7 +245,7 @@
 }
 
 .progress-item strong {
-    color: #667eea;
+    color: #ff0000;
 }
 
 /* ======================= PRIZE MODAL ======================= */

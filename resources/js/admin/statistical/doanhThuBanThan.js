@@ -219,7 +219,6 @@ $(document).ready(function () {
             },
             success: function (response) {
                 if (response.success) {
-                    // console.log(response.data);
                     updateTransactionsTable(response.data.data);
                 }
             },

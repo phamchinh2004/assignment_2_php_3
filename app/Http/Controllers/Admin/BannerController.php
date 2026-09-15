@@ -46,7 +46,6 @@ class BannerController extends Controller
                     }
                 }
             }
-            // dd($data['images']);
             $newBanner = Banner::create([
                 'name' => $data['name'],
                 'status' => 0

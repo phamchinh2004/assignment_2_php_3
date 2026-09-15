@@ -174,23 +174,23 @@ document.addEventListener("DOMContentLoaded", function () {
         const amount = getRandomAmount();
         const time = getRandomTimeAgo();
         return `
-        <div class="distribution-item mb-3 p-3 rounded-3 shadow-sm border-0" style="background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%); border-left: 4px solid #FF9500 !important;">
+        <div class="distribution-item mb-3 p-3 rounded-3 shadow-sm border-0" style="background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%); border-left: 4px solid #000000 !important;">
             <div class="d-flex justify-content-between align-items-center">
                 <div class="d-flex align-items-center">
                     <div class="user-avatar me-3">
-                        <div class="avatar-circle" style="width: 40px; height: 40px; background: linear-gradient(135deg, #FF9500 0%, #FF8C00 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 14px;">
+                        <div class="avatar-circle" style="width: 40px; height: 40px; background: linear-gradient(135deg, #000000 0%, #000000 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 14px;">
                             ${phone.charAt(3)}
                         </div>
                     </div>
                     <div>
-                        <div class="user-phone fw-bold text-dark mb-1" style="font-size: 14px;">${phone}</div>
+                        <div class="user-phone fw-bold mb-1" style="font-size: 14px;color: black;">${phone}</div>
                         <div class="success-text text-muted" style="font-size: 12px;">${trans.successText
             }</div>
                     </div>
                 </div>
                 <div class="d-flex align-items-center">
                     <div class="text-end me-3">
-                        <div class="amount-value fw-bold text-success mb-1" style="font-size: 16px; color: #FF9500 !important;">${amount}</div>
+                        <div class="amount-value fw-bold text-success mb-1" style="font-size: 16px; color: red !important;">${amount}</div>
                         <div class="time-ago text-muted" style="font-size: 11px;">${time}</div>
                     </div>
                     <div class="success-icon" style="width: 30px; height: 30px; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 12px;">
@@ -234,7 +234,7 @@ document.addEventListener("DOMContentLoaded", function () {
         
         .distribution-item:hover .avatar-circle {
             transform: scale(1.1);
-            box-shadow: 0 5px 15px rgba(255, 149, 0, 0.4);
+            box-shadow: 0 5px 15px rgba(255, 255, 255, 0.4);
         }
         
         .success-icon {
@@ -251,7 +251,7 @@ document.addEventListener("DOMContentLoaded", function () {
         
         .distribution-item:hover .amount-value {
             transform: scale(1.05);
-            text-shadow: 1px 1px 2px rgba(255, 149, 0, 0.3);
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
         }
     `;
     document.head.appendChild(style);
@@ -274,36 +274,18 @@ document.addEventListener("DOMContentLoaded", function () {
     }, 5000);
 
     //==================================================Xem nội dung chi tiết==================================================
-    const view_amazon = document.getElementById("view_amazon");
-    const view_mo_ta = document.getElementById("view_mo_ta");
-    const view_tai_chinh = document.getElementById("view_tai_chinh");
-    const view_quy_dinh = document.getElementById("view_quy_dinh");
-    function view_content(object, object_content) {
-        object.addEventListener("click", function () {
-            const get_object_content = document.getElementById(object_content);
-            get_object_content.classList.add("active");
-        });
-    }
-    view_content(view_amazon, "amazon_content");
-    view_content(view_mo_ta, "mo_ta_content");
-    view_content(view_tai_chinh, "tai_chinh_content");
-    view_content(view_quy_dinh, "quy_dinh_content");
-    //==================================================Đóng nội dung chi tiết==================================================
-    function close_content(buttonId, contentId) {
-        const button = document.getElementById(buttonId);
-        const content = document.getElementById(contentId);
+    const contentViews = document.querySelectorAll(".section-4-content[data-content-target]");
+    const contentPanels = document.querySelectorAll(".inline-content-panel");
 
-        if (button && content) {
-            button.addEventListener("click", () => {
-                content.classList.remove("active");
+    contentViews.forEach((view) => {
+        view.addEventListener("click", function () {
+            const targetId = view.dataset.contentTarget;
+            contentPanels.forEach((panel) => {
+                panel.classList.toggle("active", panel.id === targetId);
             });
-        }
-    }
-
-    close_content("close_xmark_amazon", "amazon_content");
-    close_content("close_xmark_mo_ta", "mo_ta_content");
-    close_content("close_xmark_tai_chinh", "tai_chinh_content");
-    close_content("close_xmark_quy_dinh", "quy_dinh_content");
+            contentViews.forEach((item) => item.classList.toggle("selected", item === view));
+        });
+    });
 
     // Thong bao
     let notificationShown = false;

@@ -7,7 +7,6 @@ use App\Models\Rank;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Validation\Rule;
 
 class MeController extends Controller
 {
@@ -24,13 +23,6 @@ class MeController extends Controller
         // $user->total_deposit, $user->total_withdraw, $user->today_transactions
 
         return view('user.me', compact('user', 'rank'));
-    }
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
     }
     public function personal_information()
     {
@@ -194,38 +186,6 @@ class MeController extends Controller
         }
     }
     /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
      * Cập nhật địa chỉ kho cho user hiện tại.
      */
     public function updateWarehouseAddress(Request $request)
@@ -242,11 +202,4 @@ class MeController extends Controller
         return redirect()->route('me')->with('success', __('me.CapNhatDiaChiKhoThanhCong'));
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
-    }
 }

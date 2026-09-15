@@ -4,6 +4,9 @@ namespace App\Livewire\Admin;
 
 use App\Events\MessageSent;
 use App\Events\MessageRead;
+use App\Events\MessageUpdated;
+use App\Events\MessageDeleted;
+use App\Events\ConversationCleared;
 use App\Events\UserLocked;
 use Livewire\Component;
 use App\Models\User;
@@ -313,7 +316,9 @@ class ChatComponent extends Component
         }
 
         try {
+            $conversationId = $this->selectedConversation->id;
             $this->selectedConversation->messages()->delete();
+            broadcast(new ConversationCleared($conversationId));
             $this->messages = [];
 
             $this->loadConversations();
@@ -346,6 +351,7 @@ class ChatComponent extends Component
         try {
             // Lưu conversation để xóa
             $conversationToDelete = $this->selectedConversation;
+            $conversationId = $conversationToDelete->id;
 
             // Reset state trước khi xóa
             $this->messages = [];
@@ -354,6 +360,7 @@ class ChatComponent extends Component
 
             // Xóa tất cả messages trong conversation
             $conversationToDelete->messages()->delete();
+            broadcast(new ConversationCleared($conversationId));
 
             // Xóa luôn bản ghi conversation
             $conversationToDelete->delete();
@@ -642,6 +649,7 @@ class ChatComponent extends Component
             $message->update([
                 'message' => trim($this->editingMessageText)
             ]);
+            broadcast(new MessageUpdated($message->id));
 
             // Cập nhật trong mảng messages đang hiển thị
             if (is_array($this->messages)) {
@@ -654,11 +662,6 @@ class ChatComponent extends Component
             }
 
             $this->cancelEdit();
-            $this->dispatch('swal', [
-                'type' => 'success',
-                'title' => 'Thành công',
-                'text' => 'Cập nhật tin nhắn thành công.'
-            ]);
         }
     }
 
@@ -671,7 +674,9 @@ class ChatComponent extends Component
             $canDelete = Auth::user()->role === 'admin' || $message->sender_id == Auth::id();
 
             if ($canDelete) {
+                $conversationId = $message->conversation_id;
                 $message->delete();
+                broadcast(new MessageDeleted($messageId, $conversationId));
 
                 // Xóa khỏi mảng hiển thị
                 if (is_array($this->messages)) {
@@ -679,12 +684,6 @@ class ChatComponent extends Component
                         return $msg['id'] != $messageId;
                     }));
                 }
-
-                $this->dispatch('swal', [
-                    'type' => 'success',
-                    'title' => 'Thành công',
-                    'text' => 'Xóa tin nhắn thành công.'
-                ]);
             }
         }
     }

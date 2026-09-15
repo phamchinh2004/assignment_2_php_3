@@ -1,24 +1,24 @@
 /* Modern Professional Color Palette */
 :root {
-    --primary-color: #2563eb;
-    --primary-dark: #1d4ed8;
-    --primary-light: #3b82f6;
-    --secondary-color: #64748b;
-    --accent-color: #06b6d4;
-    --success-color: #10b981;
+    --primary-color: #fe2c55;
+    --primary-dark: #d91f45;
+    --primary-light: #ff5575;
+    --secondary-color: #71717a;
+    --accent-color: #fe2c55;
+    --success-color: #22c55e;
     --warning-color: #f59e0b;
     --error-color: #ef4444;
     
-    --background-primary: #ffffff;
-    --background-secondary: #f8fafc;
-    --background-tertiary: #f1f5f9;
+    --background-primary: #0b0b0d;
+    --background-secondary: #ffffff;
+    --background-tertiary: #252529;
     
-    --text-primary: #0f172a;
-    --text-secondary: #475569;
-    --text-tertiary: #94a3b8;
+    --text-primary: #ffffff;
+    --text-secondary: #d4d4d8;
+    --text-tertiary: #a1a1aa;
     
-    --border-color: #e2e8f0;
-    --border-light: #f1f5f9;
+    --border-color: #353539;
+    --border-light: #27272a;
     
     --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
     --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
@@ -40,8 +40,8 @@
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     line-height: 1.6;
-    color: var(--text-primary);
-    background: var(--background-secondary);
+    color: #111113;
+    background: #ffffff;
 }
 
 /* Profile Container */
@@ -54,7 +54,7 @@ body {
 
 /* Profile Header */
 .profile-header {
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    background: #0b0b0d;
     border-radius: var(--radius-2xl);
     padding: 2rem;
     margin-bottom: 2rem;
@@ -184,7 +184,7 @@ body {
 }
 
 .settings-section {
-    background: var(--background-primary);
+    background: #0b0b0d;
     border-radius: var(--radius-xl);
     padding: 2rem;
     box-shadow: var(--shadow-md);
@@ -228,7 +228,7 @@ body {
     display: flex;
     align-items: center;
     padding: 1.5rem;
-    background: var(--background-primary);
+    background: #18181b;
     border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -262,7 +262,7 @@ body {
 .card-icon {
     width: 48px;
     height: 48px;
-    background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+    background: var(--primary-color);
     border-radius: var(--radius-lg);
     display: flex;
     align-items: center;
@@ -287,13 +287,13 @@ body {
 .card-title {
     font-size: 1.125rem;
     font-weight: 600;
-    color: var(--text-primary);
+    color: black !important;
     margin: 0 0 0.25rem 0;
 }
 
 .card-description {
     font-size: 0.875rem;
-    color: var(--text-secondary);
+    color: gray;
     margin: 0 0 0.75rem 0;
     line-height: 1.4;
 }
@@ -345,7 +345,7 @@ body {
 .action-btn {
     width: 40px;
     height: 40px;
-    background: var(--background-tertiary);
+    background: #252529;
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
     display: flex;
@@ -406,7 +406,7 @@ body {
 }
 
 .btn-secondary {
-    background: var(--background-primary);
+    background: #0b0b0d;
     color: var(--text-secondary);
     border-color: var(--border-color);
 }
@@ -419,7 +419,7 @@ body {
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+    background: var(--primary-color);
     color: white;
     box-shadow: var(--shadow-md);
 }
@@ -540,7 +540,7 @@ body {
     }
 
     .profile-stats {
-        flex-direction: column;
+        flex-direction: row;
         gap: 0.75rem;
     }
 

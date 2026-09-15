@@ -46,7 +46,7 @@ class LoginController extends Controller
         if (!$get_user_from_username) {
             return back()->with('error', 'Sai tên đăng nhập hoặc mật khẩu!');
         } else {
-            if (Auth::attempt($credentials, $request->remember_password)) {
+            if (Auth::attempt($credentials, $request->boolean('remember_password'))) {
                 if ($get_user_from_username->status == "activated") {
                     $request->session()->regenerate();
                     if ($get_user_from_username->role == "member") {

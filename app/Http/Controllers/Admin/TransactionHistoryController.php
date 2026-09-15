@@ -38,7 +38,6 @@ class TransactionHistoryController extends Controller
             }
         }
         $list_withdraw_transactions = $query->orderByDesc("wallet_balance_histories.id")->get();
-        // dd($list_withdraw_transactions); 
         return view('admin.transactions.withdraw', compact('list_withdraw_transactions'));
     }
     public function confirm_withdraw(Wallet_balance_history $transaction)

@@ -40,7 +40,7 @@
             <!-- Icon & Title -->
             <div class="header-title-section">
                 <div class="header-icon">
-                    <i class="fas fa-history"></i>
+                    <i class="fas fa-history text-dark"></i>
                 </div>
                 <div class="header-text">
                     <h1 class="header-title">{{__('order.LichSuPhanPhoi')}}</h1>
@@ -51,7 +51,7 @@
             <!-- Balance Card -->
             <div class="balance-card">
                 <div class="balance-icon">
-                    <i class="fas fa-wallet"></i>
+                    <i class="fas fa-wallet text-dark"></i>
                 </div>
                 <div class="balance-info">
                     <span class="balance-label">{{__('order.SoDuHienTai')}}</span>

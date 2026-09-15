@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Manager_setting;
 use App\Http\Requests\StoreManager_settingRequest;
 use App\Http\Requests\UpdateManager_settingRequest;
-use Illuminate\Database\Capsule\Manager;
 use Str;
 
 class ManagerSettingController extends Controller

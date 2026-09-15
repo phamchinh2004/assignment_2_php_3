@@ -23,7 +23,7 @@
         }
 
         .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #000000 0%, #000000 100%);
             padding: 40px 20px;
             text-align: center;
         }

@@ -4,11 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- <link rel="stylesheet" href="{{ asset('css/general.css') }}"> -->
     @vite ('resources/css/general.css')
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css">
 
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.css" rel="stylesheet" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet" />
     <title>Register</title>
     <style>
@@ -23,61 +21,76 @@
     <div class="background-overlay">
         <div class="background-blur"></div>
     </div>
-    <div class="d-flex flex-column align-items-center">
-        <!-- Nội dung đăng nhập -->
-        <div class="mt-5 pt-4 text-center">
-            <h2 class="text-white fw-bold">Cung Ứng <span class="text-warning">Toàn Cầu</span> 🌎 - Global Logistics
-            </h2>
-        </div>
-        <div class="title_gereral d-flex justify-content-center align-items-center">
-            <a href="login" class="me-5 text-white cspt">Đăng Nhập</a>
-            <a class="fw-bold text-white cspt title-register">Đăng Ký</a>
-        </div>
-        <form href="{{ route('registerdone') }}" class="d-flex flex-column mt-4" id="form_register" method="post">
+    <main class="auth-page">
+        <section class="auth-card auth-card-wide">
+            <img class="auth-brand-logo auth-logo" src="{{ asset('images/login_and_register/tiktok-shop.webp') }}"
+                alt="Cung Ứng Toàn Cầu - Global Logistics">
+            <nav class="auth-tabs" aria-label="Điều hướng tài khoản">
+                <a href="{{ route('login') }}">Đăng nhập</a>
+                <a class="active" href="{{ route('register') }}">Đăng ký</a>
+            </nav>
+            <div class="auth-heading">
+                <h1 class="auth-title">Tạo tài khoản</h1>
+                <p class="auth-subtitle">Tham gia hệ thống và bắt đầu hành trình của bạn</p>
+            </div>
+        <form action="{{ route('registerdone') }}" id="form_register" method="post">
             @csrf
             @method('POST')
-            <div>
-                <label for="" class="text-white label-register">Họ và tên</label>
-                <input class="form-control" id="full_name_register" value="{{ old('full_name') }}" name="full_name"
-                    type="text" placeholder="Nhập họ và tên thật của bạn">
+            <div class="auth-field">
+                <label for="full_name_register" class="auth-label">Họ và tên</label>
+                <div class="auth-input-wrap">
+                    <i class="fa-solid fa-user auth-input-icon" aria-hidden="true"></i>
+                    <input class="form-control auth-input" id="full_name_register" value="{{ old('full_name') }}" name="full_name"
+                        type="text" placeholder="Nhập họ và tên thật của bạn" autocomplete="name">
+                </div>
             </div>
-            <div class="mt-2">
-                <label for="" class="text-white label-register">Tên đăng nhập</label>
-                <input class="form-control" id="username_register" value="{{ old('username') }}" name="username"
-                    type="text" placeholder="Nhập tên tài khoản">
+            <div class="auth-field">
+                <label for="username_register" class="auth-label">Tên đăng nhập</label>
+                <div class="auth-input-wrap">
+                    <i class="fa-solid fa-at auth-input-icon" aria-hidden="true"></i>
+                    <input class="form-control auth-input" id="username_register" value="{{ old('username') }}" name="username"
+                        type="text" placeholder="Nhập tên tài khoản" autocomplete="username">
+                </div>
                 @error('username')
                     <span class="invalid-feedback">
                         <strong>{{ $message }}</strong>
                     </span>
                 @enderror
             </div>
-            <div class="mt-2">
-                <label for="" class="text-white label-register">Số điện thoại</label>
-                <input class="form-control" id="phone_register" value="{{ old('phone') }}" name="phone" type="number"
-                    placeholder="Nhập số điện thoại">
+            <div class="auth-field">
+                <label for="phone_register" class="auth-label">Số điện thoại</label>
+                <div class="auth-input-wrap">
+                    <i class="fa-solid fa-phone auth-input-icon" aria-hidden="true"></i>
+                    <input class="form-control auth-input" id="phone_register" value="{{ old('phone') }}" name="phone" type="tel"
+                        placeholder="Nhập số điện thoại" autocomplete="tel">
+                </div>
                 @error('phone')
                     <span class="invalid-feedback">
                         <strong>{{ $message }}</strong>
                     </span>
                 @enderror
             </div>
-            <div class="mt-2">
-                <label for="" class="text-white label-register">Email</label>
-                <input class="form-control" id="email_register" value="{{ old('email') }}" name="email" type="email"
-                    placeholder="Nhập email của bạn">
+            <div class="auth-field">
+                <label for="email_register" class="auth-label">Email</label>
+                <div class="auth-input-wrap">
+                    <i class="fa-solid fa-envelope auth-input-icon" aria-hidden="true"></i>
+                    <input class="form-control auth-input" id="email_register" value="{{ old('email') }}" name="email" type="email"
+                        placeholder="you@example.com" autocomplete="email">
+                </div>
                 @error('email')
                     <span class="invalid-feedback">
                         <strong>{{ $message }}</strong>
                     </span>
                 @enderror
             </div>
-            <div class="mt-2">
-                <label for="" class="text-white label-register">Mật khẩu</label>
-                <div class="position-relative w-auto">
-                    <input class="form-control input-text-register" value="{{ old('password') }}" id="password_register"
+            <div class="auth-field">
+                <label for="password_register" class="auth-label">Mật khẩu</label>
+                <div class="auth-input-wrap">
+                    <i class="fa-solid fa-lock auth-input-icon" aria-hidden="true"></i>
+                    <input class="form-control auth-input" value="{{ old('password') }}" id="password_register"
                         name="password" type="password" placeholder="Nhập mật khẩu">
-                    <i class="fa-regular fa-eye position-absolute cspt" id="show_password_register"></i>
-                    <i hidden class="fa-regular fa-eye-slash position-absolute cspt" id="hide_password_register"></i>
+                    <i class="fa-regular fa-eye auth-password-toggle cspt" id="show_password_register"></i>
+                    <i hidden class="fa-regular fa-eye-slash auth-password-toggle cspt" id="hide_password_register"></i>
                 </div>
                 @error('password')
                     <span class="invalid-feedback">
@@ -85,19 +98,21 @@
                     </span>
                 @enderror
             </div>
-            <div class="mt-2">
-                <label for="" class="text-white label-register">Nhập lại mật khẩu</label>
-                <div class="position-relative w-auto">
-                    <input class="form-control input-text-register" id="repassword_register" name="repassword"
+            <div class="auth-field">
+                <label for="repassword_register" class="auth-label">Nhập lại mật khẩu</label>
+                <div class="auth-input-wrap">
+                    <i class="fa-solid fa-lock auth-input-icon" aria-hidden="true"></i>
+                    <input class="form-control auth-input" id="repassword_register" name="repassword"
                         type="password" placeholder="Nhập lại mật khẩu">
-                    <i class="fa-regular fa-eye position-absolute cspt" id="show_repassword_register"></i>
-                    <i hidden class="fa-regular fa-eye-slash position-absolute cspt" id="hide_repassword_register"></i>
+                    <i class="fa-regular fa-eye auth-password-toggle cspt" id="show_repassword_register"></i>
+                    <i hidden class="fa-regular fa-eye-slash auth-password-toggle cspt" id="hide_repassword_register"></i>
                 </div>
             </div>
-            <div class="mt-2">
-                <label for="" class="text-white label-register">Mã giới thiệu</label>
-                <div class="position-relative w-auto">
-                    <input class="form-control input-text-register" value="{{ old('referral_code') }}"
+            <div class="auth-field">
+                <label for="referral_code_register" class="auth-label">Mã giới thiệu <span class="text-white-50">(tuỳ chọn)</span></label>
+                <div class="auth-input-wrap">
+                    <i class="fa-solid fa-gift auth-input-icon" aria-hidden="true"></i>
+                    <input class="form-control auth-input" value="{{ old('referral_code') }}"
                         id="referral_code_register" name="referral_code" type="text" placeholder="Nhập mã giới thiệu">
                 </div>
                 @error('referral_code')
@@ -106,25 +121,25 @@
                     </span>
                 @enderror
             </div>
-            <div class="form-check mt-2">
-                <input class="form-check-input p-2" type="checkbox" name="accept_terms" value="" id="accept_terms">
-                <label class="form-check-label text-white" style="font-size: 14px;" for="accept_terms">
+            <div class="auth-helper form-check mt-2">
+                <input class="form-check-input p-2" type="checkbox" name="accept_terms" value="1" id="accept_terms">
+                <label class="form-check-label" for="accept_terms">
                     Đồng ý với <span class="text-decoration-underline">điều khoản</span> của chúng tôi.
                 </label>
             </div>
-            <div class="mt-3 d-flex justify-content-center">
-                <button type="button" class="btn btn-warning fw-bold text-white w-100" id="register">Đăng ký</button>
+            <div class="d-grid mt-4">
+                <button type="button" class="btn auth-submit" id="register">Tạo tài khoản <i class="fa-solid fa-arrow-right ms-2"></i></button>
             </div>
         </form>
-        <div class="mt-3">
-            <span class="text-white">Bạn đã có tài khoản? <a href="login"
-                    class="fw-bold text-warning cspt text-decoration-underline">Đăng nhập</a> ngay!</span>
+        <div class="auth-switch text-center mt-4">
+            Bạn đã có tài khoản? <a href="{{ route('login') }}">Đăng nhập ngay</a>
         </div>
-        <div class="mt-3 w-auto d-flex flex-row justify-content-center align-items-center other-login">
-            <img width="40px" class="me-3 cspt" src="{{ asset('images/login_and_register/fb-logo.png') }}" alt="">
-            <img width="45px" class="cspt" src="{{ asset('images/login_and_register/gg-logo.png') }}" alt="">
+        <div class="auth-social">
+            <img class="cspt" src="{{ asset('images/login_and_register/fb-logo.png') }}" alt="Facebook">
+            <img class="cspt" src="{{ asset('images/login_and_register/gg-logo.png') }}" alt="Google">
         </div>
-    </div>
+        </section>
+    </main>
     <!-- SPINNER -->
     <div class="absolute-spinner" id="spinner" hidden>
         <div class="lds-spinner">
@@ -149,7 +164,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.js.map"></script>
     <script>
         const route_check_referral_code = "{{ route('check_referral_code') }}";
         const route_check_email = "{{ route('check_email') }}";

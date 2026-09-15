@@ -60,7 +60,7 @@
                 <div class="display">
                     <img class="image-section-1" width="50px" src="{{ asset('images/home/display.png') }}" alt="">
                 </div>
-                <span class="text-white tittle-section-1">{{__('home.PhanPhoi')}}</span>
+                <span class="tittle-section-1">{{__('home.PhanPhoi')}}</span>
             </div>
             <div class="w-25 position-relative d-flex align-items-center justify-content-center flex-column cspt"
                 id="btn_bien_dong_so_du">
@@ -70,7 +70,7 @@
                 <div class="display">
                     <img class="image-section-1" width="50px" src="{{ asset('images/home/display.png') }}" alt="">
                 </div>
-                <span class="text-white tittle-section-1">{{__('home.BienDongSoDu')}}</span>
+                <span class="tittle-section-1">{{__('home.BienDongSoDu')}}</span>
             </div>
             <div class="w-25 position-relative d-flex align-items-center justify-content-center flex-column cspt"
                 id="btn_nap_tien">
@@ -80,7 +80,7 @@
                 <div class="display">
                     <img class="image-section-1" width="50px" src="{{ asset('images/home/display.png') }}" alt="">
                 </div>
-                <span class="text-white tittle-section-1">{{__('home.NapTien')}}</span>
+                <span class="tittle-section-1">{{__('home.NapTien')}}</span>
             </div>
             <div class="w-25 position-relative d-flex align-items-center justify-content-center flex-column cspt"
                 id="btn_rut_tien">
@@ -90,7 +90,7 @@
                 <div class="display">
                     <img class="image-section-1" width="50px" src="{{ asset('images/home/display.png') }}" alt="">
                 </div>
-                <span class="text-white tittle-section-1">{{__('home.RutTien')}}</span>
+                <span class="tittle-section-1">{{__('home.RutTien')}}</span>
             </div>
 
         </div>
@@ -285,108 +285,74 @@
             </div>
         </div>
         <div class="section-4-box-content">
-            <div class="section-4-content d-flex flex-column" id="view_amazon">
-                <img class="section-4-amazon-image" src="{{ asset('images/home/section-4.1.png') }}" alt="">
+            <div class="section-4-content d-flex flex-column" id="view_amazon" data-content-target="amazon_content">
+                <img class="section-4-amazon-image" src="{{ asset('images/home/section-4.1.webp') }}" alt="">
                     <span class="fw-bold">HỆ THỐNG</span>
                 </div>
-                <div id="amazon_content">
-                    <div class="d-flex justify-content-end">
-                        <div id="close_xmark_amazon">
-                            <i class="fa fa-solid fa-xmark fa-xl"></i>
-                        </div>
-                    </div>
-                    <div class="amazon-title">
-                        <h3 class="fw-bold text-center">{{__('home.GioiThieuNenTang')}}</h3>
-                    </div>
-                    <div class="amazon-detail-content">
-                        @if (!empty($list_sections))
-                            @foreach ($list_sections as $item)
-                                @if ($item->code === 'gioi_thieu_nen_tang')
-                                    @php
-                                        $content = $item->getTranslatedContent();
-                                        break;
-                                    @endphp
-                                @endif
-                            @endforeach
-                        @endif
-                        {!! $content ?? __('home.DangCapNhat')!!}
-                    </div>
-                </div>
-                <div class="section-4-content d-flex flex-column" id="view_mo_ta">
+                <div class="section-4-content d-flex flex-column" id="view_mo_ta" data-content-target="mo_ta_content">
                     <img src="{{ asset('images/home/section-4.2.webp') }}" alt="">
                     <span class="fw-bold">{{__('home.MoTa')}}</span>
                 </div>
-                <div id="mo_ta_content">
-                    <div class="d-flex justify-content-end">
-                        <div id="close_xmark_mo_ta">
-                            <i class="fa fa-solid fa-xmark fa-xl"></i>
-                        </div>
-                    </div>
-                    <div class="amazon-title">
-                        <h3 class="fw-bold text-center">{{__('home.QuyTacLayDon')}}</h3>
-                    </div>
-                    <div class="amazon-detail-content">
-                        @if (!empty($list_sections))
-                            @foreach ($list_sections as $item)
-                                @if ($item->code === 'quy_tac_lay_don')
-                                    @php
-                                        $content = $item->getTranslatedContent();
-                                        break;
-                                    @endphp
-                                @endif
-                            @endforeach
-                        @endif
-                        {!! $content ?? __('home.DangCapNhat')!!}
-                    </div>
-                </div>
-                <div class="section-4-content d-flex flex-column" id="view_tai_chinh">
+                <div class="section-4-content d-flex flex-column" id="view_tai_chinh" data-content-target="tai_chinh_content">
                     <img src="{{ asset(path: 'images/home/section-4.3.webp') }}" alt="">
                     <span class="fw-bold">{{__('home.TaiChinh')}}</span>
                 </div>
-                <div id="tai_chinh_content">
-                    <div class="d-flex justify-content-end">
-                        <div id="close_xmark_tai_chinh">
-                            <i class="fa fa-solid fa-xmark fa-xl"></i>
-                        </div>
-                    </div>
-                    <div class="amazon-title">
-                        <h3 class="fw-bold text-center">{{__('home.HopTacDaiLy')}}</h3>
-                    </div>
+                <div class="section-4-content d-flex flex-column" id="view_quy_dinh" data-content-target="quy_dinh_content">
+                    <img src="{{ asset(path: 'images/home/section-4.4.webp') }}" alt="">
+                    <span class="fw-bold">{{__('home.QuyDinh')}}</span>
+                </div>
+            </div>
+            <div class="section-4-content-panel">
+                <div class="inline-content-panel active" id="amazon_content">
+                    <div class="amazon-title"><h3 class="fw-bold text-center">{{__('home.GioiThieuNenTang')}}</h3></div>
                     <div class="amazon-detail-content">
+                        @php $content = null; @endphp
                         @if (!empty($list_sections))
                             @foreach ($list_sections as $item)
-                                @if ($item->code === 'hop_tac_dai_ly')
-                                    @php
-                                        $content = $item->getTranslatedContent();
-                                        break;
-                                    @endphp
+                                @if ($item->code === 'gioi_thieu_nen_tang')
+                                    @php $content = $item->getTranslatedContent(); break; @endphp
                                 @endif
                             @endforeach
                         @endif
                         {!! $content ?? __('home.DangCapNhat')!!}
                     </div>
                 </div>
-                <div class="section-4-content d-flex flex-column" id="view_quy_dinh">
-                    <img src="{{ asset(path: 'images/home/section-4.4.webp') }}" alt="">
-                    <span class="fw-bold">{{__('home.QuyDinh')}}</span>
-                </div>
-                <div id="quy_dinh_content">
-                    <div class="d-flex justify-content-end">
-                        <div id="close_xmark_quy_dinh">
-                            <i class="fa fa-solid fa-xmark fa-xl"></i>
-                        </div>
-                    </div>
-                    <div class="amazon-title">
-                        <h3 class="fw-bold text-center">{{__('home.QuyDinhCongTy')}}</h3>
-                    </div>
+                <div class="inline-content-panel" id="mo_ta_content">
+                    <div class="amazon-title"><h3 class="fw-bold text-center">{{__('home.QuyTacLayDon')}}</h3></div>
                     <div class="amazon-detail-content">
+                        @php $content = null; @endphp
+                        @if (!empty($list_sections))
+                            @foreach ($list_sections as $item)
+                                @if ($item->code === 'quy_tac_lay_don')
+                                    @php $content = $item->getTranslatedContent(); break; @endphp
+                                @endif
+                            @endforeach
+                        @endif
+                        {!! $content ?? __('home.DangCapNhat')!!}
+                    </div>
+                </div>
+                <div class="inline-content-panel" id="tai_chinh_content">
+                    <div class="amazon-title"><h3 class="fw-bold text-center">{{__('home.HopTacDaiLy')}}</h3></div>
+                    <div class="amazon-detail-content">
+                        @php $content = null; @endphp
+                        @if (!empty($list_sections))
+                            @foreach ($list_sections as $item)
+                                @if ($item->code === 'hop_tac_dai_ly')
+                                    @php $content = $item->getTranslatedContent(); break; @endphp
+                                @endif
+                            @endforeach
+                        @endif
+                        {!! $content ?? __('home.DangCapNhat')!!}
+                    </div>
+                </div>
+                <div class="inline-content-panel" id="quy_dinh_content">
+                    <div class="amazon-title"><h3 class="fw-bold text-center">{{__('home.QuyDinhCongTy')}}</h3></div>
+                    <div class="amazon-detail-content">
+                        @php $content = null; @endphp
                         @if (!empty($list_sections))
                             @foreach ($list_sections as $item)
                                 @if ($item->code === 'quy_dinh_cong_ty')
-                                    @php
-                                        $content = $item->getTranslatedContent();
-                                        break;
-                                    @endphp
+                                    @php $content = $item->getTranslatedContent(); break; @endphp
                                 @endif
                             @endforeach
                         @endif
@@ -631,8 +597,8 @@
             </div>
             <div class="ranks-comparison">
                 <div class="comparison-header">
-                    <h3><i class="fas fa-chart-bar me-2"></i>So sánh các gian hàng</h3>
-                    <p class="comparison-subtitle">Chọn gian hàng phù hợp với nhu cầu của bạn</p>
+                    <h3><i class="fas fa-chart-bar me-2"></i>Thông tin gian hàng</h3>
+                    <p class="comparison-subtitle">Cấp độ gian hàng càng cao - phần thưởng càng hấp dẫn!</p>
                 </div>
                 <div class="comparison-table">
                     <div class="table-header">
@@ -802,7 +768,7 @@
                             <tr>
                                 <td class="text-center">
                                     <span class="badge badge-primary"
-                                        style="background: linear-gradient(45deg, #FF9500, #FF8C00); color: white; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-weight: bold;">{{$index + 1}}</span>
+                                        style="background: linear-gradient(45deg, #000000, #000000); color: white; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-weight: bold;">{{$index + 1}}</span>
                                 </td>
                                 <td class="text-center fw-bold">{{$item->name}}</td>
                                 <td class="text-center">
@@ -810,7 +776,7 @@
                                         <img class="image-doi-tac" src="{{ Storage::url($item->image) }}" alt="{{$item->name}}">
                                     </div>
                                 </td>
-                                <td class="text-center"><a class="btn btn-sm btn-warning link-doi-tac" href="{{$item->link}}"
+                                <td class="text-center"><a class="btn btn-sm link-doi-tac" href="{{$item->link}}"
                                         target="_blank">{{__('home.XemTrangWeb')}}</a></td>
                             </tr>
                         @endforeach

@@ -329,7 +329,7 @@
         // ===== HỆ THỐNG NOTIFICATION MỚI =====
         
         // Function phát âm thanh notification
-        function playNotificationSound(soundFile = 'notification.mp3') {
+        function playNotificationSound(soundFile = 'notification_fb.mp3') {
             try {
                 // Tạo audio element mới mỗi lần để tránh conflict
                 const audio = new Audio('/audio/' + soundFile);
@@ -353,7 +353,7 @@
         }
 
         // Function hiển thị desktop notification
-        function showDesktopNotification(title, body, icon = '/images/logo.png', soundFile = 'notification.mp3', chatUrl = null) {
+        function showDesktopNotification(title, body, icon = '/images/logo.png', soundFile = 'notification_fb.mp3', chatUrl = null) {
             // Kiểm tra browser support
             if (!("Notification" in window)) {
                 console.log("Browser không hỗ trợ Desktop Notifications");
@@ -384,7 +384,7 @@
         }
 
         // Function tạo notification
-        function createNotification(title, body, icon, soundFile = 'notification.mp3', chatUrl = null) {
+        function createNotification(title, body, icon, soundFile = 'notification_fb.mp3', chatUrl = null) {
             const notification = new Notification(title, {
                 body: body,
                 icon: icon,
@@ -450,7 +450,7 @@
                                 
                                 // Hiển thị cả toastr và desktop notification (có thể click để chuyển đến chat)
                                 notification('success', messageText, title, 10000, chatUrl);
-                                showDesktopNotification(title, messageText, '/images/logo.png', 'notification.mp3', chatUrl);
+                                showDesktopNotification(title, messageText, '/images/logo.png', 'notification_fb.mp3', chatUrl);
                             }
                         })
                         .listen('.StaffLocked', function(e) {

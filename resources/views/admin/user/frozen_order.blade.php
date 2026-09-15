@@ -4,14 +4,10 @@
 @endsection
 
 @section('style-libs')
-<link href="{{ asset('theme/admin/vendor/datatables/dataTables.bootstrap4.min.css') }}" rel="stylesheet">
 @vite('resources/css/admin/user/frozen_order.css')
 @endsection
 
 @section('script-libs')
-<script src="{{ asset('theme/admin/vendor/datatables/jquery.dataTables.min.js') }}"></script>
-<script src="{{ asset('theme/admin/vendor/datatables/dataTables.bootstrap4.min.js') }}"></script>
-<script src="{{ asset('theme/admin/js/demo/datatables-demo.js') }}"></script>
 @vite('resources/js/admin/user/frozen_order.js')
 <script>
     window.currentPermissionCode = "quan_ly_tat_ca_nguoi_dung";
@@ -149,12 +145,12 @@
                                                 {{ Str::limit($order->name, 60, '...') }}
                                                 @if ($is_current)
                                                 <span class="badge badge-success ml-2">
-                                                    <i class="fas fa-sync-alt"></i> Đã quay đến đây
+                                                    <i class="fas fa-sync-alt"></i> Đã làm đến đây
                                                 </span>
                                                 @endif
                                                 @if ($is_frozen_and_spun)
                                                 <span class="badge badge-warning ml-2">
-                                                    <i class="fas fa-sync-alt"></i> Đã quay đến đây (đã đóng băng)
+                                                    <i class="fas fa-sync-alt"></i> Đã làm đến đây (đã đóng băng)
                                                 </span>
                                                 @endif
                                                 @if ($is_frozen)

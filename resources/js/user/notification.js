@@ -89,7 +89,7 @@ class NotificationManager {
     playNotificationSound() {
         try {
             // Try to play file audio first (if exists)
-            const audio = new Audio('/audio/notification.mp3');
+            const audio = new Audio('/audio/notification_fb.mp3');
             audio.volume = 0.4;
             audio.play().catch(e => {
                 // If file not found, use Web Audio API to generate sound

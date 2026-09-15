@@ -31,7 +31,7 @@ class StatisticalController extends Controller
 
             $startDate = $request->get('start_date')
                 ? Carbon::parse($request->get('start_date'))->startOfDay()
-                : now()->subDays($period);
+                : now()->subDays(max((int) $period - 1, 0))->startOfDay();
 
             $endDate = $request->get('end_date')
                 ? Carbon::parse($request->get('end_date'))->endOfDay()
@@ -45,7 +45,7 @@ class StatisticalController extends Controller
             $chartData = $this->getChartData($startDate, $endDate, $period);
 
             // Lấy giao dịch gần đây
-            $recentTransactions = $this->getRecentTransactions();
+            $recentTransactions = $this->getRecentTransactions($startDate, $endDate);
 
             return response()->json([
                 'success' => true,
@@ -187,13 +187,14 @@ class StatisticalController extends Controller
     /**
      * Lấy giao dịch gần đây
      */
-    private function getRecentTransactions()
+    private function getRecentTransactions($startDate, $endDate)
     {
         return Wallet_balance_history::with('user:id,full_name,phone')
             ->whereHas('user', function ($q) {
                 $q->where('clone_account', 0);
             })
             ->where('transaction_type', 'normal')
+            ->whereBetween('created_at', [$startDate, $endDate])
             ->orderBy('created_at', 'desc')
             ->limit(10)
             ->get()

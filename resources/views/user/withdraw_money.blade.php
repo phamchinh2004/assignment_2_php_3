@@ -28,7 +28,7 @@
         <div class="rank-header">
             <div class="rank-badge">
                 <i class="fas fa-crown"></i>
-                <span>{{ $rank->name }}</span>
+                <span class="text-dark">{{ $rank->name }}</span>
             </div>
             <div class="rank-level">Cấp độ {{ $rank->id }}</div>
         </div>
