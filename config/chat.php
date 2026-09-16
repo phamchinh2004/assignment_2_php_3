@@ -15,8 +15,15 @@ return [
         // Bật/tắt tính năng auto reply
         'enabled' => env('CHAT_AUTO_REPLY_ENABLED', true),
 
-        // Thời gian timeout (giờ) - chỉ gửi auto-reply nếu đã không nhắn với staff >= X giờ
+        // Thời gian timeout (giờ) - chỉ gửi auto-reply nếu đã không nhắn với staff >= X giờ.
+        // Với chat hỗ trợ, 1 giờ là mức chấp nhận được để không chờ quá lâu nhưng vẫn tránh spam.
         'timeout_hours' => env('CHAT_AUTO_REPLY_TIMEOUT_HOURS', 1),
+
+        // Tần suất tối thiểu giữa các tin nhắn tự động trong cùng conversation.
+        'repeat_after_hours' => env('CHAT_AUTO_REPLY_REPEAT_AFTER_HOURS', 1),
+
+        // Sau bao nhiêu phút kể từ khi auto-reply gửi, nếu chưa có admin/staff reply thì gửi email cảnh báo.
+        'escalation_after_minutes' => env('CHAT_AUTO_REPLY_ESCALATION_AFTER_MINUTES', 5),
 
         // Nội dung tin nhắn chào tự động (hỗ trợ đa ngôn ngữ)
         'messages' => [

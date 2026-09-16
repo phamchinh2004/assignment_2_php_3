@@ -184,6 +184,7 @@ class ChatComponent extends Component
         $conversationId = $this->conversation->id;
         $userId = Auth::id();
         $userName = Auth::user()->full_name;
+        $isFirstCustomerMessage = Message::where('conversation_id', $conversationId)->count() === 0;
 
         $messages = [];
         $template_message_for_notification = "";
@@ -279,8 +280,8 @@ class ChatComponent extends Component
         event(new UserSentMessage($userName, $template_message_for_notification, $user->id));
         $this->checkAndSendEmailNotification($template_message_for_notification);
 
-        // Kiểm tra và gửi tin nhắn chào tự động nếu đã lâu không nhắn
-        $this->sendAutoReplyIfNeeded();
+        // Kiểm tra và gửi tin nhắn chào tự động nếu là tin nhắn đầu tiên hoặc đã quá thời gian chờ
+        $this->sendAutoReplyIfNeeded($isFirstCustomerMessage);
     }
 
     public function messageReceived($message)
@@ -600,77 +601,85 @@ class ChatComponent extends Component
     /**
      * Gửi tin nhắn chào tự động nếu đã lâu không có tin nhắn từ staff
      */
-    protected function sendAutoReplyIfNeeded()
+    protected function sendAutoReplyIfNeeded($isFirstCustomerMessage = false)
     {
         try {
-            // Kiểm tra tính năng có được bật không
             if (!config('chat.auto_reply.enabled', true)) {
                 return;
             }
 
-            // Thời gian timeout (giờ) từ config
-            $timeoutHours = config('chat.auto_reply.timeout_hours', 1);
+            $timeoutHours = (float) config('chat.auto_reply.timeout_hours', 1);
+            $repeatAfterHours = (float) config('chat.auto_reply.repeat_after_hours', 1);
+            $escalationAfterMinutes = (int) config('chat.auto_reply.escalation_after_minutes', 5);
+            $currentLocale = app()->getLocale();
+            $defaultLocale = config('chat.auto_reply.default_language', 'vi');
+            $messages = config('chat.auto_reply.messages', []);
+            $autoReplyMessage = $messages[$currentLocale] ?? $messages[$defaultLocale] ?? $messages['vi'] ?? null;
 
-            // Lấy tin nhắn gần nhất từ staff trong conversation này
+            if (!$autoReplyMessage) {
+                return;
+            }
+
             $lastStaffMessage = Message::where('conversation_id', $this->conversation->id)
                 ->where('sender_id', '!=', Auth::id())
                 ->whereHas('sender', function ($query) {
                     $query->whereIn('role', ['admin', 'staff']);
                 })
-                ->select('id', 'created_at')
+                ->select('id', 'created_at', 'sender_id')
                 ->orderBy('created_at', 'desc')
                 ->first();
 
-            // Kiểm tra có cần gửi auto-reply không
+            $lastAutoReply = Message::where('conversation_id', $this->conversation->id)
+                ->where('sender_id', $this->conversation->staff_id)
+                ->whereIn('message', array_values($messages))
+                ->select('id', 'created_at', 'message')
+                ->orderBy('created_at', 'desc')
+                ->first();
+
             $shouldSendAutoReply = false;
 
-            if (!$lastStaffMessage) {
-                // Chưa có tin nhắn nào từ staff → gửi auto-reply
+            if ($isFirstCustomerMessage) {
                 $shouldSendAutoReply = true;
-            } else {
-                // Kiểm tra thời gian tin nhắn cuối từ staff
-                $hoursSinceLastMessage = $lastStaffMessage->created_at->diffInHours(now());
-
-                if ($hoursSinceLastMessage >= $timeoutHours) {
-                    $shouldSendAutoReply = true;
-                }
+            } elseif ($lastAutoReply && $lastAutoReply->created_at->diffInHours(now()) >= $repeatAfterHours && (!$lastStaffMessage || $lastStaffMessage->created_at->diffInHours(now()) >= $timeoutHours)) {
+                $shouldSendAutoReply = true;
+            } elseif (!$lastStaffMessage && (!$lastAutoReply || $lastAutoReply->created_at->diffInHours(now()) >= $repeatAfterHours)) {
+                $shouldSendAutoReply = true;
             }
 
-            // Gửi tin nhắn chào tự động nếu cần
-            if ($shouldSendAutoReply) {
-                // Lấy ngôn ngữ hiện tại của user (từ session hoặc config)
-                $currentLocale = app()->getLocale();
-                $defaultLocale = config('chat.auto_reply.default_language', 'vi');
-
-                // Lấy nội dung tin nhắn theo ngôn ngữ
-                $messages = config('chat.auto_reply.messages', []);
-                $autoReplyMessage = $messages[$currentLocale] ?? $messages[$defaultLocale] ?? $messages['vi'];
-
-                // Lấy staff_id từ conversation để làm người gửi
-                $staffId = $this->conversation->staff_id;
-
-                // Dispatch job để GỬI TIN NHẮN TỰ ĐỘNG SAU 3 GIÂY
-                // Delay để đảm bảo tin nhắn user được INSERT VÀ BROADCAST trước
-                \App\Jobs\SendAutoReplyMessage::dispatch(
-                    $this->conversation->id,
-                    $staffId,
-                    $autoReplyMessage,
-                    Auth::id(),
-                    $currentLocale,
-                    $lastStaffMessage ? $lastStaffMessage->created_at->diffInHours(now()) : null
-                )->delay(now()->addSeconds(3));
-
-                Log::info('Đã đưa tin nhắn chào tự động vào queue', [
-                    'conversation_id' => $this->conversation->id,
-                    'user_id' => Auth::id(),
-                    'staff_id' => $staffId,
-                    'locale' => $currentLocale,
-                    'hours_since_last_message' => $lastStaffMessage ? $lastStaffMessage->created_at->diffInHours(now()) : null,
-                ]);
+            if (!$shouldSendAutoReply) {
+                return;
             }
+
+            $staffId = $this->conversation->staff_id;
+
+            \App\Jobs\SendAutoReplyMessage::dispatch(
+                $this->conversation->id,
+                $staffId,
+                $autoReplyMessage,
+                Auth::id(),
+                $currentLocale,
+                $lastStaffMessage ? $lastStaffMessage->created_at->diffInHours(now()) : null
+            )->delay(now()->addSeconds(3));
+
+            $recipientEmails = \App\Services\ChatAutoReplyService::getEscalationRecipients(Auth::user());
+            \App\Jobs\NotifyAutoReplyEscalation::dispatch(
+                $this->conversation->id,
+                Auth::id(),
+                $autoReplyMessage,
+                $recipientEmails,
+                $escalationAfterMinutes
+            )->delay(now()->addMinutes($escalationAfterMinutes));
+
+            Log::info('Đã đưa tin nhắn chào tự động vào queue', [
+                'conversation_id' => $this->conversation->id,
+                'user_id' => Auth::id(),
+                'staff_id' => $staffId,
+                'locale' => $currentLocale,
+                'hours_since_last_message' => $lastStaffMessage ? $lastStaffMessage->created_at->diffInHours(now()) : null,
+                'is_first_customer_message' => $isFirstCustomerMessage,
+            ]);
 
         } catch (\Exception $e) {
-            // Log lỗi nhưng không làm gián đoạn việc gửi tin nhắn
             Log::error('Lỗi gửi tin nhắn chào tự động: ' . $e->getMessage(), [
                 'conversation_id' => $this->conversation->id ?? null,
                 'user_id' => Auth::id(),

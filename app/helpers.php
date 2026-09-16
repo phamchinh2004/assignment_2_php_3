@@ -13,10 +13,10 @@ if (!function_exists('format_money')) {
 if (!function_exists('get_user_avatar')) {
     function get_user_avatar($user, $defaultAvatar = 'images/default-avatar-gray.svg')
     {
-        if ($user->avatar && file_exists(public_path('storage/' . $user->avatar))) {
+        if ($user->avatar) {
             return asset('storage/' . $user->avatar);
         }
-        
+
         return asset($defaultAvatar);
     }
 }
