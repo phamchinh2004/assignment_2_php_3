@@ -1,7 +1,7 @@
 <?php
 return [
     "CapDoThanhVien" => "会員ランク",
-    "Cap" => "ランク: ",
+    "CapDo" => "ランク: ",
     "SoLuongDonHang" => "注文数：",
     "Unit" => "（単位）",
     "ChiTietNguoiDung" => "ユーザー詳細",
@@ -16,4 +16,5 @@ return [
     "TiLeHoaHong" => "報酬率：",
     "ThanhVienVinhVien" => "永久会員",
     "QuayLai" => "戻る",
+    "BanChuaCoGianHang" => "まだショップをお持ちではありません",
 ];

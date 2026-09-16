@@ -1,7 +1,7 @@
 <?php
 return [
     "CapDoThanhVien" => "회원 등급",
-    "Cap" => "등급: ",
+    "CapDo" => "등급: ",
     "SoLuongDonHang" => "주문 수량：",
     "Unit" => "(단위)",
     "ChiTietNguoiDung" => "사용자 상세 정보",
@@ -16,4 +16,5 @@ return [
     "TiLeHoaHong" => "커미션 비율: ",
     "ThanhVienVinhVien" => "영구 회원",
     "QuayLai" => "돌아가기",
+    "BanChuaCoGianHang" => "아직 상점이 없습니다",
 ];

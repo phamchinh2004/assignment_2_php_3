@@ -14,10 +14,14 @@
         </div>
         <div class="d-flex flex-column">
             <span class="fw-bold section_1_text_1">
-                {{__('vip.Cap').$rank->name}}
+                @if ($rank)
+                    {{ __('vip.CapDo') . $rank->name }}
+                @else
+                            <span class="text-danger">{{ __('vip.BanChuaCoGianHang') }}</span>
+                @endif
             </span>
             <span class="section_1_text_2">
-                {{__('vip.SoLuongDonHang').$rank->spin_count}} (Unit)
+                {{ __('vip.SoLuongDonHang') . ($rank?->spin_count ?? 0) }} {{ __('vip.Unit') }}
             </span>
         </div>
     </div>
@@ -48,7 +52,7 @@
         @foreach($list_ranks as $item)
         <div class="col-6 section_3_item">
             <div class="section_3_item_content text-center d-flex flex-column">
-                <span class="section_3_item_tittle">{{ $item->name }} {{ $item->id===$rank->id?__('vip.Ban'):"" }}</span>
+                <span class="section_3_item_tittle">{{ $item->name }} {{ $rank && $item->id === $rank->id ? __('vip.Ban') : '' }}</span>
                 <span class="section_3_item_price">{{ format_money($item->upgrade_fee) }}$</span>
                 <span class="section_3_item_text">{{__('vip.SoLuotRutTien')}} {{ $item->maximum_number_of_withdrawals.__('vip.Ngay') }}</span>
                 <span class="section_3_item_text">{{__('vip.SoTienRutToiDa')}} {{ format_money($item->maximum_withdrawal_amount)."$".__('vip.Ngay') }}</span>

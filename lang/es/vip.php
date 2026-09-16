@@ -1,7 +1,7 @@
 <?php
 return [
     "CapDoThanhVien" => "Nivel de Membresía",
-    "Cap" => "Nivel: ",
+    "CapDo" => "Nivel: ",
     "SoLuongDonHang" => "Cantidad de Pedidos: ",
     "Unit" => "(Unidad)",
     "ChiTietNguoiDung" => "Detalles del Usuario",
@@ -16,4 +16,5 @@ return [
     "TiLeHoaHong" => "Tasa de Comisión: ",
     "ThanhVienVinhVien" => "Miembro Permanente",
     "QuayLai" => "Volver",
+    "BanChuaCoGianHang" => "Aún no tienes una tienda",
 ];

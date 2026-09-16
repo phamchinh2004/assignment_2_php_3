@@ -1,7 +1,7 @@
 <?php
 return [
     "CapDoThanhVien" => "Cấp độ thành viên",
-    "Cap" => "Cấp: ",
+    "CapDo" => "Cấp độ: ",
     "SoLuongDonHang" => "Số lượng đơn hàng: ",
     "Unit" => "(Unit)",
     "ChiTietNguoiDung" => "Chi tiết người dùng",
@@ -16,4 +16,5 @@ return [
     "TiLeHoaHong" => "Tỷ lệ hoa hồng: ",
     "ThanhVienVinhVien" => "Thành viên vĩnh viễn",
     "QuayLai" => "Quay lại",
+    "BanChuaCoGianHang" => "Bạn chưa có gian hàng",
 ];

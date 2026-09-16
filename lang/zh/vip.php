@@ -1,7 +1,7 @@
 <?php
 return [
     "CapDoThanhVien" => "会员等级",
-    "Cap" => "等级：",
+    "CapDo" => "等级：",
     "SoLuongDonHang" => "订单数量：",
     "Unit" => "（单位）",
     "ChiTietNguoiDung" => "用户详情",
@@ -16,4 +16,5 @@ return [
     "TiLeHoaHong" => "佣金比例：",
     "ThanhVienVinhVien" => "永久会员",
     "QuayLai" => "返回",
+    "BanChuaCoGianHang" => "您还没有店铺",
 ];

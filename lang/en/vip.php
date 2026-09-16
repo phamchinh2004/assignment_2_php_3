@@ -1,7 +1,7 @@
 <?php
 return [
     "CapDoThanhVien" => "Membership Level",
-    "Cap" => "Level: ",
+    "CapDo" => "Level: ",
     "SoLuongDonHang" => "Order Quantity: ",
     "Unit" => "(Unit)",
     "ChiTietNguoiDung" => "User Details",
@@ -16,4 +16,5 @@ return [
     "TiLeHoaHong" => "Commission Rate: ",
     "ThanhVienVinhVien" => "Permanent Member",
     "QuayLai" => "Go Back",
+    "BanChuaCoGianHang" => "You don't have a store yet",
 ];
