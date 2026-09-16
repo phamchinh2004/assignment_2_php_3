@@ -1,4 +1,5 @@
-name: Deploy Laravel App
+name: Deploy to Hosting
+
 on:
   push:
     branches:
@@ -9,60 +10,48 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout source code
-        uses: actions/checkout@v3
+      # 1. Lấy source code từ GitHub
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Deploy to server
-        uses: appleboy/ssh-action@v1.0.3
+      # 2. Cài Node.js trên GitHub Actions
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.PORT }}
+          node-version: 20
+          cache: npm
+
+      # 3. Cài dependencies và build frontend
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Build frontend
+        run: npm run build
+
+      # 4. Upload build lên hosting
+      - name: Upload build to hosting
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: "public/build/*"
+          target: "/home/orderthe/public_html/build"
+          strip_components: 2
+
+      # 5. SSH vào hosting và cập nhật Laravel
+      - name: Deploy Laravel
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            set -e
-            APP_DIR=/var/www/amazon
+            cd /home/orderthe/amazon
 
-            echo "🚀 Starting deployment..."
-            cd $APP_DIR
+            git fetch origin main
+            git reset --hard origin/main
 
-            echo "🧹 Fixing permissions..."
-            sudo chown -R apache:apache $APP_DIR
+            composer install --no-dev --optimize-autoloader
 
-            echo "📥 Pulling code..."
-            sudo -u apache git fetch --all
-            sudo -u apache git reset --hard origin/main
-            sudo -u apache git clean -fd
-
-            echo "📦 Installing PHP dependencies..."
-            sudo chown -R apache:apache vendor composer.lock composer.json || true
-            sudo -u apache /usr/local/bin/composer install --no-dev --optimize-autoloader
-
-            echo "🎨 Building frontend (full clean)..."
-            sudo rm -rf node_modules package-lock.json
-            sudo chown -R apache:apache $APP_DIR
-            
-            # NÊN thêm export PATH để tránh lỗi npm chạy sai node binary
-            export PATH=$PATH:/usr/local/bin
-
-            sudo -u apache npm install --legacy-peer-deps
-            sudo -u apache npm rebuild
-            sudo -u apache npm run build
-
-            echo "🧭 Running Laravel tasks..."
-            sudo -u apache php artisan migrate --force
-            sudo -u apache php artisan db:seed --force
-            sudo -u apache php artisan optimize:clear
-            sudo -u apache php artisan optimize
-
-            echo "📌 Updating supervisor (reload queue worker)..."
-            sudo cp queue.ini /etc/supervisord.d/laravel-queue.ini
-            sudo supervisorctl reread
-            sudo supervisorctl update
-            sudo supervisorctl restart laravel-queue:*
-
-            echo "🔐 Fixing final permissions..."
-            sudo chown -R apache:apache storage bootstrap/cache
-            sudo chmod -R 775 storage bootstrap/cache
-
-            echo "🎯 Deployment done!"
+            php artisan optimize:clear
