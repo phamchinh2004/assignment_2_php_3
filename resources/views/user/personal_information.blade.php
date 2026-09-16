@@ -13,9 +13,11 @@
             <div class="header-content">
                 <div class="profile-avatar">
                     <div class="avatar-container">
-                        <img src="{{ asset('storage/'.$user->avatar) }}" alt="Profile Avatar"
+                        <img src="{{ $user->avatar ? asset('storage/' . $user->avatar) : asset('images/default-avatar-gray.svg') }}" alt="Profile Avatar"
                             class="avatar-image">
-                        <div class="avatar-badge">
+                        <div class="avatar-badge" role="button" tabindex="0" aria-label="Cập nhật ảnh đại diện"
+                            onclick="openAvatarUpload()"
+                            onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openAvatarUpload(); }">
                             <i class="fas fa-camera"></i>
                         </div>
                     </div>
@@ -32,6 +34,20 @@
                             <span class="stat-number">100%</span>
                             <span class="stat-label">Bảo mật</span>
                         </div>
+                    </div>
+                </div>
+                <div class="profile-header-panel">
+                    <div class="profile-header-panel-title">
+                        <span class="profile-online-dot"></span>
+                        Tài khoản đang hoạt động
+                    </div>
+                    <div class="profile-header-panel-row">
+                        <span><i class="fas fa-shield-halved"></i> Bảo mật</span>
+                        <strong>100%</strong>
+                    </div>
+                    <div class="profile-header-panel-row">
+                        <span><i class="fas fa-camera"></i> Ảnh đại diện</span>
+                        <strong>{{ $user->avatar ? 'Đã cập nhật' : 'Chưa cập nhật' }}</strong>
                     </div>
                 </div>
             </div>
@@ -320,7 +336,7 @@
                             <div class="current-avatar-preview">
                                 <div class="avatar-preview-container">
                                     <img id="currentAvatarPreview"
-                                        src="{{ $user->avatar ? asset('storage/' . $user->avatar) : asset('images/personal_information/image_7.png') }}"
+                                        src="{{ $user->avatar ? asset('storage/' . $user->avatar) : asset('images/default-avatar-gray.svg') }}"
                                         alt="Current Avatar" class="avatar-preview-image">
                                     <div class="avatar-overlay">
                                         <i class="fas fa-camera"></i>

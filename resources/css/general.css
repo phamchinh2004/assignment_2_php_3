@@ -191,12 +191,12 @@
     position: absolute;
     top: 50%;
     right: 15px;
-    color: rgba(255, 255, 255, 0.62);
+    color: gray;
     transform: translateY(-50%);
 }
 
 .auth-password-toggle:hover {
-    color: #fff;
+    color: #000000;
 }
 
 .auth-submit {

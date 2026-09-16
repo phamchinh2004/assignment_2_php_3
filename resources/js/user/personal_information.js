@@ -49,7 +49,7 @@ window.handlePaymentMethodClick = function () {
 };
 
 // Toggle password visibility
-function togglePassword(inputId) {
+window.togglePassword = function (inputId) {
     const input = document.getElementById(inputId);
     const icon = document.getElementById(inputId + "Icon");
 
