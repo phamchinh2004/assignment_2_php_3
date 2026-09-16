@@ -178,13 +178,13 @@
                     <div class="prize-wheel" id="prizeWheel">
                         <div class="wheel-slice slice-1" data-prize="SH Mode">
                             <div class="slice-content">
-                                <i class="fas fa-mobile-screen-button"></i>
+                                <img class="slice-prize-image" src="{{ asset('images/spin/18prm.png') }}" alt="18 Pro Max">
                                 <span>18 Pro Max</span>
                             </div>
                         </div>
                         <div class="wheel-slice slice-2" data-prize="$2">
                             <div class="slice-content">
-                                <i class="fas fa-dollar-sign"></i>
+                                <img class="slice-prize-image" src="{{ asset('images/spin/dollars.png') }}" alt="$2">
                                 <span>$2</span>
                             </div>
                         </div>
@@ -196,19 +196,19 @@
                         </div>
                         <div class="wheel-slice slice-4" data-prize="$10">
                             <div class="slice-content">
-                                <i class="fas fa-dollar-sign"></i>
+                                <img class="slice-prize-image" src="{{ asset('images/spin/dollars.png') }}" alt="$10">
                                 <span>$10</span>
                             </div>
                         </div>
                         <div class="wheel-slice slice-5" data-prize="$2">
                             <div class="slice-content">
-                                <i class="fas fa-dollar-sign"></i>
+                                <img class="slice-prize-image" src="{{ asset('images/spin/dollars.png') }}" alt="$2">
                                 <span>$2</span>
                             </div>
                         </div>
                         <div class="wheel-slice slice-6" data-prize="$5">
                             <div class="slice-content">
-                                <i class="fas fa-dollar-sign"></i>
+                                <img class="slice-prize-image" src="{{ asset('images/spin/dollars.png') }}" alt="$5">
                                 <span>$5</span>
                             </div>
                         </div>
@@ -220,7 +220,7 @@
                         </div>
                         <div class="wheel-slice slice-8" data-prize="$2">
                             <div class="slice-content">
-                                <i class="fas fa-dollar-sign"></i>
+                                <img class="slice-prize-image" src="{{ asset('images/spin/dollars.png') }}" alt="$2">
                                 <span>$2</span>
                             </div>
                         </div>
@@ -261,7 +261,7 @@
                     <p class="prize-subtitle">Bạn đã trúng giải:</p>
 
                     <div class="prize-name-display" id="prizeNameDisplay">
-                        <i class="prize-icon-display" id="prizeIconDisplay"></i>
+                        <img class="prize-icon-display" id="prizeIconDisplay" src="" alt="Giải thưởng">
                         <span class="prize-text-display" id="prizeTextDisplay">Đang tải...</span>
                     </div>
 

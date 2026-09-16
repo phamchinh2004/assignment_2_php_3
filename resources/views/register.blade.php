@@ -4,6 +4,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="TikTok Shop - Nền tảng mua sắm trực tuyến">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="TikTok Shop">
+    <meta property="og:description" content="TikTok Shop - Nền tảng mua sắm trực tuyến">
+    <meta property="og:url" content="{{ url()->current() }}">
+    <meta property="og:image" content="{{ asset('images/logo/tiktok-shop.webp') }}">
+    <meta property="og:image:alt" content="TikTok Shop">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:image" content="{{ asset('images/logo/tiktok-shop.webp') }}">
     @vite ('resources/css/general.css')
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css">
 
