@@ -14,51 +14,56 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 2. Setup Node.js
+      # 2. Prepare SSH private key
+      - name: Prepare SSH key
+        run: |
+          echo "${{ secrets.SSH_PRIVATE_KEY_B64 }}" | base64 -d > github_actions_key
+          chmod 600 github_actions_key
+
+      # 3. Setup Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
 
-      # 3. Install frontend dependencies
+      # 4. Install frontend dependencies
       - name: Install npm dependencies
         run: npm ci
 
-      # 4. Build frontend
+      # 5. Build frontend
       - name: Build frontend
         env:
           VITE_PUSHER_APP_KEY: ${{ secrets.VITE_PUSHER_APP_KEY }}
           VITE_PUSHER_APP_CLUSTER: ${{ secrets.VITE_PUSHER_APP_CLUSTER }}
         run: npm run build
 
-      # 5. Prepare build directory
+      # 6. Prepare build directory
       - name: Prepare build
         run: |
           mkdir -p deploy_build
           cp -R public/build/. deploy_build/
 
-      # 6. Upload build to hosting
+      # 7. Upload frontend build
       - name: Upload build
         uses: appleboy/scp-action@v1
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           port: ${{ secrets.PORT }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          key_path: github_actions_key
           source: "deploy_build/*"
           target: "/home/orderthe/deploy_build"
           strip_components: 1
 
-      # 7. Deploy Laravel + replace build
+      # 8. Deploy Laravel
       - name: Deploy Laravel
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           port: ${{ secrets.PORT }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          passphrase: ${{ secrets.SSH_PASSPHRASE }}
+          key_path: github_actions_key
           script: |
             set -e
 
