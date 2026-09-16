@@ -13,4 +13,14 @@ window.Echo = new Echo({
     authEndpoint: '/broadcasting/auth',
 });
 
+const pusherConnection = window.Echo.connector?.pusher?.connection;
+if (pusherConnection) {
+    pusherConnection.bind('state_change', (states) => {
+        console.debug('[Echo] connection:', states.previous, '->', states.current);
+    });
+    pusherConnection.bind('error', (error) => {
+        console.error('[Echo] connection error:', error);
+    });
+}
+
 window.dispatchEvent(new CustomEvent('echo:ready'));

@@ -1,3 +1,5 @@
+import Modal from 'bootstrap/js/dist/modal';
+
 // Show/Hide Password
 document.addEventListener('DOMContentLoaded', function () {
     const password_login = document.getElementById('password_login');
@@ -277,9 +279,9 @@ window.change_password = async function () {
         notification('success', result.message, 'Successfully!');
         // Close modal
         const modalElement = document.getElementById('changePasswordModal');
-        let modal = bootstrap.Modal.getInstance(modalElement);
+        let modal = Modal.getInstance(modalElement);
         if (!modal) {
-            modal = new bootstrap.Modal(modalElement);
+            modal = new Modal(modalElement);
         }
         modal.hide();
 
@@ -347,9 +349,9 @@ window.change_transaction_password = async function () {
         notification('success', result.message, 'Successfully!');
         // Close modal
         const modalElement = document.getElementById('changeTransactionPasswordModal');
-        let modal = bootstrap.Modal.getInstance(modalElement);
+        let modal = Modal.getInstance(modalElement);
         if (!modal) {
-            modal = new bootstrap.Modal(modalElement);
+            modal = new Modal(modalElement);
         }
         modal.hide();
 
@@ -405,9 +407,9 @@ window.reset_transaction_password = async function () {
         notification('success', result.message, 'Successfully!');
         swal("Mật khẩu giao dịch mới là: " + result.data + ", bạn nên đổi nó ngay bây giờ!");
         const modalElement = document.getElementById('resetTransactionPasswordModal');
-        let modal = bootstrap.Modal.getInstance(modalElement);
+        let modal = Modal.getInstance(modalElement);
         if (!modal) {
-            modal = new bootstrap.Modal(modalElement);
+            modal = new Modal(modalElement);
         }
         modal.hide();
 

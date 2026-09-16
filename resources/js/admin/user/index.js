@@ -1,3 +1,5 @@
+import Modal from 'bootstrap/js/dist/modal';
+
 document.addEventListener('DOMContentLoaded', function () {
     let currentUserId = null;
     let currentUserBalance = 0;
@@ -9,7 +11,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const errorModalElement = document.getElementById('errorModal');
     
     // Initialize modals with options to prevent backdrop issues
-    const depositModal = new bootstrap.Modal(depositModalElement, {
+    const depositModal = new Modal(depositModalElement, {
         backdrop: 'static',
         keyboard: false
     });
@@ -165,7 +167,7 @@ document.addEventListener('DOMContentLoaded', function () {
     
     function getConfirmModal() {
         if (!confirmModal) {
-            confirmModal = new bootstrap.Modal(confirmModalElement, {
+            confirmModal = new Modal(confirmModalElement, {
                 backdrop: 'static',
                 keyboard: true
             });
@@ -175,7 +177,7 @@ document.addEventListener('DOMContentLoaded', function () {
     
     function getSuccessModal() {
         if (!successModal) {
-            successModal = new bootstrap.Modal(successModalElement, {
+            successModal = new Modal(successModalElement, {
                 backdrop: true,
                 keyboard: true
             });
@@ -185,7 +187,7 @@ document.addEventListener('DOMContentLoaded', function () {
     
     function getErrorModal() {
         if (!errorModal) {
-            errorModal = new bootstrap.Modal(errorModalElement, {
+            errorModal = new Modal(errorModalElement, {
                 backdrop: true,
                 keyboard: true
             });

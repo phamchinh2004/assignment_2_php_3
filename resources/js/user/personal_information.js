@@ -1,9 +1,11 @@
+import Modal from 'bootstrap/js/dist/modal';
+
 //Khởi tạo slimselect
 // Tắt focus cho modal
 document
     .getElementById("bankLinkModal")
     .addEventListener("shown.bs.modal", function () {
-        const modal = bootstrap.Modal.getInstance(this);
+        const modal = Modal.getInstance(this);
         if (modal && modal._focustrap) {
             modal._focustrap.deactivate();
         }
@@ -36,7 +38,7 @@ window.handlePaymentMethodClick = function () {
 
     if (!hasBankAccount) {
         // Show bank link modal
-        const bankLinkModal = new bootstrap.Modal(
+        const bankLinkModal = new Modal(
             document.getElementById("bankLinkModal")
         );
         bankLinkModal.show();
@@ -123,7 +125,7 @@ window.submitBankLinkForm = function () {
                     data.message || "Liên kết tài khoản ngân hàng thành công!"
                 );
                 // Close modal
-                const bankLinkModal = bootstrap.Modal.getInstance(modal);
+                const bankLinkModal = Modal.getInstance(modal);
                 bankLinkModal.hide();
                 // Reload page to update status
                 location.reload();
@@ -145,7 +147,7 @@ window.submitBankLinkForm = function () {
 // Initialize form with existing data if available
 // Avatar Upload Functions
 window.openAvatarUpload = function() {
-    const avatarModal = new bootstrap.Modal(document.getElementById('avatarUploadModal'));
+    const avatarModal = new Modal(document.getElementById('avatarUploadModal'));
     avatarModal.show();
 };
 
@@ -204,7 +206,7 @@ window.uploadAvatar = function() {
                     
                     // Close modal after delay
                     setTimeout(() => {
-                        const modal = bootstrap.Modal.getInstance(document.getElementById('avatarUploadModal'));
+                        const modal = Modal.getInstance(document.getElementById('avatarUploadModal'));
                         modal.hide();
                         location.reload(); // Reload to update status
                     }, 1500);

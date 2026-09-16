@@ -802,6 +802,15 @@
         }
         window.chatComponentInitialized = true;
 
+        function whenEchoReady(callback) {
+            if (window.Echo) {
+                callback();
+                return;
+            }
+
+            window.addEventListener('echo:ready', callback, { once: true });
+        }
+
         // Listen to chat notification event (clickable notification)
         Livewire.on('chat-notification', (data) => {
             const eventData = Array.isArray(data) ? data[0] : data;
@@ -883,7 +892,7 @@
             const staffChannel = `staff.{{ auth()->id() }}`;
             const currentUserId = {{ auth()->id() }};
 
-            window.Echo.private(staffChannel)
+            whenEchoReady(() => window.Echo.private(staffChannel)
                 .listen('.MessageSent', (e) => {
                     const root = document.getElementById('chat-root');
                     const component = Livewire.find(root.getAttribute('wire:id'));
@@ -930,7 +939,7 @@
                             })
                 .error((error) => {
                     console.error('Staff Echo error:', error);
-                });
+                }));
         @endif
 
         // Join conversation channel
@@ -945,7 +954,7 @@
             // Update current channel
             currentChannel = newChannel;
 
-            window.Echo.private(currentChannel)
+            whenEchoReady(() => window.Echo.private(currentChannel)
                 .error((error) => {
                     console.error('❌ ERROR joining conversation channel:', currentChannel, error);
                 })
@@ -1003,7 +1012,7 @@
                 })
                 .error((error) => {
                     console.error('Echo error:', error);
-                });
+                }));
         });
 
         window.loadMoreMessagesAdmin = function () {
