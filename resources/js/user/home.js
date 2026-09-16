@@ -1,4 +1,5 @@
 import SlimSelect from 'slim-select';
+import * as bootstrap from 'bootstrap';
 document.addEventListener("DOMContentLoaded", function () {
     // Chỉnh nút theo kích cỡ màn hình
     if (window.innerWidth <= 768) {
