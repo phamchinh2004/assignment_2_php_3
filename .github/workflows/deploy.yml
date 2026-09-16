@@ -76,6 +76,13 @@ jobs:
             echo "=== Install PHP dependencies ==="
             composer install --no-dev --optimize-autoloader
 
+            echo "=== Link public storage ==="
+            if [ -e /home/orderthe/public_html/storage ] && [ ! -L /home/orderthe/public_html/storage ]; then
+              echo "ERROR: /home/orderthe/public_html/storage exists and is not a symlink"
+              exit 1
+            fi
+            ln -sfn /home/orderthe/amazon/storage/app/public /home/orderthe/public_html/storage
+
             echo "=== Update frontend build ==="
             rm -rf /home/orderthe/public_html/build
             mv /home/orderthe/deploy_build /home/orderthe/public_html/build
