@@ -1,5 +1,5 @@
 import SlimSelect from 'slim-select';
-import * as bootstrap from 'bootstrap';
+import Modal from 'bootstrap/js/dist/modal';
 document.addEventListener("DOMContentLoaded", function () {
     // Chỉnh nút theo kích cỡ màn hình
     if (window.innerWidth <= 768) {
@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", function () {
     document
         .getElementById("bankLinkModal")
         .addEventListener("shown.bs.modal", function () {
-            const modal = bootstrap.Modal.getInstance(this);
+            const modal = Modal.getInstance(this);
             if (modal && modal._focustrap) {
                 modal._focustrap.deactivate();
             }
@@ -311,7 +311,7 @@ document.addEventListener("DOMContentLoaded", function () {
     function showNotification() {
         const modalElement = document.getElementById("notificationModal");
         if (modalElement) {
-            const modal = new bootstrap.Modal(modalElement);
+            const modal = new Modal(modalElement);
             modal.show();
             notificationShown = true;
 
@@ -338,7 +338,7 @@ document.addEventListener("DOMContentLoaded", function () {
         stopFireworks();
 
         if (modalElement) {
-            const modal = bootstrap.Modal.getInstance(modalElement);
+            const modal = Modal.getInstance(modalElement);
             if (modal) {
                 modal.hide();
             }
@@ -485,7 +485,7 @@ document.addEventListener("DOMContentLoaded", function () {
             form.classList.remove("was-validated");
 
             // Close modal
-            const modal = bootstrap.Modal.getInstance(
+            const modal = Modal.getInstance(
                 document.getElementById("bankLinkModal")
             );
             modal.hide();
@@ -539,7 +539,7 @@ document.addEventListener("DOMContentLoaded", function () {
             // Kiểm tra xem notification modal có đang hiển thị không
             const showBankModal = () => {
                 try {
-                    const bankModal = bootstrap.Modal.getOrCreateInstance(bankModalElement);
+                    const bankModal = Modal.getOrCreateInstance(bankModalElement);
                     bankModal.show();
                 } catch (error) {
                     console.error("Error showing bank modal:", error);
@@ -549,7 +549,7 @@ document.addEventListener("DOMContentLoaded", function () {
             // Kiểm tra sau 3 giây để đảm bảo notification modal đã được xử lý
             setTimeout(() => {
                 if (notificationModalElement) {
-                    const notificationModal = bootstrap.Modal.getInstance(notificationModalElement);
+                    const notificationModal = Modal.getInstance(notificationModalElement);
                     if (notificationModal && notificationModal._isShown) {
                         // Đợi notification modal đóng
                         notificationModalElement.addEventListener('hidden.bs.modal', showBankModal, { once: true });
