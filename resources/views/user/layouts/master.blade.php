@@ -299,7 +299,7 @@
 
         // Define userId for notification system
         @auth
-            const userId = {{ auth()->id() }};
+            window.userId = {{ auth()->id() }};
         @endauth
 
         window.addEventListener('load', function () {

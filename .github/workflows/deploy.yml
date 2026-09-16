@@ -44,7 +44,13 @@ jobs:
           mkdir -p deploy_build
           cp -R public/build/. deploy_build/
 
-      # 7. Upload frontend build
+      # 7. Prepare public static files
+      - name: Prepare public assets
+        run: |
+          mkdir -p deploy_public
+          cp -R public/. deploy_public/
+
+      # 8. Upload frontend build
       - name: Upload build
         uses: appleboy/scp-action@v1
         with:
@@ -56,7 +62,19 @@ jobs:
           target: "/home/orderthe/deploy_build"
           strip_components: 1
 
-      # 8. Deploy Laravel
+      # 9. Upload public static files
+      - name: Upload public assets
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          port: ${{ secrets.PORT }}
+          key_path: github_actions_key
+          source: "deploy_public/*"
+          target: "/home/orderthe/deploy_public"
+          strip_components: 1
+
+      # 10. Deploy Laravel
       - name: Deploy Laravel
         uses: appleboy/ssh-action@v1
         with:
@@ -75,6 +93,9 @@ jobs:
 
             echo "=== Install PHP dependencies ==="
             composer install --no-dev --optimize-autoloader
+
+            echo "=== Update public static files ==="
+            cp -R /home/orderthe/deploy_public/. /home/orderthe/public_html/
 
             echo "=== Link public storage ==="
             if [ -e /home/orderthe/public_html/storage ] && [ ! -L /home/orderthe/public_html/storage ]; then

@@ -174,8 +174,8 @@ class NotificationManager {
 const notificationManager = new NotificationManager();
 
 // Listen to money deposited event
-if (typeof Echo !== 'undefined' && typeof userId !== 'undefined') {
-    Echo.private(`user.${userId}`)
+if (window.Echo && window.userId) {
+    window.Echo.private(`user.${window.userId}`)
         .listen('.money.deposited', (data) => {
             console.log('Money deposited event received:', data);
             notificationManager.show(data);
