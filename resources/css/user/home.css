@@ -3656,6 +3656,28 @@ marquee {
     transition: all 0.3s ease;
 }
 
+.rank-unlock-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: 999px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+.rank-unlock-status.is-unlocked {
+    color: #166534;
+    background: #dcfce7;
+}
+
+.rank-unlock-status.is-locked {
+    color: #6b7280;
+    background: #f3f4f6;
+}
+
 .rank-badge-1 {
     background: linear-gradient(135deg, #8B4513 0%, #654321 100%);
     color: #FFD700;
@@ -3874,158 +3896,30 @@ marquee {
     }
 }
 
-/* iPhone X, XS, 11 Pro and similar devices */
-@media (max-width: 375px) {
-    .ranks-comparison {
-        margin-top: 16px;
-        border-radius: 14px;
-        overflow-x: auto;
-    }
-    
-    .comparison-header {
-        padding: 16px 14px;
-    }
-    
-    .comparison-header h3 {
-        font-size: 1.1rem;
-    }
-    
-    .comparison-subtitle {
-        font-size: 0.78rem;
-    }
-    
-    
-    .table-header,
-    .table-row {
-        display: grid;
-        grid-template-columns: 125px 85px 85px 85px 85px 85px;
-        min-width: 520px;
-    }
-    
-    .table-header > div,
-    .table-row > div {
-        padding: 12px 8px;
-        font-size: 0.8rem;
-        border-right: 1px solid rgba(255, 149, 0, 0.1);
-        border-bottom: none;
-        justify-content: center;
-    }
-    
-    .table-header > div:last-child,
-    .table-row > div:last-child {
-        border-right: none;
-    }
-    
-    .rank-badge {
-        padding: 8px;
-        flex-direction: column;
-        gap: 5px;
-    }
-    
-    .rank-icon {
-        font-size: 1.1rem;
-    }
-    
-    .rank-name {
-        font-size: 0.75rem;
-    }
-    
-    .count-number,
-    .rate,
-    .count {
-        font-size: 1rem;
-    }
-    
-    .amount {
-        font-size: 0.9rem;
-    }
-    
-    .count-label,
-    .label {
-        font-size: 0.7rem;
-    }
-    
-    .currency,
-    .percent {
-        font-size: 0.75rem;
-    }
-}
-
-/* iPhone Plus and similar devices */
-@media (max-width: 414px) {
-    .ranks-comparison {
-        margin-top: 18px;
-        border-radius: 16px;
-        overflow-x: auto;
-    }
-    
-    .comparison-header {
-        padding: 18px 16px;
-    }
-    
-    .comparison-header h3 {
-        font-size: 1.2rem;
-    }
-    
-    .comparison-subtitle {
-        font-size: 0.8rem;
-    }
-    
-    
-    .table-header,
-    .table-row {
-        display: grid;
-        grid-template-columns: 130px 90px 90px 90px 90px 90px;
-    }
-    
-    .table-header > div,
-    .table-row > div {
-        padding: 14px 10px;
-        font-size: 0.82rem;
-        border-right: 1px solid rgba(255, 149, 0, 0.1);
-        border-bottom: none;
-        justify-content: center;
-    }
-    
-    .table-header > div:last-child,
-    .table-row > div:last-child {
-        border-right: none;
-    }
-    
-    .rank-badge {
-        padding: 10px;
-        flex-direction: column;
-        gap: 6px;
-    }
-    
-    .rank-icon {
-        font-size: 1.2rem;
-    }
-    
-    .rank-name {
-        font-size: 0.8rem;
-    }
-    
-    .count-number,
-    .rate,
-    .count {
-        font-size: 1.05rem;
-    }
-    
-    .amount {
-        font-size: 0.95rem;
-    }
-    
-    .count-label,
-    .label {
-        font-size: 0.72rem;
-    }
-    
-    .currency,
-    .percent {
-        font-size: 0.8rem;
-    }
-}
+/*
+ * NOTE (refactor): The old @media (max-width: 375px) and
+ * @media (max-width: 414px) "comparison table" blocks that used to sit
+ * here have been removed.
+ *
+ * Why they were removed:
+ * - They re-declared `.table-header`/`.table-row` as a fixed-column
+ *   CSS grid (e.g. `grid-template-columns: 125px 85px 85px 85px 85px 85px`)
+ *   with `min-width: 520px` — wider than the 375/360px viewports it was
+ *   meant to support.
+ * - `.ranks-comparison { overflow-x: auto; }` was added on top of that,
+ *   which only hid the overflow behind a horizontal scrollbar instead of
+ *   fixing the layout, exactly what this ticket asked to stop doing.
+ * - Because these blocks appeared *before* the `@media (max-width: 768px)`
+ *   card-layout block later in this file, and CSS applies later rules
+ *   first when specificity is equal, the 768px block's `display: flex`
+ *   won on that property — but nothing after it ever reset `min-width`
+ *   or `overflow-x`, so those two leftover declarations kept firing at
+ *   any width ≤375px and forced the card into horizontal scroll.
+ *
+ * The mobile ≤480px "gian hàng" card redesign now lives entirely in
+ * tiktok-theme.css (single source of truth, appended at the end of that
+ * file so it wins the cascade cleanly), which also covers 375/360px.
+ */
 
 /* Mobile Large - Card Layout */
 @media (max-width: 768px) {
@@ -4251,60 +4145,14 @@ marquee {
     }
 }
 
-/* Mobile Extra Small */
-@media (max-width: 360px) {
-    .comparison-header h3 {
-        font-size: 1rem;
-    }
-    
-    .comparison-subtitle {
-        font-size: 0.7rem;
-    }
-    
-    .comparison-table {
-        min-width: 450px;
-    }
-    
-    .table-header,
-    .table-row {
-        grid-template-columns: 100px 70px 70px 70px 70px 70px;
-        min-width: 450px;
-    }
-    
-    .table-header > div,
-    .table-row > div {
-        padding: 8px 4px;
-        font-size: 0.7rem;
-    }
-    
-    .rank-badge {
-        padding: 4px;
-        gap: 2px;
-    }
-    
-    .rank-icon {
-        font-size: 0.8rem;
-    }
-    
-    .rank-name {
-        font-size: 0.65rem;
-    }
-    
-    .count-number,
-    .rate,
-    .count {
-        font-size: 0.8rem;
-    }
-    
-    .amount {
-        font-size: 0.75rem;
-    }
-    
-    .count-label,
-    .label {
-        font-size: 0.6rem;
-    }
-}
+/*
+ * NOTE (refactor): The old @media (max-width: 360px) "Mobile Extra Small"
+ * block that lived here has been removed for the same reason as the
+ * 375px/414px blocks above — it set `min-width: 450px` on
+ * `.comparison-table`/`.table-header`/`.table-row`, which is wider than
+ * a 360px viewport and forced horizontal overflow. The 480px card
+ * redesign in tiktok-theme.css now handles 480/375/360px in one place.
+ */
 
 /* Checkbox styles for notification */
 .notification-options {

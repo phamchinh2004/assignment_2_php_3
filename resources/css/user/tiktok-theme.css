@@ -511,7 +511,19 @@ textarea:focus {
     }
 
     .section-5 .rank-name {
+        flex: 1 1 auto;
+        min-width: 0;
         font-size: 0.78rem !important;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .section-5 .rank-unlock-status {
+        flex: 0 0 auto;
+        padding: 3px 6px;
+        font-size: 0.58rem;
+        gap: 3px;
         white-space: nowrap;
     }
 
@@ -591,6 +603,10 @@ textarea:focus {
         box-sizing: border-box !important;
     }
 
+    .section-5 .table-row > div:not(.col-rank) {
+        grid-column: auto !important;
+    }
+
     .section-5 .table-row > div {
         width: auto !important;
         min-width: 0 !important;
@@ -609,13 +625,15 @@ textarea:focus {
     }
 
     .section-5 .table-row .col-rank {
-        height: 42px !important;
+        height: auto !important;
+        min-height: 52px !important;
         grid-column: 1 / -1 !important;
         flex-direction: row !important;
         align-items: center !important;
         justify-content: flex-start !important;
         padding: 5px 10px !important;
         background: #252529 !important;
+        overflow: visible !important;
     }
 
     .section-5 .rank-badge {
@@ -638,11 +656,24 @@ textarea:focus {
 
     .section-5 .rank-name {
         min-width: 0 !important;
-        overflow: hidden !important;
+        overflow: visible !important;
         color: #fff !important;
         font-size: 0.82rem !important;
         font-weight: 700 !important;
+        line-height: 1.2 !important;
+        text-overflow: clip;
+        white-space: normal !important;
+        overflow-wrap: anywhere;
+    }
+
+    .section-5 .rank-unlock-status {
+        flex: 0 0 auto;
+        max-width: 42%;
+        overflow: hidden;
         text-overflow: ellipsis;
+        padding: 3px 6px;
+        font-size: 0.58rem;
+        gap: 3px;
         white-space: nowrap;
     }
 
@@ -715,6 +746,322 @@ textarea:focus {
         color: var(--tt-red) !important;
     }
 }
+
+/* ==========================================================================
+   FINAL MOBILE CARD LAYOUT — "Thông tin gian hàng" (section-5), <= 480px
+   --------------------------------------------------------------------------
+   This is the single, final block for phone-width rendering of the store
+   comparison table. It intentionally comes last in the cascade for this
+   component so it wins over every earlier @media(max-width:768px) rule
+   above (same specificity + !important => last declaration wins) without
+   needing higher specificity tricks.
+
+   Fixes vs. the old blocks it replaces:
+   - Store name (.rank-name) now wraps (`white-space: normal` +
+     `overflow-wrap: anywhere`) instead of `text-overflow: ellipsis`, so the
+     full name is always visible, never silently cut off.
+   - Data cells use `overflow: visible` + `min-height` (not a hard `height`)
+     so long numbers/labels push the card taller instead of being clipped
+     by `overflow: hidden`.
+   - No `min-width` anywhere in this block, and the outer wrapper is
+     explicitly `overflow-x: hidden` — the card can never force horizontal
+     scrolling on a 480/375/360px screen.
+   - >=768px styles above are completely untouched.
+   ========================================================================== */
+@media (max-width: 480px) {
+    .section-5 .ranks-comparison {
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow-x: hidden !important;
+    }
+
+    .section-5 .comparison-table {
+        display: flex !important;
+        flex-direction: column !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        gap: 10px !important;
+        padding: 8px !important;
+        overflow-x: hidden !important;
+        box-sizing: border-box !important;
+    }
+
+    .section-5 .table-header {
+        display: none !important;
+    }
+
+    /* Each store = one card. Data cells laid out as a 2-column grid,
+       with the header row spanning full width. */
+    .section-5 .table-row {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        grid-auto-rows: auto !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        gap: 0 !important;
+        padding: 0 !important;
+        border: 1px solid #34343a !important;
+        border-radius: 12px !important;
+        background: #18181b !important;
+        overflow: hidden !important; /* clips only the rounded corners */
+        box-sizing: border-box !important;
+    }
+
+    .section-5 .table-row > div:not(.col-rank) {
+        grid-column: auto !important;
+    }
+
+    /* ---- Card header: rank icon + store name + unlock status ---- */
+    .section-5 .table-row .col-rank {
+        grid-column: 1 / -1 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        height: auto !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 10px 12px !important;
+        border: none !important;
+        border-bottom: 1px solid #2b2b2f !important;
+        border-radius: 0 !important;
+        background: #252529 !important;
+        display: flex !important;
+        overflow: visible !important;
+    }
+
+    .section-5 .rank-badge {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        gap: 10px !important;
+        padding: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+    }
+
+    .section-5 .rank-icon {
+        flex: 0 0 26px !important;
+        width: 26px !important;
+        font-size: 1.1rem !important;
+        text-align: center !important;
+    }
+
+    .section-5 .rank-meta {
+        display: flex !important;
+        flex-direction: column !important;
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
+        gap: 4px !important;
+    }
+
+    /* Full store name: wraps to a new line instead of being cut off */
+    .section-5 .rank-name {
+        text-align: left !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        color: #ffffff !important;
+        font-size: 0.85rem !important;
+        font-weight: 700 !important;
+        line-height: 1.3 !important;
+        white-space: normal !important;
+        overflow: visible !important;
+        overflow-wrap: anywhere !important;
+        text-overflow: clip !important;
+    }
+
+    .section-5 .rank-unlock-status {
+        align-self: flex-start !important;
+        max-width: 100% !important;
+        padding: 3px 8px !important;
+        font-size: 0.62rem !important;
+        line-height: 1.2 !important;
+        white-space: nowrap !important;
+    }
+
+    /* ---- Data cells: Thành viên / Phí / Chiết khấu / Lượt / Giá trị ---- */
+    .section-5 .table-row > div:not(.col-rank) {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        height: auto !important;
+        min-height: 56px !important;
+        margin: 0 !important;
+        padding: 8px 10px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        justify-content: center !important;
+        gap: 3px !important;
+        border: none !important;
+        border-top: 1px solid #2b2b2f !important;
+        border-right: 1px solid #2b2b2f !important;
+        box-sizing: border-box !important;
+        overflow: visible !important; /* never hide data */
+    }
+
+    /* remove the double border between the two columns */
+    .section-5 .table-row > div:nth-child(2n) {
+        border-right: none !important;
+    }
+
+    .section-5 .table-row > div:not(.col-rank)::before {
+        display: block !important;
+        width: 100% !important;
+        margin: 0 !important;
+        color: #a1a1aa !important;
+        font-size: 0.6rem !important;
+        font-weight: 600 !important;
+        line-height: 1.1 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.02em !important;
+    }
+
+    .section-5 .table-row .col-members::before    { content: "Thành viên" !important; }
+    .section-5 .table-row .col-fee::before         { content: "Phí nâng cấp" !important; }
+    .section-5 .table-row .col-commission::before  { content: "Chiết khấu" !important; }
+    .section-5 .table-row .col-spins::before       { content: "Lượt phân phối" !important; }
+    .section-5 .table-row .col-value::before       { content: "Giá trị" !important; }
+
+    .section-5 .member-count,
+    .section-5 .fee-amount,
+    .section-5 .commission-rate,
+    .section-5 .spin-count,
+    .section-5 .value-amount {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        align-items: baseline !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        gap: 3px !important;
+        line-height: 1.2 !important;
+    }
+
+    /* Long numbers wrap instead of being clipped/ellipsized */
+    .section-5 .count-number,
+    .section-5 .amount,
+    .section-5 .rate,
+    .section-5 .count {
+        max-width: 100% !important;
+        overflow-wrap: anywhere !important;
+        white-space: normal !important;
+        color: #fff !important;
+        font-size: 0.82rem !important;
+        font-weight: 700 !important;
+    }
+
+    .section-5 .fee-amount .amount,
+    .section-5 .commission-rate .rate,
+    .section-5 .value-amount .amount {
+        color: var(--tt-red) !important;
+    }
+
+    .section-5 .count-label,
+    .section-5 .label,
+    .section-5 .currency,
+    .section-5 .percent {
+        font-size: 0.62rem !important;
+        color: #a1a1aa !important;
+    }
+}
+
+/* Smallest phones (iPhone SE 375px, Galaxy Fold-ish 360px): same layout,
+   just a bit tighter. Still no min-width, still no overflow-x. */
+@media (max-width: 360px) {
+    .section-5 .rank-icon {
+        flex-basis: 22px !important;
+        width: 22px !important;
+        font-size: 1rem !important;
+    }
+
+    .section-5 .rank-name {
+        font-size: 0.8rem !important;
+    }
+
+    .section-5 .rank-unlock-status {
+        padding: 3px 6px !important;
+        font-size: 0.56rem !important;
+    }
+
+    .section-5 .table-row > div:not(.col-rank) {
+        min-height: 50px !important;
+        padding: 7px 8px !important;
+    }
+
+    .section-5 .count-number,
+    .section-5 .amount,
+    .section-5 .rate,
+    .section-5 .count {
+        font-size: 0.78rem !important;
+    }
+}
+/*
+    .section-5 .table-row .col-rank {
+        min-height: 70px !important;
+        padding: 8px 10px !important;
+    }
+
+    .section-5 .rank-badge {
+        display: grid !important;
+        grid-template-columns: 26px minmax(0, 1fr) !important;
+        grid-template-rows: auto auto !important;
+        column-gap: 8px !important;
+        row-gap: 3px !important;
+        align-items: center !important;
+    }
+
+    .section-5 .rank-icon {
+        grid-row: 1 / 3;
+        align-self: center;
+    }
+
+    .section-5 .rank-name {
+        grid-column: 2;
+        width: 100% !important;
+        font-size: 0.82rem !important;
+        line-height: 1.15 !important;
+        white-space: normal !important;
+        overflow: visible !important;
+        overflow-wrap: anywhere;
+    }
+
+    .section-5 .rank-unlock-status {
+        grid-column: 2;
+        justify-self: start;
+        max-width: none !important;
+        padding: 3px 7px !important;
+        font-size: 0.58rem !important;
+        line-height: 1.15 !important;
+    }
+
+    .section-5 .rank-meta {
+        grid-column: 2;
+        min-width: 0;
+        display: flex !important;
+        flex: 1 1 auto;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 3px;
+    }
+
+    .section-5 .rank-meta .rank-name {
+        width: 100% !important;
+        overflow: visible !important;
+        text-overflow: clip !important;
+        white-space: normal !important;
+        overflow-wrap: anywhere;
+    }
+
+    .section-5 .rank-meta .rank-unlock-status {
+        max-width: none !important;
+        overflow: visible !important;
+        text-overflow: clip !important;
+        white-space: nowrap !important;
+    }
+}
+*/
 
 /* Distribution page palette */
 .distribution-header,

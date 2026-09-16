@@ -637,7 +637,18 @@
                                                 <i class="fas fa-star"></i>
                                             @endif
                                         </div>
-                                        <div class="rank-name">{{$item->name}}</div>
+                                        <div class="rank-meta">
+                                            <div class="rank-name">{{$item->name}}</div>
+                                            @if($rank && (int) $rank->id === (int) $item->id)
+                                                <span class="rank-unlock-status is-unlocked">
+                                                    <i class="fas fa-lock-open"></i> Đã mở khóa
+                                                </span>
+                                            @else
+                                                <span class="rank-unlock-status is-locked">
+                                                    <i class="fas fa-lock"></i> Chưa mở khóa
+                                                </span>
+                                            @endif
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="col-members">
