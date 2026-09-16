@@ -1113,13 +1113,15 @@ textarea:focus {
 .product-card-modern,
 .transaction-details,
 .loading-step,
-.frozen-balance-info,
-.alert-info {
+.frozen-balance-info {
     background: #fff !important;
     border-color: #3d3d43 !important;
     color: #f5f5f5 !important;
 }
-
+.alert-info {
+    background: #fff !important;
+    border-color: #3d3d43 !important;
+}
 .summary-value,
 .summary-value-total,
 .price-value,
