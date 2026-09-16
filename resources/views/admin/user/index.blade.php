@@ -44,7 +44,7 @@ Danh sách người dùng
                         <tr>
                             <th style="width: 50px;">#</th>
                             <th>Thông tin</th>
-                            <th>Ngân hàng</th>
+                            <th>Số dư</th>
                             <th>Trạng thái</th>
                             <th>Lịch sử</th>
                             <th style="width: 180px;">Thao tác</th>
@@ -86,24 +86,6 @@ Danh sách người dùng
                                         <span class="info-label">Username:</span> 
                                         <span class="info-value">{{ $item->username }}</span>
                                     </div>
-                                    <div class="mb-2">
-                                        <span class="info-label">SĐT:</span> 
-                                        <span class="info-value">{{ $item->phone }}</span>
-                                    </div>
-                                    <div class="mb-2">
-                                        <span class="info-label">Email:</span> 
-                                        <span class="info-value">{{ $item->email ?: "Chưa có" }}</span>
-                                    </div>
-                                    <div class="mb-2">
-                                        <span class="info-label">Số dư:</span> 
-                                        <span class="balance-highlight">{{ format_money($item->balance) }}$</span>
-                                    </div>
-                                    @if (!empty($item->referrer))
-                                    <div class="mb-2">
-                                        <span class="info-label">Giới thiệu bởi:</span> 
-                                        <span class="info-value">{{ $item->referrer->full_name }} ({{ $item->referrer->username }})</span>
-                                    </div>
-                                    @endif
                                     <div>
                                         <span class="info-label">Cấp bậc:</span> 
                                         <span class="info-value">{!! optional($item->rank)->name ?? '<i class="text-secondary">Chưa có cấp bậc</i>' !!}</span>
@@ -113,16 +95,12 @@ Danh sách người dùng
                             <td>
                                 <div class="info-box">
                                     <div class="mb-2">
-                                        <span class="info-label">Tên TK:</span> 
-                                        <span class="info-value">{{ $item->username_bank ?: "Chưa liên kết" }}</span>
-                                    </div>
-                                    <div class="mb-2">
-                                        <span class="info-label">Số TK:</span> 
-                                        <span class="info-value">{{ $item->account_number ?: "Chưa liên kết" }}</span>
+                                        <span class="info-label">Số dư:</span>
+                                        <span class="balance-highlight">{{ format_money($item->balance ?? 0, 5) }}$</span>
                                     </div>
                                     <div>
-                                        <span class="info-label">Ngân hàng:</span> 
-                                        <span class="info-value">{{ $item->bank_name ?: "Chưa liên kết" }}</span>
+                                        <span class="info-label">Đóng băng:</span>
+                                        <span class="info-value">{{ format_money($item->frozen_balance ?? 0, 5) }}$</span>
                                     </div>
                                 </div>
                             </td>
@@ -169,6 +147,12 @@ Danh sách người dùng
                             </td>
                             <td>
                                 <div class="action-container">
+                                    <a href="{{ route('user.show', ['user' => $item->id]) }}"
+                                       class="btn-action btn-primary-modern"
+                                       title="Xem chi tiết">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+
                                     <a href="{{ route('chat-panel') }}#user-{{ $item->id }}" 
                                        class="btn-action btn-info-modern"
                                        title="Nhắn tin">
@@ -194,13 +178,13 @@ Danh sách người dùng
                                         <i class="fas fa-lock-open"></i>
                                     </a>
                                     @endif
-                                    
+
                                     <a href="{{ route('user.frozen.order.interface',['user'=>$item->id]) }}"
                                        class="btn-action btn-dark-modern"
                                        title="Đóng băng đơn hàng">
                                         <i class="fas fa-snowflake"></i>
                                     </a>
-                                    
+
                                     <a href="{{ route('user.edit',['user'=>$item->id]) }}" 
                                        class="btn-action btn-warning-modern"
                                        title="Chỉnh sửa">
@@ -310,7 +294,7 @@ Danh sách người dùng
                 <div class="summary-card">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <span class="text-muted">Số dư hiện tại:</span>
-                        <strong id="summaryCurrentBalance">0$</strong>
+                        <strong style="color: #000;" id="summaryCurrentBalance">0$</strong>
                     </div>
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <span class="text-muted">Số tiền nạp:</span>
@@ -318,7 +302,7 @@ Danh sách người dùng
                     </div>
                     <hr class="my-2">
                     <div class="d-flex justify-content-between align-items-center">
-                        <span class="fw-bold">Số dư sau nạp:</span>
+                        <span style="color: #000;" class="fw-bold">Số dư sau nạp:</span>
                         <strong class="text-primary fs-5" id="summaryNewBalance">0$</strong>
                     </div>
                 </div>

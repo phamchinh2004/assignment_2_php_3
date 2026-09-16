@@ -22,7 +22,7 @@
 }
 
 ::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(180deg, #0000%, #764ba2 100%);
     border-radius: 10px;
     border: 2px solid transparent;
     background-clip: padding-box;
@@ -42,7 +42,7 @@
 /* Firefox */
 * {
     scrollbar-width: thin;
-    scrollbar-color: #667eea #f0f4ff;
+    /* scrollbar-color: #000#f0f4ff; */
 }
 
 /* Header Section */
@@ -247,7 +247,7 @@
     left: 0;
     width: 4px;
     height: 100%;
-    background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(180deg, #000 0%, #764ba2 100%);
 }
 
 .stat-card:hover {
@@ -414,7 +414,7 @@
 }
 
 .order-modal-modern::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(180deg, #000000 0%, #764ba2 100%);
     border-radius: 10px;
     transition: all 0.3s ease;
 }
@@ -436,7 +436,7 @@
 /* Firefox Scrollbar */
 .order-modal-modern {
     scrollbar-width: thin;
-    scrollbar-color: #667eea rgba(0, 0, 0, 0.05);
+    scrollbar-color: #fe2c55 rgba(0, 0, 0, 0.05);
 }
 
 .order-modal-modern.special-order {
@@ -547,7 +547,7 @@
     display: inline-flex;
     align-items: center;
     gap: 10px;
-    background: rgba(255, 255, 255, 0.3);
+    background: #fff;
     backdrop-filter: blur(10px);
     padding: 8px 20px;
     border-radius: 50px;
@@ -721,7 +721,7 @@
 .product-name {
     font-size: 18px;
     font-weight: 700;
-    color: #2c3e50;
+    color: #fff;
     margin: 0 0 15px 0;
 }
 
@@ -792,7 +792,7 @@
 
 .summary-label i {
     font-size: 16px;
-    color: #667eea;
+    color: #000;
 }
 
 /* Special Order - Icons vàng */
@@ -835,7 +835,7 @@
 
 .summary-label-total i {
     font-size: 18px;
-    color: #667eea;
+    color: #000;
 }
 
 /* Special Order - Icon vàng */
@@ -1259,7 +1259,7 @@
 
 .progress-bar-modern {
     height: 100%;
-    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(90deg, #0000%, #764ba2 100%);
     border-radius: 10px;
     transition: width 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
     position: relative;
@@ -2083,7 +2083,7 @@
     display: block;
     margin-bottom: 8px;
     font-weight: 600;
-    color: #2c3e50;
+    color: #fff;
     font-size: 14px;
 }
 

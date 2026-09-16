@@ -1,8 +1,13 @@
+:root {
+    --app-font: "Inter", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
 * {
-    font-family: "Trebuchet MS", Arial, sans-serif;
+    font-family: var(--app-font);
 }
 
 body {
+    font-family: var(--app-font);
     width: 70%;
     background-color: #f4f4f5;
 }

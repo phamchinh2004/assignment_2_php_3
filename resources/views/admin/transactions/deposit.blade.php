@@ -65,15 +65,16 @@ Danh sách cấp độ
                     <tbody id="tbody">
                         @if (!empty($list_deposit_transactions))
                         @foreach ($list_deposit_transactions as $index =>$item)
+                        @php($transactionUser = $item->user)
                         <tr class="small">
                             <td>{{$index+1}}</td>
                             <td>
                                 <div class="d-flex flex-column nowrap">
-                                    <span>Tên khách hàng: <b>{{ $item->user->full_name }}</b></span>
-                                    <span>Tên tài khoản: <b>{{ $item->user->username }}</b></span>
+                                    <span>Tên khách hàng: <b>{{ $transactionUser->full_name ?? 'Tài khoản đã xóa' }}</b></span>
+                                    <span>Tên tài khoản: <b>{{ $transactionUser->username ?? 'Không còn dữ liệu' }}</b></span>
                                 </div>
                             </td>
-                            <td>{{$item->user->phone}}</td>
+                            <td>{{ $transactionUser->phone ?? 'Không còn dữ liệu' }}</td>
                             <td>{{$item->byUser->username}}</td>
                             <td>
                                 <div class="d-flex flex-column nowrap">
@@ -82,7 +83,7 @@ Danh sách cấp độ
                                 </div>
                             </td>
                             <td>
-                                <span class="text-primary fw-bold">{{format_money($item->user->balance)}}$</span>
+                                <span class="text-primary fw-bold">{{ format_money($transactionUser->balance ?? 0) }}$</span>
                             </td>
                             <td>{{$item->created_at}}</td>
                             <td>

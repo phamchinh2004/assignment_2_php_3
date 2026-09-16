@@ -561,7 +561,7 @@
 
                                     <!-- Thao tác tin nhắn -->
                                     <div class="message-actions position-absolute opacity-0 d-flex" 
-                                         style="transition: opacity 0.2s; top: 0; {{ $isCurrentUser ? 'left: -60px;' : 'right: -60px;' }} z-index: 10;">
+                                         style="transition: opacity 0.2s; top: 0; {{ $isCurrentUser ? 'left: -60px;' : 'right: -30px;' }} z-index: 10;">
                                         @if($isCurrentUser && ($message['type'] ?? 'text') === 'text')
                                             <button class="btn btn-link btn-sm p-1 text-muted" title="Sửa" 
                                                     wire:click="editMessage({{ $message['id'] }})">

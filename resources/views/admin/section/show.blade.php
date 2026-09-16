@@ -12,6 +12,7 @@ Cập nhật section
 <!-- Page level plugins -->
 <script src="{{ asset('theme/admin/vendor/datatables/jquery.dataTables.min.js') }}"></script>
 <script src="{{ asset('theme/admin/vendor/datatables/dataTables.bootstrap4.min.js') }}"></script>
+@vite('resources/js/admin/section/show.js')
 <!-- Page level custom scripts -->
 <script src="{{ asset('theme/admin/js/demo/datatables-demo.js') }}"></script>
 <script>

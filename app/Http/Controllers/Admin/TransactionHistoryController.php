@@ -67,6 +67,9 @@ class TransactionHistoryController extends Controller
                 return back()->with('error', 'Giao dịch đã bị từ chối!');
             } else {
                 $get_user = User::find($transaction->user_id);
+                if (!$get_user) {
+                    return back()->with('error', 'Không thể hủy giao dịch vì tài khoản khách hàng không còn tồn tại.');
+                }
                 $get_user->balance += $transaction->value;
                 $get_user->save();
                 $transaction->status = "cancelled";
@@ -108,6 +111,9 @@ class TransactionHistoryController extends Controller
             return back()->with('error', 'Chỉ có thể xóa giao dịch nạp tiền!');
         }
         $user = User::find($transaction->user_id);
+        if (!$user) {
+            return back()->with('error', 'Không thể xóa giao dịch vì tài khoản khách hàng không còn tồn tại.');
+        }
         $user->balance -= $transaction->value;
         $user->save();
         $transaction->delete();

@@ -104,9 +104,10 @@ document.addEventListener('DOMContentLoaded', function () {
     
     // Event listener cho nút cộng tiền
     document.getElementById('tbody').addEventListener('click', function (e) {
-        if (e.target.classList.contains('btn_plus_money')) {
-            const userId = e.target.id;
-            const row = e.target.closest('tr');
+        const depositButton = e.target.closest('.btn_plus_money');
+        if (depositButton) {
+            const userId = depositButton.id;
+            const row = depositButton.closest('tr');
             
             // Lấy thông tin user từ row
             const userName = row.querySelector('.user-link').textContent.trim();
@@ -115,7 +116,7 @@ document.addEventListener('DOMContentLoaded', function () {
             
             // Cập nhật modal
             currentUserId = userId;
-            currentUserBalance = parseFloat(userBalance);
+            currentUserBalance = parseFloat(userBalance.replace(/,/g, '')) || 0;
             
             document.getElementById('modalUserName').textContent = userName;
             document.getElementById('modalUserUsername').textContent = userUsername;
@@ -157,7 +158,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const newBalance = currentUserBalance + amount;
         
         document.getElementById('summaryDepositAmount').textContent = '+' + amount.toFixed(2) + '$';
-        document.getElementById('summaryNewBalance').textContent = newBalance.toFixed(2) + '$';
+        document.getElementById('summaryNewBalance').textContent = newBalance.toFixed(5) + '$';
     }
     
     // Initialize modals with lazy initialization to prevent conflicts

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\CompleteOrder;
 use App\Models\Order;
 use App\Http\Requests\StoreOrderRequest;
 use App\Http\Requests\UpdateOrderRequest;
@@ -45,7 +46,7 @@ class OrderController extends Controller
             ];
             return response()->json($response);
         } else {
-            // Load trang lần đầu, không có filter
+            // Load trang lần đầu
             // Chỉ cần đếm tổng số đơn hàng để hiển thị trong nút "Tất cả"
             // Dữ liệu sẽ được load qua JavaScript
             $total_orders_count = Order::count();
@@ -264,69 +265,36 @@ class OrderController extends Controller
     }
 
     /**
-     * Cập nhật trạng thái đã thanh toán hoa hồng (commission_paid = 1) 
-     * cho các đơn hàng đã completed trong bảng frozen_orders
+     * Gửi các đơn đã giao qua luồng hoàn thành chính thức.
      */
     public function updateCommissionPaid()
     {
         try {
-            // Tìm các frozen_orders đã completed nhưng chưa được đánh dấu là đã thanh toán hoa hồng
-            $completedOrders = Frozen_order::where(function($query) {
-                $query->where('status', 'completed')
-                      ->orWhereNotNull('completed_at');
-            })
+            $deliveredOrders = Frozen_order::where('status', 'delivered')
             ->where('commission_paid', false)
-            ->with('order')
             ->get();
 
-            if ($completedOrders->isEmpty()) {
-                return redirect()->route('order.index')->with('info', 'Không có đơn hàng nào cần cập nhật trạng thái đã thanh toán hoa hồng!');
+            if ($deliveredOrders->isEmpty()) {
+                return redirect()->route('order.index')->with('info', 'Không có đơn hàng đã giao nào cần xử lý!');
             }
 
-            $countUpdated = 0;
-
-            foreach ($completedOrders as $frozenOrder) {
-                try {
-                    // Cập nhật commission_paid = 1
-                    $frozenOrder->commission_paid = true;
-                    $frozenOrder->save();
-
-                    $countUpdated++;
-
-                    Log::info('Đã cập nhật trạng thái đã thanh toán hoa hồng', [
-                        'frozen_order_id' => $frozenOrder->id,
-                        'order_id' => $frozenOrder->order_id,
-                        'order_code' => $frozenOrder->order->order_code ?? 'N/A',
-                        'user_id' => $frozenOrder->user_id
-                    ]);
-                } catch (\Exception $e) {
-                    Log::error('Lỗi khi cập nhật trạng thái đã thanh toán hoa hồng', [
-                        'frozen_order_id' => $frozenOrder->id,
-                        'error' => $e->getMessage(),
-                        'trace' => $e->getTraceAsString()
-                    ]);
-                    // Tiếp tục xử lý đơn hàng tiếp theo
-                    continue;
-                }
+            foreach ($deliveredOrders as $frozenOrder) {
+                CompleteOrder::dispatch($frozenOrder->id);
             }
 
-            if ($countUpdated > 0) {
-                return redirect()->route('order.index')->with('success', "Đã cập nhật trạng thái đã thanh toán hoa hồng cho {$countUpdated} đơn hàng thành công!");
-            } else {
-                return redirect()->route('order.index')->with('error', 'Không thể cập nhật trạng thái đã thanh toán hoa hồng cho bất kỳ đơn hàng nào!');
-            }
+            return redirect()->route('order.index')->with('success', "Đã gửi {$deliveredOrders->count()} đơn hàng qua luồng hoàn thành tự động!");
         } catch (\Exception $e) {
-            Log::error('Lỗi khi cập nhật trạng thái đã thanh toán hoa hồng (tổng thể)', [
+            Log::error('Lỗi khi gửi đơn hàng qua luồng hoàn thành', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return redirect()->route('order.index')->with('error', 'Có lỗi xảy ra khi cập nhật trạng thái đã thanh toán hoa hồng: ' . $e->getMessage());
+            return redirect()->route('order.index')->with('error', 'Có lỗi xảy ra khi gửi đơn hàng hoàn thành: ' . $e->getMessage());
         }
     }
 
     /**
      * Cập nhật hoa hồng đơn hàng đóng băng
-     * Set commission_percentage = 10 cho các bản ghi có custom_price != null và commission_percentage = null
+    * Set commission_percentage = 10 cho các bản ghi có custom_price != null và commission_percentage = null
      */
     public function updateFrozenCommissionPercentage()
     {
@@ -345,7 +313,7 @@ class OrderController extends Controller
 
             foreach ($frozenOrdersToUpdate as $frozenOrder) {
                 try {
-                    // Cập nhật commission_percentage = 10
+                    // Cập nhật commission_percentage = 10 (10%) cho đơn đặc biệt
                     $frozenOrder->commission_percentage = 10;
                     $frozenOrder->save();
 

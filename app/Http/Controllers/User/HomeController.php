@@ -16,6 +16,7 @@ use App\Models\User_spin_progress;
 use App\Models\Wallet_balance_history;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 
@@ -183,24 +184,47 @@ class HomeController extends Controller
     public function check_frozen_order()
     {
         try {
-            $user = Auth::user();
-            if (!$user->rank_id) {
-                return response()->json([
-                    'status' => 500,
-                    'message' => __('home.BanChuaCoGianHang')
-                ]);
-            }
-            $check_frozen = Frozen_order::join('orders', 'frozen_orders.order_id', '=', 'orders.id')
-                ->where('frozen_orders.user_id', Auth::id())
-                ->where('frozen_orders.is_frozen', 1)
-                ->orderBy('orders.index', 'asc')
-                ->select('frozen_orders.*')
-                ->first();
+            $result = DB::transaction(function () {
+                $user = User::whereKey(Auth::id())->lockForUpdate()->firstOrFail();
+                if (!$user->rank_id) {
+                    return [
+                        'status' => 500,
+                        'message' => __('home.BanChuaCoGianHang')
+                    ];
+                }
+
+                $check_frozen = Frozen_order::where('user_id', $user->id)
+                    ->where('is_frozen', 1)
+                    ->with('order')
+                    ->join('orders', 'frozen_orders.order_id', '=', 'orders.id')
+                    ->orderBy('orders.index', 'asc')
+                    ->select('frozen_orders.*')
+                    ->lockForUpdate()
+                    ->first();
+
+                return $this->processFrozenOrderCheck($user, $check_frozen);
+            });
+
+            return $result instanceof \Illuminate\Http\JsonResponse
+                ? $result
+                : response()->json($result);
+        } catch (\Exception $e) {
+            \Log::error($e);
+            return response()->json([
+                'status' => 500,
+                'message' => __('home.DaXayRaLoiKhiKiemTraDonHang'),
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    private function processFrozenOrderCheck(User $user, ?Frozen_order $check_frozen)
+    {
             if ($check_frozen) {
-                if ($check_frozen->custom_price) {
+                if ($check_frozen->custom_price !== null) {
                     $order_special_id = $check_frozen->order_id;
                     $get_order_special = Order::find($order_special_id);
-                    $query_current_spin = User_spin_progress::where('user_id', Auth::user()->id)->first();
+                    $query_current_spin = User_spin_progress::where('user_id', $user->id)->lockForUpdate()->first();
                     if (!$get_order_special) {
                         return response()->json([
                             'status' => 500,
@@ -209,8 +233,8 @@ class HomeController extends Controller
                     }
                     if (!$query_current_spin) {
                         User_spin_progress::create([
-                            'user_id' => Auth::user()->id,
-                            'rank_id' => Auth::user()->rank_id
+                            'user_id' => $user->id,
+                            'rank_id' => $user->rank_id
                         ]);
                         return response()->json([
                             'status' => 500,
@@ -234,9 +258,9 @@ class HomeController extends Controller
                         $check_frozen->save();
 
                         // Chuyển số dư hiện tại vào số dư đóng băng khi nhận đơn đặc biệt
-                        $user = Auth::user();
                         $user->frozen_balance += $user->balance;
                         $user->balance = 0;
+                        $user->distribution_today += 1;
                         $user->save();
                         return response()->json([
                             'status' => 200,
@@ -278,7 +302,7 @@ class HomeController extends Controller
                         $query_current_spin->current_spin = $query_current_spin->current_spin + 1;
                         $query_current_spin->save();
                         $new_frozen = Frozen_order::create([
-                            'user_id' => Auth::user()->id,
+                            'user_id' => $user->id,
                             'order_id' => $order->id,
                             'spun' => true,
                             'status' => 'pending' // Trạng thái chờ nhận đơn
@@ -312,11 +336,11 @@ class HomeController extends Controller
                     ]);
                 }
             } else {
-                $query_current_spin = User_spin_progress::where('user_id', Auth::user()->id)->first();
+                $query_current_spin = User_spin_progress::where('user_id', $user->id)->lockForUpdate()->first();
                 if (!$query_current_spin) {
                     User_spin_progress::create([
-                        'user_id' => Auth::user()->id,
-                        'rank_id' => Auth::user()->rank_id
+                        'user_id' => $user->id,
+                        'rank_id' => $user->rank_id
                     ]);
                     return response()->json([
                         'status' => 500,
@@ -343,7 +367,7 @@ class HomeController extends Controller
                 $query_current_spin->current_spin = $query_current_spin->current_spin + 1;
                 $query_current_spin->save();
                 $new_frozen = Frozen_order::create([
-                    'user_id' => Auth::user()->id,
+                    'user_id' => $user->id,
                     'order_id' => $order->id,
                     'spun' => true,
                     'status' => 'pending' // Trạng thái chờ nhận đơn
@@ -357,7 +381,6 @@ class HomeController extends Controller
                     null // System change
                 );
 
-                $user = User::find(Auth::user()->id);
                 $user->distribution_today += 1;
                 $user->save();
                 return response()->json([
@@ -371,14 +394,6 @@ class HomeController extends Controller
                     'message' => 'Đây là đơn hàng bình thường'
                 ]);
             }
-        } catch (\Exception $e) {
-            \Log::error($e);
-            return response()->json([
-                'status' => 500,
-                'message' => __('home.DaXayRaLoiKhiKiemTraDonHang'),
-                'error' => $e->getMessage()
-            ]);
-        }
     }
     public function distribution()
     {
@@ -418,18 +433,20 @@ class HomeController extends Controller
             ->get();
 
         $todays_discount = 0;
+        $todays_expected_refund = 0;
         foreach ($today_confirmed_orders as $frozen_order) {
             // Tính tổng giá trị đơn hàng
-            $total_price = $frozen_order->custom_price
+            $total_price = $frozen_order->custom_price !== null
                 ? $frozen_order->custom_price
                 : ($frozen_order->order->price * $frozen_order->order->quantity);
 
             // Tính hoa hồng dự tính = tổng giá * phần trăm hoa hồng
-            $percent = $frozen_order->commission_percentage
-                ?? $frozen_order->order->commission_percentage
-                ?? 0;
+            $percent = $frozen_order->custom_price !== null
+                ? ($frozen_order->commission_percentage ?? $frozen_order->order->commission_percentage ?? 0)
+                : ($frozen_order->order->commission_percentage ?? 0);
             $commission = bcmul($total_price, bcdiv($percent, 100, 6), 6);
             $todays_discount += $commission;
+            $todays_expected_refund += bcadd($total_price, $commission, 6);
         }
 
         // Tính hoa hồng đã được cộng hôm nay từ các đơn hàng đã hoàn thành
@@ -452,7 +469,7 @@ class HomeController extends Controller
                 ->sum('value');
         }
 
-        return view('user.distribution', compact('user', 'frozen_price', 'section_mo_ta', 'user_rank', 'total_orders', 'current_order', 'todays_discount', 'today_commission_added'));
+        return view('user.distribution', compact('user', 'frozen_price', 'section_mo_ta', 'user_rank', 'total_orders', 'current_order', 'todays_discount', 'todays_expected_refund', 'today_commission_added'));
     }
     public function withdraw_money()
     {

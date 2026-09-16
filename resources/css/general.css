@@ -1,5 +1,9 @@
+:root {
+    --app-font: "Inter", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
 * {
-    font-family: "Trebuchet MS", Arial, sans-serif;
+    font-family: var(--app-font);
 }
 
 .container_login_register {

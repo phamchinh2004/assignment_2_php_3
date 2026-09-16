@@ -48,6 +48,25 @@ class UserController extends Controller
     }
 
     /**
+     * Display the details of a member.
+     */
+    public function show(User $user)
+    {
+        abort_unless($user->role === User::ROLE_MEMBER, 404);
+
+        $user->load([
+            'rank',
+            'referrer',
+            'user_spin_progress',
+            'frozen_orders.order',
+            'transaction_histories' => fn ($query) => $query->latest()->limit(10),
+            'wallet_balance_histories' => fn ($query) => $query->latest()->limit(10),
+        ]);
+
+        return view('admin.user.show', compact('user'));
+    }
+
+    /**
      * Show the form for creating a new resource.
      */
     public function create()

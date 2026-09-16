@@ -42,6 +42,7 @@
 
 .avatar {
     width: 70px;
+    border-radius: 50%;
 }
 
 .section_1_text_3 {

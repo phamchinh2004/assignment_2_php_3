@@ -10,7 +10,10 @@
 <section class="section_1 d-flex flex-row justify-content-between align-items-center">
     <div class="d-flex flex-row align-items-center">
         <div class="me-2">
-            <img class="avatar" src="{{ asset('images/personal_information/image_7.png') }}" alt="">
+            <img class="avatar"
+                src="{{ get_user_avatar($user) }}"
+                alt="{{ $user->full_name }}"
+                onerror="this.src='{{ asset('images/default-avatar-gray.svg') }}'">
         </div>
         <div class="d-flex flex-column">
             <span class="fw-bold section_1_text_1">

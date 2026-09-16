@@ -535,7 +535,7 @@ th {
 /* Special Badge */
 .special_badge {
     position: absolute;
-    top: 52px;
+    top: 59px;
     right: 20px;
     background: linear-gradient(135deg, #ffd700 0%, #ffc107 100%);
     color: #7c3a00;

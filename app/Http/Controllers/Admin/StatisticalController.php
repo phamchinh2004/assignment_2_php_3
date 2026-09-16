@@ -1294,7 +1294,11 @@ class StatisticalController extends Controller
             ->whereBetween('created_at', [$prevStartDate, $prevEndDate])
             ->sum('value');
 
-        $growth = $prevStats > 0 ? (($totalRevenue - $prevStats) / $prevStats) * 100 : 0;
+        if ($prevStats == 0.0) {
+            $growth = $totalRevenue > 0 ? 100 : 0;
+        } else {
+            $growth = (($totalRevenue - $prevStats) / $prevStats) * 100;
+        }
 
         return [
             'total_revenue' => $totalRevenue,

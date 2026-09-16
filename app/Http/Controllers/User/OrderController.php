@@ -13,6 +13,7 @@ use App\Jobs\PrepareOrder;
 use App\Services\OrderStatusService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class OrderController extends Controller
@@ -94,155 +95,6 @@ class OrderController extends Controller
             ]);
         }
     }
-    public function handle_so_du($order_id, $total_price, $frozen_id)
-    {
-        try {
-            $user = User::find(Auth::user()->id);
-            $user_id = $user->id;
-            $frozen_order = Frozen_order::find($frozen_id);
-            $order = Order::find($order_id);
-            if (!$order) {
-                return response()->json([
-                    'status' => 404,
-                    'message' => __('order.KhongTimThayDonHang'),
-                ]);
-            }
-            // Kiểm tra nếu là đơn đặc biệt
-            $is_special_order = $frozen_order->custom_price != null;
-            $penalty_amount = $frozen_order->penalty_amount ?? 0;
-            $total_required = $is_special_order ? ($frozen_order->custom_price + $penalty_amount) : 0;
-
-            // Nếu là đơn đặc biệt, kiểm tra số dư đủ để xử lý
-            if ($is_special_order) {
-                if ($user->balance < $total_required) {
-                    return response()->json([
-                        'status' => 400,
-                        'message' => 'Số dư không đủ để xử lý đơn hàng đặc biệt. Vui lòng nạp thêm tiền!',
-                    ]);
-                }
-
-                // Trừ tiền từ balance để xử lý đơn hàng
-                $user->balance -= $total_required;
-
-                // Cho phép rút từ frozen_balance (chuyển frozen_balance về balance)
-                $user->balance += $user->frozen_balance;
-                $user->frozen_balance = 0;
-            }
-
-            $frozen_order->is_frozen = 0;
-            $frozen_order->save();
-
-            // Tính chiết khấu
-            $rose = $total_price * $order->commission_percentage;
-
-            // Trừ tiền phạt nếu có (đã trừ ở trên nếu là đơn đặc biệt)
-            if (!$is_special_order) {
-                $actual_profit = $rose - $penalty_amount;
-            } else {
-                // Đối với đơn đặc biệt, profit = rose (đã trừ penalty khi trừ total_required)
-                $actual_profit = $rose;
-            }
-
-            Log::info('Phân phối đơn hàng', [
-                'order_id' => $order_id,
-                'total_price' => $total_price,
-                'rose' => $rose,
-                'penalty_amount' => $penalty_amount,
-                'actual_profit' => $actual_profit,
-                'is_special_order' => $is_special_order
-            ]);
-
-            // Cập nhật balance (cộng hoa hồng)
-            $user->balance += $actual_profit;
-            $user->todays_discount += $actual_profit;
-            $user->save();
-            
-            // Đánh dấu đã cộng tiền hoa hồng
-            $frozen_order->commission_paid = true;
-            $frozen_order->save();
-
-            Transaction_history::create([
-                'user_id' => $user_id,
-                'value' => $total_price,
-                'type' => "order",
-                'note' => $order->order_code
-            ]);
-            Transaction_history::create([
-                'user_id' => $user_id,
-                'value' => $rose,
-                'type' => "profit",
-                'note' => $order->order_code
-            ]);
-
-            // Lưu lịch sử phạt nếu có
-            if ($penalty_amount > 0) {
-                Transaction_history::create([
-                    'user_id' => $user_id,
-                    'value' => $penalty_amount, // Lưu số dương
-                    'type' => "penalty",
-                    'note' => $order->order_code // Giống format với order và profit
-                ]);
-            }
-
-            // Reload user để lấy thông tin mới nhất
-            $user->refresh();
-
-            // Tính chiết khấu hôm nay
-            $today_start = \Carbon\Carbon::today();
-            $today_end = \Carbon\Carbon::tomorrow();
-
-            $today_profit = Transaction_history::where('user_id', $user_id)
-                ->where('type', 'profit')
-                ->whereBetween('created_at', [$today_start, $today_end])
-                ->sum('value');
-
-            $today_penalty = Transaction_history::where('user_id', $user_id)
-                ->where('type', 'penalty')
-                ->whereBetween('created_at', [$today_start, $today_end])
-                ->sum('value');
-
-            $todays_discount = $today_profit - $today_penalty;
-
-            // Tính số dư đóng băng (nếu có đơn đặc biệt chưa phân phối)
-            $frozen_price = 0;
-            $frozen_order = Frozen_order::where('user_id', $user_id)
-                ->where('custom_price', '!=', null)
-                ->where('is_frozen', true)
-                ->where('spun', true)
-                ->first();
-
-            if ($frozen_order) {
-                $penalty_amount_frozen = $frozen_order->penalty_amount ?? 0;
-                $total_required = $frozen_order->custom_price + $penalty_amount_frozen;
-                $frozen_price = max(0, $total_required - $user->balance);
-            }
-
-            return response()->json([
-                'status' => 200,
-                'message' => __('order.PhanPhoiThanhCong'),
-                'balance' => $user->balance,
-                'profit' => $actual_profit,
-                'total_amount' => $total_price,
-                'commission' => $rose,
-                'penalty_amount' => $penalty_amount,
-                'distribution_today' => $user->distribution_today,
-                'todays_discount' => $todays_discount,
-                'frozen_price' => $frozen_price
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Lỗi phân phối đơn hàng', [
-                'message' => $e->getMessage(),
-                'line' => $e->getLine(),
-                'file' => $e->getFile()
-            ]);
-
-            return response()->json([
-                'status' => 500,
-                'message' => 'Lỗi hệ thống: ' . $e->getMessage()
-            ]);
-        }
-    }
-
     /**
      * Nhận đơn hàng (thay thế handle_distribution)
      * Chỉ redirect đến trang order, không thay đổi status
@@ -354,7 +206,19 @@ class OrderController extends Controller
             $currentStatus = Status::where('name', $frozen_order->status)->first();
         }
 
-        return view('user.order_detail', compact('frozen_order', 'statusHistory', 'currentStatus', 'allStatusesWithHistory'));
+        $currentBalance = (float) Auth::user()->balance;
+        $apiUrl = $frozen_order->order->api
+            ? rtrim(config('app.url'), '/') . '/order?api_key=' . urlencode($frozen_order->order->api)
+            : null;
+
+        return view('user.order_detail', compact(
+            'frozen_order',
+            'statusHistory',
+            'currentStatus',
+            'allStatusesWithHistory',
+            'currentBalance',
+            'apiUrl'
+        ));
     }
 
     /**
@@ -458,27 +322,71 @@ class OrderController extends Controller
             ]);
         }
 
-        // Chuyển trạng thái sử dụng OrderStatusService
+        // Chuyển trạng thái và trừ tiền hàng trong cùng transaction.
+        // Như vậy, nếu xác nhận thất bại thì số dư không bị thay đổi, và các request đồng thời
+        // không thể xác nhận/trừ tiền hai lần.
         try {
-            $success = OrderStatusService::changeStatus(
-                $frozen_order,
-                'confirmed',
-                'Nhân viên xác nhận đơn hàng',
-                Auth::id()
-            );
+            $frozen_order = DB::transaction(function () use ($frozen_order) {
+                $lockedOrder = Frozen_order::with('order')
+                    ->lockForUpdate()
+                    ->findOrFail($frozen_order->id);
+                $lockedUser = User::lockForUpdate()->findOrFail($lockedOrder->user_id);
 
-            if (!$success) {
-                Log::error('Không thể thay đổi trạng thái đơn hàng', [
-                    'frozen_order_id' => $frozen_order->id,
-                    'status' => 'confirmed'
+                if ($lockedOrder->status && $lockedOrder->status !== 'pending') {
+                    throw new \RuntimeException('Đơn hàng đã được xử lý.');
+                }
+
+                $orderTotal = $lockedOrder->custom_price !== null
+                    ? $lockedOrder->custom_price
+                    : ($lockedOrder->order->price * $lockedOrder->order->quantity);
+                $penaltyAmount = $lockedOrder->penalty_amount ?? 0;
+
+                if ($lockedOrder->custom_price !== null) {
+                    // Tiền nạp thêm vẫn nằm ở balance; gom vào ví đóng băng
+                    // trước khi trừ tiền hàng của đơn đặc biệt.
+                    $lockedUser->frozen_balance += $lockedUser->balance;
+                    $lockedUser->balance = 0;
+                    $availableBalance = $lockedUser->frozen_balance;
+                } else {
+                    $availableBalance = $lockedUser->balance;
+                }
+
+                if ((float) $availableBalance < (float) ($orderTotal + $penaltyAmount)) {
+                    throw new \RuntimeException('Số dư không đủ để xác nhận đơn hàng.');
+                }
+
+                if (!OrderStatusService::changeStatus(
+                    $lockedOrder,
+                    'confirmed',
+                    'Nhân viên xác nhận đơn hàng',
+                    Auth::id()
+                )) {
+                    throw new \RuntimeException('Không thể thay đổi trạng thái đơn hàng.');
+                }
+
+                // Chỉ trừ tiền hàng; tiền phạt (nếu có) vẫn được xử lý khi hoàn tất đơn.
+                if ($lockedOrder->custom_price !== null) {
+                    $lockedUser->frozen_balance -= $orderTotal;
+                    $lockedUser->balance += $lockedUser->frozen_balance;
+                    $lockedUser->frozen_balance = 0;
+                } else {
+                    $lockedUser->balance -= $orderTotal;
+                }
+                $lockedUser->save();
+                $lockedOrder->is_frozen = 0;
+                $lockedOrder->save();
+
+                Transaction_history::create([
+                    'user_id' => $lockedUser->id,
+                    'value' => $orderTotal,
+                    'type' => 'order',
+                    'note' => $lockedOrder->order->order_code,
                 ]);
-                return response()->json([
-                    'status' => 500,
-                    'message' => 'Không thể thay đổi trạng thái đơn hàng. Vui lòng thử lại!'
-                ]);
-            }
+
+                return $lockedOrder;
+            });
         } catch (\Exception $e) {
-            Log::error('Exception khi thay đổi trạng thái đơn hàng', [
+            Log::error('Không thể xác nhận đơn hàng hoặc trừ tiền trong ví', [
                 'frozen_order_id' => $frozen_order->id,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
@@ -499,10 +407,6 @@ class OrderController extends Controller
             // Fallback: 5-10 phút nếu không có cấu hình
             $delayMinutes = rand(5, 10);
         }
-
-        // Đổi is_frozen = 0 khi đã xác nhận đơn hàng
-        $frozen_order->is_frozen = 0;
-        $frozen_order->save();
 
         try {
             PrepareOrder::dispatch($frozen_order->id)

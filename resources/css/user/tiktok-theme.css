@@ -668,7 +668,7 @@ textarea:focus {
 
     .section-5 .rank-unlock-status {
         flex: 0 0 auto;
-        max-width: 42%;
+        max-width: 100%;
         overflow: hidden;
         text-overflow: ellipsis;
         padding: 3px 6px;
@@ -746,28 +746,6 @@ textarea:focus {
         color: var(--tt-red) !important;
     }
 }
-
-/* ==========================================================================
-   FINAL MOBILE CARD LAYOUT — "Thông tin gian hàng" (section-5), <= 480px
-   --------------------------------------------------------------------------
-   This is the single, final block for phone-width rendering of the store
-   comparison table. It intentionally comes last in the cascade for this
-   component so it wins over every earlier @media(max-width:768px) rule
-   above (same specificity + !important => last declaration wins) without
-   needing higher specificity tricks.
-
-   Fixes vs. the old blocks it replaces:
-   - Store name (.rank-name) now wraps (`white-space: normal` +
-     `overflow-wrap: anywhere`) instead of `text-overflow: ellipsis`, so the
-     full name is always visible, never silently cut off.
-   - Data cells use `overflow: visible` + `min-height` (not a hard `height`)
-     so long numbers/labels push the card taller instead of being clipped
-     by `overflow: hidden`.
-   - No `min-width` anywhere in this block, and the outer wrapper is
-     explicitly `overflow-x: hidden` — the card can never force horizontal
-     scrolling on a 480/375/360px screen.
-   - >=768px styles above are completely untouched.
-   ========================================================================== */
 @media (max-width: 480px) {
     .section-5 .ranks-comparison {
         width: 100% !important;
@@ -997,72 +975,6 @@ textarea:focus {
         font-size: 0.78rem !important;
     }
 }
-/*
-    .section-5 .table-row .col-rank {
-        min-height: 70px !important;
-        padding: 8px 10px !important;
-    }
-
-    .section-5 .rank-badge {
-        display: grid !important;
-        grid-template-columns: 26px minmax(0, 1fr) !important;
-        grid-template-rows: auto auto !important;
-        column-gap: 8px !important;
-        row-gap: 3px !important;
-        align-items: center !important;
-    }
-
-    .section-5 .rank-icon {
-        grid-row: 1 / 3;
-        align-self: center;
-    }
-
-    .section-5 .rank-name {
-        grid-column: 2;
-        width: 100% !important;
-        font-size: 0.82rem !important;
-        line-height: 1.15 !important;
-        white-space: normal !important;
-        overflow: visible !important;
-        overflow-wrap: anywhere;
-    }
-
-    .section-5 .rank-unlock-status {
-        grid-column: 2;
-        justify-self: start;
-        max-width: none !important;
-        padding: 3px 7px !important;
-        font-size: 0.58rem !important;
-        line-height: 1.15 !important;
-    }
-
-    .section-5 .rank-meta {
-        grid-column: 2;
-        min-width: 0;
-        display: flex !important;
-        flex: 1 1 auto;
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 3px;
-    }
-
-    .section-5 .rank-meta .rank-name {
-        width: 100% !important;
-        overflow: visible !important;
-        text-overflow: clip !important;
-        white-space: normal !important;
-        overflow-wrap: anywhere;
-    }
-
-    .section-5 .rank-meta .rank-unlock-status {
-        max-width: none !important;
-        overflow: visible !important;
-        text-overflow: clip !important;
-        white-space: nowrap !important;
-    }
-}
-*/
-
 /* Distribution page palette */
 .distribution-header,
 .distribution-header::before,
@@ -1203,38 +1115,10 @@ textarea:focus {
 .loading-step,
 .frozen-balance-info,
 .alert-info {
-    background: #252529 !important;
+    background: #fff !important;
     border-color: #3d3d43 !important;
     color: #f5f5f5 !important;
 }
-
-/* .normal-badge,
-.celebration-badge,
-.status-badge,
-.special-tag,
-.step-icon,
-.success-icon-wrapper {
-    background: var(--tt-red) !important;
-    border-color: var(--tt-red) !important;
-    color: #fff !important;
-} */
-
-/* .normal-title,
-.normal-message,
-.celebration-message,
-.congratulations-text,
-.summary-label,
-.summary-label-total,
-.product-name,
-.price-label,
-.quantity-label,
-.detail-label,
-.detail-label-total,
-.loading-title,
-.modal-title,
-.form-label {
-    color: #fff !important;
-} */
 
 .summary-value,
 .summary-value-total,

@@ -40,7 +40,7 @@
     .status-cancelled { background: #dc354520; color: #dc3545; }
     
     .info-section {
-        margin-bottom: 24px;
+        margin-bottom: 20px;
     }
     .info-section-title {
         font-size: 18px;
@@ -423,7 +423,7 @@
                                 <div class="info-row">
                                     <div class="info-label">Hoa hồng ({{ $commission_percentage }}%):</div>
                                     <div class="info-value" style="font-weight: 600; color: #0d6efd;">
-                                        {{ format_money($commission_amount) }}$
+                                        {{ format_money($commission_amount, 5) }}$
                                     </div>
                                 </div>
                                 @if($frozen->penalty_amount && $frozen->penalty_amount > 0)

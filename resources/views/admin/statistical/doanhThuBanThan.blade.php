@@ -5,9 +5,28 @@ Danh sách section
 
 @section('style-libs')
 @vite('resources/css/admin/statistical/doanhThuBanThan.css')
+<style>
+    .revenue-chart-container {
+        position: relative;
+        height: 320px;
+        width: 100%;
+    }
+
+    .revenue-chart-container canvas {
+        display: block;
+        max-height: 100%;
+    }
+
+    @media (max-width: 768px) {
+        .revenue-chart-container {
+            height: 260px;
+        }
+    }
+</style>
 @endsection
 
 @section('script-libs')
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 @vite('resources/js/admin/statistical/doanhThuBanThan.js')
 @endsection
 
@@ -117,7 +136,9 @@ Danh sách section
                                     <h5 class="card-title">Biểu đồ doanh thu theo thời gian</h5>
                                 </div>
                                 <div class="card-body">
-                                    <canvas id="revenueChart" height="300"></canvas>
+                                    <div class="revenue-chart-container">
+                                        <canvas id="revenueChart"></canvas>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -127,7 +148,9 @@ Danh sách section
                                     <h5 class="card-title">Phân bổ giao dịch</h5>
                                 </div>
                                 <div class="card-body">
-                                    <canvas id="transactionTypeChart" height="300"></canvas>
+                                    <div class="revenue-chart-container">
+                                        <canvas id="transactionTypeChart"></canvas>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -141,7 +164,9 @@ Danh sách section
                                     <h5 class="card-title">Biểu đồ doanh thu theo tháng</h5>
                                 </div>
                                 <div class="card-body">
-                                    <canvas id="monthlyChart" height="300"></canvas>
+                                    <div class="revenue-chart-container">
+                                        <canvas id="monthlyChart"></canvas>
+                                    </div>
                                 </div>
                             </div>
                         </div>

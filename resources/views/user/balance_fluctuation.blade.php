@@ -57,7 +57,7 @@
             </div>
             <div class="stat-content">
                 <div class="stat-label">{{__('balance_fluctuation.SoDuHienTai')}}</div>
-                <div class="stat-value text-white">${{ number_format($stats['current_balance'], 2) }}</div>
+                <div class="stat-value text-white">${{ number_format($stats['current_balance'], 6) }}</div>
             </div>
         </div>
         
@@ -68,7 +68,7 @@
             </div>
             <div class="stat-content">
                 <div class="stat-label">{{__('balance_fluctuation.TongLoiNhuan')}}</div>
-                <div class="stat-value text-success">${{ number_format($stats['total_profit'], 2) }}</div>
+                <div class="stat-value text-success">${{ number_format($stats['total_profit'], 6) }}</div>
             </div>
         </div>
         
@@ -79,7 +79,7 @@
             </div>
             <div class="stat-content">
                 <div class="stat-label">Hoa hồng tạm tính</div>
-                <div class="stat-value text-warning">${{ number_format($stats['pending_commission'], 6) }}</div>
+                <div class="stat-value text-success">${{ number_format($stats['pending_commission'], 6) }}</div>
             </div>
         </div>
         

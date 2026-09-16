@@ -70,7 +70,7 @@
         function handleUpdateFrozenCommissionPercentage(event, element) {
             event.preventDefault();
             
-            const confirmed = confirm('Bạn có chắc chắn muốn cập nhật hoa hồng đơn hàng đóng băng? Hành động này sẽ set commission_percentage = 10 cho các đơn hàng đóng băng có custom_price != null và commission_percentage = null.');
+            const confirmed = confirm('Bạn có chắc chắn muốn cập nhật hoa hồng đơn hàng đóng băng? Hành động này sẽ set commission_percentage = 10 (10%) cho các đơn hàng đóng băng có custom_price != null và commission_percentage = null.');
             
             if (confirmed) {
                 // Hiển thị spinner

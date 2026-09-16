@@ -199,7 +199,7 @@
                     <button class="btn-process-modern" id="btn_phan_phoi_ngay">
                         <span class="btn-shine-effect"></span>
                         <i class="fas fa-bolt"></i>
-                        <span>Nhận đơn</span>
+                        <span>Xử lý luôn</span>
                     </button>
                 </div>
             </div>
@@ -251,7 +251,23 @@
             </div>
             <div class="stat-info">
                 <h4 class="stat-label">{{__('distribution.HoaHongDuTinhHomNay')}}</h4>
-                <p class="stat-value text-white">${{format_money($todays_discount)}}</p>
+                <p class="stat-value text-success">${{format_money($todays_discount, 5)}}</p>
+            </div>
+            <div class="stat-trend positive">
+                <i class="fas fa-arrow-trend-up"></i>
+            </div>
+        </div>
+
+        <!-- Số tiền hoàn nhập dự tính hôm nay -->
+        <div class="stat-card refund-card">
+            <div class="stat-icon-wrapper">
+                <div class="stat-icon">
+                    <i class="fas fa-wallet"></i>
+                </div>
+            </div>
+            <div class="stat-info">
+                <h4 class="stat-label">Số tiền hoàn nhập dự tính hôm nay</h4>
+                <p class="stat-value text-success">${{format_money($todays_expected_refund, 5)}}</p>
             </div>
             <div class="stat-trend positive">
                 <i class="fas fa-arrow-trend-up"></i>
@@ -267,7 +283,7 @@
             </div>
             <div class="stat-info">
                 <h4 class="stat-label">Hoa hồng đã được cộng hôm nay</h4>
-                <p class="stat-value text-white">${{format_money($today_commission_added ?? 0)}}</p>
+                <p class="stat-value text-success">${{format_money($today_commission_added ?? 0, 5)}}</p>
             </div>
             <div class="stat-trend positive">
                 <i class="fas fa-check-circle"></i>

@@ -61,9 +61,9 @@ class BalanceFluctuationController extends Controller
             $price = $item->custom_price
                 ?? ($item->order->price * $item->order->quantity);
 
-            $percent = $item->commission_percentage
-                ?? $item->order->commission_percentage
-                ?? 0;
+            $percent = $item->custom_price !== null
+                ? ($item->commission_percentage ?? $item->order->commission_percentage ?? 0)
+                : ($item->order->commission_percentage ?? 0);
 
             $pendingCommission += bcmul(
                 $price,

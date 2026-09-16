@@ -256,11 +256,13 @@ window.addEventListener('DOMContentLoaded', function () {
                     const currentStatus = frozen_order.status || 'pending';
                     const statusBadgeHTML = getStatusBadge(currentStatus);
                     const price = frozen_order.custom_price != null ? frozen_order.custom_price / frozen_order.order.quantity : frozen_order.order.price;
-                    // Lấy commission_percentage: đơn đặc biệt từ frozen_order, đơn thường từ order
-                    const commission_percentage = frozen_order.commission_percentage != null ? frozen_order.commission_percentage : frozen_order.order.commission_percentage;
+                    // Đơn đặc biệt dùng tỷ lệ riêng; đơn thường dùng tỷ lệ trong orders.
+                    const commission_percentage = frozen_order.custom_price != null
+                        ? (frozen_order.commission_percentage != null ? frozen_order.commission_percentage : frozen_order.order.commission_percentage)
+                        : frozen_order.order.commission_percentage;
                     const order_details_price_formatted = format_currency(price);
                     const order_details_end_value_total_price_formatted = format_currency(frozen_order.order.quantity * price);
-                    const order_details_end_value_price_rose_formatted = format_currency((frozen_order.order.quantity * price) * (commission_percentage / 100));
+                    const order_details_end_value_price_rose_formatted = format_currency((frozen_order.order.quantity * price) * (commission_percentage / 100), 5, 5);
                     const order_details_end_value_total_formatted = format_currency((frozen_order.order.quantity * price) + ((frozen_order.order.quantity * price) * (commission_percentage / 100)));
                     
                     // Tính toán penalty nếu có
@@ -588,9 +590,9 @@ window.showSuccessModal = function(profit, totalAmount, commission, penaltyAmoun
     const modal = document.getElementById('successModalOverlay');
     if (!modal) return;
     
-    document.getElementById('success_profit_amount').textContent = '+' + format_currency(profit, 4, 4);
+                    document.getElementById('success_profit_amount').textContent = '+' + format_currency(profit, 5, 5);
     document.getElementById('success_total_amount').textContent = '' + format_currency(totalAmount, 4, 4);
-    document.getElementById('success_commission').textContent = '+' + format_currency(commission, 4, 4);
+                    document.getElementById('success_commission').textContent = '+' + format_currency(commission, 5, 5);
     document.getElementById('success_total_refund').textContent = '+' + format_currency(totalRefund, 4, 4);
     document.getElementById('success_time').textContent = new Date().toLocaleString('vi-VN');
     

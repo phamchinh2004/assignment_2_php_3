@@ -194,8 +194,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (bonusSpecialRow) bonusSpecialRow.style.display = 'none';
                     const order_details_price_formatted = format_currency(selectedOrder.price);
                     const order_details_end_value_total_price_formatted = format_currency(selectedOrder.quantity * selectedOrder.price);
-                    const order_details_end_value_price_rose_formatted = format_currency((selectedOrder.quantity * selectedOrder.price) * selectedOrder.commission_percentage);
-                    const order_details_end_value_total_formatted = format_currency((selectedOrder.quantity * selectedOrder.price) + ((selectedOrder.quantity * selectedOrder.price) * selectedOrder.commission_percentage));
+                    const commissionAmount = (selectedOrder.quantity * selectedOrder.price) * (selectedOrder.commission_percentage / 100);
+                    const order_details_end_value_price_rose_formatted = format_currency(commissionAmount, 5, 5);
+                    const order_details_end_value_total_formatted = format_currency((selectedOrder.quantity * selectedOrder.price) + commissionAmount);
 
                     order_details_time.innerText = trans.ThoiGianDatPhanPhoi + formatDateTime(frozen_updated_at);
                     order_details_img.src = `/storage/${selectedOrder.image}`;
@@ -215,8 +216,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (bonusSpecialRow) bonusSpecialRow.style.display = 'flex';
                     const order_details_price_formatted = format_currency(fake_price / selectedOrder.quantity);
                     const order_details_end_value_total_price_formatted = format_currency(fake_price);
-                    const order_details_end_value_price_rose_formatted = format_currency(fake_price * selectedOrder.commission_percentage);
-                    const order_details_end_value_total_formatted = format_currency(fake_price + (fake_price * selectedOrder.commission_percentage));
+                    const commissionAmount = fake_price * (selectedOrder.commission_percentage / 100);
+                    const order_details_end_value_price_rose_formatted = format_currency(commissionAmount, 5, 5);
+                    const order_details_end_value_total_formatted = format_currency(fake_price + commissionAmount);
 
                     order_details_time.innerText = trans.ThoiGianDatPhanPhoi + formatDateTime(frozen_updated_at);
                     order_details_img.src = `/storage/${selectedOrder.image}`;
@@ -312,9 +314,9 @@ document.addEventListener('DOMContentLoaded', function () {
         
         // Lấy modal và cập nhật nội dung
         const modal = document.getElementById('successModalOverlay');
-        document.getElementById('success_profit_amount').textContent = '+' + format_currency(profit, 4, 4);
+        document.getElementById('success_profit_amount').textContent = '+' + format_currency(profit, 5, 5);
         document.getElementById('success_total_amount').textContent = '' + format_currency(totalAmount, 4, 4);
-        document.getElementById('success_commission').textContent = '+' + format_currency(commission, 4, 4);
+        document.getElementById('success_commission').textContent = '+' + format_currency(commission, 5, 5);
         document.getElementById('success_total_refund').textContent = '+' + format_currency(totalRefund, 4, 4);
         document.getElementById('success_time').textContent = new Date().toLocaleString('vi-VN');
         

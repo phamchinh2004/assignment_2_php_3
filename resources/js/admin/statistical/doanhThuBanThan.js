@@ -40,8 +40,8 @@ $(document).ready(function () {
 
                     loadRecentTransactions();
                 }
-                $('#loading').hide();
-                $('#statsCards').show();
+                    $('#loading').hide();
+                    $('#statsCards, #revenueChart, #transactionTypeChart').show();
             },
             error: function (xhr, status, error) {
                 console.error('Error loading data:', error);
