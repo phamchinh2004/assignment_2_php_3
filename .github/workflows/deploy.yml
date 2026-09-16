@@ -46,7 +46,6 @@ jobs:
           username: ${{ secrets.USERNAME }}
           port: ${{ secrets.PORT }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          passphrase: ${{ secrets.SSH_PASSPHRASE }}
           source: "deploy_build/*"
           target: "/home/orderthe/deploy_build"
           strip_components: 1
