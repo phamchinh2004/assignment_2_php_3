@@ -178,8 +178,8 @@
                     <div class="prize-wheel" id="prizeWheel">
                         <div class="wheel-slice slice-1" data-prize="SH Mode">
                             <div class="slice-content">
-                                <i class="fas fa-motorcycle"></i>
-                                <span>SH Mode</span>
+                                <i class="fas fa-mobile-screen-button"></i>
+                                <span>18 Pro Max</span>
                             </div>
                         </div>
                         <div class="wheel-slice slice-2" data-prize="$2">

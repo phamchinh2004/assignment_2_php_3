@@ -204,6 +204,15 @@
 
             <!-- Gợi ý tin nhắn nhanh (Quick Replies) -->
             @if(config('chat.quick_replies.enabled', true) && count($quickReplySuggestions) > 0)
+                <style>
+                    .quick-reply-btn,
+                    .quick-reply-btn:disabled,
+                    .quick-reply-btn span,
+                    .quick-reply-btn i {
+                        color: #495057 !important;
+                        -webkit-text-fill-color: #495057 !important;
+                    }
+                </style>
                 <div class="px-2 px-sm-3 py-2" style="background: #f8f9fa; border-top: 1px solid #e9ecef;"
                      x-show="showQuick" x-transition:enter="transition ease-out duration-200"
                      x-transition:enter-start="opacity-0 transform -translate-y-2"
@@ -228,19 +237,17 @@
                                                                border-radius: 16px; 
                                                                padding: 6px 12px;
                                                                font-size: 12px;
-                                                               color: #495057;
+                                                               color: #495057 !important;
                                                                transition: all 0.2s ease;
                                                                white-space: nowrap;
                                                                position: relative;
                                                                min-width: fit-content;" x-bind:disabled="loadingIndex !== null"
                                 x-bind:style="loadingIndex !== null && loadingIndex !== {{ $index }} ? 'opacity: 0.5; cursor: not-allowed;' : ''"
                                 onmouseover="if (!this.disabled) {
-                                                                        this.style.background='linear-gradient(135deg, #000000 0%, #000000 100%)'; 
-                                                                        this.style.color='white'; 
-                                                                        this.style.borderColor='transparent';
+                                                                                                this.style.background='#f1f3f5';
+                                                                                                this.style.borderColor='#adb5bd';
                                                                      }" onmouseout="if (!this.disabled) {
                                                                         this.style.background='white'; 
-                                                                        this.style.color='#495057'; 
                                                                         this.style.borderColor='#dee2e6';
                                                                     }">
                                 <span x-show="loadingIndex !== {{ $index }}">{{ $suggestion }}</span>
