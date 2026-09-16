@@ -10,36 +10,43 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Lấy source code từ GitHub
+      # 1. Checkout source code
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 2. Cài Node.js trên GitHub Actions
+      # 2. Setup Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
 
-      # 3. Cài dependencies và build frontend
+      # 3. Install frontend dependencies
       - name: Install npm dependencies
         run: npm ci
 
+      # 4. Build frontend
       - name: Build frontend
         run: npm run build
 
-      # 4. Upload build lên hosting
-      - name: Upload build to hosting
+      # 5. Prepare build directory
+      - name: Prepare build
+        run: |
+          mkdir -p deploy_build
+          cp -R public/build/. deploy_build/
+
+      # 6. Upload build to hosting
+      - name: Upload build
         uses: appleboy/scp-action@v1
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          source: "public/build/*"
-          target: "/home/orderthe/public_html/build"
-          strip_components: 2
+          source: "deploy_build/*"
+          target: "/home/orderthe/deploy_build"
+          strip_components: 1
 
-      # 5. SSH vào hosting và cập nhật Laravel
+      # 7. Deploy Laravel + replace build
       - name: Deploy Laravel
         uses: appleboy/ssh-action@v1
         with:
@@ -47,11 +54,22 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
+            set -e
+
             cd /home/orderthe/amazon
 
+            echo "=== Update Laravel source ==="
             git fetch origin main
             git reset --hard origin/main
 
+            echo "=== Install PHP dependencies ==="
             composer install --no-dev --optimize-autoloader
 
+            echo "=== Update frontend build ==="
+            rm -rf /home/orderthe/public_html/build
+            mv /home/orderthe/deploy_build /home/orderthe/public_html/build
+
+            echo "=== Clear Laravel cache ==="
             php artisan optimize:clear
+
+            echo "=== Deployment completed ==="
