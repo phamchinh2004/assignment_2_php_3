@@ -31,6 +31,8 @@ class BroadcastMessageSent
     public function handle(): void
     {
         // Broadcast với messageId (không cần query lại, event sẽ tự query)
-        broadcast(new MessageSent($this->messageId))->toOthers();
+        // Queue jobs do not have the originating HTTP request/socket ID.
+        // Broadcast to all subscribers; clients ignore their own message by sender_id.
+        broadcast(new MessageSent($this->messageId));
     }
 }

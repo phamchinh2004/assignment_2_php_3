@@ -1,6 +1,4 @@
 import Echo from 'laravel-echo';
-import * as bootstrap from 'bootstrap'; // lấy đúng đối tượng bootstrap
-window.bootstrap = bootstrap;
 import Pusher from 'pusher-js';
 
 window.Pusher = Pusher;
