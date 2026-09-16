@@ -464,8 +464,12 @@
             isLoadingMore = false;
         });
 
-        // Listen for WebSocket messages
-        if (conversationId && window.Echo) {
+        // Listen for WebSocket messages after the Echo module is ready.
+        function subscribeToConversationChannel() {
+            if (!conversationId || !window.Echo) {
+                return;
+            }
+
             window.Echo.private(`chat.conversation.${conversationId}`)
                 .listen('.MessageSent', (e) => {
                     const message = e.message;
@@ -537,6 +541,12 @@
                 .error((error) => {
                     console.error('Echo error:', error);
                 });
+        }
+
+        if (window.Echo) {
+            subscribeToConversationChannel();
+        } else {
+            window.addEventListener('echo:ready', subscribeToConversationChannel, { once: true });
         }
 
         // Auto-focus input when chat opens

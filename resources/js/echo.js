@@ -12,3 +12,5 @@ window.Echo = new Echo({
     withCredentials: true,
     authEndpoint: '/broadcasting/auth',
 });
+
+window.dispatchEvent(new CustomEvent('echo:ready'));
