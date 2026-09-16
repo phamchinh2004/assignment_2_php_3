@@ -31,7 +31,6 @@
 </head>
 
 <body class="m-auto">
-    <h1>Test CI/CD</h1>
     <div class="container-1">
 
         <div class="around-content">
