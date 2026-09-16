@@ -12,7 +12,7 @@
         };
     </script>
     @vite(['resources/js/app.js', 'resources/css/app.css'])
-    <link rel="icon" href="data:,">
+    <link rel="icon" href="{{ asset('images/logo/tiktok-shop.png') }}">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet" />
 
     @vite('resources/css/user.css')
