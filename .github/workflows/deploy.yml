@@ -96,7 +96,22 @@ jobs:
             composer install --no-dev --optimize-autoloader
 
             echo "=== Update public static files ==="
+            rm -f /home/orderthe/deploy_public/index.php /home/orderthe/deploy_public/.htaccess
+            preserve_dir=$(mktemp -d)
+            if [ -f /home/orderthe/public_html/index.php ]; then
+              cp -p /home/orderthe/public_html/index.php "$preserve_dir/index.php"
+            fi
+            if [ -f /home/orderthe/public_html/.htaccess ]; then
+              cp -p /home/orderthe/public_html/.htaccess "$preserve_dir/.htaccess"
+            fi
             cp -R /home/orderthe/deploy_public/. /home/orderthe/public_html/
+            if [ -f "$preserve_dir/index.php" ]; then
+              cp -p "$preserve_dir/index.php" /home/orderthe/public_html/index.php
+            fi
+            if [ -f "$preserve_dir/.htaccess" ]; then
+              cp -p "$preserve_dir/.htaccess" /home/orderthe/public_html/.htaccess
+            fi
+            rm -rf "$preserve_dir"
 
             echo "=== Link public storage ==="
             if [ -e /home/orderthe/public_html/storage ] && [ ! -L /home/orderthe/public_html/storage ]; then
