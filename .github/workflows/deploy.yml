@@ -49,6 +49,7 @@ jobs:
         run: |
           mkdir -p deploy_public
           cp -R public/. deploy_public/
+          rm -f deploy_public/index.php deploy_public/.htaccess
 
       # 8. Upload frontend build
       - name: Upload build
@@ -105,6 +106,8 @@ jobs:
             ln -sfn /home/orderthe/amazon/storage/app/public /home/orderthe/public_html/storage
 
             echo "=== Update frontend build ==="
+            rm -rf /home/orderthe/amazon/public/build
+            cp -R /home/orderthe/deploy_build /home/orderthe/amazon/public/build
             rm -rf /home/orderthe/public_html/build
             mv /home/orderthe/deploy_build /home/orderthe/public_html/build
 
