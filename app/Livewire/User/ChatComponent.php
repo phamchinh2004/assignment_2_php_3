@@ -333,7 +333,7 @@ class ChatComponent extends Component
             $this->updateMessageReadStatus($messageId, true);
 
             // Broadcast event để người gửi biết tin nhắn đã được đọc
-            broadcast(new MessageRead($message->id, $this->conversation->id))->toOthers();
+            broadcast(new MessageRead($message->id, $this->conversation->id));
         }
     }
 
@@ -393,7 +393,7 @@ class ChatComponent extends Component
             }
 
             // Gửi duy nhất 1 broadcast thay vì loop gửi N broadcast
-            broadcast(new \App\Events\ConversationRead($this->conversation->id, Auth::id()))->toOthers();
+            broadcast(new \App\Events\ConversationRead($this->conversation->id, Auth::id()));
         }
     }
 
