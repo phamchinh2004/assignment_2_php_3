@@ -61,9 +61,9 @@
 
         <div class="warning">
             @if($warningType === 'first')
-                Đơn hàng của bạn còn <strong>{{ $remainingHours }} giờ</strong> nữa là đến mốc cảnh báo lần 1 ({{ $warningThreshold }} giờ trước hạn).
+                Đây là cảnh báo lần 1. Đơn hàng của bạn còn <strong>{{ $remainingHours }} giờ</strong> để hoàn tất xử lý trước thời hạn.
             @else
-                Đơn hàng của bạn còn <strong>{{ $remainingHours }} giờ</strong> nữa là đến mốc cảnh báo lần 2 và cần xử lý ngay.
+                Đây là cảnh báo lần 2. Đơn hàng của bạn chỉ còn <strong>{{ $remainingHours }} giờ</strong> để hoàn tất xử lý trước thời hạn. Vui lòng xử lý ngay để tránh bị phạt.
             @endif
         </div>
 
