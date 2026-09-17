@@ -553,16 +553,26 @@
                                 </div>
                             </div>
                             <div class="info-row" style="border-bottom: none;">
-                                <div class="info-label">Số tiền cần xử lý đơn hàng này:</div>
+                                <div class="info-label">Tổng giá trị đơn hàng:</div>
                                 <div class="info-value" style="font-weight: 600; color: #dc3545;">
                                     @php
                                         $totalOrderValue = $frozen_order->custom_price ? $frozen_order->custom_price : ($frozen_order->order->price * $frozen_order->order->quantity);
                                         $penaltyAmount = $frozen_order->penalty_amount ?? 0;
-                                        $totalAmount = $totalOrderValue + $penaltyAmount;
+                                        $refundAmount = $totalOrderValue + $commission_amount - $penaltyAmount;
                                     @endphp
-                                    {{ format_money($totalAmount) }}$
+                                    {{ format_money($totalOrderValue) }}$
                                     <small style="display: block; font-size: 12px; color: #666; margin-top: 4px;">
-                                        (Tổng giá trị: {{ format_money($totalOrderValue) }}$ + Tiền phạt:
+                                        (Tổng giá trị đơn hàng)
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="info-row" style="border-bottom: none;">
+                                <div class="info-label">Số tiền hoàn nhập:</div>
+                                <div class="info-value" style="font-weight: 600; color: #198754;">
+                                    {{ format_money($refundAmount) }}$
+                                    <small style="display: block; font-size: 12px; color: #666; margin-top: 4px;">
+                                        (Tổng giá trị: {{ format_money($totalOrderValue) }}$ + Hoa hồng:
+                                        {{ format_money($commission_amount, 5) }}$ - Tiền phạt:
                                         {{ format_money($penaltyAmount) }}$)
                                     </small>
                                 </div>

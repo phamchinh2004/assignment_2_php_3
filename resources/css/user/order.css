@@ -273,7 +273,7 @@
 }
 
 .order_item::before {
-    content: '';
+    content: "";
     position: absolute;
     top: 0;
     left: 0;
@@ -305,12 +305,12 @@
 }
 
 .order_time::before {
-    content: '🕐';
+    content: "🕐";
     font-size: 14px;
 }
 
 .order_code::before {
-    content: '#';
+    content: "#";
     font-weight: 700;
     color: #667eea;
 }
@@ -375,7 +375,7 @@
 
 .status-badge:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
 }
 
 /* ======================= ORDER TABLE ======================= */
@@ -426,7 +426,7 @@ th {
 }
 
 .btn_phan_phoi::before {
-    content: '⚡';
+    content: "⚡";
     font-size: 18px;
 }
 
@@ -442,13 +442,15 @@ th {
 /* ======================= SPECIAL ORDER STYLES ======================= */
 .order_item.special-order {
     position: relative;
-    background: linear-gradient(135deg, 
-        rgba(255, 215, 0, 0.08) 0%, 
-        rgba(255, 193, 7, 0.12) 50%, 
-        rgba(255, 215, 0, 0.08) 100%);
+    background: linear-gradient(
+        135deg,
+        rgba(255, 215, 0, 0.08) 0%,
+        rgba(255, 193, 7, 0.12) 50%,
+        rgba(255, 215, 0, 0.08) 100%
+    );
     border: 3px solid transparent;
     background-clip: padding-box;
-    box-shadow: 
+    box-shadow:
         0 8px 32px rgba(255, 193, 7, 0.25),
         inset 0 0 20px rgba(255, 215, 0, 0.1);
     animation: specialGlow 3s ease-in-out infinite;
@@ -456,19 +458,21 @@ th {
 }
 
 .order_item.special-order::before {
-    content: '';
+    content: "";
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(90deg, 
-        #ffd700 0%, 
+    background: linear-gradient(
+        90deg,
+        #ffd700 0%,
         #ffed4e 20%,
         #ffd700 40%,
         #ffc107 60%,
         #ffd700 80%,
-        #ffed4e 100%);
+        #ffed4e 100%
+    );
     background-size: 200% 100%;
     animation: shimmer 3s linear infinite;
     opacity: 1;
@@ -476,18 +480,20 @@ th {
 }
 
 .order_item.special-order::after {
-    content: '';
+    content: "";
     position: absolute;
     top: -2px;
     left: -2px;
     right: -2px;
     bottom: -2px;
-    background: linear-gradient(45deg,
+    background: linear-gradient(
+        45deg,
         #ffd700 0%,
         #ffc107 25%,
         #ffed4e 50%,
         #ffc107 75%,
-        #ffd700 100%);
+        #ffd700 100%
+    );
     background-size: 300% 300%;
     border-radius: 16px;
     z-index: -1;
@@ -495,13 +501,14 @@ th {
 }
 
 @keyframes specialGlow {
-    0%, 100% {
-        box-shadow: 
+    0%,
+    100% {
+        box-shadow:
             0 8px 32px rgba(255, 193, 7, 0.25),
             inset 0 0 20px rgba(255, 215, 0, 0.1);
     }
     50% {
-        box-shadow: 
+        box-shadow:
             0 12px 40px rgba(255, 193, 7, 0.4),
             inset 0 0 30px rgba(255, 215, 0, 0.2);
     }
@@ -517,7 +524,8 @@ th {
 }
 
 @keyframes gradientShift {
-    0%, 100% {
+    0%,
+    100% {
         background-position: 0% 50%;
     }
     50% {
@@ -527,7 +535,7 @@ th {
 
 .order_item.special-order:hover {
     transform: translateY(-6px) scale(1.02);
-    box-shadow: 
+    box-shadow:
         0 16px 48px rgba(255, 193, 7, 0.4),
         inset 0 0 30px rgba(255, 215, 0, 0.2);
 }
@@ -543,7 +551,7 @@ th {
     border-radius: 25px;
     font-size: 12px;
     font-weight: 800;
-    box-shadow: 
+    box-shadow:
         0 6px 20px rgba(255, 193, 7, 0.5),
         inset 0 -2px 4px rgba(0, 0, 0, 0.1),
         inset 0 2px 4px rgba(255, 255, 255, 0.5);
@@ -557,16 +565,17 @@ th {
 }
 
 @keyframes badgePulse {
-    0%, 100% {
+    0%,
+    100% {
         transform: scale(1);
-        box-shadow: 
+        box-shadow:
             0 6px 20px rgba(255, 193, 7, 0.5),
             inset 0 -2px 4px rgba(0, 0, 0, 0.1),
             inset 0 2px 4px rgba(255, 255, 255, 0.5);
     }
     50% {
         transform: scale(1.05);
-        box-shadow: 
+        box-shadow:
             0 8px 28px rgba(255, 193, 7, 0.7),
             inset 0 -2px 4px rgba(0, 0, 0, 0.1),
             inset 0 2px 4px rgba(255, 255, 255, 0.6);
@@ -575,15 +584,17 @@ th {
 
 /* Special Info Box */
 .special_info {
-    background: linear-gradient(135deg, 
-        rgba(255, 215, 0, 0.15) 0%, 
+    background: linear-gradient(
+        135deg,
+        rgba(255, 215, 0, 0.15) 0%,
         rgba(255, 193, 7, 0.25) 50%,
-        rgba(255, 215, 0, 0.15) 100%);
+        rgba(255, 215, 0, 0.15) 100%
+    );
     border: 2px solid #ffd700;
     border-radius: 12px;
     padding: 16px;
     margin-top: 16px;
-    box-shadow: 
+    box-shadow:
         0 4px 16px rgba(255, 193, 7, 0.3),
         inset 0 0 20px rgba(255, 255, 255, 0.2);
     position: relative;
@@ -591,16 +602,18 @@ th {
 }
 
 .special_info::before {
-    content: '';
+    content: "";
     position: absolute;
     top: 0;
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, 
-        transparent, 
-        rgba(255, 255, 255, 0.3), 
-        transparent);
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.3),
+        transparent
+    );
     animation: sweep 3s infinite;
 }
 
@@ -633,9 +646,11 @@ th {
 
 /* Special Table Row */
 .special_row {
-    background: linear-gradient(135deg, 
-        rgba(255, 215, 0, 0.2) 0%, 
-        rgba(255, 193, 7, 0.3) 100%);
+    background: linear-gradient(
+        135deg,
+        rgba(255, 215, 0, 0.2) 0%,
+        rgba(255, 193, 7, 0.3) 100%
+    );
     border-radius: 8px;
 }
 
@@ -668,13 +683,14 @@ th {
 }
 
 .btn_phan_phoi.special-btn::before {
-    content: '⚡';
+    content: "⚡";
     font-size: 20px;
     animation: iconSpin 2s linear infinite;
 }
 
 @keyframes iconSpin {
-    0%, 100% {
+    0%,
+    100% {
         transform: rotate(0deg) scale(1);
     }
     50% {
@@ -683,16 +699,18 @@ th {
 }
 
 .btn_phan_phoi.special-btn::after {
-    content: '';
+    content: "";
     position: absolute;
     top: 0;
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, 
-        transparent, 
-        rgba(255, 255, 255, 0.4), 
-        transparent);
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.4),
+        transparent
+    );
     animation: buttonSweep 2s infinite;
 }
 
@@ -722,13 +740,14 @@ th {
 }
 
 .btn_phan_phoi.penalty-btn::before {
-    content: '⚠';
+    content: "⚠";
     font-size: 20px;
     animation: penaltyButtonIconPulse 1.5s ease-in-out infinite;
 }
 
 @keyframes penaltyButtonIconPulse {
-    0%, 100% {
+    0%,
+    100% {
         transform: scale(1);
     }
     50% {
@@ -737,13 +756,18 @@ th {
 }
 
 .btn_phan_phoi.penalty-btn::after {
-    content: '';
+    content: "";
     position: absolute;
     top: 0;
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.3),
+        transparent
+    );
     animation: penaltyButtonSweep 2s infinite;
 }
 
@@ -831,7 +855,7 @@ th {
 .countdown-timer {
     font-size: 18px;
     font-weight: 800;
-    font-family: 'Courier New', monospace;
+    font-family: "Courier New", monospace;
     letter-spacing: 1px;
 }
 
@@ -859,7 +883,8 @@ th {
 }
 
 @keyframes countdownWarningPulse {
-    0%, 100% {
+    0%,
+    100% {
         box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
     }
     50% {
@@ -880,7 +905,8 @@ th {
 }
 
 @keyframes countdownDangerPulse {
-    0%, 100% {
+    0%,
+    100% {
         box-shadow: 0 2px 8px rgba(249, 115, 22, 0.4);
         transform: scale(1);
     }
@@ -909,14 +935,15 @@ th {
 }
 
 @keyframes countdownCriticalPulse {
-    0%, 100% {
-        box-shadow: 
+    0%,
+    100% {
+        box-shadow:
             0 4px 16px rgba(239, 68, 68, 0.5),
             0 0 0 2px rgba(239, 68, 68, 0.2);
         transform: scale(1);
     }
     50% {
-        box-shadow: 
+        box-shadow:
             0 8px 28px rgba(239, 68, 68, 0.7),
             0 0 0 4px rgba(239, 68, 68, 0.3);
         transform: scale(1.03);
@@ -924,7 +951,8 @@ th {
 }
 
 @keyframes countdownCriticalShake {
-    0%, 100% {
+    0%,
+    100% {
         transform: rotate(0deg);
     }
     25% {
@@ -936,7 +964,8 @@ th {
 }
 
 @keyframes countdownCriticalBlink {
-    0%, 100% {
+    0%,
+    100% {
         opacity: 1;
     }
     50% {
@@ -962,26 +991,35 @@ th {
 }
 
 @keyframes countdownExpiredPulse {
-    0%, 100% {
-        box-shadow: 
+    0%,
+    100% {
+        box-shadow:
             0 6px 20px rgba(220, 38, 38, 0.6),
             0 0 0 3px rgba(220, 38, 38, 0.3);
     }
     50% {
-        box-shadow: 
+        box-shadow:
             0 10px 32px rgba(220, 38, 38, 0.8),
             0 0 0 5px rgba(220, 38, 38, 0.4);
     }
 }
 
 @keyframes countdownExpiredShake {
-    0%, 100% {
+    0%,
+    100% {
         transform: rotate(0deg) scale(1);
     }
-    10%, 30%, 50%, 70%, 90% {
+    10%,
+    30%,
+    50%,
+    70%,
+    90% {
         transform: rotate(-15deg) scale(1.1);
     }
-    20%, 40%, 60%, 80% {
+    20%,
+    40%,
+    60%,
+    80% {
         transform: rotate(15deg) scale(1.1);
     }
 }
@@ -990,8 +1028,12 @@ th {
 /* Đơn bị phạt CHƯA hoàn thành - Cảnh báo mạnh */
 .order_item.penalized {
     border: 3px solid #ef4444;
-    background: linear-gradient(to bottom, rgba(239, 68, 68, 0.08), rgba(239, 68, 68, 0.03));
-    box-shadow: 
+    background: linear-gradient(
+        to bottom,
+        rgba(239, 68, 68, 0.08),
+        rgba(239, 68, 68, 0.03)
+    );
+    box-shadow:
         0 4px 12px rgba(239, 68, 68, 0.25),
         0 0 0 1px rgba(239, 68, 68, 0.1),
         inset 0 1px 0 rgba(255, 255, 255, 0.3);
@@ -1001,8 +1043,12 @@ th {
 /* Đơn bị phạt ĐÃ hoàn thành - Thông báo nhẹ */
 .order_item.penalized-completed {
     border: 2px solid #fb923c;
-    background: linear-gradient(to bottom, rgba(251, 146, 60, 0.04), rgba(251, 146, 60, 0.01));
-    box-shadow: 
+    background: linear-gradient(
+        to bottom,
+        rgba(251, 146, 60, 0.04),
+        rgba(251, 146, 60, 0.01)
+    );
+    box-shadow:
         0 2px 8px rgba(251, 146, 60, 0.15),
         inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
@@ -1014,20 +1060,21 @@ th {
 
 .order_item.penalized-completed:hover {
     transform: translateY(-4px);
-    box-shadow: 
+    box-shadow:
         0 8px 20px rgba(251, 146, 60, 0.2),
         inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
 @keyframes penaltyGlow {
-    0%, 100% {
-        box-shadow: 
+    0%,
+    100% {
+        box-shadow:
             0 4px 12px rgba(239, 68, 68, 0.25),
             0 0 0 1px rgba(239, 68, 68, 0.1),
             inset 0 1px 0 rgba(255, 255, 255, 0.3);
     }
     50% {
-        box-shadow: 
+        box-shadow:
             0 6px 20px rgba(239, 68, 68, 0.4),
             0 0 0 2px rgba(239, 68, 68, 0.2),
             inset 0 1px 0 rgba(255, 255, 255, 0.3);
@@ -1040,13 +1087,20 @@ th {
 }
 
 .order_item.penalized::after {
-    content: '';
+    content: "";
     position: absolute;
     top: -3px;
     left: -3px;
     right: -3px;
     bottom: -3px;
-    background: linear-gradient(45deg, #ef4444, #dc2626, #b91c1c, #dc2626, #ef4444);
+    background: linear-gradient(
+        45deg,
+        #ef4444,
+        #dc2626,
+        #b91c1c,
+        #dc2626,
+        #ef4444
+    );
     background-size: 300% 300%;
     border-radius: 16px;
     z-index: -1;
@@ -1055,7 +1109,8 @@ th {
 }
 
 @keyframes penaltyBorderShift {
-    0%, 100% {
+    0%,
+    100% {
         background-position: 0% 50%;
     }
     50% {
@@ -1065,7 +1120,7 @@ th {
 
 .order_item.penalized:hover {
     transform: translateY(-8px);
-    box-shadow: 
+    box-shadow:
         0 12px 32px rgba(239, 68, 68, 0.35),
         0 0 0 3px rgba(239, 68, 68, 0.15),
         inset 0 1px 0 rgba(255, 255, 255, 0.3);
@@ -1081,7 +1136,7 @@ th {
     border-radius: 20px;
     font-size: 11px;
     font-weight: 800;
-    box-shadow: 
+    box-shadow:
         0 4px 16px rgba(239, 68, 68, 0.5),
         0 0 0 2px rgba(255, 255, 255, 0.3),
         inset 0 -1px 3px rgba(0, 0, 0, 0.2);
@@ -1096,16 +1151,17 @@ th {
 }
 
 @keyframes penaltyBadgePulse {
-    0%, 100% {
+    0%,
+    100% {
         transform: scale(1);
-        box-shadow: 
+        box-shadow:
             0 4px 16px rgba(239, 68, 68, 0.5),
             0 0 0 2px rgba(255, 255, 255, 0.3),
             inset 0 -1px 3px rgba(0, 0, 0, 0.2);
     }
     50% {
         transform: scale(1.08);
-        box-shadow: 
+        box-shadow:
             0 6px 24px rgba(239, 68, 68, 0.7),
             0 0 0 3px rgba(255, 255, 255, 0.5),
             inset 0 -1px 3px rgba(0, 0, 0, 0.2);
@@ -1113,13 +1169,14 @@ th {
 }
 
 .penalty_badge::before {
-    content: '⚠';
+    content: "⚠";
     font-size: 16px;
     animation: penaltyIconShake 0.5s ease-in-out infinite;
 }
 
 @keyframes penaltyIconShake {
-    0%, 100% {
+    0%,
+    100% {
         transform: rotate(0deg);
     }
     25% {
@@ -1134,7 +1191,7 @@ th {
 .order_item.penalized-completed .penalty_badge {
     background: linear-gradient(135deg, #fb923c 0%, #f97316 100%);
     animation: none; /* Không pulse */
-    box-shadow: 
+    box-shadow:
         0 3px 12px rgba(251, 146, 60, 0.4),
         0 0 0 2px rgba(255, 255, 255, 0.3),
         inset 0 -1px 3px rgba(0, 0, 0, 0.2);
@@ -1191,7 +1248,7 @@ th {
     border-radius: 12px;
     padding: 16px;
     margin-top: 16px;
-    box-shadow: 
+    box-shadow:
         0 4px 16px rgba(239, 68, 68, 0.3),
         inset 0 1px 0 rgba(255, 255, 255, 0.5);
     position: relative;
@@ -1199,13 +1256,18 @@ th {
 }
 
 .penalty_info_warning::before {
-    content: '';
+    content: "";
     position: absolute;
     top: 0;
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.3),
+        transparent
+    );
     animation: penaltyWarningShine 3s infinite;
 }
 
@@ -1213,7 +1275,8 @@ th {
     0% {
         left: -100%;
     }
-    50%, 100% {
+    50%,
+    100% {
         left: 100%;
     }
 }
@@ -1279,7 +1342,8 @@ th {
 }
 
 @keyframes penaltyAmountPulse {
-    0%, 100% {
+    0%,
+    100% {
         transform: scale(1);
     }
     50% {
@@ -1303,87 +1367,87 @@ th {
     .order-header-wrapper {
         padding: 24px 16px;
     }
-    
+
     .order-header-content {
         flex-direction: column;
         align-items: stretch;
     }
-    
+
     .header-title-section {
         min-width: auto;
     }
-    
+
     .header-icon {
         width: 48px;
         height: 48px;
         font-size: 24px;
     }
-    
+
     .header-title {
         font-size: 24px;
     }
-    
+
     .header-subtitle {
         font-size: 13px;
     }
-    
+
     .balance-card {
         min-width: auto;
         width: 100%;
     }
-    
+
     .balance-amount {
         font-size: 20px;
     }
-    
+
     /* Tabs */
     .tab-navigation {
         gap: 6px;
         padding: 10px 50px;
     }
-    
+
     .tab-btn {
         min-width: 100px;
         padding: 10px 12px;
         flex-direction: column;
         gap: 4px;
     }
-    
+
     .tab-scroll-btn {
         width: 32px;
         height: 32px;
         font-size: 14px;
     }
-    
+
     .tab-scroll-left {
         left: 4px;
     }
-    
+
     .tab-scroll-right {
         right: 4px;
     }
-    
+
     .tab-btn i {
         font-size: 18px;
     }
-    
+
     .btn_status_text {
         font-size: 12px;
     }
-    
+
     /* Orders */
     .orders-wrapper {
         padding: 16px;
     }
-    
+
     .list_orders {
         gap: 12px;
     }
-    
+
     .order_item {
         padding: 16px;
     }
-    
+
     .order_status {
         top: 16px;
         right: 16px;
@@ -1413,29 +1477,29 @@ th {
     .order_name {
         font-size: 14px;
     }
-    
+
     .order_info_text {
         padding: 12px;
     }
-    
+
     td {
         font-size: 13px;
     }
-    
+
     th {
         font-size: 14px;
     }
-    
+
     .total {
         font-size: 16px !important;
     }
-    
+
     .btn_phan_phoi {
         padding: 12px 24px;
         font-size: 14px;
         width: 100%;
     }
-    
+
     /* Penalty */
     .penalty_badge {
         top: 44px;
@@ -1443,34 +1507,34 @@ th {
         padding: 5px 12px;
         font-size: 10px;
     }
-    
+
     /* Đơn bị phạt đã hoàn thành cũng áp dụng responsive */
     .order_item.penalized-completed {
         border-width: 2px;
     }
-    
+
     /* Countdown */
     .countdown-container {
         padding: 8px 12px;
         gap: 8px;
     }
-    
+
     .countdown-icon {
         font-size: 20px;
     }
-    
+
     .countdown-label {
         font-size: 10px;
     }
-    
+
     .countdown-timer {
         font-size: 16px;
     }
-    
+
     .countdown-critical .countdown-timer {
         font-size: 18px;
     }
-    
+
     /* Special Order */
     .special_badge {
         top: 44px;
@@ -1478,19 +1542,19 @@ th {
         padding: 6px 12px;
         font-size: 11px;
     }
-    
+
     .special_text {
         font-size: 12px;
     }
-    
+
     .special_bonus {
         font-size: 14px;
     }
-    
+
     .special-total {
         font-size: 18px !important;
     }
-    
+
     .special_info {
         padding: 12px;
     }
@@ -1503,7 +1567,7 @@ th {
     .penalty_amount {
         font-size: 14px;
     }
-    
+
     .penalty_info,
     .penalty_info_warning {
         padding: 12px;
@@ -1514,16 +1578,16 @@ th {
     .header-title {
         font-size: 20px;
     }
-    
+
     .balance-amount {
         font-size: 18px;
     }
-    
+
     .tab-btn {
         min-width: 80px;
         padding: 8px 8px;
     }
-    
+
     .btn_status_text {
         font-size: 11px;
     }
@@ -1591,7 +1655,7 @@ th {
 }
 
 .success-modal-content::before {
-    content: '';
+    content: "";
     position: absolute;
     top: 0;
     left: 0;
@@ -1683,8 +1747,13 @@ th {
 }
 
 @keyframes bounce {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-5px); }
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-5px);
+    }
 }
 
 .success-subtitle {
@@ -2041,8 +2110,13 @@ th {
 }
 
 @keyframes pulseIcon {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.1); }
+    0%,
+    100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
 }
 
 .step-content {
@@ -2095,23 +2169,23 @@ th {
     .success-modal-content {
         padding: 30px 20px;
     }
-    
+
     .success-title {
         font-size: 24px;
     }
-    
+
     .profit-amount {
         font-size: 28px;
     }
-    
+
     .detail-value-total {
         font-size: 18px;
     }
-    
+
     .loading-modal-container {
         padding: 30px 20px;
     }
-    
+
     .loading-title {
         font-size: 18px;
     }
