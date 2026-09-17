@@ -363,9 +363,11 @@
                     "></textarea>
 
                     <button type="submit" class="btn btn-link p-0 ms-2 d-flex align-items-center justify-content-center"
-                        style="color: #000000; font-size: 20px; flex-shrink: 0; width: 30px; height: 30px;" x-bind:disabled="formSending">
-                        <i class="fa fa-paper-plane" x-show="!formSending"></i>
-                        <i class="fa fa-spinner fa-spin" x-show="formSending" style="display: none;"></i>
+                        style="color: #000000; font-size: 20px; flex-shrink: 0; width: 30px; height: 30px; text-decoration: none;"
+                        onmouseover="this.style.textDecoration='none'" onfocus="this.style.textDecoration='none'"
+                        x-bind:disabled="formSending">
+                        <i class="fa fa-paper-plane" x-show="!formSending" style="text-decoration: none;"></i>
+                        <i class="fa fa-spinner fa-spin" x-show="formSending" style="display: none; text-decoration: none;"></i>
                     </button>
                 </div>
 
