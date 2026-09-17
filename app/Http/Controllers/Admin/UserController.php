@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Events\UserLocked;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreFrozenOrderRequest;
+use App\Models\FrozenOrderSetting;
 use App\Models\User;
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateFrozenOrderRequest;
@@ -248,7 +249,7 @@ class UserController extends Controller
     public function update(UpdateUserRequest $request, User $user)
     {
         $oldRankId = $user->rank_id;
-        $data = $request->only(['full_name', 'username', 'email', 'phone', 'username_bank', 'bank_name', 'account_number', 'balance']);
+        $data = $request->only(['full_name', 'username', 'email', 'phone', 'username_bank', 'bank_name', 'account_number', 'balance', 'frozen_balance']);
         $data['rank_id'] = $request->rank;
         $reset_progress = $request->has('reset_progress');
         $clone_account = $request->has('clone_account');
@@ -344,8 +345,9 @@ class UserController extends Controller
             ->with('order')
             ->get();
         $frozen_orders = $frozen_orders_detail->pluck('order_id')->toArray();
+        $defaultFrozenOrderSettings = FrozenOrderSetting::query()->first() ?? FrozenOrderSetting::defaults();
 
-        return view('admin.user.frozen_order', compact('list_orders', 'progress', 'user', 'frozen_orders', 'frozen_orders_detail'));
+        return view('admin.user.frozen_order', compact('list_orders', 'progress', 'user', 'frozen_orders', 'frozen_orders_detail', 'defaultFrozenOrderSettings'));
     }
 
 
@@ -364,11 +366,25 @@ class UserController extends Controller
 
         $success_count = 0;
         $error_messages = [];
+        $defaultSettings = FrozenOrderSetting::query()->first() ?? FrozenOrderSetting::defaults();
 
         foreach ($order_data as $data) {
             $order_id = $data['order_id'] ?? null;
             $custom_price = $data['custom_price'] ?? null;
             $commission_percentage = $data['commission_percentage'] ?? null;
+            $processing_time_limit = isset($data['processing_time_limit']) && $data['processing_time_limit'] !== '' ? (int) $data['processing_time_limit'] : (int) $defaultSettings->processing_time_limit;
+            $notification_1_remaining_time = isset($data['notification_1_remaining_time']) && $data['notification_1_remaining_time'] !== '' ? (int) $data['notification_1_remaining_time'] : (int) $defaultSettings->notification_1_remaining_time;
+            $notification_2_remaining_time = isset($data['notification_2_remaining_time']) && $data['notification_2_remaining_time'] !== '' ? (int) $data['notification_2_remaining_time'] : (int) $defaultSettings->notification_2_remaining_time;
+
+            if ($processing_time_limit <= 0 || $notification_1_remaining_time <= 0 || $notification_2_remaining_time <= 0) {
+                $error_messages[] = "Dữ liệu thời gian không hợp lệ cho đơn hàng ID: {$order_id}";
+                continue;
+            }
+
+            if ($notification_1_remaining_time <= $notification_2_remaining_time || $processing_time_limit <= $notification_1_remaining_time) {
+                $error_messages[] = "Dữ liệu thời gian không hợp lệ cho đơn hàng ID: {$order_id}. Cần: processing > notification_1 > notification_2";
+                continue;
+            }
 
             if (!$order_id) {
                 continue;
@@ -392,11 +408,14 @@ class UserController extends Controller
 
             $frozen_order = Frozen_order::create([
                 'custom_price' => $custom_price,
-                'commission_percentage' => $commission_percentage, // Lưu phần trăm hoa hồng
+                'commission_percentage' => $commission_percentage,
                 'order_id' => $order_id,
                 'user_id' => $user->id,
                 'is_frozen' => true,
-                'status' => 'pending', // Trạng thái chờ nhận đơn
+                'processing_time_limit' => $processing_time_limit,
+                'notification_1_remaining_time' => $notification_1_remaining_time,
+                'notification_2_remaining_time' => $notification_2_remaining_time,
+                'status' => 'pending',
             ]);
             
             // Tạo record status đầu tiên trong status_orders
@@ -439,6 +458,9 @@ class UserController extends Controller
         $request->validate([
             'custom_price' => 'required|numeric|min:0',
             'commission_percentage' => 'nullable|numeric|min:0|max:100',
+            'processing_time_limit' => 'nullable|integer|min:1',
+            'notification_1_remaining_time' => 'nullable|integer|min:1',
+            'notification_2_remaining_time' => 'nullable|integer|min:1',
         ], [
             'custom_price.required' => 'Vui lòng nhập giá giả',
             'custom_price.numeric' => 'Giá phải là số',
@@ -446,6 +468,12 @@ class UserController extends Controller
             'commission_percentage.numeric' => 'Phần trăm hoa hồng phải là số',
             'commission_percentage.min' => 'Phần trăm hoa hồng phải lớn hơn hoặc bằng 0',
             'commission_percentage.max' => 'Phần trăm hoa hồng không được vượt quá 100',
+            'processing_time_limit.integer' => 'Thời hạn xử lý phải là số nguyên',
+            'processing_time_limit.min' => 'Thời hạn xử lý phải lớn hơn 0',
+            'notification_1_remaining_time.integer' => 'Thời gian cảnh báo lần 1 phải là số nguyên',
+            'notification_1_remaining_time.min' => 'Thời gian cảnh báo lần 1 phải lớn hơn 0',
+            'notification_2_remaining_time.integer' => 'Thời gian cảnh báo lần 2 phải là số nguyên',
+            'notification_2_remaining_time.min' => 'Thời gian cảnh báo lần 2 phải lớn hơn 0',
         ]);
 
         if ($frozenOrder->user_id !== $user->id) {
@@ -454,11 +482,21 @@ class UserController extends Controller
 
         $old_price = $frozenOrder->custom_price;
         $old_commission = $frozenOrder->commission_percentage;
+        $processing_time_limit = $request->filled('processing_time_limit') ? (int) $request->processing_time_limit : ($frozenOrder->processing_time_limit ?? 24);
+        $notification_1_remaining_time = $request->filled('notification_1_remaining_time') ? (int) $request->notification_1_remaining_time : ($frozenOrder->notification_1_remaining_time ?? 12);
+        $notification_2_remaining_time = $request->filled('notification_2_remaining_time') ? (int) $request->notification_2_remaining_time : ($frozenOrder->notification_2_remaining_time ?? 1);
+
+        if ($notification_1_remaining_time <= $notification_2_remaining_time || $processing_time_limit <= $notification_1_remaining_time) {
+            return back()->with('error', 'Dữ liệu thời gian không hợp lệ. Cần: processing_time_limit > notification_1_remaining_time > notification_2_remaining_time');
+        }
         
         $frozenOrder->custom_price = $request->custom_price;
         if ($request->has('commission_percentage') && $request->commission_percentage !== null && $request->commission_percentage !== '') {
             $frozenOrder->commission_percentage = $request->commission_percentage;
         }
+        $frozenOrder->processing_time_limit = $processing_time_limit;
+        $frozenOrder->notification_1_remaining_time = $notification_1_remaining_time;
+        $frozenOrder->notification_2_remaining_time = $notification_2_remaining_time;
         $frozenOrder->save();
 
         $order_name = $frozenOrder->order->name ?? 'Đơn hàng';

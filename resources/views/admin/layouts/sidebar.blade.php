@@ -105,11 +105,11 @@
                 <span>Quản lý nhân viên</span>
             </a>
             <!-- <div id="collapseRatings" class="collapse" aria-labelledby="headingPages" data-parent="#accordionSidebar">
-                <div class="bg-white py-2 collapse-inner rounded">
-                    <h6 class="collapse-header">Danh sách chức năng</h6>
-                    <a class="collapse-item" href="{{ route('staff.index') }}">Danh sách</a>
-                </div>
-            </div> -->
+                    <div class="bg-white py-2 collapse-inner rounded">
+                        <h6 class="collapse-header">Danh sách chức năng</h6>
+                        <a class="collapse-item" href="{{ route('staff.index') }}">Danh sách</a>
+                    </div>
+                </div> -->
         </li>
     @endif
     <!-- Quản lý đơn hàng -->
@@ -145,7 +145,15 @@
                 <span>Cấu hình thời gian đơn hàng</span>
             </a>
         </li>
+
     @endif
+    {{-- Cấu hình mặc định Frozen Order --}}
+    <li class="nav-item">
+        <a class="nav-link collapsed" href="{{ route('frozen_order_settings.index') }}">
+            <i class="fa-solid fa-snowflake text-white"></i>
+            <span>Cấu hình Frozen Order default</span>
+        </a>
+    </li>
     <!-- Quản lý cấp độ -->
     <li class="nav-item">
         <a class="nav-link collapsed" href="{{ route('rank.index') }}" data-target="#collapseTwo" aria-expanded="true"
@@ -241,12 +249,12 @@
                 <span>Quản lý chức năng</span>
             </a>
             <!-- <div id="collapseManagers" class="collapse" aria-labelledby="headingPages" data-parent="#accordionSidebar">
-                <div class="bg-white py-2 collapse-inner rounded">
-                    <h6 class="collapse-header">Danh sách chức năng</h6>
-                    <a class="collapse-item" href="{{ route('manager_setting.index') }}">Danh sách</a>
-                    <a class="collapse-item" href="{{ route('manager_setting.create') }}">Thêm</a>
-                </div>
-            </div> -->
+                    <div class="bg-white py-2 collapse-inner rounded">
+                        <h6 class="collapse-header">Danh sách chức năng</h6>
+                        <a class="collapse-item" href="{{ route('manager_setting.index') }}">Danh sách</a>
+                        <a class="collapse-item" href="{{ route('manager_setting.create') }}">Thêm</a>
+                    </div>
+                </div> -->
         </li>
     @endif
 

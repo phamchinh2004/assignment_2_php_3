@@ -173,6 +173,21 @@ Chỉnh sửa người dùng
 
                             <div class="col-md-6">
                                 <div class="form-group-custom">
+                                    <label for="frozen_balance">Số dư đóng băng</label>
+                                    <input type="number" name="frozen_balance" id="frozen_balance"
+                                        value="{{ old('frozen_balance', $user->frozen_balance ?: 0) }}"
+                                        class="form-control form-control-custom"
+                                        placeholder="Nhập số dư đóng băng"
+                                        step="0.00000001"
+                                        min="0">
+                                    @error('frozen_balance')
+                                    <small class="error-message">{{ $message }}</small>
+                                    @enderror
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-group-custom">
                                     <label for="rank">Cấp độ</label>
                                     <select name="rank" id="rank" class="form-control form-select-custom">
                                         <option value="">--- Chọn cấp độ ---</option>

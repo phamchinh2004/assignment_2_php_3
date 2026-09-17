@@ -133,12 +133,12 @@
                                     name="order_ids[]"
                                     value="{{ $order->id }}"
                                     class="order-checkbox"
-                                    {{ $is_frozen ? 'disabled' : '' }}>
+                                    {{ $is_frozen || $is_current_spin ? 'disabled' : '' }}>
                                 <div class="order-content d-flex flex-row">
                                     <div class="pe-3">
                                         <img class="order_image" width="100x" height="100px" src="{{ Storage::url($order->image) }}" alt="">
                                     </div>
-                                    <div>
+                                    <div class="w-100">
                                         <div class="d-flex align-items-center justify-content-between">
                                             <span>
                                                 <strong>#{{ $order->index }}</strong> -
@@ -162,8 +162,9 @@
                                         </div>
 
                                         @if (!$is_frozen)
+                                        <div class="order-input-grid">
                                         <div class="price-input-wrapper">
-                                            <label for="price_{{ $order->id }}" class="mb-0 text-muted" style="min-width: 80px;">
+                                            <label for="price_{{ $order->id }}" class="mb-0 text-muted" style="min-width: 80px;white-space: nowrap;">
                                                 <i class="fas fa-tag"></i> Giá giả:
                                             </label>
                                             <input
@@ -174,11 +175,11 @@
                                                 placeholder="Nhập giá"
                                                 step="0.01"
                                                 min="0"
-                                                disabled>
+                                                {{ $is_current_spin ? 'disabled' : '' }}>
                                             <span class="text-muted">$</span>
                                         </div>
                                         <div class="price-input-wrapper mt-2">
-                                            <label for="commission_{{ $order->id }}" class="mb-0 text-muted" style="min-width: 80px;">
+                                            <label for="commission_{{ $order->id }}" class="mb-0 text-muted" style="min-width: 80px;white-space: nowrap;">
                                                 <i class="fas fa-percent"></i> Phần trăm hoa hồng:
                                             </label>
                                             <input
@@ -192,12 +193,61 @@
                                                 max="100"
                                                 value="10"
                                                 data-default-value="10"
-                                                disabled>
+                                                {{ $is_current_spin ? 'disabled' : '' }}>
                                             <span class="text-muted">%</span>
                                             <input
                                                 type="hidden"
                                                 name="order_data[{{ $order->id }}][order_id]"
                                                 value="{{ $order->id }}">
+                                        </div>
+                                        <div class="price-input-wrapper mt-2">
+                                            <label for="processing_{{ $order->id }}" class="mb-0 text-muted" style="min-width: 120px;white-space: nowrap;">
+                                                <i class="fas fa-hourglass-half"></i> Thời hạn xử lý:
+                                            </label>
+                                            <input
+                                                type="number"
+                                                name="order_data[{{ $order->id }}][processing_time_limit]"
+                                                id="processing_{{ $order->id }}"
+                                                class="price-input"
+                                                placeholder="VD: 24"
+                                                step="1"
+                                                min="1"
+                                                value="{{ $defaultFrozenOrderSettings->processing_time_limit ?? 24 }}"
+                                                {{ $is_current_spin ? 'disabled' : '' }}>
+                                            <span class="text-muted">giờ</span>
+                                        </div>
+                                        <div class="price-input-wrapper mt-2">
+                                            <label for="notify1_{{ $order->id }}" class="mb-0 text-muted" style="min-width: 150px;white-space: nowrap;">
+                                                <i class="fas fa-bell"></i> Cảnh báo lần 1:
+                                            </label>
+                                            <input
+                                                type="number"
+                                                name="order_data[{{ $order->id }}][notification_1_remaining_time]"
+                                                id="notify1_{{ $order->id }}"
+                                                class="price-input"
+                                                placeholder="VD: 12"
+                                                step="1"
+                                                min="1"
+                                                value="{{ $defaultFrozenOrderSettings->notification_1_remaining_time ?? 12 }}"
+                                                {{ $is_current_spin ? 'disabled' : '' }}>
+                                            <span class="text-muted">giờ trước deadline</span>
+                                        </div>
+                                        <div class="price-input-wrapper mt-2">
+                                            <label for="notify2_{{ $order->id }}" class="mb-0 text-muted" style="min-width: 150px;white-space: nowrap;">
+                                                <i class="fas fa-exclamation-circle"></i> Cảnh báo lần 2:
+                                            </label>
+                                            <input
+                                                type="number"
+                                                name="order_data[{{ $order->id }}][notification_2_remaining_time]"
+                                                id="notify2_{{ $order->id }}"
+                                                class="price-input"
+                                                placeholder="VD: 1"
+                                                step="1"
+                                                min="1"
+                                                value="{{ $defaultFrozenOrderSettings->notification_2_remaining_time ?? 1 }}"
+                                                {{ $is_current_spin ? 'disabled' : '' }}>
+                                            <span class="text-muted">giờ trước deadline</span>
+                                        </div>
                                         </div>
                                         @endif
                                     </div>
@@ -300,11 +350,19 @@
                                         <i class="fas fa-percent"></i>
                                         Hoa hồng: {{ $frozen->commission_percentage ?? $frozen->order->commission_percentage ?? 0 }}%
                                     </span>
+                                    <span class="badge badge-secondary badge-large ml-2">
+                                        <i class="fas fa-hourglass-half"></i>
+                                        Deadline: {{ $frozen->processing_time_limit ?? 24 }}h
+                                    </span>
+                                    <span class="badge badge-warning badge-large ml-2">
+                                        <i class="fas fa-bell"></i>
+                                        Cảnh báo: {{ $frozen->notification_1_remaining_time ?? 12 }}h / {{ $frozen->notification_2_remaining_time ?? 1 }}h
+                                    </span>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Form sửa giá -->
+                        <!-- Form sửa thông tin đơn hàng -->
                         <div class="edit-price-form" id="edit-form-{{ $frozen->id }}">
                             <form
                                 action="{{ route('user.update.frozen.order', ['user' => $user->id, 'frozenOrder' => $frozen->id]) }}"
@@ -313,7 +371,7 @@
                                 @csrf
                                 @method('PUT')
                                 <div class="row align-items-end">
-                                    <div class="col-md-5">
+                                    <div class="col-md-3">
                                         <label class="font-weight-bold">Giá giả mới ($)</label>
                                         <input
                                             type="number"
@@ -325,7 +383,7 @@
                                             required
                                             placeholder="Nhập giá mới">
                                     </div>
-                                    <div class="col-md-5">
+                                    <div class="col-md-3">
                                         <label class="font-weight-bold">Phần trăm hoa hồng (%)</label>
                                         <input
                                             type="number"
@@ -338,6 +396,42 @@
                                             placeholder="Nhập % (VD: 5)">
                                     </div>
                                     <div class="col-md-2">
+                                        <label class="font-weight-bold">Deadline (giờ)</label>
+                                        <input
+                                            type="number"
+                                            name="processing_time_limit"
+                                            class="form-control"
+                                            value="{{ $frozen->processing_time_limit ?? 24 }}"
+                                            step="1"
+                                            min="1"
+                                            required
+                                            placeholder="VD: 24">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="font-weight-bold">Cảnh báo 1 (giờ)</label>
+                                        <input
+                                            type="number"
+                                            name="notification_1_remaining_time"
+                                            class="form-control"
+                                            value="{{ $frozen->notification_1_remaining_time ?? 12 }}"
+                                            step="1"
+                                            min="1"
+                                            required
+                                            placeholder="VD: 12">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="font-weight-bold">Cảnh báo 2 (giờ)</label>
+                                        <input
+                                            type="number"
+                                            name="notification_2_remaining_time"
+                                            class="form-control"
+                                            value="{{ $frozen->notification_2_remaining_time ?? 1 }}"
+                                            step="1"
+                                            min="1"
+                                            required
+                                            placeholder="VD: 1">
+                                    </div>
+                                    <div class="col-md-2 mt-3 mt-md-0">
                                         <button type="submit" class="btn btn-success">
                                             <i class="fas fa-save"></i> Lưu
                                         </button>

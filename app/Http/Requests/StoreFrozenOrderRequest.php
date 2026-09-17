@@ -27,6 +27,9 @@ class StoreFrozenOrderRequest extends FormRequest
             'order_data.*.order_id' => 'required|exists:orders,id',
             'order_data.*.custom_price' => 'nullable|numeric|min:0',
             'order_data.*.commission_percentage' => 'nullable|numeric|min:0|max:100',
+            'order_data.*.processing_time_limit' => 'nullable|integer|min:1',
+            'order_data.*.notification_1_remaining_time' => 'nullable|integer|min:1',
+            'order_data.*.notification_2_remaining_time' => 'nullable|integer|min:1',
         ];
     }
 
@@ -42,6 +45,12 @@ class StoreFrozenOrderRequest extends FormRequest
             'order_data.*.commission_percentage.numeric' => 'Phần trăm hoa hồng phải là số',
             'order_data.*.commission_percentage.min' => 'Phần trăm hoa hồng phải lớn hơn hoặc bằng 0',
             'order_data.*.commission_percentage.max' => 'Phần trăm hoa hồng không được vượt quá 100',
+            'order_data.*.processing_time_limit.integer' => 'Thời hạn xử lý phải là số nguyên',
+            'order_data.*.processing_time_limit.min' => 'Thời hạn xử lý phải lớn hơn 0',
+            'order_data.*.notification_1_remaining_time.integer' => 'Thời gian cảnh báo lần 1 phải là số nguyên',
+            'order_data.*.notification_1_remaining_time.min' => 'Thời gian cảnh báo lần 1 phải lớn hơn 0',
+            'order_data.*.notification_2_remaining_time.integer' => 'Thời gian cảnh báo lần 2 phải là số nguyên',
+            'order_data.*.notification_2_remaining_time.min' => 'Thời gian cảnh báo lần 2 phải lớn hơn 0',
         ];
     }
 

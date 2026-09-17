@@ -934,7 +934,7 @@ class HomeController extends Controller
             if ($current < $total) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Bạn cần hoàn thành ' . ($total - $current) . ' đơn hàng nữa để được quay!'
+                    'message' => 'Bạn cần hoàn thành ' . ($total - $current) . ' đơn hàng nữa để quay!'
                 ], 400);
             }
 

@@ -36,6 +36,7 @@ class UpdateUserRequest extends FormRequest
                 'required',
             ],
             'balance'=>'numeric|min:0',
+            'frozen_balance'=>'numeric|min:0',
             'rank' => 'required',
         ];
     }

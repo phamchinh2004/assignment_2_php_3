@@ -11,10 +11,25 @@
     padding: 12px;
     border-bottom: 1px solid #e3e6f0;
     transition: all 0.2s;
+    cursor: pointer;
 }
 
 .order-item:hover {
     background-color: #f8f9fc;
+}
+
+.order-item.selected {
+    background-color: #dbeafe;
+    box-shadow: inset 4px 0 0 #2563eb;
+}
+
+.order-item.selected:hover {
+    background-color: #bfdbfe;
+}
+
+.order-item input:not(.order-checkbox),
+.order-item label {
+    cursor: auto;
 }
 
 .already-frozen {
@@ -129,4 +144,30 @@
 .badge-large {
     font-size: 1rem;
     padding: 8px 12px;
+}
+
+.order-input-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 390px), 1fr));
+    gap: 8px 12px;
+    margin-top: 8px;
+}
+
+.order-input-grid .price-input-wrapper {
+    display: grid;
+    grid-template-columns: max-content minmax(60px, 125px) max-content;
+    min-width: 0;
+    margin-top: 0;
+    gap: 6px;
+}
+
+.order-input-grid .price-input-wrapper label {
+    min-width: 0 !important;
+    white-space: nowrap !important;
+    line-height: 1.25;
+}
+
+.order-input-grid .price-input {
+    width: 100%;
+    min-width: 0;
 }

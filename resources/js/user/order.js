@@ -262,9 +262,9 @@ window.addEventListener('DOMContentLoaded', function () {
                         : frozen_order.order.commission_percentage;
                     const order_details_price_formatted = format_currency(price);
                     const order_details_end_value_total_price_formatted = format_currency(frozen_order.order.quantity * price);
-                    const order_details_end_value_price_rose_formatted = format_currency((frozen_order.order.quantity * price) * (commission_percentage / 100), 5, 5);
+                    const order_details_end_value_price_rose_formatted = format_currency((frozen_order.order.quantity * price) * (commission_percentage / 100));
                     const order_details_end_value_total_formatted = format_currency((frozen_order.order.quantity * price) + ((frozen_order.order.quantity * price) * (commission_percentage / 100)));
-                    
+
                     // Tính toán penalty nếu có
                     const penalty_amount = frozen_order.penalty_amount ? parseFloat(frozen_order.penalty_amount) : 0;
                     const penalty_amount_formatted = format_currency(penalty_amount);
@@ -280,7 +280,12 @@ window.addEventListener('DOMContentLoaded', function () {
                     let countdownHTML = '';
                     if (frozen_order.is_frozen == 1 && frozen_order.spun == 1) {
                         const receivedTime = new Date(frozen_order.updated_at); // Thời điểm nhận đơn
-                        const deadline = new Date(receivedTime.getTime() + 24 * 60 * 60 * 1000); // +24 giờ
+                        const processingTimeLimit = Number(frozen_order.processing_time_limit) > 0
+                            ? Number(frozen_order.processing_time_limit)
+                            : 24;
+                        const deadline = new Date(
+                            receivedTime.getTime() + processingTimeLimit * 60 * 60 * 1000
+                        );
                         const now = new Date();
                         const timeLeft = deadline - now;
                         
@@ -303,7 +308,7 @@ window.addEventListener('DOMContentLoaded', function () {
                                 <div class="countdown-container ${countdownClass}" data-deadline="${deadline.toISOString()}" data-order-id="${frozen_order.id}">
                                     <div class="countdown-icon">⏰</div>
                                     <div class="countdown-text">
-                                        <div class="countdown-label">Thời hạn xử lý đơn hàng:</div>
+                                        <div class="countdown-label">Thời hạn xử lý đơn hàng: ${processingTimeLimit} giờ</div>
                                         <div class="countdown-timer">
                                             <span class="countdown-hours">${hours.toString().padStart(2, '0')}</span>:
                                             <span class="countdown-minutes">${minutes.toString().padStart(2, '0')}</span>:
@@ -590,9 +595,9 @@ window.showSuccessModal = function(profit, totalAmount, commission, penaltyAmoun
     const modal = document.getElementById('successModalOverlay');
     if (!modal) return;
     
-                    document.getElementById('success_profit_amount').textContent = '+' + format_currency(profit, 5, 5);
+                    document.getElementById('success_profit_amount').textContent = '+' + format_currency(profit);
     document.getElementById('success_total_amount').textContent = '' + format_currency(totalAmount, 4, 4);
-                    document.getElementById('success_commission').textContent = '+' + format_currency(commission, 5, 5);
+                    document.getElementById('success_commission').textContent = '+' + format_currency(commission);
     document.getElementById('success_total_refund').textContent = '+' + format_currency(totalRefund, 4, 4);
     document.getElementById('success_time').textContent = new Date().toLocaleString('vi-VN');
     

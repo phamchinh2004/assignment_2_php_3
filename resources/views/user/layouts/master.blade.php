@@ -267,14 +267,23 @@
                 };
             });
         };
-        // Định dạng tiền tệ
-        function format_currency(currency, min = 2, max = 4) {
-            return new Intl.NumberFormat('en-US', {
-                style: 'currency',
-                currency: 'USD',
-                minimumFractionDigits: min, // số chữ số sau dấu phẩy
-                maximumFractionDigits: max
-            }).format(currency);
+        // Không ép làm tròn theo 2 chữ số cố định; giữ giá trị thực với tối đa 8 chữ số thập phân
+        function format_currency(currency, min = 0, max = 8) {
+            const value = Number(currency);
+
+            if (!Number.isFinite(value)) {
+                return '$0';
+            }
+
+            const safeMax = Math.max(0, Math.min(8, Number(max) || 8));
+            const safeMin = Math.max(0, Number(min) || 0);
+
+            const formatted = new Intl.NumberFormat('en-US', {
+                minimumFractionDigits: safeMin,
+                maximumFractionDigits: safeMax
+            }).format(value);
+
+            return `$${formatted}`;
         }
 
         @if(session('success'))

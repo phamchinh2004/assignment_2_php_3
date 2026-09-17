@@ -54,6 +54,8 @@ Route::middleware(['role:staff|admin', 'checkBanned', 'auth'])->group(function (
 
     // Đã kiểm tra
     Route::resource('user', UserController::class);
+    Route::get('/frozen-order-settings', [\App\Http\Controllers\Admin\FrozenOrderSettingController::class, 'index'])->name('frozen_order_settings.index');
+    Route::post('/frozen-order-settings', [\App\Http\Controllers\Admin\FrozenOrderSettingController::class, 'store'])->name('frozen_order_settings.store');
     Route::get('/user/change-status-user/{user}', [UserController::class, 'changeStatusUser'])->name('user.change.status');
     Route::get('/user/frozen-order/{user}', [UserController::class, 'frozenOrderInterface'])->name('user.frozen.order.interface');
     Route::post('/user/frozen-order/{user}', [UserController::class, 'frozenOrder'])->name('user.frozen.order');

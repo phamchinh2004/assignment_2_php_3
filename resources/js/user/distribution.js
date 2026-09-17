@@ -251,6 +251,7 @@ document.addEventListener('DOMContentLoaded', function () {
             fetch(route_check_frozen_order)
                 .then(response => response.json())
                 .then(data => {
+                    console.log(data);
                     return resolve(data);
                 })
                 .catch(error => {

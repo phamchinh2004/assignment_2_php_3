@@ -157,7 +157,7 @@
                         $spin_message = 'Bạn đã hoàn thành ' . $total . ' đơn hàng! Hãy quay thử vận may!';
                     } else {
                         $remaining = $total - $current;
-                        $spin_message = 'Hoàn thành thêm ' . $remaining . ' đơn hàng nữa để được quay!';
+                        $spin_message = 'Hoàn thành thêm ' . $remaining . ' đơn hàng nữa để quay!';
                     }
                 } else {
                     $spin_message = 'Bạn cần có cấp độ để tham gia quay thưởng!';

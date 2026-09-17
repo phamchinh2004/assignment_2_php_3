@@ -305,7 +305,7 @@
                 style: 'currency',
                 currency: 'USD',
                 minimumFractionDigits: 2, // số chữ số sau dấu phẩy
-                maximumFractionDigits: 2
+                maximumFractionDigits: 5
             }).format(currency);
         }
     </script>

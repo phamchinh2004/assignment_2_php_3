@@ -34,32 +34,41 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
+    document.querySelectorAll(".order-item").forEach((item) => {
+        item.addEventListener("click", function (event) {
+            if (event.target.closest("input, button, select, textarea, label, a")) {
+                return;
+            }
+
+            const checkbox = this.querySelector(".order-checkbox");
+            if (!checkbox || checkbox.disabled) {
+                return;
+            }
+
+            checkbox.checked = !checkbox.checked;
+            checkbox.dispatchEvent(new Event("change", { bubbles: true }));
+        });
+    });
+
     function togglePriceInput(checkbox) {
         const orderId = checkbox.value;
         const priceInput = document.getElementById(`price_${orderId}`);
         const commissionInput = document.getElementById(
             `commission_${orderId}`
         );
+        const isLocked = checkbox.disabled;
+        const orderItem = checkbox.closest(".order-item");
+
+        if (orderItem) {
+            orderItem.classList.toggle("selected", checkbox.checked);
+        }
 
         if (priceInput) {
-            priceInput.disabled = !checkbox.checked;
-            if (!checkbox.checked) {
-                priceInput.value = "";
-            }
+            priceInput.disabled = isLocked;
         }
 
         if (commissionInput) {
-            commissionInput.disabled = !checkbox.checked;
-            if (!checkbox.checked) {
-                // Khôi phục giá trị mặc định từ order
-                const orderCommission =
-                    commissionInput.getAttribute("data-default-value");
-                if (orderCommission) {
-                    commissionInput.value = orderCommission;
-                } else {
-                    commissionInput.value = "";
-                }
-            }
+            commissionInput.disabled = isLocked;
         }
     }
 
@@ -148,9 +157,35 @@ document.addEventListener("DOMContentLoaded", function () {
     document.querySelectorAll(".form-edit-price").forEach((form) => {
         form.addEventListener("submit", function (e) {
             const priceInput = this.querySelector('input[name="custom_price"]');
+            const processingInput = this.querySelector(
+                'input[name="processing_time_limit"]'
+            );
+            const notification1Input = this.querySelector(
+                'input[name="notification_1_remaining_time"]'
+            );
+            const notification2Input = this.querySelector(
+                'input[name="notification_2_remaining_time"]'
+            );
             if (!priceInput.value || parseFloat(priceInput.value) < 0) {
                 e.preventDefault();
                 alert("Vui lòng nhập giá hợp lệ!");
+                return;
+            }
+
+            const processingTime = parseInt(processingInput.value, 10);
+            const notification1Time = parseInt(notification1Input.value, 10);
+            const notification2Time = parseInt(notification2Input.value, 10);
+            if (
+                !processingTime ||
+                !notification1Time ||
+                !notification2Time ||
+                processingTime <= notification1Time ||
+                notification1Time <= notification2Time
+            ) {
+                e.preventDefault();
+                alert(
+                    "Thời gian không hợp lệ. Cần: Deadline > Cảnh báo lần 1 > Cảnh báo lần 2."
+                );
             }
         });
     });

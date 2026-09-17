@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\Frozen_order;
 use App\Models\User;
 use App\Mail\SpecialOrderReminderMail;
+use App\Mail\SpecialOrderWarningMail;
 use App\Mail\SpecialOrderPenaltyMail;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Mail;
@@ -28,121 +29,140 @@ class CheckSpecialOrdersReminder extends Command
     protected $description = 'Kiểm tra và gửi mail nhắc nhở cho đơn hàng đặc biệt chưa phân phối';
 
     /**
+     * Tính tổng giá trị đơn hàng để tính phạt theo quy tắc 30%.
+     */
+    protected function getOrderValue(Frozen_order $frozenOrder): float
+    {
+        if ($frozenOrder->custom_price !== null && $frozenOrder->custom_price !== '') {
+            return (float) $frozenOrder->custom_price;
+        }
+
+        if ($frozenOrder->order) {
+            return (float) ($frozenOrder->order->price * $frozenOrder->order->quantity);
+        }
+
+        return 0.0;
+    }
+
+    /**
      * Execute the console command.
      */
     public function handle()
     {
-        $this->info('Bắt đầu kiểm tra đơn hàng đặc biệt chưa phân phối...');
+        $this->info('Bắt đầu kiểm tra frozen order chưa phân phối...');
 
-        // Lấy tất cả đơn hàng đặc biệt chưa phân phối (is_frozen = true, spun = true)
         $unprocessedOrders = Frozen_order::with(['user', 'order'])
             ->where('is_frozen', true)
             ->where('spun', true)
-            ->whereNotNull('custom_price')
             ->get();
 
         $reminderCount = 0;
         $penaltyCount = 0;
 
         foreach ($unprocessedOrders as $frozenOrder) {
-            $hoursPassed = $frozenOrder->updated_at->diffInHours(Carbon::now());
-            
-            // Kiểm tra nếu đã qua 8 tiếng nhưng chưa qua 24 tiếng - gửi mail nhắc nhở
-            if ($hoursPassed >= 8 && $hoursPassed < 24 && !$frozenOrder->reminder_sent) {
+            if (!$frozenOrder->user || !$frozenOrder->order) {
+                Log::warning('Bỏ qua frozen order thiếu user hoặc order liên kết', [
+                    'frozen_order_id' => $frozenOrder->id,
+                    'user_id' => $frozenOrder->user_id,
+                    'order_id' => $frozenOrder->order_id,
+                ]);
+                continue;
+            }
+
+            // updated_at is the timestamp shown by the user countdown when the order is received.
+            $createdAt = $frozenOrder->updated_at ?? $frozenOrder->created_at ?? Carbon::now();
+            $processingLimitHours = (int) ($frozenOrder->processing_time_limit ?? 24);
+            $notification1Hours = (int) ($frozenOrder->notification_1_remaining_time ?? 12);
+            $notification2Hours = (int) ($frozenOrder->notification_2_remaining_time ?? 1);
+
+            $deadlineAt = $createdAt->copy()->addHours($processingLimitHours);
+            $now = Carbon::now();
+            $remainingHours = (int) max(0, ceil($now->diffInHours($deadlineAt, false)));
+            $hoursPassed = (int) max(0, floor($createdAt->diffInHours($now)));
+
+            if ($remainingHours <= $notification1Hours && $remainingHours > $notification2Hours && empty($frozenOrder->notification_1_sent_at)) {
                 try {
-                    $this->info("Đang chuẩn bị gửi mail nhắc nhở đến: {$frozenOrder->user->email}");
-                    Log::info("Chuẩn bị gửi mail nhắc nhở", [
-                        'user_id' => $frozenOrder->user->id,
-                        'email' => $frozenOrder->user->email,
-                        'order_code' => $frozenOrder->order->order_code,
-                        'hours_passed' => $hoursPassed,
-                        'mail_mailer' => config('mail.default'),
-                        'mail_host' => config('mail.mailers.smtp.host'),
-                    ]);
-                    
                     Mail::to($frozenOrder->user->email)->send(
-                        new SpecialOrderReminderMail($frozenOrder->user, $frozenOrder, $hoursPassed)
+                        new SpecialOrderWarningMail($frozenOrder->user, $frozenOrder, $hoursPassed, $remainingHours, 'first', $notification1Hours)
                     );
-                    
-                    Log::info("Đã gửi mail nhắc nhở thành công", [
-                        'user_id' => $frozenOrder->user->id,
-                        'email' => $frozenOrder->user->email,
-                    ]);
-                    
-                    // Cập nhật trạng thái đã gửi mail nhắc nhở (không cập nhật updated_at)
+
                     $frozenOrder->timestamps = false;
                     $frozenOrder->update([
-                        'reminder_sent' => true,
-                        'reminder_sent_at' => Carbon::now()
+                        'notification_1_sent_at' => Carbon::now(),
                     ]);
                     $frozenOrder->timestamps = true;
-                    
-                    $this->info("✓ Đã gửi mail nhắc nhở cho user {$frozenOrder->user->name} (ID: {$frozenOrder->user->id}) - Đơn hàng {$frozenOrder->order->order_code}");
+
+                    $this->warn("⚠ Đã gửi cảnh báo lần 1 cho user {$frozenOrder->user->name} - Đơn hàng {$frozenOrder->order->order_code}");
                     $reminderCount++;
                 } catch (\Exception $e) {
-                    $this->error("✗ Lỗi gửi mail nhắc nhở cho user {$frozenOrder->user->name}: " . $e->getMessage());
-                    Log::error("Lỗi gửi mail nhắc nhở", [
+                    Log::error('Lỗi gửi cảnh báo lần 1', [
                         'user_id' => $frozenOrder->user->id,
                         'email' => $frozenOrder->user->email,
                         'error' => $e->getMessage(),
-                        'trace' => $e->getTraceAsString()
                     ]);
                 }
             }
-            
-            // Kiểm tra nếu đã qua 24 tiếng - gửi mail phạt
-            if ($hoursPassed >= 24 && !$frozenOrder->penalty_sent) {
+
+            if ($remainingHours <= $notification2Hours && $remainingHours > 0 && empty($frozenOrder->notification_2_sent_at)) {
                 try {
-                    $penaltyAmount = $frozenOrder->custom_price * 0.3; // 30% tổng giá trị đơn hàng
-                    
-                    $this->warn("Đang chuẩn bị gửi mail phạt đến: {$frozenOrder->user->email}");
-                    Log::warning("Chuẩn bị gửi mail phạt", [
-                        'user_id' => $frozenOrder->user->id,
-                        'email' => $frozenOrder->user->email,
-                        'order_code' => $frozenOrder->order->order_code,
-                        'hours_passed' => $hoursPassed,
-                        'penalty_amount' => $penaltyAmount,
-                        'mail_mailer' => config('mail.default'),
-                        'mail_host' => config('mail.mailers.smtp.host'),
-                    ]);
-                    
                     Mail::to($frozenOrder->user->email)->send(
-                        new SpecialOrderPenaltyMail($frozenOrder->user, $frozenOrder, $hoursPassed, $penaltyAmount)
+                        new SpecialOrderWarningMail($frozenOrder->user, $frozenOrder, $hoursPassed, $remainingHours, 'second', $notification2Hours)
                     );
-                    
-                    Log::warning("Đã gửi mail phạt thành công", [
-                        'user_id' => $frozenOrder->user->id,
-                        'email' => $frozenOrder->user->email,
-                        'penalty_amount' => $penaltyAmount,
-                    ]);
-                    
-                    // Cập nhật trạng thái đã gửi mail phạt và lưu số tiền phạt (không cập nhật updated_at)
+
                     $frozenOrder->timestamps = false;
                     $frozenOrder->update([
-                        'penalty_sent' => true,
-                        'penalty_sent_at' => Carbon::now(),
-                        'penalty_amount' => $penaltyAmount
+                        'notification_2_sent_at' => Carbon::now(),
                     ]);
+
+                    $reminderCount++;
                     $frozenOrder->timestamps = true;
-                    
-                    $this->warn("⚠ Đã gửi mail phạt cho user {$frozenOrder->user->name} (ID: {$frozenOrder->user->id}) - Đơn hàng {$frozenOrder->order->order_code} - Số tiền phạt: $" . number_format($penaltyAmount, 2));
-                    $penaltyCount++;
+
+                    $this->warn("⚠ Đã gửi cảnh báo lần 2 cho user {$frozenOrder->user->name} - Đơn hàng {$frozenOrder->order->order_code}");
                 } catch (\Exception $e) {
-                    $this->error("✗ Lỗi gửi mail phạt cho user {$frozenOrder->user->name}: " . $e->getMessage());
-                    Log::error("Lỗi gửi mail phạt", [
+                    Log::error('Lỗi gửi cảnh báo lần 2', [
                         'user_id' => $frozenOrder->user->id,
                         'email' => $frozenOrder->user->email,
                         'error' => $e->getMessage(),
-                        'trace' => $e->getTraceAsString()
+                    ]);
+                }
+            }
+
+            if ($remainingHours <= 0 && empty($frozenOrder->penalty_notification_sent_at)) {
+                try {
+                    $orderValue = $this->getOrderValue($frozenOrder);
+                    if ($orderValue <= 0) {
+                        continue;
+                    }
+
+                    $penaltyAmount = $orderValue * 0.3;
+
+                    Mail::to($frozenOrder->user->email)->send(
+                        new SpecialOrderPenaltyMail($frozenOrder->user, $frozenOrder, $hoursPassed, $penaltyAmount)
+                    );
+
+                    $frozenOrder->timestamps = false;
+                    $frozenOrder->update([
+                        'penalty_notification_sent_at' => Carbon::now(),
+                        'penalty_amount' => $penaltyAmount,
+                    ]);
+                    $frozenOrder->timestamps = true;
+
+                    $this->warn("⚠ Đã gửi mail phạt cho user {$frozenOrder->user->name} - Đơn hàng {$frozenOrder->order->order_code} - Số tiền phạt: $" . number_format($penaltyAmount, 2));
+                    $penaltyCount++;
+                } catch (\Exception $e) {
+                    Log::error('Lỗi gửi mail phạt', [
+                        'user_id' => $frozenOrder->user->id,
+                        'email' => $frozenOrder->user->email,
+                        'error' => $e->getMessage(),
                     ]);
                 }
             }
         }
 
-        $this->info("Hoàn thành kiểm tra!");
-        $this->info("Tổng số mail nhắc nhở đã gửi: {$reminderCount}");
+        $this->info('Hoàn thành kiểm tra!');
+        $this->info("Tổng số cảnh báo đã gửi: {$reminderCount}");
         $this->info("Tổng số mail phạt đã gửi: {$penaltyCount}");
-        $this->info("Tổng số đơn hàng đặc biệt được kiểm tra: " . $unprocessedOrders->count());
+        $this->info('Tổng số frozen order được kiểm tra: ' . $unprocessedOrders->count());
 
         return Command::SUCCESS;
     }
