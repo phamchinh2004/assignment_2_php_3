@@ -211,7 +211,7 @@
                         <h4 class="tab-card-title">{{ $orderCode }}</h4>
                     </div>
                     <span class="tab-card-total {{ $groupTotal >= 0 ? 'positive' : 'negative' }}">
-                        {{ $groupTotal >= 0 ? '+' : '-' }}${{ format_money($groupTotal) }}
+                        {{ $groupTotal >= 0 ? '+' : '-' }}${{ format_money(abs($groupTotal)) }}
                     </span>
                 </div>
 
