@@ -258,26 +258,31 @@
 @if($tab === 'deposit')
 <div class="tab-content-shell" id="content_items">
     @if(optional($list_deposit)->isNotEmpty())
-        @foreach($list_deposit as $item)
-            <div class="tab-card">
-                <div class="tab-card-header compact">
-                    <div class="tab-card-title-wrap">
-                        <span class="mini-pill success">Deposit</span>
-                        <h4 class="tab-card-title">{{__('balance_fluctuation.NapTien')}}</h4>
+        @foreach($list_deposit->groupBy(fn($item) => $item->created_at->format('Y-m-d')) as $date => $transactions)
+            <div class="transaction-date-group">
+                @php $dailyTotal = $transactions->sum('value'); @endphp
+                <div class="tab-card">
+                    <div class="tab-card-header compact">
+                        <div class="tab-card-title-wrap">
+                            <span class="mini-pill success">Deposit</span>
+                            <h4 class="tab-card-title">{{ \Carbon\Carbon::parse($date)->format('d/m/Y') }} - {{__('balance_fluctuation.NapTien')}}</h4>
+                        </div>
+                        <span class="tab-card-total positive">+${{ format_money($dailyTotal) }}</span>
                     </div>
-                    <span class="tab-card-total positive">+${{ format_money($item->value) }}</span>
-                </div>
 
-                <div class="transaction-stack">
-                    <div class="transaction-list-item profit">
-                        <div class="transaction-icon-list success">
-                            <i class="fa-solid fa-money-bill-wave"></i>
-                        </div>
-                        <div class="transaction-details">
-                            <div class="transaction-type-name">{{__('balance_fluctuation.NapTien')}}</div>
-                            <div class="transaction-time">{{ $item->created_at->format('d/m/Y H:i') }}</div>
-                        </div>
-                        <div class="transaction-value positive">+${{ format_money($item->value) }}</div>
+                    <div class="transaction-stack">
+                        @foreach($transactions as $item)
+                            <div class="transaction-list-item profit">
+                                <div class="transaction-icon-list success">
+                                    <i class="fa-solid fa-money-bill-wave"></i>
+                                </div>
+                                <div class="transaction-details">
+                                    <div class="transaction-type-name">{{__('balance_fluctuation.NapTien')}}</div>
+                                    <div class="transaction-time">{{ $item->created_at->format('d/m/Y H:i') }}</div>
+                                </div>
+                                <div class="transaction-value positive">+${{ format_money($item->value) }}</div>
+                            </div>
+                        @endforeach
                     </div>
                 </div>
             </div>
@@ -295,51 +300,48 @@
 @if($tab === 'withdraw')
 <div class="tab-content-shell" id="content_items">
     @if(optional($list_withdraw)->isNotEmpty())
-        @foreach($list_withdraw as $item)
-            @php
-                $statusClass = match($item->status) {
-                    'processing' => 'warning',
-                    'completed' => 'success',
-                    default => 'danger',
-                };
-                $statusLabel = match($item->status) {
-                    'processing' => __('balance_fluctuation.ChoXacNhan'),
-                    'completed' => __('balance_fluctuation.HoanThanh'),
-                    default => __('balance_fluctuation.Huy'),
-                };
-            @endphp
+        @foreach($list_withdraw->groupBy(fn($item) => $item->created_at->format('Y-m-d')) as $date => $transactions)
+            <div class="transaction-date-group">
+                @php $dailyTotal = $transactions->sum('value'); @endphp
+                <div class="tab-card withdraw-card-shell">
+                    <div class="tab-card-header compact">
+                        <div class="tab-card-title-wrap">
+                            <span class="mini-pill danger">Withdraw</span>
+                            <h4 class="tab-card-title">{{ \Carbon\Carbon::parse($date)->format('d/m/Y') }} - {{__('balance_fluctuation.RutTien')}}</h4>
+                        </div>
+                        <span class="tab-card-total negative">-${{ format_money($dailyTotal) }}</span>
+                    </div>
 
-            <div class="tab-card withdraw-card-shell">
-                <div class="tab-card-header compact">
-                    <div class="tab-card-title-wrap">
-                        <span class="mini-pill danger">Withdraw</span>
-                        <h4 class="tab-card-title">{{__('balance_fluctuation.RutTien')}}</h4>
+                    <div class="transaction-stack">
+                        @foreach($transactions as $item)
+                            @php
+                                $statusClass = match($item->status) {
+                                    'processing' => 'warning',
+                                    'completed' => 'success',
+                                    default => 'danger',
+                                };
+                                $statusLabel = match($item->status) {
+                                    'processing' => __('balance_fluctuation.ChoXacNhan'),
+                                    'completed' => __('balance_fluctuation.HoanThanh'),
+                                    default => __('balance_fluctuation.Huy'),
+                                };
+                            @endphp
+                            <div class="transaction-list-item expense">
+                                <div class="transaction-icon-list danger">
+                                    <i class="fa-solid fa-arrow-up"></i>
+                                </div>
+                                <div class="transaction-details">
+                                    <div class="transaction-type-name">{{__('balance_fluctuation.RutTien')}}</div>
+                                    <div class="transaction-time">{{ $item->created_at->format('d/m/Y H:i') }}</div>
+                                    <div class="transaction-time">{{ $item->username_bank }} - {{ $item->bank_name }}</div>
+                                </div>
+                                <div class="transaction-value negative">
+                                    -${{ format_money($item->value) }}
+                                    <span class="status-badge {{ $statusClass }}">{{ $statusLabel }}</span>
+                                </div>
+                            </div>
+                        @endforeach
                     </div>
-                    <span class="status-badge {{ $statusClass }}">{{ $statusLabel }}</span>
-                </div>
-
-                <div class="withdraw-info">
-                    <div class="withdraw-detail">
-                        <span class="detail-label">{{__('balance_fluctuation.TenTaiKhoan')}}:</span>
-                        <span class="detail-value">{{ $item->username_bank }}</span>
-                    </div>
-                    <div class="withdraw-detail">
-                        <span class="detail-label">{{__('balance_fluctuation.SoTaiKhoan')}}:</span>
-                        <span class="detail-value">{{ $item->account_number }}</span>
-                    </div>
-                    <div class="withdraw-detail">
-                        <span class="detail-label">{{__('balance_fluctuation.NganHang')}}:</span>
-                        <span class="detail-value">{{ $item->bank_name }}</span>
-                    </div>
-                    <div class="withdraw-detail">
-                        <span class="detail-label">{{__('balance_fluctuation.ThoiGian')}}:</span>
-                        <span class="detail-value">{{ $item->created_at->format('d/m/Y H:i') }}</span>
-                    </div>
-                </div>
-
-                <div class="withdraw-amount">
-                    <span class="amount-label">{{__('balance_fluctuation.SoTien')}}</span>
-                    <span class="amount-value">-${{ format_money($item->value) }}</span>
                 </div>
             </div>
         @endforeach
