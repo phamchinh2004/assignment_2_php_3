@@ -93,21 +93,32 @@
             <h3>Thông tin đơn hàng:</h3>
             <p><strong>Mã đơn hàng:</strong> {{ $frozenOrder->order->order_code }}</p>
             <p><strong>Tên đơn hàng:</strong> {{ $frozenOrder->order->name }}</p>
-            <p><strong>Giá đặc biệt:</strong> ${{ number_format($frozenOrder->custom_price, 2) }}</p>
+            <p><strong>Trị giá:</strong> ${{ number_format($orderValue, 2) }}</p>
             <p><strong>Thời gian nhận:</strong> {{ $frozenOrder->created_at->format('d/m/Y H:i:s') }}</p>
             <p><strong>Thời gian đã trôi qua:</strong> {{ $hoursPassed }} giờ</p>
         </div>
         
         <div class="penalty-amount">
-            <p>Phí xử lý áp dụng: ${{ number_format($penaltyAmount, 2) }}</p>
-            <p style="font-size: 14px; font-weight: normal;">(30% giá trị đơn hàng theo chính sách)</p>
+            <p style="margin: 0 0 10px;"><strong>Chi tiết phí xử lý</strong></p>
+            <p style="margin: 6px 0; font-size: 15px; font-weight: normal;">
+                Trị giá đơn hàng: <strong>${{ number_format($orderValue, 2) }}</strong>
+            </p>
+            <p style="margin: 6px 0; font-size: 15px; font-weight: normal;">
+                Tỷ lệ phạt quá hạn: <strong>30%</strong>
+            </p>
+            <p style="margin: 6px 0; font-size: 15px; font-weight: normal;">
+                Cách tính: ${{ number_format($orderValue, 2) }} × 30%
+            </p>
+            <p style="margin: 12px 0 0;">
+                Phí xử lý áp dụng: <strong>${{ number_format($penaltyAmount, 2) }}</strong>
+            </p>
         </div>
         
         <p><strong>Các bước tiếp theo:</strong></p>
         <ul>
-            <li>Nạp thêm ${{ number_format($penaltyAmount, 2) }} vào tài khoản của bạn</li>
-            <li>Liên hệ bộ phận hỗ trợ qua email: {{ config('mail.from.address') }}</li>
-            <li>Đơn hàng sẽ được xử lý sau khi hoàn tất thanh toán</li>
+            <li>Nhanh chóng xử lý đơn hàng</li>
+            <li>Liên hệ bộ phận chăm sóc khách hàng để được hỗ trợ</li>
+            <li>Đơn hàng sẽ được xử lý sau khi xử lý đơn hàng thành công</li>
             <li>Truy cập hệ thống tại: <a href="{{ config('app.url') }}">{{ config('app.url') }}</a></li>
         </ul>
         

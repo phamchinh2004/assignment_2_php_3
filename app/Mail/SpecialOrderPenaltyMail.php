@@ -19,6 +19,7 @@ class SpecialOrderPenaltyMail extends Mailable
     public $frozenOrder;
     public $hoursPassed;
     public $penaltyAmount;
+    public $orderValue;
 
     /**
      * Create a new message instance.
@@ -29,6 +30,9 @@ class SpecialOrderPenaltyMail extends Mailable
         $this->frozenOrder = $frozenOrder;
         $this->hoursPassed = $hoursPassed;
         $this->penaltyAmount = $penaltyAmount;
+        $this->orderValue = $frozenOrder->custom_price !== null && $frozenOrder->custom_price !== ''
+            ? (float) $frozenOrder->custom_price
+            : (float) (($frozenOrder->order->price ?? 0) * ($frozenOrder->order->quantity ?? 0));
     }
 
     /**
