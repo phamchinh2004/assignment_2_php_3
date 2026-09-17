@@ -191,7 +191,17 @@
                     $order = ['order' => 1, 'profit' => 2, 'penalty' => 3];
                     return $order[$item->type] ?? 999;
                 });
-                $groupTotal = $transactions->sum('value');
+                $groupTotal = $transactions->sum(function ($transaction) {
+                    if ($transaction->type === 'profit') {
+                        return (float) $transaction->value;
+                    }
+
+                    if ($transaction->type === 'penalty') {
+                        return -(float) $transaction->value;
+                    }
+
+                    return 0;
+                });
             @endphp
 
             <div class="tab-card">
