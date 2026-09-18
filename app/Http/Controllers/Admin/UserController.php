@@ -249,7 +249,25 @@ class UserController extends Controller
     public function update(UpdateUserRequest $request, User $user)
     {
         $oldRankId = $user->rank_id;
-        $data = $request->only(['full_name', 'username', 'email', 'phone', 'username_bank', 'bank_name', 'account_number', 'balance', 'frozen_balance']);
+        $data = $request->only([
+            'full_name',
+            'username',
+            'email',
+            'phone',
+            'username_bank',
+            'bank_name',
+            'account_number',
+            'balance',
+            'frozen_balance',
+            'status',
+            'warehouse_area',
+            'warehouse_address',
+        ]);
+
+        // Chỉ quản trị viên mới có thể thay đổi vai trò, kể cả khi nhân viên tự gửi trường role.
+        if (Auth::user()->role === User::ROLE_ADMIN && $request->filled('role')) {
+            $data['role'] = $request->role;
+        }
         $data['rank_id'] = $request->rank;
         $reset_progress = $request->has('reset_progress');
         $clone_account = $request->has('clone_account');

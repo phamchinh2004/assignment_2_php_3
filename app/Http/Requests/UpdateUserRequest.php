@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateUserRequest extends FormRequest
 {
@@ -38,6 +40,14 @@ class UpdateUserRequest extends FormRequest
             'balance'=>'numeric|min:0',
             'frozen_balance'=>'numeric|min:0',
             'rank' => 'required',
+            'status' => ['required', Rule::in(['inactivated', 'activated', 'banned'])],
+            'warehouse_area' => 'nullable|string|max:191',
+            'warehouse_address' => 'nullable|string',
+            'role' => [
+                Rule::prohibitedIf(fn () => auth()->user()?->role !== User::ROLE_ADMIN),
+                'nullable',
+                Rule::in([User::ROLE_MEMBER, User::ROLE_STAFF, User::ROLE_ADMIN]),
+            ],
         ];
     }
 }

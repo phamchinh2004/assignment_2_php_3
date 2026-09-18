@@ -97,6 +97,81 @@ Chỉnh sửa người dùng
                                 </div>
                             </div>
                         </div>
+
+                        <div class="row row-cols-custom">
+                            <div class="col-md-6">
+                                <div class="form-group-custom">
+                                    <label for="status">Trạng thái tài khoản <span class="text-danger">*</span></label>
+                                    <select name="status" id="status" class="form-control form-select-custom">
+                                        <option value="inactivated" @selected(old('status', $user->status) === 'inactivated')>Chưa kích hoạt</option>
+                                        <option value="activated" @selected(old('status', $user->status) === 'activated')>Đang hoạt động</option>
+                                        <option value="banned" @selected(old('status', $user->status) === 'banned')>Đã khóa</option>
+                                    </select>
+                                    @error('status')
+                                    <small class="error-message">{{ $message }}</small>
+                                    @enderror
+                                </div>
+                            </div>
+
+                            @if (auth()->user()->role === \App\Models\User::ROLE_ADMIN)
+                            <div class="col-md-6">
+                                <div class="form-group-custom">
+                                    <label for="role">Vai trò <span class="text-danger">*</span></label>
+                                    <select name="role" id="role" class="form-control form-select-custom">
+                                        <option value="member" @selected(old('role', $user->role) === 'member')>Người dùng</option>
+                                        <option value="staff" @selected(old('role', $user->role) === 'staff')>Nhân viên</option>
+                                        <option value="admin" @selected(old('role', $user->role) === 'admin')>Quản trị viên</option>
+                                    </select>
+                                    @error('role')
+                                    <small class="error-message">{{ $message }}</small>
+                                    @enderror
+                                </div>
+                            </div>
+                            @endif
+                        </div>
+                    </div>
+
+                    <!-- Thông tin kho -->
+                    <div class="form-section">
+                        <div class="form-section-title">
+                            <i class="fas fa-warehouse me-2"></i>Thông tin kho
+                        </div>
+
+                        <div class="form-group-custom">
+                            <label for="warehouse_area">Khu vực phân phối / kho</label>
+                            <input type="text" name="warehouse_area" id="warehouse_area"
+                                value="{{ old('warehouse_area', $user->warehouse_area) }}"
+                                class="form-control form-control-custom"
+                                placeholder="Nhập khu vực hoặc tên kho">
+                            @error('warehouse_area')
+                            <small class="error-message">{{ $message }}</small>
+                            @enderror
+                        </div>
+
+                        <div class="form-group-custom">
+                            <label for="warehouse_address">Địa chỉ kho</label>
+                            <textarea name="warehouse_address" id="warehouse_address" rows="3"
+                                class="form-control form-control-custom"
+                                placeholder="Nhập địa chỉ kho hiện tại">{{ old('warehouse_address', $user->warehouse_address) }}</textarea>
+                            @error('warehouse_address')
+                            <small class="error-message">{{ $message }}</small>
+                            @enderror
+                        </div>
+
+                        <div class="row row-cols-custom">
+                            <div class="col-md-6">
+                                <div class="form-group-custom">
+                                    <label>Mã giới thiệu</label>
+                                    <input type="text" value="{{ $user->referral_code ?: 'Chưa có' }}" class="form-control form-control-custom" readonly>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group-custom">
+                                    <label>Thời điểm tạo tài khoản</label>
+                                    <input type="text" value="{{ $user->created_at?->format('d/m/Y H:i') ?: 'Không xác định' }}" class="form-control form-control-custom" readonly>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Thông tin ngân hàng -->
