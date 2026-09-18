@@ -206,9 +206,17 @@ class ChatComponent extends Component
             'previousConversationId' => $this->selectedConversationId
         ]);
 
-        // Nếu conversation đã được chọn rồi → KHÔNG làm gì cả
+        // Chọn lại cùng conversation vẫn phải reload dữ liệu tin nhắn.
         if ($this->selectedConversationId == $conversationId) {
-            logger('⏭️ Conversation already selected, skipping');
+            logger('🔄 Conversation already selected, reloading messages');
+            $this->messages = [];
+            $this->currentPage = 1;
+            $this->hasMoreMessages = true;
+            $this->isLoading = false;
+            $this->loadMessages();
+            $this->markMessagesAsRead($conversationId);
+            $this->updateConversationUnreadCount($conversationId);
+            $this->dispatch('scroll-to-bottom');
             return;
         }
 
@@ -301,6 +309,10 @@ class ChatComponent extends Component
     #[On('delete-all-messages')]
     public function deleteAllMessages()
     {
+        if (Auth::user()->role !== User::ROLE_ADMIN) {
+            return;
+        }
+
         // $this->dispatch('swal', [
         //     'type' => 'error',
         //     'title' => 'Lỗi',
@@ -344,6 +356,10 @@ class ChatComponent extends Component
 
     public function deleteConversation()
     {
+        if (Auth::user()->role !== User::ROLE_ADMIN) {
+            return false;
+        }
+
         if (!$this->selectedConversation) {
             return false;
         }
@@ -668,12 +684,13 @@ class ChatComponent extends Component
     #[On('delete-single-message')]
     public function deleteMessage($messageId)
     {
+        if (Auth::user()->role !== User::ROLE_ADMIN) {
+            return;
+        }
+
         $message = Message::find($messageId);
         if ($message) {
-            // Quyền: Admin xóa được hết, Staff xóa được tin nhắn của mình
-            $canDelete = Auth::user()->role === 'admin' || $message->sender_id == Auth::id();
-
-            if ($canDelete) {
+            if (Auth::user()->role === User::ROLE_ADMIN) {
                 $conversationId = $message->conversation_id;
                 $message->delete();
                 broadcast(new MessageDeleted($messageId, $conversationId));

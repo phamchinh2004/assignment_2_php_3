@@ -538,10 +538,9 @@ class StatisticalController extends Controller
 
             // Lấy danh sách người dùng được mời bởi nhân viên này
             $invitedUsers = User::where('referrer_id', $staffId)->where('clone_account', 0)->get();
-            $invitedUserIds = $invitedUsers->pluck('id')->toArray();
 
-            // Lấy tất cả giao dịch nạp tiền của những người dùng được mời
-            $transactions = Wallet_balance_history::whereIn('user_id', $invitedUserIds)
+            // Lấy giao dịch của những người dùng được nhân viên giới thiệu
+            $transactions = Wallet_balance_history::whereIn('user_id', $invitedUsers->pluck('id'))
                 ->where('type', 'deposit')
                 ->where('status', 'completed')
                 ->where('transaction_type', 'normal')
@@ -1198,9 +1197,9 @@ class StatisticalController extends Controller
 
     private function getDailyRevenue($userId, $startDate, $endDate)
     {
-        $data = Wallet_balance_history::where('by_user_id', $userId)
-            ->whereHas('user', function ($q) {
-                $q->where('clone_account', 0);
+        $data = Wallet_balance_history::whereHas('user', function ($q) use ($userId) {
+                $q->where('referrer_id', $userId)
+                    ->where('clone_account', 0);
             })
             ->where('status', 'completed')
             ->where('transaction_type', 'normal')
@@ -1234,9 +1233,9 @@ class StatisticalController extends Controller
 
     private function getMonthlyRevenue($userId, $startDate, $endDate)
     {
-        $data = Wallet_balance_history::where('by_user_id', $userId)
-            ->whereHas('user', function ($q) {
-                $q->where('clone_account', 0);
+        $data = Wallet_balance_history::whereHas('user', function ($q) use ($userId) {
+                $q->where('referrer_id', $userId)
+                    ->where('clone_account', 0);
             })
             ->where('status', 'completed')
             ->where('transaction_type', 'normal')
@@ -1264,9 +1263,9 @@ class StatisticalController extends Controller
 
     private function getOverviewStats($userId, $startDate, $endDate)
     {
-        $stats = Wallet_balance_history::where('by_user_id', $userId)
-            ->whereHas('user', function ($q) {
-                $q->where('clone_account', 0);
+        $stats = Wallet_balance_history::whereHas('user', function ($q) use ($userId) {
+                $q->where('referrer_id', $userId)
+                    ->where('clone_account', 0);
             })
             ->where('status', 'completed')
             ->where('transaction_type', 'normal')
@@ -1287,7 +1286,10 @@ class StatisticalController extends Controller
         $prevStartDate = $startDate->copy()->sub($endDate->diff($startDate));
         $prevEndDate = $startDate->copy()->subDay();
 
-        $prevStats = Wallet_balance_history::where('by_user_id', $userId)
+        $prevStats = Wallet_balance_history::whereHas('user', function ($q) use ($userId) {
+                $q->where('referrer_id', $userId)
+                    ->where('clone_account', 0);
+            })
             ->where('status', 'completed')
             ->where('type', 'deposit')
             ->where('transaction_type', 'normal')
@@ -1314,9 +1316,9 @@ class StatisticalController extends Controller
 
     private function getTransactionTypeStats($userId, $startDate, $endDate)
     {
-        $stats = Wallet_balance_history::where('by_user_id', $userId)
-            ->whereHas('user', function ($q) {
-                $q->where('clone_account', 0);
+        $stats = Wallet_balance_history::whereHas('user', function ($q) use ($userId) {
+                $q->where('referrer_id', $userId)
+                    ->where('clone_account', 0);
             })
             ->where('status', 'completed')
             ->where('transaction_type', 'normal')
@@ -1348,9 +1350,9 @@ class StatisticalController extends Controller
         $type = $request->get('type'); // deposit, withdraw
         $status = $request->get('status'); // processing, completed, cancelled
 
-        $query = Wallet_balance_history::where('by_user_id', $userId)
-            ->whereHas('user', function ($q) {
-                $q->where('clone_account', 0);
+        $query = Wallet_balance_history::whereHas('user', function ($q) use ($userId) {
+                $q->where('referrer_id', $userId)
+                    ->where('clone_account', 0);
             })
             ->with(['user:id,full_name,username'])
             ->where('transaction_type', 'normal')

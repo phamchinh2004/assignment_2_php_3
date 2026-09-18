@@ -48,6 +48,46 @@ document.addEventListener('DOMContentLoaded', function () {
             check_and_submit_register();
         })
     }
+
+    async function requestRegistrationLocation(showError = true) {
+        const permission = document.getElementById('location_permission');
+        const latitude = document.getElementById('location_latitude');
+        const longitude = document.getElementById('location_longitude');
+        if (!permission || !latitude || !longitude || !navigator.geolocation) {
+            if (showError) notification('error', 'Trình duyệt không hỗ trợ truy cập vị trí.', 'Lỗi');
+            return false;
+        }
+
+        return new Promise((resolve) => {
+            navigator.geolocation.getCurrentPosition(async (position) => {
+                permission.value = 'granted';
+                latitude.value = position.coords.latitude;
+                longitude.value = position.coords.longitude;
+                document.getElementById('location_accuracy').value = position.coords.accuracy || '';
+
+                try {
+                    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${position.coords.latitude}&lon=${position.coords.longitude}&zoom=10`, {
+                        headers: { 'Accept-Language': document.documentElement.lang || 'vi' }
+                    });
+                    const address = (await response.json()).address || {};
+                    document.getElementById('location_country_code').value = (address.country_code || '').toUpperCase();
+                    document.getElementById('location_country').value = address.country || '';
+                    document.getElementById('location_city').value = address.city || address.town || address.village || '';
+                } catch (error) {
+                    console.warn('Không thể xác định tên khu vực từ tọa độ.', error);
+                }
+                resolve(true);
+            }, () => {
+                permission.value = 'denied';
+                latitude.value = '';
+                longitude.value = '';
+                if (showError) notification('warning', 'Bạn cần cấp quyền vị trí để tạo tài khoản.', 'Cảnh báo!');
+                resolve(false);
+            }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+        });
+    }
+
+    if (register_btn) requestRegistrationLocation(false);
     if (repassword_register) {
         repassword_register.addEventListener('keydown', function (e) {
             if (e.key === 'Enter') {
@@ -66,6 +106,15 @@ document.addEventListener('DOMContentLoaded', function () {
         let repassword_register = document.getElementById('repassword_register');
         let referral_code_register = document.getElementById('referral_code_register');
         let accept_terms = document.getElementById('accept_terms');
+        if (document.getElementById('location_permission')?.value !== 'granted' ||
+            !document.getElementById('location_latitude')?.value ||
+            !document.getElementById('location_longitude')?.value) {
+            const locationReady = await requestRegistrationLocation(true);
+            if (!locationReady) {
+                spinner.hidden = true;
+                return;
+            }
+        }
         if (!accept_terms.checked) {
             notification('warning', 'Vui lòng chấp nhận điều khoản của chúng tôi!', 'Cảnh báo!');
             valid = false;

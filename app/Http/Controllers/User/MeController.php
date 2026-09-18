@@ -202,4 +202,38 @@ class MeController extends Controller
         return redirect()->route('me')->with('success', __('me.CapNhatDiaChiKhoThanhCong'));
     }
 
+    public function updateLocation(Request $request)
+    {
+        $validated = $request->validate([
+            'permission' => ['required', 'in:granted,denied'],
+            'latitude' => ['nullable', 'numeric', 'between:-90,90', 'required_if:permission,granted'],
+            'longitude' => ['nullable', 'numeric', 'between:-180,180', 'required_if:permission,granted'],
+            'accuracy' => ['nullable', 'numeric', 'min:0', 'max:100000'],
+            'country_code' => ['nullable', 'string', 'size:2'],
+            'country' => ['nullable', 'string', 'max:191'],
+            'city' => ['nullable', 'string', 'max:191'],
+        ]);
+
+        $user = Auth::user();
+        $user->location_permission = $validated['permission'];
+        $user->location_latitude = $validated['latitude'] ?? null;
+        $user->location_longitude = $validated['longitude'] ?? null;
+        $user->location_accuracy = $validated['accuracy'] ?? null;
+        $user->location_country_code = isset($validated['country_code'])
+            ? strtoupper($validated['country_code'])
+            : null;
+        $user->location_country = $validated['country'] ?? null;
+        $user->location_city = $validated['city'] ?? null;
+        $user->location_updated_at = now();
+        $user->save();
+
+        return response()->json([
+            'status' => 200,
+            'message' => $validated['permission'] === 'granted'
+                ? 'Đã cập nhật vị trí hiện tại.'
+                : 'Bạn đã từ chối quyền truy cập vị trí.',
+            'location_permission' => $user->location_permission,
+        ]);
+    }
+
 }

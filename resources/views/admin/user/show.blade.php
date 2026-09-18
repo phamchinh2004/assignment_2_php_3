@@ -144,6 +144,34 @@ Chi tiết người dùng
             <div class="detail-row"><span class="detail-label">Mã giới thiệu</span><span class="detail-value">{{ $user->referral_code ?: 'Chưa có' }}</span></div>
         </section>
 
+        <section class="user-detail-section full-width">
+            <h5><i class="fas fa-location-dot mr-2"></i>Vị trí hiện tại</h5>
+            <div class="detail-row">
+                <span class="detail-label">Quyền truy cập</span>
+                <span class="detail-value">
+                    @if($user->location_permission === 'granted')
+                        <span class="text-success"><i class="fas fa-check-circle mr-1"></i>Đã cấp quyền</span>
+                    @elseif($user->location_permission === 'denied')
+                        <span class="text-danger"><i class="fas fa-ban mr-1"></i>Đã từ chối</span>
+                    @else
+                        <span class="text-warning"><i class="fas fa-clock mr-1"></i>Chưa hỏi quyền</span>
+                    @endif
+                </span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Khu vực</span>
+                <span class="detail-value">
+                    @if($user->location_country_code)
+                        <span class="fs-5 mr-1">{{ country_flag($user->location_country_code) }}</span>
+                    @endif
+                    {{ $user->location_city ?: 'Chưa xác định thành phố' }}{{ $user->location_country ? ', ' . $user->location_country : '' }}
+                </span>
+            </div>
+            <div class="detail-row"><span class="detail-label">Tọa độ</span><span class="detail-value">{{ $user->location_latitude !== null && $user->location_longitude !== null ? $user->location_latitude . ', ' . $user->location_longitude : 'Chưa có' }}</span></div>
+            <div class="detail-row"><span class="detail-label">Độ chính xác</span><span class="detail-value">{{ $user->location_accuracy !== null ? number_format($user->location_accuracy, 2) . ' m' : 'Chưa có' }}</span></div>
+            <div class="detail-row"><span class="detail-label">Cập nhật lần cuối</span><span class="detail-value">{{ $user->location_updated_at ? $user->location_updated_at->format('d/m/Y H:i:s') : 'Chưa có' }}</span></div>
+        </section>
+
         <section class="user-detail-section">
             <h5><i class="fas fa-building-columns mr-2"></i>Thông tin ngân hàng</h5>
             <div class="detail-row"><span class="detail-label">Tên tài khoản</span><span class="detail-value">{{ $user->username_bank ?: 'Chưa liên kết' }}</span></div>

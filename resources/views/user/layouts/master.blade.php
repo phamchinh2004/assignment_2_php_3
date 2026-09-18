@@ -64,7 +64,7 @@
                 <a href="{{ route('distribution') }}"
                     class="d-flex footer-item justify-content-center align-items-center p-0 cspt text-dark text-decoration-none">
                     <div class="amazon_btn d-flex justify-content-center align-items-center">
-                        <img class="footer-logo" src="{{ asset('images/home/section-4.1.png') }}" alt="Trang phân phối">
+                        <img class="footer-logo" src="{{ asset('images/home/distribution_button.webp') }}" alt="Trang phân phối">
                     </div>
                 </a>
 

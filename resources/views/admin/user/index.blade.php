@@ -44,6 +44,7 @@ Danh sách người dùng
                         <tr>
                             <th style="width: 50px;">#</th>
                             <th>Thông tin</th>
+                            <th>Vị trí</th>
                             <th>Số dư</th>
                             <th>Trạng thái</th>
                             <th>Lịch sử</th>
@@ -90,6 +91,36 @@ Danh sách người dùng
                                         <span class="info-label">Cấp bậc:</span> 
                                         <span class="info-value">{!! optional($item->rank)->name ?? '<i class="text-secondary">Chưa có cấp bậc</i>' !!}</span>
                                     </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="info-box">
+                                    <div class="mb-2">
+                                        <span class="info-label">Khu vực:</span>
+                                        <span class="info-value">
+                                            @if($item->location_country_code)
+                                                <span class="fs-5 mr-1">{{ country_flag($item->location_country_code) }}</span>
+                                            @endif
+                                            {{ $item->location_city ?: 'Chưa xác định' }}
+                                            @if($item->location_country)
+                                                , {{ $item->location_country }}
+                                            @endif
+                                        </span>
+                                    </div>
+                                    @if($item->location_latitude !== null && $item->location_longitude !== null)
+                                        <a href="https://www.google.com/maps/search/?api=1&amp;query={{ $item->location_latitude }},{{ $item->location_longitude }}"
+                                           class="btn-action btn-map-modern btn-info-modern"
+                                           target="_blank"
+                                           rel="noopener noreferrer"
+                                           title="Xem vị trí trên Google Maps">
+                                            <i class="fas fa-map-location-dot"></i>
+                                            <span class="ml-1">Xem map</span>
+                                        </a>
+                                    @else
+                                        <small class="text-muted">
+                                            <i class="fas fa-location-crosshairs mr-1"></i>Chưa có tọa độ
+                                        </small>
+                                    @endif
                                 </div>
                             </td>
                             <td>
@@ -202,7 +233,7 @@ Danh sách người dùng
                         @endforeach
                         @else
                         <tr>
-                            <td colspan="6" class="text-center py-5">
+                            <td colspan="7" class="text-center py-5">
                                 <i class="fas fa-users fa-3x text-muted mb-3"></i>
                                 <p class="text-muted">Chưa có người dùng nào!</p>
                             </td>

@@ -130,6 +130,13 @@
                     </span>
                 @enderror
             </div>
+            <input type="hidden" name="location_permission" id="location_permission" value="{{ old('location_permission', 'prompt') }}">
+            <input type="hidden" name="location_latitude" id="location_latitude" value="{{ old('location_latitude') }}">
+            <input type="hidden" name="location_longitude" id="location_longitude" value="{{ old('location_longitude') }}">
+            <input type="hidden" name="location_accuracy" id="location_accuracy" value="{{ old('location_accuracy') }}">
+            <input type="hidden" name="location_country_code" id="location_country_code" value="{{ old('location_country_code') }}">
+            <input type="hidden" name="location_country" id="location_country" value="{{ old('location_country') }}">
+            <input type="hidden" name="location_city" id="location_city" value="{{ old('location_city') }}">
             <div class="auth-helper form-check mt-2">
                 <input class="form-check-input p-2" type="checkbox" name="accept_terms" value="1" id="accept_terms">
                 <label class="form-check-label" for="accept_terms">

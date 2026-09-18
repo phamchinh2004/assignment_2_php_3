@@ -68,7 +68,14 @@ class RegisterController extends Controller
                 'max:50',
                 // 'confirmed', // Xác nhận mật khẩu khớp
                 'regex:/^\S+$/', // Không chứa khoảng trắng
-            ]
+            ],
+            'location_permission' => ['required', 'in:granted'],
+            'location_latitude' => ['required', 'numeric', 'between:-90,90'],
+            'location_longitude' => ['required', 'numeric', 'between:-180,180'],
+            'location_accuracy' => ['nullable', 'numeric', 'min:0', 'max:100000'],
+            'location_country_code' => ['nullable', 'string', 'size:2'],
+            'location_country' => ['nullable', 'string', 'max:191'],
+            'location_city' => ['nullable', 'string', 'max:191'],
         ], [
             'username.required' => 'Tên người dùng không được để trống!',
             'username.min' => 'Tên người dùng phải từ 6 ký tự trở lên!',
@@ -107,6 +114,14 @@ class RegisterController extends Controller
         $user->referral_code = $this->return_random_referral_code();
         $user->password = Hash::make($request->password);
         $user->register_ip = $ip;
+        $user->location_permission = $request->location_permission;
+        $user->location_latitude = $request->location_latitude;
+        $user->location_longitude = $request->location_longitude;
+        $user->location_accuracy = $request->location_accuracy;
+        $user->location_country_code = $request->location_country_code ? strtoupper($request->location_country_code) : null;
+        $user->location_country = $request->location_country;
+        $user->location_city = $request->location_city;
+        $user->location_updated_at = now();
         $user->save();
         session()->forget('registration_data');
         if ($user->referrer_id) {

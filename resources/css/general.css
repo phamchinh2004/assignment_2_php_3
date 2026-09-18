@@ -465,7 +465,7 @@
 
 /* TOASTR */
 .toast-warning {
-    background-color: #fe2c55 !important;
+    background-color: yellow !important;
 }
 
 .toast-error {
@@ -473,29 +473,7 @@
 }
 
 .toast-success {
-    background-color: #111113 !important;
-}
-
-.btn-warning,
-.btn-primary {
-    --bs-btn-color: #fff;
-    --bs-btn-bg: #fe2c55;
-    --bs-btn-border-color: #fe2c55;
-    --bs-btn-hover-color: #fff;
-    --bs-btn-hover-bg: #d91f45;
-    --bs-btn-hover-border-color: #d91f45;
-    --bs-btn-active-bg: #b81738;
-    --bs-btn-active-border-color: #b81738;
-}
-
-.text-warning {
-    color: #fe2c55 !important;
-}
-
-.form-control:focus,
-.form-select:focus {
-    border-color: #fe2c55;
-    box-shadow: 0 0 0 0.2rem rgba(254, 44, 85, 0.2);
+    background-color: green !important;
 }
 
 .nsl {

@@ -22,7 +22,7 @@ class MessageSent implements ShouldBroadcastNow
     public function broadcastOn()
     {
         // Load message từ database với relationships
-        $message = \App\Models\Message::with('sender', 'conversation')->find($this->messageId);
+        $message = \App\Models\Message::with(['sender', 'conversation.user'])->find($this->messageId);
 
         if (!$message) {
             return [];
@@ -34,19 +34,22 @@ class MessageSent implements ShouldBroadcastNow
 
         $broadcastedIds = []; // Tránh duplicate channels
 
-        // Broadcast đến người được assign conversation này (có thể là staff hoặc admin)
-        if ($message->conversation && $message->conversation->staff_id) {
-            $channels[] = new PrivateChannel('staff.' . $message->conversation->staff_id);
-            $broadcastedIds[] = $message->conversation->staff_id;
+        // Ưu tiên tài khoản quản lý hiện tại của user theo referrer_id.
+        $managerId = $message->conversation?->user?->referrer_id;
+        if (!$managerId) {
+            $managerId = $message->conversation?->staff_id;
         }
 
-        // Broadcast đến tất cả admin (trừ người đã nhận ở trên) - Cache 5 phút
-        $admins = \Illuminate\Support\Facades\Cache::remember('admin_ids', 300, function () {
-            return \App\Models\User::where('role', 'admin')->pluck('id')->toArray();
-        });
+        if ($managerId) {
+            $channels[] = new PrivateChannel('staff.' . $managerId);
+            $broadcastedIds[] = (int) $managerId;
+        }
+
+        // Broadcast đến tất cả admin, kể cả admin không quản lý trực tiếp user.
+        $admins = \App\Models\User::where('role', 'admin')->pluck('id');
 
         foreach ($admins as $adminId) {
-            if (!in_array($adminId, $broadcastedIds)) {
+            if (!in_array((int) $adminId, $broadcastedIds, true)) {
                 $channels[] = new PrivateChannel('staff.' . $adminId);
             }
         }

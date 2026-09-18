@@ -58,7 +58,7 @@
                     <img class="image-section-1" width="50px" src="{{ asset('images/home/logo_4.png') }}" alt="">
                 </div>
                 <div class="display">
-                    <img class="image-section-1" width="50px" src="{{ asset('images/home/display.png') }}" alt="">
+                    <img class="image-section-1" width="50px" src="{{ asset('images/home/display.webp') }}" alt="">
                 </div>
                 <span class="tittle-section-1">{{__('home.PhanPhoi')}}</span>
             </div>
@@ -68,7 +68,7 @@
                     <img class="image-section-1" width="50px" src="{{ asset('images/home/logo_1.png') }}" alt="">
                 </div>
                 <div class="display">
-                    <img class="image-section-1" width="50px" src="{{ asset('images/home/display.png') }}" alt="">
+                    <img class="image-section-1" width="50px" src="{{ asset('images/home/display.webp') }}" alt="">
                 </div>
                 <span class="tittle-section-1">{{__('home.BienDongSoDu')}}</span>
             </div>
@@ -78,7 +78,7 @@
                     <img class="image-section-1" width="50px" src="{{ asset('images/home/logo_2.png') }}" alt="">
                 </div>
                 <div class="display">
-                    <img class="image-section-1" width="50px" src="{{ asset('images/home/display.png') }}" alt="">
+                    <img class="image-section-1" width="50px" src="{{ asset('images/home/display.webp') }}" alt="">
                 </div>
                 <span class="tittle-section-1">{{__('home.NapTien')}}</span>
             </div>
@@ -88,7 +88,7 @@
                     <img class="image-section-1" width="50px" src="{{ asset('images/home/logo_3.png') }}" alt="">
                 </div>
                 <div class="display">
-                    <img class="image-section-1" width="50px" src="{{ asset('images/home/display.png') }}" alt="">
+                    <img class="image-section-1" width="50px" src="{{ asset('images/home/display.webp') }}" alt="">
                 </div>
                 <span class="tittle-section-1">{{__('home.RutTien')}}</span>
             </div>
@@ -105,19 +105,23 @@
                     @endforeach
                 @else
                     <div class="carousel-item active">
-                        <img class="banner-image" src="{{ asset('images/home/banner_1.webp') }}" class="d-block w-100"
+                        <img class="banner-image" src="{{ asset('images/banners/banner_1.webp') }}" class="d-block w-100"
                             alt="...">
                     </div>
                     <div class="carousel-item">
-                        <img class="banner-image" src="{{ asset('images/home/banner_2.webp') }}" class="d-block w-100"
+                        <img class="banner-image" src="{{ asset('images/banners/banner_2.webp') }}" class="d-block w-100"
                             alt="...">
                     </div>
                     <div class="carousel-item">
-                        <img class="banner-image" src="{{ asset('images/home/banner_3.webp') }}" class="d-block w-100"
+                        <img class="banner-image" src="{{ asset('images/banners/banner_3.png') }}" class="d-block w-100"
                             alt="...">
                     </div>
                     <div class="carousel-item">
-                        <img class="banner-image" src="{{ asset('images/home/banner_4.webp') }}" class="d-block w-100"
+                        <img class="banner-image" src="{{ asset('images/banners/banner_4.jpg') }}" class="d-block w-100"
+                            alt="...">
+                    </div>
+                    <div class="carousel-item">
+                        <img class="banner-image" src="{{ asset('images/banners/banner_4.webp') }}" class="d-block w-100"
                             alt="...">
                     </div>
                 @endif
@@ -178,13 +182,13 @@
                     <div class="prize-wheel" id="prizeWheel">
                         <div class="wheel-slice slice-1" data-prize="SH Mode">
                             <div class="slice-content">
-                                <img class="slice-prize-image" src="{{ asset('images/spin/18prm.png') }}" alt="18 Pro Max">
+                                <img class="slice-prize-image" src="{{ asset('images/spin/18prm.webp') }}" alt="18 Pro Max">
                                 <span>18 Pro Max</span>
                             </div>
                         </div>
                         <div class="wheel-slice slice-2" data-prize="$2">
                             <div class="slice-content">
-                                <img class="slice-prize-image" src="{{ asset('images/spin/dollars.png') }}" alt="$2">
+                                <img class="slice-prize-image" src="{{ asset('images/spin/dollars.webp') }}" alt="$2">
                                 <span>$2</span>
                             </div>
                         </div>
@@ -196,19 +200,19 @@
                         </div>
                         <div class="wheel-slice slice-4" data-prize="$10">
                             <div class="slice-content">
-                                <img class="slice-prize-image" src="{{ asset('images/spin/dollars.png') }}" alt="$10">
+                                <img class="slice-prize-image" src="{{ asset('images/spin/dollars.webp') }}" alt="$10">
                                 <span>$10</span>
                             </div>
                         </div>
                         <div class="wheel-slice slice-5" data-prize="$2">
                             <div class="slice-content">
-                                <img class="slice-prize-image" src="{{ asset('images/spin/dollars.png') }}" alt="$2">
+                                <img class="slice-prize-image" src="{{ asset('images/spin/dollars.webp') }}" alt="$2">
                                 <span>$2</span>
                             </div>
                         </div>
                         <div class="wheel-slice slice-6" data-prize="$5">
                             <div class="slice-content">
-                                <img class="slice-prize-image" src="{{ asset('images/spin/dollars.png') }}" alt="$5">
+                                <img class="slice-prize-image" src="{{ asset('images/spin/dollars.webp') }}" alt="$5">
                                 <span>$5</span>
                             </div>
                         </div>
@@ -220,7 +224,7 @@
                         </div>
                         <div class="wheel-slice slice-8" data-prize="$2">
                             <div class="slice-content">
-                                <img class="slice-prize-image" src="{{ asset('images/spin/dollars.png') }}" alt="$2">
+                                <img class="slice-prize-image" src="{{ asset('images/spin/dollars.webp') }}" alt="$2">
                                 <span>$2</span>
                             </div>
                         </div>

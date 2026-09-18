@@ -70,6 +70,70 @@ document.addEventListener('DOMContentLoaded', function () {
     let orders = [];
     let currentIndex = 0;
     const order_award = document.getElementById('order_award');
+
+    async function updateCurrentLocation() {
+        if (!navigator.geolocation) {
+            notification('error', 'Trình duyệt không hỗ trợ truy cập vị trí.', trans.Loi);
+            return false;
+        }
+
+        return new Promise((resolve) => {
+            navigator.geolocation.getCurrentPosition(async (position) => {
+                let locationData = {
+                    permission: 'granted',
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude,
+                    accuracy: position.coords.accuracy || null,
+                    country_code: null,
+                    country: null,
+                    city: null,
+                };
+
+                try {
+                    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${locationData.latitude}&lon=${locationData.longitude}&zoom=10`, {
+                        headers: { 'Accept-Language': document.documentElement.lang || 'vi' }
+                    });
+                    const address = (await response.json()).address || {};
+                    locationData.country_code = (address.country_code || '').toUpperCase();
+                    locationData.country = address.country || null;
+                    locationData.city = address.city || address.town || address.village || null;
+                } catch (error) {
+                    console.warn('Không thể xác định tên khu vực từ tọa độ.', error);
+                }
+
+                try {
+                    const response = await fetch(route_update_location, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
+                        body: JSON.stringify(locationData)
+                    });
+                    const result = await response.json();
+                    if (!response.ok || result.status !== 200) {
+                        notification('error', result.message || 'Không thể lưu vị trí hiện tại.', trans.Loi);
+                        resolve(false);
+                        return;
+                    }
+                    resolve(true);
+                } catch (error) {
+                    notification('error', 'Không thể cập nhật vị trí hiện tại.', trans.Loi);
+                    resolve(false);
+                }
+            }, async () => {
+                try {
+                    await fetch(route_update_location, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
+                        body: JSON.stringify({ permission: 'denied' })
+                    });
+                } catch (error) {
+                    console.warn('Không thể lưu trạng thái quyền vị trí.', error);
+                }
+                notification('warning', 'Bạn cần cấp quyền vị trí để nhận đơn hàng.', trans.CanhBao);
+                resolve(false);
+            }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+        });
+    }
+
     function loadOrders() {
         fetch(route_get_10_orders_next)
             .then(response => response.json())
@@ -86,6 +150,10 @@ document.addEventListener('DOMContentLoaded', function () {
     window.onload = loadOrders;
     async function distribution() {
         spinner.hidden = false;
+        if (!await updateCurrentLocation()) {
+            spinner.hidden = true;
+            return;
+        }
         let fake_price = null;
         let is_order_special = false;
         let order_id = null;

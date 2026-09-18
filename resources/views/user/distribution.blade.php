@@ -20,6 +20,7 @@
         ThanhCong: @json(__('home.ThanhCong')),
         PhanPhoiThanhCong2: @json(__('home.PhanPhoiThanhCong2')),
     };
+    const route_update_location = @json(route('location.update'));
 </script>
 @endsection
 @section('content')

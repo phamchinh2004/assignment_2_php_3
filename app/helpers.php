@@ -35,6 +35,18 @@ if (!function_exists('get_user_avatar')) {
         return asset($defaultAvatar);
     }
 }
+
+if (!function_exists('country_flag')) {
+    function country_flag(?string $countryCode): string
+    {
+        $countryCode = strtoupper(trim((string) $countryCode));
+        if (!preg_match('/^[A-Z]{2}$/', $countryCode)) {
+            return '';
+        }
+
+        return mb_chr(ord($countryCode[0]) + 127397) . mb_chr(ord($countryCode[1]) + 127397);
+    }
+}
 class ReferralCodeHelper
 {
     public static function generate()

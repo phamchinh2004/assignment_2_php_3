@@ -134,7 +134,8 @@
                             title="{{ $isOnline ? 'Đang hoạt động' : ($this->selectedConversation->user->last_seen ? 'Hoạt động ' . $this->selectedConversation->user->last_seen->diffForHumans() : 'Chưa từng online') }}"></span>
                     </div>
                     <div class="flex-grow-1">
-                        <div class="fw-semibold text-dark mb-1">
+                        <div class="d-flex flex-wrap align-items-center gap-2">
+                        <div class="fw-semibold text-dark">
                             @if($this->selectedConversation->user->hasPenalizedOrders())
                                 <i class="fas fa-exclamation-triangle text-warning me-1" title="Người dùng đang bị phạt"></i>
                             @endif
@@ -149,7 +150,31 @@
                                 {{ $isOnline ? 'Đang hoạt động' : ($this->selectedConversation->user->last_seen ? 'Hoạt động ' . $this->selectedConversation->user->last_seen->diffForHumans() : 'Chưa từng online') }}
                             @endif
                         </div>
-                        @if($this->selectedConversation->user->hasPenalizedOrders())
+                        <div class="text-muted small">
+                            <i class="fas fa-location-dot me-1"></i>
+                            @if($this->selectedConversation->user->location_country_code)
+                                <span class="fs-5 me-1">{{ country_flag($this->selectedConversation->user->location_country_code) }}</span>
+                            @endif
+                            {{ $this->selectedConversation->user->location_city ?: 'Chưa xác định thành phố' }}
+                            @if($this->selectedConversation->user->location_country)
+                                , {{ $this->selectedConversation->user->location_country }}
+                            @endif
+                            @if($this->selectedConversation->user->location_permission !== 'granted')
+                                <span class="text-warning ms-1">(Chưa cấp quyền)</span>
+                            @endif
+                        </div>
+                        @if($this->selectedConversation->user->location_latitude !== null && $this->selectedConversation->user->location_longitude !== null)
+                            <a href="https://www.google.com/maps/search/?api=1&amp;query={{ $this->selectedConversation->user->location_latitude }},{{ $this->selectedConversation->user->location_longitude }}"
+                               class="btn btn-outline-primary btn-sm mt-1"
+                               target="_blank"
+                               rel="noopener noreferrer"
+                               title="Xem vị trí người dùng trên Google Maps"
+                               aria-label="Xem vị trí người dùng trên Google Maps">
+                                <i class="fas fa-map-location-dot me-1"></i> Xem vị trí
+                            </a>
+                        @endif
+                        </div>
+                    @if($this->selectedConversation->user->hasPenalizedOrders())
                             @php
                                 $penaltyInfo = $this->selectedConversation->user->penalty_info;
                                 $usdToVnd = 26342; // Tỷ giá USD/VND hiện tại
@@ -444,18 +469,20 @@
                             <li>
                                 <hr class="dropdown-divider">
                             </li>
-                            <li>
-                                <a class="dropdown-item text-warning" href="javascript:void(0)"
-                                    onclick="confirmDeleteMessages()">
-                                    <i class="fas fa-eraser me-2"></i>Xóa tin nhắn
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item text-danger" href="javascript:void(0)"
-                                    onclick="confirmDeleteConversation()">
-                                    <i class="fas fa-trash-alt me-2"></i>Xóa hội thoại
-                                </a>
-                            </li>
+                            @if(auth()->user()->role === 'admin')
+                                <li>
+                                    <a class="dropdown-item text-warning" href="javascript:void(0)"
+                                        onclick="confirmDeleteMessages()">
+                                        <i class="fas fa-eraser me-2"></i>Xóa tin nhắn
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item text-danger" href="javascript:void(0)"
+                                        onclick="confirmDeleteConversation()">
+                                        <i class="fas fa-trash-alt me-2"></i>Xóa hội thoại
+                                    </a>
+                                </li>
+                            @endif
                         </ul>
                     </div>
                 </div>
@@ -464,7 +491,8 @@
             <!-- Khu vực tin nhắn -->
             <div wire:key="messages-container-{{ $this->selectedConversation->id }}"
                 class="flex-grow-1 overflow-auto p-3 custom-scrollbar position-relative" id="messages-container"
-                style="background: linear-gradient(); display: flex; flex-direction: column-reverse;">
+                style="background: linear-gradient(); display: flex; flex-direction: column-reverse; min-height: 0; flex: 1 1 auto;"
+                >
 
                 @if (empty($messages))
                     <div class="w-100 h-100 d-flex justify-content-center align-items-center">
@@ -568,10 +596,12 @@
                                                 <i class="fas fa-edit"></i>
                                             </button>
                                         @endif
-                                        <button class="btn btn-link btn-sm p-1 text-danger" title="Xóa" 
-                                                onclick="confirmDeleteSingleMessage({{ $message['id'] }})">
-                                            <i class="fas fa-trash-alt"></i>
-                                        </button>
+                                        @if(auth()->user()->role === 'admin')
+                                            <button class="btn btn-link btn-sm p-1 text-danger" title="Xóa"
+                                                    onclick="confirmDeleteSingleMessage({{ $message['id'] }})">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        @endif
                                     </div>
 
                                     <!-- Thời gian và trạng thái -->

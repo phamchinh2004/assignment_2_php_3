@@ -103,6 +103,17 @@ class OrderController extends Controller
     {
         $frozen_id = request()->input('frozen_id');
         $user = Auth::user();
+
+        if ($user->location_permission !== 'granted' ||
+            $user->location_latitude === null ||
+            $user->location_longitude === null) {
+            return response()->json([
+                'status' => 403,
+                'message' => 'Bạn phải cấp quyền truy cập vị trí trước khi nhận đơn hàng.',
+                'location_required' => true,
+            ]);
+        }
+
         $get_frozen_order = Frozen_order::with('order')->find($frozen_id);
 
         if (!$get_frozen_order) {

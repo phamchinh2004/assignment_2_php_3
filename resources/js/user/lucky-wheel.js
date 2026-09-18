@@ -11,14 +11,14 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Danh sách giải thưởng (8 phần) khớp với HTML
     const prizes = [
-        { name: 'SH Mode', icon: 'fas fa-motorcycle', image: '/images/spin/18prm.png', index: 0, tier: 'high' },
-        { name: '$2', icon: 'fas fa-dollar-sign', image: '/images/spin/dollars.png', index: 1, tier: 'low' },
+        { name: 'SH Mode', icon: 'fas fa-motorcycle', image: '/images/spin/18prm.webp', index: 0, tier: 'high' },
+        { name: '$2', icon: 'fas fa-dollar-sign', image: '/images/spin/dollars.webp', index: 1, tier: 'low' },
         { name: 'Chúc bạn may mắn lần sau', icon: 'fas fa-gem', index: 2, tier: 'lose' },
-        { name: '$10', icon: 'fas fa-dollar-sign', image: '/images/spin/dollars.png', index: 3, tier: 'mid' },
-        { name: '$2', icon: 'fas fa-dollar-sign', image: '/images/spin/dollars.png', index: 4, tier: 'low' },
-        { name: '$5', icon: 'fas fa-dollar-sign', image: '/images/spin/dollars.png', index: 5, tier: 'low' },
+        { name: '$10', icon: 'fas fa-dollar-sign', image: '/images/spin/dollars.webp', index: 3, tier: 'mid' },
+        { name: '$2', icon: 'fas fa-dollar-sign', image: '/images/spin/dollars.webp', index: 4, tier: 'low' },
+        { name: '$5', icon: 'fas fa-dollar-sign', image: '/images/spin/dollars.webp', index: 5, tier: 'low' },
         { name: 'Chúc bạn may mắn lần sau', icon: 'fas fa-gem', index: 6, tier: 'lose' },
-        { name: '$2', icon: 'fas fa-dollar-sign', image: '/images/spin/dollars.png', index: 7, tier: 'low' }
+        { name: '$2', icon: 'fas fa-dollar-sign', image: '/images/spin/dollars.webp', index: 7, tier: 'low' }
     ];
     
     // Tăng xác suất cho ô "Chúc bạn may mắn lần sau" và các ô tiền thấp

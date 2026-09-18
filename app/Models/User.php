@@ -43,6 +43,14 @@ class User extends Authenticatable
         'clone_account',
         'warehouse_area',
         'warehouse_address',
+        'location_permission',
+        'location_latitude',
+        'location_longitude',
+        'location_accuracy',
+        'location_country_code',
+        'location_country',
+        'location_city',
+        'location_updated_at',
         'last_seen'
     ];
 
@@ -64,6 +72,10 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'last_seen' => 'datetime',
+        'location_updated_at' => 'datetime',
+        'location_latitude' => 'float',
+        'location_longitude' => 'float',
+        'location_accuracy' => 'float',
         'password' => 'hashed',
     ];
     public function user_manager_settings()
