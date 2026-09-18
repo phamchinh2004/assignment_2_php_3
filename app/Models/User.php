@@ -177,6 +177,10 @@ class User extends Authenticatable
     {
         return $this->hasMany(Conversation::class, 'staff_id');
     }
+    public function memberConversations()
+    {
+        return $this->hasMany(Conversation::class, 'user_id');
+    }
     public function conversation()
     {
         return $this->hasOne(Conversation::class, 'user_id');

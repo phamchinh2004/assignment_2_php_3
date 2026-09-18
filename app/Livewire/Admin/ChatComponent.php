@@ -63,7 +63,11 @@ class ChatComponent extends Component
     }
     public function getSelectedConversationProperty()
     {
-        return $this->conversations->firstWhere('id', $this->selectedConversationId);
+        $conv = $this->conversations->firstWhere('id', $this->selectedConversationId);
+        if (!$conv && $this->selectedConversationId) {
+            $conv = Conversation::with(['user', 'staff', 'messages'])->find($this->selectedConversationId);
+        }
+        return $conv;
     }
 
     public function loadConversations()
@@ -128,7 +132,7 @@ class ChatComponent extends Component
             ->whereIn('referrer_id', $staffIds)
             // Lấy kèm hộp thoại và message mới nhất
             ->with([
-                'conversations' => function ($q) use ($currentUserId) {
+                'memberConversations' => function ($q) use ($currentUserId) {
                     $q->orderBy('updated_at', 'desc')
                         ->with([
                             'messages' => function ($qm) {
@@ -153,7 +157,7 @@ class ChatComponent extends Component
             $usersArray = [];
 
             foreach ($users as $user) {
-                $latestConv = $user->conversations->first();
+                $latestConv = $user->memberConversations->firstWhere('staff_id', $staff->id) ?? $user->memberConversations->first();
 
                 $userData = [
                     'id' => $user->id,
@@ -608,6 +612,11 @@ class ChatComponent extends Component
             return;
         }
 
+        // Đảm bảo accordion của nhân viên này được giữ mở
+        if (!in_array($actualStaffId, $this->expandedStaff)) {
+            $this->expandedStaff[] = $actualStaffId;
+        }
+
         // Reset state trước
         $this->messages = [];
 
@@ -658,7 +667,8 @@ class ChatComponent extends Component
 
     public function updateMessage()
     {
-        if (!$this->editingMessageId) return;
+        if (!$this->editingMessageId)
+            return;
 
         $message = Message::find($this->editingMessageId);
         if ($message && $message->sender_id == Auth::id()) {

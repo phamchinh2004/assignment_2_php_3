@@ -1,83 +1,230 @@
+/* ==========================================================================
+   Admin Chat Component Styles - Modern SaaS / FinTech Aesthetic
+   ========================================================================== */
+
 .arround_topbar {
     display: none !important;
 }
 
-/* Custom CSS for animations and styling */
+@media screen and (max-width: 768px) {
+    .arround_topbar {
+        display: block !important;
+    }
+}
+
+/* Custom Scrollbar */
 .custom-scrollbar::-webkit-scrollbar {
     width: 6px;
+    height: 6px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 3px;
+    background: transparent;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
-    border-radius: 3px;
+    background: #cbd5e1;
+    border-radius: 9999px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #a8a8a8;
+    background: #94a3b8;
 }
 
-.conversation-item:hover {
-    transform: translateX(5px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+/* Chat Header */
+.chat-header {
+    background: #ffffff !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    backdrop-filter: blur(8px);
 }
 
-.user-item:hover {
-    background-color: #f8f9fa !important;
-    transform: translateX(3px);
+.chat-header-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 500;
+    border-radius: 9999px;
+    background-color: #f1f5f9;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s ease;
 }
 
-.staff-header:hover {
-    background-color: #e9ecef !important;
-    transform: translateX(3px);
+.chat-header-chip:hover {
+    background-color: #e2e8f0;
+}
+
+.chat-header-chip.chip-staff {
+    background-color: #f0fdf4;
+    color: #166534;
+    border-color: #bbf7d0;
+}
+
+.chat-header-chip.chip-location {
+    background-color: #eff6ff;
+    color: #1e40af;
+    border-color: #bfdbfe;
+}
+
+/* Chat Messages Container */
+#messages-container {
+    background-color: #f8fafc !important;
+    background-image: radial-gradient(#e2e8f0 1.2px, transparent 1.2px) !important;
+    background-size: 24px 24px !important;
+}
+
+/* Message Bubble Base */
+.message-bubble {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    line-height: 1.55;
 }
 
 .message-bubble:hover {
-    transform: scale(1.02);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08) !important;
 }
 
-.message-tail-right {
-    right: -8px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 0;
-    height: 0;
-    border-left: 8px solid #0d6efd;
-    border-top: 8px solid transparent;
-    border-bottom: 8px solid transparent;
+/* Sent Messages (Current User) */
+.sent-message {
+    background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%) !important;
+    color: #ffffff !important;
+    border-radius: 18px 18px 4px 18px !important;
+    box-shadow: 0 4px 14px rgba(79, 70, 229, 0.22) !important;
+    border: none !important;
 }
 
-.message-tail-left {
-    left: -8px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 0;
-    height: 0;
-    border-right: 8px solid white;
-    border-top: 8px solid transparent;
-    border-bottom: 8px solid transparent;
+/* Received Member Messages */
+.member-message {
+    background: #ffffff !important;
+    color: #1e293b !important;
+    border-radius: 18px 18px 18px 4px !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+    border: 1px solid #e2e8f0 !important;
+    font-family: inherit;
 }
 
-.message-input input:focus {
-    border-color: #0d6efd !important;
-    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25) !important;
+/* Admin Messages */
+.admin-message {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+    color: #ffffff !important;
+    border-radius: 18px 18px 18px 4px !important;
+    box-shadow: 0 4px 14px rgba(239, 68, 68, 0.22) !important;
+    border: none !important;
 }
 
-.chat-header {
-    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%) !important;
+/* Staff Messages */
+.staff-message {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+    color: #ffffff !important;
+    border-radius: 18px 18px 18px 4px !important;
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.22) !important;
+    border: none !important;
+}
+
+/* Message Tails - subtle modern curve */
+.message-tail {
+    display: none !important; /* Hide old bulky triangles for modern clean iOS/Telegram bubble style */
+}
+
+/* Hover Actions on Messages */
+.message-actions {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(4px);
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    padding: 2px 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.message-item:hover .message-actions {
+    opacity: 1 !important;
+}
+
+.message-actions .btn-link {
+    transition: all 0.2s ease;
+    border-radius: 50%;
+}
+
+.message-actions .btn-link:hover {
+    background-color: #f1f5f9;
+}
+
+/* Message Input Area */
+.message-input {
+    background: #ffffff !important;
+    border-top: 1px solid #e2e8f0 !important;
+}
+
+.message-input textarea {
+    border: 1.5px solid #e2e8f0 !important;
+    background-color: #f8fafc !important;
+    transition: all 0.2s ease !important;
+    border-radius: 24px !important;
+}
+
+.message-input textarea:focus {
+    background-color: #ffffff !important;
+    border-color: #6366f1 !important;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15) !important;
+}
+
+.send-btn-gradient {
+    background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%) !important;
+    border: none !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35) !important;
+    transition: all 0.25s ease !important;
+}
+
+.send-btn-gradient:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 18px rgba(79, 70, 229, 0.45) !important;
+}
+
+.send-btn-gradient:active {
+    transform: scale(0.96);
+}
+
+/* Quick Message Pill Buttons */
+.quick-msg-btn {
+    border-radius: 8px !important;
+    transition: all 0.2s ease !important;
+    text-align: left;
+    font-size: 11px !important;
+    border: 1px solid #e2e8f0 !important;
+    background: #ffffff !important;
+    color: #334155 !important;
+    padding: 6px 10px !important;
+    cursor: pointer;
+}
+
+.quick-msg-btn:hover {
+    background: #f8fafc !important;
+    border-color: #6366f1 !important;
+    color: #4f46e5 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(99, 102, 241, 0.12);
+}
+
+/* Modals & Alerts */
+.editing-banner {
+    animation: slideDown 0.3s ease-out;
+    border-left: 4px solid #4f46e5 !important;
+    border-radius: 8px !important;
+}
+
+@keyframes slideDown {
+    from { transform: translateY(-10px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
 }
 
 @keyframes slideIn {
     from {
         opacity: 0;
-        transform: translateY(20px);
+        transform: translateY(12px);
     }
-
     to {
         opacity: 1;
         transform: translateY(0);
@@ -88,73 +235,15 @@
     0% {
         transform: scale(1);
     }
-
     50% {
         transform: scale(1.05);
     }
-
     100% {
         transform: scale(1);
     }
 }
 
-.transition-transform {
-    transition: transform 0.3s ease;
-}
-
-.avatar {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.bg-info.bg-opacity-25 {
-    background-color: rgba(13, 202, 240, 0.15) !important;
-}
-
-.bg-warning.bg-opacity-25 {
-    background-color: rgba(255, 193, 7, 0.15) !important;
-}
-
-.admin-message {
-    background-color: #dc3545 !important;
-    border-color: #dc3545 !important;
-}
-
-.staff-message {
-    background-color: #198754 !important;
-    border-color: #198754 !important;
-}
-
-.member-message {
-    background: linear-gradient(135deg, #f0f0f0 0%, #f0f0f0 100%) !important;
-    border-color: #f0f0f0 !important;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
-    color: #050505 !important;
-}
-
-.message-tail {
-    width: 0;
-    height: 0;
-    position: absolute;
-}
-
-.message-tail-left {
-    left: -8px;
-    border-top: 8px solid transparent;
-    border-bottom: 8px solid transparent;
-}
-
-.message-tail-right {
-    right: -8px;
-    border-top: 8px solid transparent;
-    border-bottom: 8px solid transparent;
-}
-
-@media screen and (max-width: 768px) {
-    .arround_topbar {
-        display: block !important;
-    }
-}
-
+/* Zoom Modal */
 .zoom-modal {
     display: none;
     position: fixed;
@@ -185,19 +274,15 @@
 }
 
 .zoom-modal-image {
-    /* QUAN TRỌNG: Không dùng position absolute */
     max-width: 100%;
     max-height: 100%;
     object-fit: contain;
     cursor: grab;
     user-select: none;
     pointer-events: auto;
-    /* Transform origin ở giữa ảnh */
     transform-origin: center center;
-    /* Không có margin/padding */
     margin: 0;
     padding: 0;
-    /* Transition mượt mà */
     will-change: transform;
 }
 
@@ -258,25 +343,25 @@ body.modal-open {
     transform: rotate(90deg);
 }
 
-    .zoom-hint {
-        position: absolute;
-        bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: rgba(0, 0, 0, 0.7);
-        color: white;
-        padding: 10px 20px;
-        border-radius: 20px;
-        font-size: 14px;
-        z-index: 100000;
-    }
+.zoom-hint {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 14px;
+    z-index: 100000;
+}
 
-/* Delete Conversation Modal */
+/* Modals */
 .success-modal, .error-modal, .warning-modal {
     border: none;
     border-radius: 20px;
     overflow: hidden;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
 }
 
 .success-icon {

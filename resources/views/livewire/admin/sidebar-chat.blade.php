@@ -4,8 +4,8 @@
     $keyPrefix = ($isMobile ?? false) ? 'mobile-' : 'desktop-';
 @endphp
 
-@push('styles')
-    <link rel="stylesheet" href="{{ asset('css/admin/sidebar-chat.css') }}">
+@push('css')
+    @vite('resources/css/admin/sidebar-chat.css')
 @endpush
 
 <div class="p-3 border-bottom bg-light">
@@ -17,9 +17,14 @@
         @endif
     </h5>
 </div>
-<input type="text" class="form-control mb-3" placeholder="Tìm kiếm người dùng..."
-    wire:model.debounce.300ms="searchTerm" />
-<div class="overflow-auto custom-scrollbar" style="height: calc(100vh - 105px);">
+<div class="px-3 pt-3 pb-1">
+    <div class="position-relative">
+        <i class="fas fa-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted" style="font-size: 13px;"></i>
+        <input type="text" class="form-control ps-5 rounded-pill sidebar-search-input" placeholder="Tìm kiếm người dùng..."
+            wire:model.debounce.300ms="searchTerm" style="font-size: 13px; background-color: #f8fafc;" />
+    </div>
+</div>
+<div class="overflow-auto custom-scrollbar" style="height: calc(100vh - 125px);">
     @if(auth()->user()->role === 'admin')
         <!-- Giao diện Admin -->
         <div class="pt-3 pe-3 pb-5 ps-3">
@@ -43,7 +48,7 @@
                             : ($hasPenalty ? 'bg-warning bg-opacity-10 shadow-sm' : ($hasUnread ? 'bg-info bg-opacity-5 shadow-sm' : 'bg-white shadow-sm'));
                         $borderColor = $isSelected ? '#0d6efd' : ($hasPenalty ? '#ffc107' : ($hasUnread ? '#0dcaf0' : '#e9ecef'));
                     @endphp
-                    <div wire:key="{{ $keyPrefix }}admin-conversation-{{ $conversation->id }}-selected-{{ $this->selectedConversationId ?? 'none' }}" class="conversation-item d-flex align-items-center p-3 rounded-3 mb-2 position-relative cursor-pointer {{ $bgClass }}"
+                    <div wire:key="{{ $keyPrefix }}admin-conversation-{{ $conversation->id }}" class="conversation-item d-flex align-items-center p-3 mb-2 position-relative cursor-pointer {{ $bgClass }} {{ $isSelected ? 'is-selected active' : '' }}"
                         style="cursor: pointer; transition: all 0.3s ease; border: 2px solid {{ $borderColor }};"
                         wire:click="selectConversation({{ $conversation->id }})">
                         <div class="avatar rounded-circle d-flex align-items-center justify-content-center text-white fw-bold me-3 position-relative"
@@ -113,7 +118,7 @@
                     <i class="fas fa-users me-2"></i>Nhân viên và khách hàng
                 </h6>
                 @foreach($staffUsers as $staff)
-                    <div wire:key="{{ $keyPrefix }}staff-section-{{ $staff['id'] }}-{{ $staffUsersUpdateKey }}-selected-{{ $this->selectedConversationId ?? 'none' }}" class="mb-3">
+                    <div wire:key="{{ $keyPrefix }}staff-section-{{ $staff['id'] }}" class="mb-3">
                         <!-- Header nhân viên -->
                         <div class="d-flex align-items-center p-3 bg-light rounded-3 cursor-pointer staff-header shadow-sm"
                             style="cursor: pointer; transition: all 0.3s ease; border: 1px solid #e9ecef;"
@@ -145,17 +150,18 @@
                                             $userHasPenalty = isset($user['_user_model']) && $user['_user_model']->hasPenalizedOrders();
                                             
                                             // Kiểm tra xem có đang chọn conversation này không
-                                            $isSelected = $this->selectedConversationId !== null &&
+                                            $isSelected = ($this->selectedConversationId !== null &&
                                                           isset($user['latest_conversation']) &&
-                                                          (int) $this->selectedConversationId === (int) $user['latest_conversation']['id'];
+                                                          (int) $this->selectedConversationId === (int) $user['latest_conversation']['id'])
+                                                          || ($this->selectedConversation && (int) $this->selectedConversation->user_id === (int) $user['id'] && (int) $this->selectedConversation->staff_id === (int) $staff['id']);
                                             
                                             $bgClass = $isSelected 
                                                 ? 'bg-primary bg-opacity-10 border-start border-primary border-4 shadow-sm' 
                                                 : ($userHasPenalty ? 'bg-warning bg-opacity-10 shadow-sm' : ($userHasUnread ? 'bg-info bg-opacity-5 shadow-sm' : 'bg-white shadow-sm'));
                                             $borderColor = $isSelected ? '#0d6efd' : ($userHasPenalty ? '#ffc107' : ($userHasUnread ? '#0dcaf0' : '#e9ecef'));
                                         @endphp
-                                        <div wire:key="{{ $keyPrefix }}staff-{{ $staff['id'] }}-user-{{ $user['id'] }}-{{ $staffUsersUpdateKey }}-selected-{{ $this->selectedConversationId ?? 'none' }}"
-                                            class="conversation-item d-flex align-items-center p-3 rounded-3 mb-2 position-relative cursor-pointer {{ $bgClass }}"
+                                        <div wire:key="{{ $keyPrefix }}staff-{{ $staff['id'] }}-user-{{ $user['id'] }}"
+                                            class="conversation-item d-flex align-items-center p-3 mb-2 position-relative cursor-pointer {{ $bgClass }} {{ $isSelected ? 'is-selected active' : '' }}"
                                             style="cursor: pointer; transition: all 0.3s ease; border: 2px solid {{ $borderColor }};"
                                             wire:click="selectUserForChat({{ $user['id'] }}, {{ $staff['id'] }})">
                                             <div class="avatar rounded-circle d-flex align-items-center justify-content-center text-white fw-bold me-3 position-relative"
@@ -250,7 +256,7 @@
                         : ($hasPenaltyStaff ? 'bg-warning bg-opacity-10 shadow-sm' : ($hasUnreadStaff ? 'bg-info bg-opacity-5 shadow-sm' : 'bg-white shadow-sm'));
                     $borderColorStaff = $isSelectedStaff ? '#0d6efd' : ($hasPenaltyStaff ? '#ffc107' : ($hasUnreadStaff ? '#0dcaf0' : '#e9ecef'));
                 @endphp
-                <div wire:key="{{ $keyPrefix }}staff-conversation-{{ $conversation->id }}-selected-{{ $this->selectedConversationId ?? 'none' }}" class="conversation-item d-flex align-items-center p-3 rounded-3 mb-2 position-relative cursor-pointer {{ $bgClassStaff }}"
+                <div wire:key="{{ $keyPrefix }}staff-conversation-{{ $conversation->id }}" class="conversation-item d-flex align-items-center p-3 mb-2 position-relative cursor-pointer {{ $bgClassStaff }} {{ $isSelectedStaff ? 'is-selected active' : '' }}"
                     style="cursor: pointer; transition: all 0.3s ease; border: 2px solid {{ $borderColorStaff }};"
                     wire:click="selectConversation({{ $conversation->id }})">
                     <div class="avatar rounded-circle d-flex align-items-center justify-content-center text-white fw-bold me-3 position-relative"

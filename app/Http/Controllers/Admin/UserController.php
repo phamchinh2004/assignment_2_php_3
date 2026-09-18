@@ -32,7 +32,7 @@ class UserController extends Controller
      */
     public function index()
     {
-        $query = User::with('frozen_orders')->with('referrer')->where('role', 'member');
+        $query = User::with(['frozen_orders', 'referrer', 'rank'])->where('role', 'member');
         if (Auth::user()->role === "staff") {
             $get_quan_ly_tat_ca_nguoi_dung = Manager_setting::where('manager_code', 'quan_ly_tat_ca_nguoi_dung')->first();
             if ($get_quan_ly_tat_ca_nguoi_dung) {

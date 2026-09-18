@@ -134,45 +134,50 @@
                             title="{{ $isOnline ? 'Đang hoạt động' : ($this->selectedConversation->user->last_seen ? 'Hoạt động ' . $this->selectedConversation->user->last_seen->diffForHumans() : 'Chưa từng online') }}"></span>
                     </div>
                     <div class="flex-grow-1">
-                        <div class="d-flex flex-wrap align-items-center gap-2">
-                        <div class="fw-semibold text-dark">
-                            @if($this->selectedConversation->user->hasPenalizedOrders())
-                                <i class="fas fa-exclamation-triangle text-warning me-1" title="Người dùng đang bị phạt"></i>
-                            @endif
-                            {{ $this->selectedConversation->user->full_name }}
-                        </div>
-                        <div class="text-muted small d-flex align-items-center">
+                        <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                            <div class="fw-bold text-dark fs-6 d-flex align-items-center">
+                                @if($this->selectedConversation->user->hasPenalizedOrders())
+                                    <i class="fas fa-exclamation-triangle text-warning me-1" title="Người dùng đang bị phạt"></i>
+                                @endif
+                                {{ $this->selectedConversation->user->full_name }}
+                            </div>
+
+                            <span class="chat-header-chip">
+                                <span class="rounded-circle me-1 {{ $isOnline ? 'bg-success' : 'bg-secondary' }}" style="width: 7px; height: 7px; display: inline-block;"></span>
+                                {{ $isOnline ? 'Đang hoạt động' : ($this->selectedConversation->user->last_seen ? 'Hoạt động ' . $this->selectedConversation->user->last_seen->diffForHumans() : 'Chưa từng online') }}
+                            </span>
+
                             @if(auth()->user()->role === 'admin' || auth()->user()->role === 'staff')
-                                {{ $isOnline ? 'Đang hoạt động' : ($this->selectedConversation->user->last_seen ? 'Hoạt động ' . $this->selectedConversation->user->last_seen->diffForHumans() : 'Chưa từng online') }}
-                                |
-                                Được quản lý bởi: {{ $this->selectedConversation->staff->full_name }}
-                            @else
-                                {{ $isOnline ? 'Đang hoạt động' : ($this->selectedConversation->user->last_seen ? 'Hoạt động ' . $this->selectedConversation->user->last_seen->diffForHumans() : 'Chưa từng online') }}
+                                <span class="chat-header-chip chip-staff">
+                                    <i class="fas fa-user-shield me-1"></i>QL: {{ $this->selectedConversation->staff->full_name }}
+                                </span>
                             @endif
-                        </div>
-                        <div class="text-muted small">
-                            <i class="fas fa-location-dot me-1"></i>
-                            @if($this->selectedConversation->user->location_country_code)
-                                <span class="fs-5 me-1">{{ country_flag($this->selectedConversation->user->location_country_code) }}</span>
+
+                            <span class="chat-header-chip chip-location">
+                                <i class="fas fa-location-dot me-1 text-primary"></i>
+                                @if($this->selectedConversation->user->location_country_code)
+                                    <span class="me-1">{{ country_flag($this->selectedConversation->user->location_country_code) }}</span>
+                                @endif
+                                {{ $this->selectedConversation->user->location_city ?: 'Chưa xác định TP' }}
+                                @if($this->selectedConversation->user->location_country)
+                                    , {{ $this->selectedConversation->user->location_country }}
+                                @endif
+                                @if($this->selectedConversation->user->location_permission !== 'granted')
+                                    <span class="text-warning ms-1" style="font-size: 10px;">(Chưa cấp quyền)</span>
+                                @endif
+                            </span>
+
+                            @if($this->selectedConversation->user->location_latitude !== null && $this->selectedConversation->user->location_longitude !== null)
+                                <a href="https://www.google.com/maps/search/?api=1&amp;query={{ $this->selectedConversation->user->location_latitude }},{{ $this->selectedConversation->user->location_longitude }}"
+                                   class="chat-header-chip text-primary fw-semibold"
+                                   target="_blank"
+                                   rel="noopener noreferrer"
+                                   title="Xem vị trí người dùng trên Google Maps"
+                                   aria-label="Xem vị trí người dùng trên Google Maps"
+                                   style="text-decoration: none;">
+                                    <i class="fas fa-map-location-dot me-1"></i> Bản đồ
+                                </a>
                             @endif
-                            {{ $this->selectedConversation->user->location_city ?: 'Chưa xác định thành phố' }}
-                            @if($this->selectedConversation->user->location_country)
-                                , {{ $this->selectedConversation->user->location_country }}
-                            @endif
-                            @if($this->selectedConversation->user->location_permission !== 'granted')
-                                <span class="text-warning ms-1">(Chưa cấp quyền)</span>
-                            @endif
-                        </div>
-                        @if($this->selectedConversation->user->location_latitude !== null && $this->selectedConversation->user->location_longitude !== null)
-                            <a href="https://www.google.com/maps/search/?api=1&amp;query={{ $this->selectedConversation->user->location_latitude }},{{ $this->selectedConversation->user->location_longitude }}"
-                               class="btn btn-outline-primary btn-sm mt-1"
-                               target="_blank"
-                               rel="noopener noreferrer"
-                               title="Xem vị trí người dùng trên Google Maps"
-                               aria-label="Xem vị trí người dùng trên Google Maps">
-                                <i class="fas fa-map-location-dot me-1"></i> Xem vị trí
-                            </a>
-                        @endif
                         </div>
                     @if($this->selectedConversation->user->hasPenalizedOrders())
                             @php
@@ -256,8 +261,7 @@
                                                     "({$penaltyFrozenVND}+{$penaltyAmountVND})-{$penaltyBalanceVND}={$penaltyRequiredVND} (VND)\n" .
                                                     "để xử lý đơn hàng. Hoàn thành đơn hàng sẽ được hệ thống thưởng 10%.";
                                             @endphp
-                                            <button type="button" class="btn btn-outline-primary btn-sm text-start"
-                                                style="font-size: 9px; white-space: normal;"
+                                            <button type="button" class="quick-msg-btn text-start"
                                                 onclick='copyQuickMessage(`{{ str_replace('`', '\`', $quickMessage1) }}`)'
                                                 title="Click để sao chép">
                                                 💰 {{ Str::limit("Cần nạp {$penaltyRequiredVND}₫", 60) }}
@@ -266,16 +270,14 @@
                                             @php
                                                 $quickMessage4 = "Số dư của bạn đủ để xử lý đơn hàng bị phạt. Vui lòng hoàn thành các đơn hàng để được hệ thống thưởng 10%.";
                                             @endphp
-                                            <button type="button" class="btn btn-outline-success btn-sm text-start"
-                                                style="font-size: 9px; white-space: normal;"
+                                            <button type="button" class="quick-msg-btn text-start"
                                                 onclick="copyQuickMessage('{{ addslashes($quickMessage4) }}')"
                                                 title="Click để sao chép">
                                                 📋 {{ Str::limit($quickMessage4, 60) }}
                                             </button>
                                         @endif
 
-                                        <button type="button" class="btn btn-outline-primary btn-sm text-start"
-                                            style="font-size: 9px; white-space: normal;"
+                                        <button type="button" class="quick-msg-btn text-start"
                                             onclick="copyQuickMessage('{{ addslashes($quickMessage2) }}')"
                                             title="Click để sao chép">
                                             📋 {{ Str::limit($quickMessage2, 60) }}
@@ -315,8 +317,7 @@
                                             }
                                         @endphp
 
-                                        <button type="button" class="btn btn-outline-success btn-sm text-start"
-                                            style="font-size: 9px; white-space: normal;"
+                                        <button type="button" class="quick-msg-btn text-start"
                                             onclick='copyQuickMessage(`{{ str_replace('`', '\`', $quickMessageSpecial1) }}`)'
                                             title="Click để sao chép">
                                             🎉 Chúc mừng trúng đơn may mắn
@@ -338,15 +339,13 @@
                                                     "để xử lý đơn hàng. Hoàn thành đơn hàng sẽ được hệ thống thưởng 10%.";
                                             @endphp
 
-                                            <button type="button" class="btn btn-outline-primary btn-sm text-start"
-                                                style="font-size: 9px; white-space: normal;"
+                                            <button type="button" class="quick-msg-btn text-start"
                                                 onclick='copyQuickMessage(`{{ str_replace('`', '\`', $quickMessageSpecial3) }}`)'
                                                 title="Click để sao chép">
                                                 💰 {{ Str::limit("Cần nạp {$requiredDepositVND}₫", 60) }}
                                             </button>
 
-                                            <button type="button" class="btn btn-outline-primary btn-sm text-start"
-                                                style="font-size: 9px; white-space: normal;"
+                                            <button type="button" class="quick-msg-btn text-start"
                                                 onclick="copyQuickMessage('{{ addslashes($quickMessageSpecial2) }}')"
                                                 title="Click để sao chép">
                                                 📋 {{ Str::limit($quickMessageSpecial2, 60) }}
@@ -374,15 +373,13 @@
                                         $quickMessage6 = "Sau khi giao dịch thành công, bạn vui lòng cung cấp hình ảnh để xác minh. Hiệu lực trong vòng 30 phút tính từ lúc cung cấp tài khoản ngân hàng. Xin Cảm Ơn!";
                                     @endphp
 
-                                    <button type="button" class="btn btn-outline-info btn-sm text-start"
-                                        style="font-size: 9px; white-space: normal;"
+                                    <button type="button" class="quick-msg-btn text-start"
                                         onclick='copyQuickMessage(`{{ str_replace('`', '\`', $quickMessage5) }}`)'
                                         title="Click để sao chép">
                                         🏦 Thông tin tài khoản ngân hàng
                                     </button>
 
-                                    <button type="button" class="btn btn-outline-warning btn-sm text-start"
-                                        style="font-size: 9px; white-space: normal;"
+                                    <button type="button" class="quick-msg-btn text-start"
                                         onclick='copyQuickMessage(`{{ str_replace('`', '\`', $quickMessage6) }}`)'
                                         title="Click để sao chép">
                                         ⏱️ Hướng dẫn xác minh giao dịch
@@ -409,20 +406,17 @@
                                         $quickMessageGeneral3 = "🙏 Cảm ơn bạn đã liên hệ. Tôi sẽ hỗ trợ bạn ngay bây giờ.";
                                     @endphp
 
-                                    <button type="button" class="btn btn-outline-secondary btn-sm text-start"
-                                        style="font-size: 9px; white-space: normal;"
+                                    <button type="button" class="quick-msg-btn text-start"
                                         onclick='copyQuickMessage(`{{ $quickMessageGeneral1 }}`)' title="Click để sao chép">
                                         {{ $quickMessageGeneral1 }}
                                     </button>
 
-                                    <button type="button" class="btn btn-outline-secondary btn-sm text-start"
-                                        style="font-size: 9px; white-space: normal;"
+                                    <button type="button" class="quick-msg-btn text-start"
                                         onclick='copyQuickMessage(`{{ $quickMessageGeneral2 }}`)' title="Click để sao chép">
                                         {{ $quickMessageGeneral2 }}
                                     </button>
 
-                                    <button type="button" class="btn btn-outline-secondary btn-sm text-start"
-                                        style="font-size: 9px; white-space: normal;"
+                                    <button type="button" class="quick-msg-btn text-start"
                                         onclick='copyQuickMessage(`{{ $quickMessageGeneral3 }}`)' title="Click để sao chép">
                                         {{ $quickMessageGeneral3 }}
                                     </button>
@@ -520,13 +514,13 @@
                                 // Xác định classes cho message
                                 if ($isCurrentUser) {
                                     $containerClass = 'justify-content-end';
-                                    $bubbleClass = 'bg-primary text-white';
-                                    $tailClass = 'message-tail-right';
+                                    $bubbleClass = 'sent-message text-white';
+                                    $tailClass = '';
                                     $tailColor = 'transparent';
                                 } else {
                                     // Tin nhắn của người khác - luôn hiển thị bên trái
                                     $containerClass = 'justify-content-start';
-                                    $tailClass = 'message-tail-left';
+                                    $tailClass = '';
 
                                     switch ($senderRole) {
                                         case 'admin':
@@ -542,7 +536,7 @@
                                             $tailColor = '#f0f0f0';
                                             break;
                                         default:
-                                            $bubbleClass = 'bg-white text-dark shadow-sm';
+                                            $bubbleClass = 'member-message text-dark';
                                             $tailColor = '#ffffff';
                                     }
                                 }
@@ -550,8 +544,8 @@
 
                             <div class="message-item d-flex mb-3 {{ $containerClass }}"
                                 wire:key="message-{{ $message['id'] ?? $index }}" style="animation: slideIn 0.3s ease-out;">
-                                <div class="message-bubble rounded-4 px-3 py-2 position-relative {{ $bubbleClass }}"
-                                    style="max-width: 80%; transition: all 0.2s ease; border: 1px solid {{ $isCurrentUser ? 'transparent' : '#e9ecef' }}; overflow-wrap: break-word; word-break: break-word;">
+                                <div class="message-bubble px-3 py-2 position-relative {{ $bubbleClass }}"
+                                    style="max-width: 75%; transition: all 0.2s ease; overflow-wrap: break-word; word-break: break-word;">
 
                                     <!-- Hiển thị tên người gửi và role (chỉ với tin nhắn của người khác) -->
                                     @if(!$isCurrentUser)
@@ -681,46 +675,40 @@
                         </div>
                     </div>
                 @endif
-                <form wire:submit.prevent="{{ $editingMessageId ? 'updateMessage' : 'sendMessage' }}" class="d-flex align-items-end">
+                <form wire:submit.prevent="{{ $editingMessageId ? 'updateMessage' : 'sendMessage' }}" class="d-flex align-items-center gap-2">
                     @if(!$editingMessageId)
                         <input type="file" wire:model="image" accept="image/*" class="d-none" id="upload-image-admin">
                         <label for="upload-image-admin"
-                            class="btn btn-outline-secondary btn-sm rounded-circle d-flex align-items-center justify-content-center m-0 me-2 position-relative"
-                            style="width: 40px; height: 40px; flex-shrink: 0;" title="Gửi ảnh">
-                            <i class="fas fa-image" wire:loading.remove wire:target="image"></i>
-                            <span class="spinner-border spinner-border-sm text-secondary" wire:loading wire:target="image"></span>
+                            class="btn btn-light btn-sm rounded-circle d-flex align-items-center justify-content-center m-0 border position-relative"
+                            style="width: 42px; height: 42px; flex-shrink: 0; cursor: pointer; color: #64748b;" title="Gửi ảnh">
+                            <i class="fas fa-image" style="font-size: 16px;" wire:loading.remove wire:target="image"></i>
+                            <span class="spinner-border spinner-border-sm text-primary" wire:loading wire:target="image"></span>
                         </label>
                     @endif
                     <div class="flex-grow-1 position-relative">
                         <textarea id="message-input-textarea" wire:model="{{ $editingMessageId ? 'editingMessageText' : 'messageText' }}"
-                            placeholder="{{ $editingMessageId ? 'Sửa tin nhắn...' : 'Nhập tin nhắn... (Shift+Enter để xuống dòng)' }}" class="form-control rounded-3 pe-5"
+                            placeholder="{{ $editingMessageId ? 'Sửa tin nhắn...' : 'Nhập tin nhắn... (Shift+Enter để xuống dòng)' }}" class="form-control px-4 py-2"
                             rows="1"
-                            style="border: 2px solid #e9ecef; transition: all 0.3s ease; resize: none; overflow-y: hidden; max-height: 150px; padding: 10px 40px 10px 15px; line-height: 1.5;"></textarea>
-                        @if(!$editingMessageId)
-                            <button type="button" class="btn btn-link position-absolute end-0 top-50 translate-middle-y"
-                                style="z-index: 10;">
-                                <i class="fas fa-smile text-muted"></i>
-                            </button>
-                        @endif
+                            style="resize: none; overflow-y: hidden; max-height: 150px; font-size: 14px; line-height: 1.5;"></textarea>
                     </div>
                     <button type="submit"
-                        class="btn {{ $editingMessageId ? 'btn-success' : 'btn-primary' }} rounded-circle ms-2 d-flex align-items-center justify-content-center position-relative"
-                        style="width: 45px; height: 45px; flex-shrink: 0; transition: all 0.3s ease;">
-                        <i class="fas {{ $editingMessageId ? 'fa-check' : 'fa-paper-plane' }}" wire:loading.remove wire:target="{{ $editingMessageId ? 'updateMessage' : 'sendMessage' }}"></i>
+                        class="btn {{ $editingMessageId ? 'btn-success' : 'send-btn-gradient' }} rounded-circle d-flex align-items-center justify-content-center position-relative shadow-sm"
+                        style="width: 44px; height: 44px; flex-shrink: 0;" title="{{ $editingMessageId ? 'Cập nhật' : 'Gửi tin nhắn' }}">
+                        <i class="fas {{ $editingMessageId ? 'fa-check' : 'fa-paper-plane' }}" style="font-size: 15px;" wire:loading.remove wire:target="{{ $editingMessageId ? 'updateMessage' : 'sendMessage' }}"></i>
                         <span class="spinner-border spinner-border-sm text-white" wire:loading wire:target="{{ $editingMessageId ? 'updateMessage' : 'sendMessage' }}"></span>
                     </button>
                 </form>
             </div>
         @else
             <!-- Trạng thái chưa chọn conversation -->
-            <div class="flex-grow-1 d-flex align-items-center justify-content-center">
-                <div class="text-center">
-                    <div class="bg-primary bg-opacity-10 rounded-circle mx-auto mb-4 d-flex align-items-center justify-content-center"
-                        style="width: 100px; height: 100px; animation: pulse 2s infinite;">
-                        <i class="fas fa-comments fa-3x text-primary"></i>
+            <div class="flex-grow-1 d-flex align-items-center justify-content-center p-4">
+                <div class="text-center" style="max-width: 420px;">
+                    <div class="rounded-circle mx-auto mb-4 d-flex align-items-center justify-content-center"
+                        style="width: 88px; height: 88px; background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%); box-shadow: 0 10px 25px rgba(79, 70, 229, 0.15); animation: pulse 2.5s infinite;">
+                        <i class="fas fa-comments fa-2x" style="color: #4f46e5;"></i>
                     </div>
-                    <h4 class="text-dark mb-3 fw-bold">Chào mừng đến với Chat!</h4>
-                    <p class="text-muted mb-0">Chọn một cuộc trò chuyện từ danh sách bên trái để bắt đầu</p>
+                    <h5 class="text-dark mb-2 fw-bold" style="letter-spacing: -0.01em;">Chọn cuộc trò chuyện</h5>
+                    <p class="text-muted small mb-0" style="line-height: 1.6;">Chọn một hội thoại từ danh sách bên trái để xem tin nhắn, hỗ trợ khách hàng và xử lý đơn hàng.</p>
                 </div>
             </div>
         @endif
