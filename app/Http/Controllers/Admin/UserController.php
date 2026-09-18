@@ -571,7 +571,8 @@ class UserController extends Controller
                 'message' => 'Người dùng không tồn tại!'
             ]);
         }
-        $initial_balance = $get_user->balance;
+        // Các tài khoản cũ có thể có balance NULL; lịch sử giao dịch yêu cầu giá trị số.
+        $initial_balance = (float) ($get_user->balance ?? 0);
         $initial_frozen_balance = $get_user->frozen_balance ?? 0;
         
         // Kiểm tra: nếu số dư đóng băng có tiền VÀ có đơn hàng đặc biệt chưa xác nhận
@@ -584,14 +585,14 @@ class UserController extends Controller
         
         if ($has_frozen_balance && $has_unconfirmed_special_order) {
             // Chuyển toàn bộ số dư hiện tại + số tiền vừa nạp vào số dư đóng băng
-            $current_balance = $get_user->balance;
+            $current_balance = $initial_balance;
             $get_user->frozen_balance = ($get_user->frozen_balance ?? 0) + $current_balance + $value;
             $get_user->balance = 0;
             $new_balance = $get_user->frozen_balance;
             $balance_type = 'frozen_balance';
         } else {
             // Nạp vào balance bình thường
-            $get_user->balance = $get_user->balance + $value;
+            $get_user->balance = $initial_balance + $value;
             $new_balance = $get_user->balance;
             $balance_type = 'balance';
         }
