@@ -136,7 +136,9 @@ class LoginController extends Controller
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        return redirect()->route('login')->with('success', 'Đăng xuất thành công!');
+        return redirect()->route('login')
+            ->with('success', 'Đăng xuất thành công!')
+            ->with('clear_login_form', true);
     }
     public function log_out_by_locked(Request $request)
     {

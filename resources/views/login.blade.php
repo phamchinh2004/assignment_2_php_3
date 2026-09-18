@@ -42,7 +42,8 @@
                 <h1 class="auth-title">Chào mừng trở lại</h1>
                 <p class="auth-subtitle">Đăng nhập để tiếp tục quản lý tài khoản của bạn</p>
             </div>
-        <form id="form_login" method="post" action="{{ route('login_done') }}">
+        <form id="form_login" method="post" action="{{ route('login_done') }}"
+            autocomplete="{{ session('clear_login_form') ? 'off' : 'on' }}">
             @csrf
             @method('POST')
             <div class="auth-field">
@@ -50,7 +51,8 @@
                 <div class="auth-input-wrap">
                     <i class="fa-solid fa-user auth-input-icon" aria-hidden="true"></i>
                     <input class="form-control auth-input" id="username_login" value="{{ old('username', "") }}"
-                        name="username" type="text" placeholder="Nhập tên tài khoản" autocomplete="username">
+                        name="username" type="text" placeholder="Nhập tên tài khoản"
+                        autocomplete="{{ session('clear_login_form') ? 'off' : 'username' }}">
                 </div>
                 @error('username')
                     <span class="invalid-feedback">
@@ -63,7 +65,8 @@
                 <div class="auth-input-wrap">
                     <i class="fa-solid fa-lock auth-input-icon" aria-hidden="true"></i>
                     <input class="form-control auth-input" id="password_login" name="password"
-                        value="{{ old('password', "") }}" type="password" placeholder="Nhập mật khẩu" autocomplete="current-password">
+                        value="{{ old('password', "") }}" type="password" placeholder="Nhập mật khẩu"
+                        autocomplete="{{ session('clear_login_form') ? 'new-password' : 'current-password' }}">
                     <i class="fa-regular fa-eye auth-password-toggle cspt" id="show_password_login"></i>
                     <i hidden class="fa-regular fa-eye-slash auth-password-toggle cspt" id="hide_password_login"></i>
                 </div>
@@ -121,6 +124,18 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
     <script>
+        @if(session('clear_login_form'))
+            // Ngăn trình duyệt tự điền thông tin ngay sau khi người dùng chủ động đăng xuất.
+            window.addEventListener('pageshow', function () {
+                const clearLoginFields = function () {
+                    document.getElementById('form_login')?.reset();
+                };
+
+                clearLoginFields();
+                window.setTimeout(clearLoginFields, 100);
+            });
+        @endif
+
         const route_check_username = "{{ route('check_username') }}";
         const csrf = "{{ csrf_token() }}";
         const spinner = document.getElementById('spinner');
