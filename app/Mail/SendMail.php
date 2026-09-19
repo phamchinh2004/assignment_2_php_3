@@ -30,7 +30,7 @@ class SendMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Mật khẩu mới từ ' . config('app.name'),
+            subject: '[' . config('app.name') . '] Thông tin đặt lại mật khẩu',
         );
     }
 
@@ -41,6 +41,7 @@ class SendMail extends Mailable
     {
         return new Content(
             view: 'emails.new_password',
+            text: 'emails.text.new_password',
         );
     }
 

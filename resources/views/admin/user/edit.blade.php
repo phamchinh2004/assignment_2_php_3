@@ -274,9 +274,6 @@ Chỉnh sửa người dùng
                                         @endforeach
                                         @endif
                                     </select>
-                                    @error('rank')
-                                    <small class="error-message">{{ $message }}</small>
-                                    @enderror
                                 </div>
                             </div>
                         </div>

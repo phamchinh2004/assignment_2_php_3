@@ -2,14 +2,16 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Cảnh báo chat chưa có phản hồi</title>
+    <title>Cuộc trò chuyện đang chờ phản hồi</title>
 </head>
 <body>
-    <h2>Cảnh báo chat chưa được phản hồi</h2>
-    <p>Khách hàng đã nhắn tin nhưng sau {{ $afterMinutes }} phút vẫn chưa có phản hồi từ admin/staff.</p>
+    <div style="display:none;max-height:0;overflow:hidden;opacity:0;">Cuộc trò chuyện #{{ $conversationId }} đang chờ nhân viên hỗ trợ.</div>
+    <h2>Cuộc trò chuyện đang chờ phản hồi</h2>
+    <p>Cuộc trò chuyện của khách hàng chưa nhận được phản hồi sau {{ $afterMinutes }} phút.</p>
     <p><strong>Tin nhắn tự động gần nhất:</strong> {{ $autoReplyMessage }}</p>
-    <p><strong>Conversation ID:</strong> {{ $conversationId }}</p>
-    <p><strong>User ID:</strong> {{ $userId }}</p>
-    <p>Vui lòng kiểm tra và trả lời khách hàng sớm.</p>
+    <p><strong>Mã cuộc trò chuyện:</strong> {{ $conversationId }}</p>
+    <p><strong>Mã người dùng:</strong> {{ $userId }}</p>
+    <p><a href="{{ url('/admin/chat-panel') }}">Mở trang quản lý hỗ trợ</a></p>
+    <p style="color:#6b7280;font-size:12px;">Thông báo nghiệp vụ dành cho nhân viên hỗ trợ của {{ config('app.name') }}.</p>
 </body>
 </html>

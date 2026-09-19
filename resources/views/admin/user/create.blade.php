@@ -79,9 +79,6 @@ Thêm mới người dùng
                     @endforeach
                     @endif
                 </select>
-                @error('rank')
-                <small class="text-danger">{{ $message }}</small>
-                @enderror
             </div>
             <div class="d-flex mt-3 justify-content-center">
                 <button class="btn btn-success" type="button" id="btn_submit">Xong</button>

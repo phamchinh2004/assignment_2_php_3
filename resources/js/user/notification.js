@@ -9,43 +9,61 @@ class NotificationManager {
         // Tạo container cho notifications
         this.container = document.createElement('div');
         this.container.className = 'notification-container';
+        this.container.setAttribute('aria-live', 'polite');
+        this.container.setAttribute('aria-label', 'Thông báo giao dịch');
         document.body.appendChild(this.container);
     }
 
     show(data) {
+        const isBonus = data.transaction_type === 'bonus';
         const notification = document.createElement('div');
-        notification.className = `notification-item ${data.transaction_type}`;
+        notification.className = `notification-item ${isBonus ? 'bonus' : 'normal'}`;
+        notification.setAttribute('role', 'status');
         
         // Icon cho từng loại
-        const icon = data.transaction_type === 'bonus' 
+        const icon = isBonus
             ? '<i class="fas fa-gift"></i>' 
             : '<i class="fas fa-money-bill-wave"></i>';
         
-        const title = data.transaction_type === 'bonus' 
-            ? 'Tiền thưởng' 
-            : 'Nạp tiền';
+        const title = isBonus ? 'Đã nhận tiền thưởng' : 'Nạp tiền thành công';
         
-        const subtitle = data.transaction_type === 'bonus'
-            ? 'Bạn đã nhận tiền thưởng'
-            : 'Tài khoản của bạn đã được nạp tiền';
+        const transactionLabel = isBonus ? 'Tiền thưởng' : 'Tiền nạp';
         
         notification.innerHTML = `
-            <button class="notification-close" onclick="this.parentElement.remove()">×</button>
+            <div class="notification-glow" aria-hidden="true"></div>
+            <button class="notification-close" type="button" aria-label="Đóng thông báo">
+                <i class="fas fa-xmark" aria-hidden="true"></i>
+            </button>
             <div class="notification-header">
                 <div class="notification-icon">${icon}</div>
-                <div style="flex: 1;">
+                <div class="notification-heading">
+                    <div class="notification-status">
+                        <span class="notification-status-dot"></span>
+                        Giao dịch hoàn tất
+                    </div>
                     <div class="notification-title">${title}</div>
-                    <div class="notification-subtitle">${subtitle}</div>
                 </div>
             </div>
-            <div class="notification-amount">+${this.formatCurrency(data.amount)}</div>
-            <div class="notification-divider"></div>
-            <div class="notification-footer">
-                <div class="notification-balance">Số dư: ${this.formatCurrency(data.new_balance)}</div>
-                <div style="font-size: 11px; color: #9ca3af;">từ hệ thống</div>
+            <div class="notification-amount-panel">
+                <span class="notification-amount-label">${transactionLabel}</span>
+                <strong class="notification-amount">+${this.formatCurrency(data.amount)}</strong>
+            </div>
+            <div class="notification-details">
+                <div class="notification-detail">
+                    <span class="notification-detail-label">Số dư mới</span>
+                    <strong class="notification-balance">${this.formatCurrency(data.new_balance)}</strong>
+                </div>
+                <div class="notification-source">
+                    <span class="notification-source-icon"><i class="fas fa-circle-check"></i></span>
+                    <span>Đã xác nhận<br><small>Vừa xong</small></span>
+                </div>
             </div>
             <div class="notification-progress"></div>
         `;
+
+        notification.querySelector('.notification-close').addEventListener('click', () => {
+            this.hideNotification(notification);
+        });
 
         this.container.appendChild(notification);
         
@@ -183,4 +201,3 @@ if (window.Echo && window.userId) {
 } else {
     console.warn('Echo or userId not defined. Real-time notifications disabled.');
 }
-

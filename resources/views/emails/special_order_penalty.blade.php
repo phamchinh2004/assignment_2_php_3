@@ -77,14 +77,14 @@
     </div>
     
     <div class="header">
-        <h2>📋 Thông báo phí xử lý đơn hàng</h2>
+        <h2>Thông báo phí xử lý đơn hàng</h2>
     </div>
     
     <div class="content">
-        <p>Xin chào <strong>{{ $user->name }}</strong>,</p>
+        <p>Xin chào <strong>{{ $user->full_name ?? $user->username }}</strong>,</p>
         
         <div class="penalty">
-            <strong>Thông báo quan trọng:</strong> Đơn hàng của bạn đã quá thời hạn phân phối ({{ $hoursPassed }} giờ)
+            Đơn hàng đã vượt thời hạn xử lý hiện tại ({{ $hoursPassed }} giờ).
         </div>
         
         <p>Chúng tôi nhận thấy đơn hàng đặc biệt của bạn chưa được phân phối sau 24 giờ kể từ khi nhận. Theo chính sách của hệ thống, một khoản phí xử lý sẽ được áp dụng cho trường hợp này.</p>
@@ -116,9 +116,9 @@
         
         <p><strong>Các bước tiếp theo:</strong></p>
         <ul>
-            <li>Nhanh chóng xử lý đơn hàng</li>
+            <li>Đăng nhập trực tiếp vào tài khoản để kiểm tra trạng thái đơn hàng</li>
             <li>Liên hệ bộ phận chăm sóc khách hàng để được hỗ trợ</li>
-            <li>Đơn hàng sẽ được xử lý sau khi xử lý đơn hàng thành công</li>
+            <li>Xem chính sách phí xử lý đang áp dụng cho đơn hàng</li>
             <li>Truy cập hệ thống tại: <a href="{{ config('app.url') }}">{{ config('app.url') }}</a></li>
         </ul>
         

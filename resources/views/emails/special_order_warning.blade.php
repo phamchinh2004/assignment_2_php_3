@@ -52,22 +52,23 @@
     </style>
 </head>
 <body>
+    <div style="display:none;max-height:0;overflow:hidden;opacity:0;">Cập nhật thời hạn xử lý đơn hàng {{ $frozenOrder->order->order_code }}.</div>
     <div class="header">
-        <h2>⚠️ Cảnh báo xử lý đơn hàng</h2>
+        <h2>Cập nhật thời hạn xử lý đơn hàng</h2>
     </div>
 
     <div class="content">
-        <p>Xin chào <strong>{{ $user->name }}</strong>,</p>
+        <p>Xin chào <strong>{{ $user->full_name ?? $user->username }}</strong>,</p>
 
         <div class="warning">
             @if($warningType === 'first')
-                Đây là cảnh báo lần 1. Đơn hàng của bạn còn <strong>{{ $remainingHours }} giờ</strong> để hoàn tất xử lý trước thời hạn.
+                Đơn hàng còn <strong>{{ $remainingHours }} giờ</strong> trong thời hạn xử lý hiện tại.
             @else
-                Đây là cảnh báo lần 2. Đơn hàng của bạn chỉ còn <strong>{{ $remainingHours }} giờ</strong> để hoàn tất xử lý trước thời hạn. Vui lòng xử lý ngay để tránh bị phạt.
+                Đơn hàng còn <strong>{{ $remainingHours }} giờ</strong> trong thời hạn xử lý hiện tại. Chi tiết chính sách được hiển thị trong tài khoản.
             @endif
         </div>
 
-        <p>Hiện tại đơn hàng đang nằm trong trạng thái chưa xử lý quá lâu. Nếu không thực hiện đúng tiến độ, hệ thống sẽ áp dụng mức phạt theo chính sách.</p>
+        <p>Đơn hàng hiện vẫn đang chờ xử lý. Bạn có thể đăng nhập để xem trạng thái và chính sách áp dụng.</p>
 
         <div class="order-info">
             <h3>Thông tin đơn hàng:</h3>
@@ -78,7 +79,7 @@
             <p><strong>Thời gian còn lại:</strong> {{ $remainingHours }} giờ</p>
         </div>
 
-        <p>Vui lòng truy cập hệ thống và xử lý đơn hàng sớm nhất để tránh bị áp dụng phí trễ.</p>
+        <p>Vui lòng đăng nhập trực tiếp để kiểm tra và xử lý đơn hàng trong thời hạn.</p>
         <p>Bạn có thể truy cập: <a href="{{ config('app.url') }}">{{ config('app.url') }}</a></p>
 
         <p>Trân trọng,<br>Đội ngũ {{ config('app.name') }}</p>
@@ -87,6 +88,7 @@
     <div class="footer">
         <p><strong>{{ config('app.name') }}</strong></p>
         <p>Email: {{ config('mail.from.address') }} | Website: {{ config('app.url') }}</p>
+        <p>Email dịch vụ này liên quan đến đơn hàng trên tài khoản {{ config('app.name') }} của bạn.</p>
     </div>
 </body>
 </html>

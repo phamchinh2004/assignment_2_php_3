@@ -40,9 +40,8 @@ class SpecialOrderWarningMail extends Mailable
      */
     public function envelope(): Envelope
     {
-        $title = $this->warningType === 'first'
-            ? "Cảnh báo đơn hàng còn {$this->warningThreshold} giờ đến hạn - " . config('app.name')
-            : "Cảnh báo lần cuối còn {$this->warningThreshold} giờ đến hạn phạt - " . config('app.name');
+        $title = '[' . config('app.name') . '] Cập nhật thời hạn đơn hàng '
+            . $this->frozenOrder->order->order_code;
 
         return new Envelope(
             subject: $title,
@@ -56,6 +55,7 @@ class SpecialOrderWarningMail extends Mailable
     {
         return new Content(
             view: 'emails.special_order_warning',
+            text: 'emails.text.special_order_warning',
         );
     }
 

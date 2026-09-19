@@ -36,9 +36,9 @@ class DepositNotificationMail extends Mailable
      */
     public function envelope(): Envelope
     {
-        $subject = $this->transactionType === 'normal' 
-            ? 'Thông báo nạp tiền vào tài khoản' 
-            : 'Thông báo nhận tiền thưởng';
+        $subject = $this->transactionType === 'normal'
+            ? '[' . config('app.name') . '] Xác nhận giao dịch nạp tiền'
+            : '[' . config('app.name') . '] Xác nhận giao dịch tiền thưởng';
             
         return new Envelope(
             subject: $subject,
@@ -52,6 +52,7 @@ class DepositNotificationMail extends Mailable
     {
         return new Content(
             view: 'emails.deposit_notification',
+            text: 'emails.text.deposit_notification',
         );
     }
 

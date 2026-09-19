@@ -65,14 +65,14 @@
     </div>
     
     <div class="header">
-        <h2>📦 Thông báo đơn hàng đặc biệt</h2>
+        <h2>Thông báo đơn hàng đặc biệt</h2>
     </div>
     
     <div class="content">
-        <p>Xin chào <strong>{{ $user->name }}</strong>,</p>
+        <p>Xin chào <strong>{{ $user->full_name ?? $user->username }}</strong>,</p>
         
         <div class="warning">
-            <strong>Thông báo quan trọng:</strong> Bạn có đơn hàng đặc biệt đang chờ phân phối ({{ $hoursPassed }} giờ)
+            Đơn hàng đang chờ xử lý ({{ $hoursPassed }} giờ).
         </div>
         
         <p>Chúng tôi nhận thấy bạn đã nhận được đơn hàng đặc biệt nhưng chưa thực hiện phân phối. Để đảm bảo đơn hàng được giao đến khách hàng đúng hạn, vui lòng thực hiện phân phối sớm nhất có thể.</p>
@@ -89,7 +89,7 @@
         <p><strong>Thời hạn và chính sách:</strong></p>
         <ul>
             <li>Thời hạn phân phối: trong vòng 24 giờ kể từ khi nhận đơn</li>
-            <li>Nếu quá thời hạn: sẽ áp dụng phí xử lý trễ (30% giá trị đơn hàng)</li>
+            <li>Chính sách phí xử lý được hiển thị trong thông tin đơn hàng trên tài khoản</li>
             <li>Bạn có thể truy cập hệ thống tại: <a href="{{ config('app.url') }}">{{ config('app.url') }}</a></li>
             <li>Cần hỗ trợ? Liên hệ: {{ config('mail.from.address') }}</li>
         </ul>

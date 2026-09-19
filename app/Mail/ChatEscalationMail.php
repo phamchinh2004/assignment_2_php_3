@@ -29,7 +29,7 @@ class ChatEscalationMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Cảnh báo chat chưa có phản hồi từ admin',
+            subject: '[' . config('app.name') . "] Cuộc trò chuyện #{$this->conversationId} đang chờ phản hồi",
         );
     }
 
@@ -37,6 +37,7 @@ class ChatEscalationMail extends Mailable
     {
         return new Content(
             view: 'emails.chat_escalation',
+            text: 'emails.text.chat_escalation',
             with: [
                 'conversationId' => $this->conversationId,
                 'userId' => $this->userId,

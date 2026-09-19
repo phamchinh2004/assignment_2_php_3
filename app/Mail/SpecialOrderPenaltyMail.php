@@ -41,7 +41,7 @@ class SpecialOrderPenaltyMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Thông báo phạt đơn hàng đặc biệt - ' . config('app.name'),
+            subject: '[' . config('app.name') . '] Cập nhật phí xử lý đơn hàng ' . $this->frozenOrder->order->order_code,
         );
     }
 
@@ -52,6 +52,7 @@ class SpecialOrderPenaltyMail extends Mailable
     {
         return new Content(
             view: 'emails.special_order_penalty',
+            text: 'emails.text.special_order_penalty',
         );
     }
 

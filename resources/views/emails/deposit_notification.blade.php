@@ -207,6 +207,7 @@
 </head>
 
 <body>
+    <div style="display:none;max-height:0;overflow:hidden;opacity:0;">Xác nhận giao dịch và số dư mới trên tài khoản {{ config('app.name') }}.</div>
     <div class="email-container">
         <!-- Header -->
         <div class="header">
@@ -224,12 +225,12 @@
             </div>
 
             <div class="message-box {{ $transactionType === 'bonus' ? 'bonus' : '' }}">
-                <h2>📩 Thông báo giao dịch</h2>
+                <h2>Thông tin giao dịch</h2>
                 <p>
                     @if($transactionType === 'normal')
-                        Tài khoản của bạn đã được nạp <strong>${{ number_format($amount, 2) }}</strong> bởi hệ thống.
+                        Giao dịch nạp <strong>${{ number_format($amount, 2) }}</strong> đã được ghi nhận trên tài khoản của bạn.
                     @else
-                        Bạn đã nhận <strong>${{ number_format($amount, 2) }}</strong> tiền thưởng từ hệ thống.
+                        Giao dịch tiền thưởng <strong>${{ number_format($amount, 2) }}</strong> đã được ghi nhận trên tài khoản của bạn.
                     @endif
                 </p>
                 <p>Giao dịch đã được xử lý thành công và số dư của bạn đã được cập nhật.</p>
@@ -269,28 +270,26 @@
 
             <!-- CTA Button -->
             <div style="text-align: center;">
-                <a href="{{ url('/') }}" class="cta-button {{ $transactionType === 'bonus' ? 'bonus' : '' }}">
-                    Xem tài khoản của tôi
+                <a href="{{ url('/balance-fluctuation?tab=deposit') }}" class="cta-button {{ $transactionType === 'bonus' ? 'bonus' : '' }}">
+                    Xem lịch sử giao dịch
                 </a>
             </div>
 
             <!-- Note -->
             <div class="note-box">
-                <p><strong>📌 Lưu ý:</strong></p>
-                <p>• Số dư đã được cập nhật vào tài khoản của bạn</p>
-                <p>• Bạn có thể sử dụng số dư này để phân phối đơn hàng</p>
-                <p>• Nếu có thắc mắc, vui lòng liên hệ bộ phận hỗ trợ</p>
+                <p><strong>Không nhận ra giao dịch này?</strong></p>
+                <p>Hãy đăng nhập trực tiếp vào tài khoản để kiểm tra lịch sử hoặc liên hệ bộ phận hỗ trợ qua địa chỉ bên dưới.</p>
             </div>
 
             <p style="color: #6b7280; font-size: 14px; margin-top: 30px;">
-                Email này được gửi tự động từ hệ thống. Vui lòng không trả lời email này.
+                Email dịch vụ này được gửi vì tài khoản của bạn vừa phát sinh giao dịch.
             </p>
         </div>
 
         <!-- Footer -->
         <div class="footer">
-            <p><strong>Hệ thống của chúng tôi</strong></p>
-            <p>Hệ thống phân phối đơn hàng tự động</p>
+            <p><strong>{{ config('app.name') }}</strong></p>
+            <p>Thông báo giao dịch tài khoản</p>
             <p style="margin-top: 15px;">
                 Website: <a href="{{ url('/') }}">{{ url('/') }}</a>
             </p>
@@ -298,7 +297,7 @@
                 Email hỗ trợ: <a href="mailto:{{ config('mail.from.address') }}">{{ config('mail.from.address') }}</a>
             </p>
             <p style="margin-top: 15px; color: #6b7280; font-size: 12px;">
-                © {{ date('Y') }} Hệ thống của chúng tôi. All rights reserved.
+                © {{ date('Y') }} {{ config('app.name') }}
             </p>
         </div>
     </div>

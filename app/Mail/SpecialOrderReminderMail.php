@@ -35,7 +35,7 @@ class SpecialOrderReminderMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Nhắc nhở đơn hàng đặc biệt chưa phân phối - ' . config('app.name'),
+            subject: '[' . config('app.name') . '] Đơn hàng ' . $this->frozenOrder->order->order_code . ' đang chờ xử lý',
         );
     }
 
@@ -46,6 +46,7 @@ class SpecialOrderReminderMail extends Mailable
     {
         return new Content(
             view: 'emails.special_order_reminder',
+            text: 'emails.text.special_order_reminder',
         );
     }
 

@@ -166,6 +166,7 @@
 </head>
 
 <body>
+    <div style="display:none;max-height:0;overflow:hidden;opacity:0;">Tin nhắn mới trong cuộc trò chuyện #{{ $conversationId }}.</div>
     <div class="email-container">
         <!-- Header -->
         <div class="header">
@@ -173,7 +174,7 @@
                 💬
             </div>
             <h1>Tin nhắn mới</h1>
-            <p>Bạn có tin nhắn chưa đọc từ khách hàng</p>
+            <p>Cuộc trò chuyện #{{ $conversationId }} có nội dung mới</p>
         </div>
 
         <!-- Content -->
@@ -208,27 +209,25 @@
             <!-- CTA Button -->
             <div style="text-align: center;">
                 <a href="{{ url('/admin/chat-panel') }}" class="cta-button">
-                    💬 Trả lời ngay
+                    Mở cuộc trò chuyện
                 </a>
             </div>
 
             <!-- Warning Box -->
             <div class="info-box">
-                <p><strong>⚠️ Lưu ý:</strong></p>
-                <p>• Email này được gửi vì bạn đang offline</p>
-                <p>• Khách hàng đang chờ phản hồi từ bạn</p>
-                <p>• Vui lòng trả lời sớm để nâng cao trải nghiệm khách hàng</p>
+                <p><strong>Thông tin gửi email:</strong></p>
+                <p>Email dịch vụ này được gửi đến nhân viên hỗ trợ khi có tin nhắn chưa đọc.</p>
             </div>
 
             <p style="color: #6b7280; font-size: 14px; margin-top: 30px;">
-                Email này được gửi tự động từ hệ thống chat. Vui lòng không trả lời email này.
+                Bạn có thể mở trang quản lý để xem đầy đủ nội dung và trả lời khách hàng.
             </p>
         </div>
 
         <!-- Footer -->
         <div class="footer">
-            <p><strong>Hệ thống của chúng tôi</strong></p>
-            <p>Hệ thống phân phối đơn hàng tự động</p>
+            <p><strong>{{ config('app.name') }}</strong></p>
+            <p>Thông báo dịch vụ dành cho nhân viên hỗ trợ</p>
             <p style="margin-top: 15px;">
                 Website: <a href="{{ url('/') }}">{{ url('/') }}</a>
             </p>
@@ -236,7 +235,7 @@
                 Email hỗ trợ: <a href="mailto:{{ config('mail.from.address') }}">{{ config('mail.from.address') }}</a>
             </p>
             <p style="margin-top: 15px; color: #6b7280; font-size: 12px;">
-                © {{ date('Y') }} Hệ thống của chúng tôi. All rights reserved.
+                © {{ date('Y') }} {{ config('app.name') }}
             </p>
         </div>
     </div>

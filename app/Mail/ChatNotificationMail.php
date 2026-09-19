@@ -33,7 +33,7 @@ class ChatNotificationMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Tin nhắn mới từ ' . ($this->user->full_name ?? $this->user->username),
+            subject: '[' . config('app.name') . "] Tin nhắn mới trong cuộc trò chuyện #{$this->conversationId}",
         );
     }
 
@@ -44,6 +44,7 @@ class ChatNotificationMail extends Mailable
     {
         return new Content(
             view: 'emails.chat_notification',
+            text: 'emails.text.chat_notification',
         );
     }
 
