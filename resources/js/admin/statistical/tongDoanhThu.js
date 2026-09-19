@@ -1,6 +1,6 @@
 /**
- * Statistical Dashboard JavaScript
- * Các tính năng nâng cao cho trang thống kê
+ * Statistical Dashboard - Tổng doanh thu
+ * Modern Analytics Dashboard with Chart.js & Dynamic Filters
  */
 
 class StatisticalDashboard {
@@ -12,435 +12,518 @@ class StatisticalDashboard {
     }
 
     init() {
+        this.initDatePickers();
         this.setupEventListeners();
         this.initializeCharts();
         this.loadData();
-        this.setupRealTimeUpdates();
+    }
+
+    initDatePickers() {
+        const today = new Date();
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(today.getDate() - 29);
+
+        $('#startDate').val(this.formatDateForInput(thirtyDaysAgo));
+        $('#endDate').val(this.formatDateForInput(today));
+    }
+
+    formatDateForInput(date) {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
     }
 
     setupEventListeners() {
-        // Period selector
-        $('#periodSelect').on('change', (e) => {
-            this.currentPeriod = parseInt(e.target.value);
+        // Quick Presets
+        $('.preset-btn').on('click', (e) => {
+            $('.preset-btn').removeClass('active');
+            const btn = $(e.currentTarget);
+            btn.addClass('active');
+
+            const days = btn.data('days');
+            const today = new Date();
+            let start = new Date();
+            let end = new Date();
+
+            if (days === 0) {
+                // Hôm nay
+                start = today;
+                end = today;
+                this.currentPeriod = 1;
+            } else if (days === 'this_month') {
+                start = new Date(today.getFullYear(), today.getMonth(), 1);
+                end = today;
+                this.currentPeriod = Math.max(1, Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1);
+            } else if (days === 'last_month') {
+                start = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+                end = new Date(today.getFullYear(), today.getMonth(), 0);
+                this.currentPeriod = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+            } else {
+                const dayCount = parseInt(days, 10);
+                start.setDate(today.getDate() - (dayCount - 1));
+                end = today;
+                this.currentPeriod = dayCount;
+            }
+
+            $('#startDate').val(this.formatDateForInput(start));
+            $('#endDate').val(this.formatDateForInput(end));
+
             this.loadData();
         });
 
-        // Refresh button
+        // Apply custom range
+        $('#applyFilterBtn').on('click', () => {
+            $('.preset-btn').removeClass('active');
+            const startVal = $('#startDate').val();
+            const endVal = $('#endDate').val();
+
+            if (startVal && endVal) {
+                const s = new Date(startVal);
+                const e = new Date(endVal);
+                if (s > e) {
+                    alert('Ngày bắt đầu không được lớn hơn ngày kết thúc!');
+                    return;
+                }
+                this.currentPeriod = Math.max(1, Math.ceil((e - s) / (1000 * 60 * 60 * 24)) + 1);
+            }
+            this.loadData();
+        });
+
+        // Refresh
         $('#refreshBtn').on('click', () => {
             this.loadData();
         });
 
-        // Export button
+        // Export CSV
         $('#exportBtn').on('click', () => {
-            this.exportData();
-        });
-
-        // Auto refresh toggle
-        $('#autoRefreshToggle').on('change', (e) => {
-            if (e.target.checked) {
-                this.startAutoRefresh();
-            } else {
-                this.stopAutoRefresh();
+            const start = $('#startDate').val();
+            const end = $('#endDate').val();
+            let exportUrl = `/api/statistical/export-revenue-data?period=${this.currentPeriod}`;
+            if (start && end) {
+                exportUrl += `&start_date=${start}&end_date=${end}`;
             }
-        });
-
-        // Chart type toggle
-        $('.chart-type-btn').on('click', (e) => {
-            const chartType = $(e.target).data('chart-type');
-            this.changeChartType(chartType);
+            window.location.href = exportUrl;
         });
     }
 
     initializeCharts() {
-        // Revenue Line Chart
-        this.charts.revenue = new Chart(document.getElementById('revenueChart'), {
-            type: 'line',
-            data: {
-                labels: [],
-                datasets: [{
-                    label: 'Doanh thu',
-                    data: [],
-                    borderColor: '#4e73df',
-                    backgroundColor: 'rgba(78, 115, 223, 0.1)',
-                    tension: 0.3,
-                    fill: true
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                interaction: {
-                    intersect: false,
-                    mode: 'index'
-                },
-                plugins: {
-                    title: {
-                        display: true,
-                        text: 'Biểu đồ doanh thu theo thời gian'
-                    },
-                    legend: {
-                        display: false
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: (context) => {
-                                return `Doanh thu: ${format_currency(context.parsed.y)}`;
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: (value) => format_currency(value)
-                        }
-                    }
-                }
-            }
-        });
+        const primaryColor = '#4f46e5';
+        const successColor = '#10b981';
+        const warningColor = '#f59e0b';
+        const dangerColor = '#ef4444';
 
-        // Pie Chart
-        this.charts.pie = new Chart(document.getElementById('pieChart'), {
-            type: 'doughnut',
-            data: {
-                labels: ['Nạp tiền', 'Rút tiền'],
-                datasets: [{
-                    data: [0, 0],
-                    backgroundColor: ['#1cc88a', '#f6c23e'],
-                    hoverBackgroundColor: ['#17a673', '#f4b619'],
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom'
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: (context) => {
-                                const label = context.label || '';
-                                const value = format_currency(context.parsed);
-                                return `${label}: ${value}`;
-                            }
-                        }
-                    }
-                }
-            }
-        });
+        // 1. Revenue Area Chart
+        const revCanvas = document.getElementById('revenueChart');
+        if (revCanvas) {
+            const ctx = revCanvas.getContext('2d');
+            const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+            gradient.addColorStop(0, 'rgba(79, 70, 229, 0.28)');
+            gradient.addColorStop(1, 'rgba(79, 70, 229, 0.0)');
 
-        // Bar Chart
-        this.charts.bar = new Chart(document.getElementById('barChart'), {
-            type: 'bar',
-            data: {
-                labels: [],
-                datasets: [{
-                    label: 'Nạp tiền',
-                    data: [],
-                    backgroundColor: '#1cc88a',
-                    borderColor: '#1cc88a',
-                    borderWidth: 1
-                }, {
-                    label: 'Rút tiền',
-                    data: [],
-                    backgroundColor: '#f6c23e',
-                    borderColor: '#f6c23e',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    title: {
-                        display: true,
-                        text: 'So sánh nạp/rút tiền'
+            this.charts.revenue = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Doanh thu ròng',
+                        data: [],
+                        borderColor: primaryColor,
+                        borderWidth: 2.5,
+                        backgroundColor: gradient,
+                        fill: true,
+                        tension: 0.35,
+                        pointBackgroundColor: primaryColor,
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 3,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
                     },
-                    tooltip: {
-                        callbacks: {
-                            label: (context) => {
-                                return `${context.dataset.label}: ${format_currency(context.parsed.y)}`;
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#1e293b',
+                            titleColor: '#ffffff',
+                            bodyColor: '#e2e8f0',
+                            padding: 10,
+                            borderRadius: 8,
+                            callbacks: {
+                                label: (context) => ` Doanh thu: ${format_currency(context.parsed.y)}`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { size: 11 }, color: '#64748b' }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(226, 232, 240, 0.6)' },
+                            ticks: {
+                                font: { size: 11 },
+                                color: '#64748b',
+                                callback: (v) => format_currency(v)
                             }
                         }
                     }
+                }
+            });
+        }
+
+        // 2. Pie / Donut Chart (Nạp vs Rút)
+        const pieCanvas = document.getElementById('pieChart');
+        if (pieCanvas) {
+            this.charts.pie = new Chart(pieCanvas, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Nạp tiền', 'Rút tiền'],
+                    datasets: [{
+                        data: [0, 0],
+                        backgroundColor: [successColor, warningColor],
+                        hoverBackgroundColor: ['#059669', '#d97706'],
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
                 },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: (value) => format_currency(value)
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '72%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                boxWidth: 12,
+                                padding: 16,
+                                font: { weight: '600', size: 12 }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => {
+                                    const val = context.parsed || 0;
+                                    return ` ${context.label}: ${format_currency(val)}`;
+                                }
+                            }
                         }
                     }
                 }
-            }
-        });
+            });
+        }
+
+        // 3. Bar Chart (So sánh Nạp vs Rút theo mốc thời gian)
+        const barCanvas = document.getElementById('barChart');
+        if (barCanvas) {
+            this.charts.bar = new Chart(barCanvas, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: 'Nạp tiền',
+                            data: [],
+                            backgroundColor: 'rgba(16, 185, 129, 0.85)',
+                            borderRadius: 4
+                        },
+                        {
+                            label: 'Rút tiền',
+                            data: [],
+                            backgroundColor: 'rgba(245, 158, 11, 0.85)',
+                            borderRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            align: 'end',
+                            labels: { boxWidth: 12, font: { weight: '600', size: 11 } }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => ` ${context.dataset.label}: ${format_currency(context.parsed.y)}`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(226, 232, 240, 0.6)' },
+                            ticks: { callback: (v) => format_currency(v), font: { size: 11 } }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 4. Status Chart (Phân bố trạng thái giao dịch)
+        const statusCanvas = document.getElementById('statusChart');
+        if (statusCanvas) {
+            this.charts.status = new Chart(statusCanvas, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Hoàn thành', 'Đang xử lý', 'Đã hủy'],
+                    datasets: [{
+                        data: [0, 0, 0],
+                        backgroundColor: [successColor, warningColor, dangerColor],
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '68%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { boxWidth: 12, padding: 14, font: { size: 11, weight: '600' } }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => ` ${context.label}: ${context.parsed} giao dịch`
+                            }
+                        }
+                    }
+                }
+            });
+        }
     }
 
     async loadData() {
         if (this.isLoading) return;
-
         this.isLoading = true;
-        this.showLoading();
+
+        const startDate = $('#startDate').val();
+        const endDate = $('#endDate').val();
+        let url = `/api/statistical/revenue-data?period=${this.currentPeriod}`;
+        let statusUrl = `/api/statistical/transaction-status-stats?period=${this.currentPeriod}`;
+
+        if (startDate && endDate) {
+            url += `&start_date=${startDate}&end_date=${endDate}`;
+            statusUrl += `&start_date=${startDate}&end_date=${endDate}`;
+            $('#chartPeriodBadge').text(`${startDate} đến ${endDate}`);
+        } else {
+            $('#chartPeriodBadge').text(`${this.currentPeriod} ngày qua`);
+        }
 
         try {
-            // const response = await fetch(`/admin/api/revenue-data?period=${this.currentPeriod}`);
-            const startDate = $('#startDate').val();
-            const endDate = $('#endDate').val();
-            let url = `/api/statistical/revenue-data?period=${this.currentPeriod}`;
+            const [revRes, statusRes] = await Promise.all([
+                fetch(url).then(r => r.json()),
+                fetch(statusUrl).then(r => r.json())
+            ]);
 
-            if (startDate && endDate) {
-                url += `&start_date=${startDate}&end_date=${endDate}`;
+            if (revRes.success) {
+                this.updateSummaryCards(revRes.summary);
+                this.updateCharts(revRes.chart_data, revRes.summary);
+                this.updateRecentTransactions(revRes.recent_transactions);
+            } else {
+                console.error('Lỗi tải dữ liệu doanh thu:', revRes.message);
             }
 
-            const response = await fetch(url);
-            const data = await response.json();
-
-            if (data.success) {
-                this.updateSummaryCards(data.summary);
-                this.updateCharts(data.chart_data);
-                this.updateRecentTransactions(data.recent_transactions);
-            } else {
-                this.showError(data.message || 'Có lỗi xảy ra khi tải dữ liệu');
+            if (statusRes.success && statusRes.data) {
+                this.updateStatusChart(statusRes.data);
             }
         } catch (error) {
-            console.error('Error loading data:', error);
-            this.showError('Không thể tải dữ liệu. Vui lòng thử lại.');
+            console.error('Lỗi khi fetch dữ liệu dashboard:', error);
         } finally {
             this.isLoading = false;
-            this.hideLoading();
         }
     }
 
     updateSummaryCards(summary) {
-        // Animate counter
-        this.animateCounter('#totalRevenue', summary.total_revenue);
-        this.animateCounter('#totalDeposit', summary.total_deposit);
-        this.animateCounter('#totalWithdraw', summary.total_withdraw);
-        this.animateCounter('#totalTransactions', summary.total_transactions, false);
+        // 1. Doanh thu ròng
+        $('#totalRevenue').text(format_currency(summary.total_revenue));
+        this.renderTrendBadge('#revenueTrendBadge', summary.revenue_growth);
+
+        // 2. Tổng nạp
+        $('#totalDeposit').text(format_currency(summary.total_deposit));
+        this.renderTrendBadge('#depositTrendBadge', summary.deposit_growth);
+        $('#depositCountLabel').text(`${summary.deposit_count || 0} lệnh nạp`);
+
+        // 3. Tổng rút
+        $('#totalWithdraw').text(format_currency(summary.total_withdraw));
+        this.renderTrendBadge('#withdrawTrendBadge', summary.withdraw_growth);
+        $('#withdrawCountLabel').text(`${summary.withdraw_count || 0} lệnh rút`);
+
+        // 4. Tổng giao dịch
+        $('#totalTransactions').text(new Intl.NumberFormat('vi-VN').format(summary.total_transactions || 0));
+
+        // 5. Giá trị nạp TB
+        $('#avgDeposit').text(format_currency(summary.avg_deposit || 0));
+
+        // 6. Khách nạp tiền
+        $('#uniqueCustomers').text(new Intl.NumberFormat('vi-VN').format(summary.unique_customers || 0));
     }
 
-    animateCounter(selector, value, isCurrency = true) {
-        const element = $(selector);
-        const currentValue = parseInt(element.text().replace(/[^\d]/g, '')) || 0;
-
-        $({ count: currentValue }).animate({ count: value }, {
-            duration: 1000,
-            easing: 'swing',
-            step: function (now) {
-                if (isCurrency) {
-                    element.text(format_currency(Math.floor(now)));
-                } else {
-                    element.text(Math.floor(now).toLocaleString('vi-VN'));
-                }
-            }.bind(this),
-            complete: function () {
-                if (isCurrency) {
-                    element.text(format_currency(value));
-                } else {
-                    element.text(value.toLocaleString('vi-VN'));
-                }
-            }.bind(this)
-        });
-    }
-
-    updateCharts(chartData) {
-        // Update revenue chart
-        this.charts.revenue.data.labels = chartData.labels;
-        this.charts.revenue.data.datasets[0].data = chartData.revenue_data;
-        this.charts.revenue.update('active');
-
-        // Update pie chart
-        this.charts.pie.data.datasets[0].data = [
-            chartData.deposit_data.reduce((a, b) => a + b, 0),
-            chartData.withdraw_data.reduce((a, b) => a + b, 0)
-        ];
-        this.charts.pie.update('active');
-
-        // Update bar chart
-        this.charts.bar.data.labels = chartData.labels;
-        this.charts.bar.data.datasets[0].data = chartData.deposit_data;
-        this.charts.bar.data.datasets[1].data = chartData.withdraw_data;
-        this.charts.bar.update('active');
-    }
-
-    updateRecentTransactions(transactions) {
-        const tbody = $('#recentTransactionsTable tbody');
-        tbody.empty();
-
-        if (transactions.length === 0) {
-            tbody.html('<tr><td colspan="6" class="text-center">Không có dữ liệu</td></tr>');
+    renderTrendBadge(selector, growth) {
+        const el = $(selector);
+        if (growth === undefined || growth === null) {
+            el.attr('class', 'trend-badge neutral').text('--');
             return;
         }
 
-        transactions.forEach(transaction => {
-            const statusClass = this.getStatusClass(transaction.status);
-            const statusText = this.getStatusText(transaction.status);
-            const typeClass = transaction.type === 'deposit' ? 'success' : 'warning';
-            const typeText = transaction.type === 'deposit' ? 'Nạp tiền' : 'Rút tiền';
+        const num = parseFloat(growth);
+        if (num > 0) {
+            el.attr('class', 'trend-badge positive').html(`<i class="fas fa-arrow-up"></i> +${num}%`);
+        } else if (num < 0) {
+            el.attr('class', 'trend-badge negative').html(`<i class="fas fa-arrow-down"></i> ${num}%`);
+        } else {
+            el.attr('class', 'trend-badge neutral').html(`<i class="fas fa-minus"></i> 0%`);
+        }
+    }
 
-            const row = `
-                <tr data-id="${transaction.id}">
-                    <td>${transaction.id}</td>
+    updateCharts(chartData, summary) {
+        // Revenue Chart
+        if (this.charts.revenue && chartData) {
+            this.charts.revenue.data.labels = chartData.labels || [];
+            this.charts.revenue.data.datasets[0].data = chartData.revenue_data || [];
+            this.charts.revenue.update();
+        }
+
+        // Pie Chart
+        if (this.charts.pie && summary) {
+            const dep = summary.total_deposit || 0;
+            const wit = summary.total_withdraw || 0;
+            this.charts.pie.data.datasets[0].data = [dep, wit];
+            this.charts.pie.update();
+
+            const total = dep + wit;
+            if (total > 0) {
+                const depPct = ((dep / total) * 100).toFixed(1);
+                const witPct = ((wit / total) * 100).toFixed(1);
+                $('#pieSummaryText').html(`Nạp tiền chiếm <strong>${depPct}%</strong> • Rút tiền chiếm <strong>${witPct}%</strong>`);
+            } else {
+                $('#pieSummaryText').text('Chưa phát sinh giao dịch nạp rút');
+            }
+        }
+
+        // Bar Chart
+        if (this.charts.bar && chartData) {
+            this.charts.bar.data.labels = chartData.labels || [];
+            this.charts.bar.data.datasets[0].data = chartData.deposit_data || [];
+            this.charts.bar.data.datasets[1].data = chartData.withdraw_data || [];
+            this.charts.bar.update();
+        }
+    }
+
+    updateStatusChart(statusData) {
+        if (!this.charts.status) return;
+
+        let completedCount = 0;
+        let processingCount = 0;
+        let cancelledCount = 0;
+
+        // format của statusStats là grouped theo status: { completed: [...], processing: [...], cancelled: [...] }
+        if (statusData.completed) {
+            statusData.completed.forEach(item => completedCount += parseInt(item.count, 10));
+        }
+        if (statusData.processing) {
+            statusData.processing.forEach(item => processingCount += parseInt(item.count, 10));
+        }
+        if (statusData.cancelled) {
+            statusData.cancelled.forEach(item => cancelledCount += parseInt(item.count, 10));
+        }
+
+        this.charts.status.data.datasets[0].data = [completedCount, processingCount, cancelledCount];
+        this.charts.status.update();
+
+        const total = completedCount + processingCount + cancelledCount;
+        let html = '';
+        if (total > 0) {
+            html = `
+                <div class="status-stat-item">
+                    <span><span class="status-stat-dot" style="background:#10b981;"></span>Hoàn thành</span>
+                    <strong>${completedCount} (${((completedCount / total) * 100).toFixed(1)}%)</strong>
+                </div>
+                <div class="status-stat-item">
+                    <span><span class="status-stat-dot" style="background:#f59e0b;"></span>Đang xử lý</span>
+                    <strong>${processingCount} (${((processingCount / total) * 100).toFixed(1)}%)</strong>
+                </div>
+                <div class="status-stat-item">
+                    <span><span class="status-stat-dot" style="background:#ef4444;"></span>Đã hủy</span>
+                    <strong>${cancelledCount} (${((cancelledCount / total) * 100).toFixed(1)}%)</strong>
+                </div>
+            `;
+        } else {
+            html = '<div class="text-center text-muted small py-2">Không có dữ liệu trạng thái</div>';
+        }
+        $('#statusSummaryList').html(html);
+    }
+
+    updateRecentTransactions(transactions) {
+        const tbody = $('#recentTransactionsBody');
+        if (!transactions || transactions.length === 0) {
+            tbody.html(`
+                <tr>
+                    <td colspan="7" class="text-center py-4 text-muted">
+                        <i class="fas fa-inbox fa-2x mb-2 d-block text-gray-300"></i>
+                        Không có giao dịch nào trong khoảng thời gian này
+                    </td>
+                </tr>
+            `);
+            return;
+        }
+
+        let html = '';
+        transactions.forEach(t => {
+            const isDeposit = t.type === 'deposit';
+            const typeBadge = isDeposit
+                ? '<span class="badge" style="background: rgba(16, 185, 129, 0.12); color: #059669; font-weight: 600;"><i class="fas fa-arrow-down me-1"></i> Nạp tiền</span>'
+                : '<span class="badge" style="background: rgba(245, 158, 11, 0.12); color: #d97706; font-weight: 600;"><i class="fas fa-arrow-up me-1"></i> Rút tiền</span>';
+
+            let statusBadge = '';
+            if (t.status === 'completed') {
+                statusBadge = '<span class="badge badge-success">Hoàn thành</span>';
+            } else if (t.status === 'processing') {
+                statusBadge = '<span class="badge badge-warning">Đang xử lý</span>';
+            } else {
+                statusBadge = '<span class="badge badge-danger">Đã hủy</span>';
+            }
+
+            const userName = t.user ? t.user.full_name : 'Khách';
+            const userPhone = t.user && t.user.phone ? t.user.phone : '--';
+            const firstLetter = userName.charAt(0).toUpperCase();
+
+            const dateStr = t.created_at ? new Date(t.created_at).toLocaleString('vi-VN') : '--';
+            const amountFormatted = (isDeposit ? '+' : '-') + format_currency(t.value);
+            const amountClass = isDeposit ? 'text-success fw-bold' : 'text-warning fw-bold';
+
+            html += `
+                <tr>
+                    <td class="text-muted small font-monospace">#${t.id}</td>
                     <td>
-                        <div class="d-flex align-items-center">
-                            <div class="avatar avatar-sm rounded-circle bg-gradient-primary me-2">
-                                <span class="text-white font-weight-bold">${transaction.user.full_name.charAt(0)}</span>
-                            </div>
-                            <div>
-                                <h6 class="mb-0 text-sm">${transaction.user.full_name}</h6>
-                                <p class="text-xs text-muted mb-0">${transaction.user.phone}</p>
-                            </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="user-avatar-bubble">${firstLetter}</span>
+                            <span class="fw-semibold text-dark">${userName}</span>
                         </div>
                     </td>
-                    <td><span class="badge badge-${typeClass}">${typeText}</span></td>
-                    <td class="font-weight-bold">${format_currency(transaction.value)}</td>
-                    <td><span class="badge badge-${statusClass}">${statusText}</span></td>
-                    <td>${this.formatDate(transaction.created_at)}</td>
+                    <td class="text-muted small">${userPhone}</td>
+                    <td>${typeBadge}</td>
+                    <td class="text-end ${amountClass}">${amountFormatted}</td>
+                    <td class="text-center">${statusBadge}</td>
+                    <td class="text-end text-muted small">${dateStr}</td>
                 </tr>
             `;
-            tbody.append(row);
         });
-    }
 
-    getStatusClass(status) {
-        const classes = {
-            'completed': 'success',
-            'processing': 'warning',
-            'cancelled': 'danger'
-        };
-        return classes[status] || 'secondary';
-    }
-
-    getStatusText(status) {
-        const texts = {
-            'completed': 'Hoàn thành',
-            'processing': 'Đang xử lý',
-            'cancelled': 'Đã hủy'
-        };
-        return texts[status] || 'Không xác định';
-    }
-
-    // format_currency(amount) {
-    //     return new Intl.NumberFormat('vi-VN', {
-    //         style: 'currency',
-    //         currency: 'VND'
-    //     }).format(amount);
-    // }
-
-    formatDate(dateString) {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('vi-VN', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    }
-
-    showLoading() {
-        $('.loading-overlay').show();
-        $('#refreshBtn').prop('disabled', true);
-        $('#periodSelect').prop('disabled', true);
-    }
-
-    hideLoading() {
-        $('.loading-overlay').hide();
-        $('#refreshBtn').prop('disabled', false);
-        $('#periodSelect').prop('disabled', false);
-    }
-
-    showError(message) {
-        const alert = `
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <strong>Lỗi!</strong> ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        `;
-        $('.container-fluid').prepend(alert);
-    }
-
-    async exportData() {
-        try {
-            const response = await fetch(`/admin/api/export-revenue-data?period=${this.currentPeriod}`);
-            const blob = await response.blob();
-
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `thong_ke_doanh_thu_${new Date().toISOString().slice(0, 10)}.csv`;
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-            document.body.removeChild(a);
-        } catch (error) {
-            console.error('Export error:', error);
-            this.showError('Có lỗi xảy ra khi xuất dữ liệu');
-        }
-    }
-
-    setupRealTimeUpdates() {
-        // Setup WebSocket or polling for real-time updates
-        this.realTimeInterval = setInterval(() => {
-            if (!this.isLoading) {
-                this.loadData();
-            }
-        }, 30000); // Update every 30 seconds
-    }
-
-    startAutoRefresh() {
-        if (this.autoRefreshInterval) {
-            clearInterval(this.autoRefreshInterval);
-        }
-
-        this.autoRefreshInterval = setInterval(() => {
-            this.loadData();
-        }, 60000); // Auto refresh every minute
-    }
-
-    stopAutoRefresh() {
-        if (this.autoRefreshInterval) {
-            clearInterval(this.autoRefreshInterval);
-            this.autoRefreshInterval = null;
-        }
-    }
-
-    changeChartType(type) {
-        // Change chart type dynamically
-        Object.values(this.charts).forEach(chart => {
-            if (chart.config.type !== type) {
-                chart.config.type = type;
-                chart.update();
-            }
-        });
-    }
-
-    destroy() {
-        // Cleanup when component is destroyed
-        if (this.realTimeInterval) {
-            clearInterval(this.realTimeInterval);
-        }
-        if (this.autoRefreshInterval) {
-            clearInterval(this.autoRefreshInterval);
-        }
-
-        Object.values(this.charts).forEach(chart => {
-            chart.destroy();
-        });
+        tbody.html(html);
     }
 }
 
-// Initialize when document is ready
-$(document).ready(function () {
-    window.statisticalDashboard = new StatisticalDashboard();
-});
-
-// Cleanup on page unload
-$(window).on('beforeunload', function () {
-    if (window.statisticalDashboard) {
-        window.statisticalDashboard.destroy();
-    }
+$(document).ready(() => {
+    new StatisticalDashboard();
 });

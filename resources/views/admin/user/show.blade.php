@@ -1,218 +1,249 @@
 @extends('admin.layouts.master')
 
 @section('title')
-Chi tiết người dùng
+    Chi tiết người dùng — {{ $user->full_name ?: $user->username }}
 @endsection
 
 @section('style-libs')
-@vite('resources/css/admin/user/index.css')
-<style>
-    .user-detail-grid {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 1rem;
-    }
-
-    .user-detail-section {
-        background: #fff;
-        border: 1px solid #e9ecef;
-        border-radius: 10px;
-        padding: 1rem;
-    }
-
-    .user-detail-section.full-width {
-        grid-column: 1 / -1;
-    }
-
-    .user-detail-section h5 {
-        margin: 0 0 1rem;
-        font-weight: 700;
-        color: #2d3748;
-    }
-
-    .detail-row {
-        display: flex;
-        justify-content: space-between;
-        gap: 1rem;
-        padding: 0.55rem 0;
-        border-bottom: 1px solid #f0f0f0;
-    }
-
-    .detail-row:last-child {
-        border-bottom: 0;
-    }
-
-    .detail-label {
-        color: #6c757d;
-        font-weight: 500;
-    }
-
-    .detail-value {
-        color: #2d3748;
-        font-weight: 600;
-        text-align: right;
-        word-break: break-word;
-    }
-
-    .balance-detail-grid {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 0.75rem;
-        margin-bottom: 1rem;
-    }
-
-    .balance-detail-item {
-        border-radius: 8px;
-        padding: 0.9rem;
-        background: #f8f9fa;
-    }
-
-    .balance-detail-item strong {
-        display: block;
-        margin-top: 0.35rem;
-        font-size: 1.15rem;
-    }
-
-    .detail-table {
-        width: 100%;
-        margin: 0;
-    }
-
-    .detail-table th,
-    .detail-table td {
-        padding: 0.65rem;
-        border-bottom: 1px solid #f0f0f0;
-        vertical-align: middle;
-    }
-
-    @media (max-width: 768px) {
-        .user-detail-grid,
-        .balance-detail-grid {
-            grid-template-columns: 1fr;
-        }
-
-        .user-detail-section.full-width {
-            grid-column: auto;
-        }
-    }
-</style>
+    @vite('resources/css/admin/common-modern.css')
 @endsection
 
 @section('content')
-<div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="h3 mb-1 text-gray-800">Chi tiết người dùng</h1>
-            <p class="mb-0 text-muted">Thông tin tài khoản #{{ $user->id }}</p>
-        </div>
-        <div class="d-flex gap-2">
-            <a href="{{ route('user.index') }}" class="btn btn-secondary">
-                <i class="fas fa-arrow-left mr-1"></i> Quay lại
-            </a>
-            <a href="{{ route('user.edit', ['user' => $user->id]) }}" class="btn btn-warning">
-                <i class="fas fa-pen mr-1"></i> Chỉnh sửa
-            </a>
-        </div>
-    </div>
+<div class="container-fluid px-4 pb-5">
 
-    <div class="user-detail-grid">
-        <section class="user-detail-section">
-            <h5><i class="fas fa-user mr-2"></i>Thông tin tài khoản</h5>
-            <div class="detail-row"><span class="detail-label">ID</span><span class="detail-value">{{ $user->id }}</span></div>
-            <div class="detail-row"><span class="detail-label">Họ và tên</span><span class="detail-value">{{ $user->full_name }}</span></div>
-            <div class="detail-row"><span class="detail-label">Username</span><span class="detail-value">{{ $user->username }}</span></div>
-            <div class="detail-row"><span class="detail-label">Email</span><span class="detail-value">{{ $user->email ?: 'Chưa có' }}</span></div>
-            <div class="detail-row"><span class="detail-label">Số điện thoại</span><span class="detail-value">{{ $user->phone ?: 'Chưa có' }}</span></div>
-            <div class="detail-row"><span class="detail-label">Trạng thái</span><span class="detail-value">{{ $user->status }}</span></div>
-        </section>
+    {{-- Back link --}}
+    <a href="{{ route('user.index') }}" class="btn-back-modern">
+        <i class="fas fa-arrow-left"></i> Quay lại danh sách
+    </a>
 
-        <section class="user-detail-section">
-            <h5><i class="fas fa-wallet mr-2"></i>Số dư và cấp bậc</h5>
-            <div class="balance-detail-grid">
-                <div class="balance-detail-item">
-                    <span class="detail-label">Số dư</span>
-                    <strong class="text-success">{{ format_money($user->balance ?? 0, 5) }}$</strong>
-                </div>
-                <div class="balance-detail-item">
-                    <span class="detail-label">Số dư đóng băng</span>
-                    <strong class="text-primary">{{ format_money($user->frozen_balance ?? 0, 5) }}$</strong>
-                </div>
+    {{-- Page Header --}}
+    <div class="page-header-wrapper d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+        <div class="d-flex align-items-center gap-3">
+            <div class="user-avatar-circle" style="width: 56px; height: 56px; font-size: 1.4rem;">
+                @if(!empty($user->avatar))
+                    <img src="{{ get_user_avatar($user) }}" alt="{{ $user->username }}" class="user-avatar-img">
+                @else
+                    <span>{{ mb_strtoupper(mb_substr($user->full_name ?: ($user->username ?: 'U'), 0, 2)) }}</span>
+                @endif
             </div>
-            <div class="detail-row"><span class="detail-label">Cấp bậc</span><span class="detail-value">{{ optional($user->rank)->name ?: 'Chưa có cấp bậc' }}</span></div>
-            <div class="detail-row"><span class="detail-label">Phân phối hôm nay</span><span class="detail-value">{{ $user->distribution_today ?? 0 }}</span></div>
-            <div class="detail-row"><span class="detail-label">Hoa hồng hôm nay</span><span class="detail-value">{{ format_money($user->todays_discount ?? 0, 5) }}$</span></div>
-            <div class="detail-row"><span class="detail-label">Mã giới thiệu</span><span class="detail-value">{{ $user->referral_code ?: 'Chưa có' }}</span></div>
-        </section>
-
-        <section class="user-detail-section full-width">
-            <h5><i class="fas fa-location-dot mr-2"></i>Vị trí hiện tại</h5>
-            <div class="detail-row">
-                <span class="detail-label">Quyền truy cập</span>
-                <span class="detail-value">
-                    @if($user->location_permission === 'granted')
-                        <span class="text-success"><i class="fas fa-check-circle mr-1"></i>Đã cấp quyền</span>
-                    @elseif($user->location_permission === 'denied')
-                        <span class="text-danger"><i class="fas fa-ban mr-1"></i>Đã từ chối</span>
+            <div>
+                <h1 class="page-title-main" style="font-size: 1.35rem;">
+                    {{ $user->full_name ?: 'Chưa đặt tên' }}
+                    <span class="id-chip">ID: {{ $user->id }}</span>
+                    @if($user->status === 'activated')
+                        <span class="badge-status-modern success"><span class="status-dot"></span> Đã kích hoạt</span>
+                    @elseif($user->status === 'inactivated')
+                        <span class="badge-status-modern warning"><span class="status-dot"></span> Chưa kích hoạt</span>
                     @else
-                        <span class="text-warning"><i class="fas fa-clock mr-1"></i>Chưa hỏi quyền</span>
+                        <span class="badge-status-modern danger"><span class="status-dot"></span> Bị khóa</span>
                     @endif
-                </span>
+                </h1>
+                <p class="page-subtitle">
+                    <span><i class="fas fa-at"></i> {{ $user->username }}</span> •
+                    <span><i class="fas fa-phone"></i> {{ $user->phone ?: 'Chưa cập nhật' }}</span> •
+                    <span><i class="fas fa-calendar-alt"></i> Ngày tham gia: {{ $user->created_at ? $user->created_at->format('d/m/Y H:i') : '—' }}</span>
+                </p>
             </div>
-            <div class="detail-row">
-                <span class="detail-label">Khu vực</span>
-                <span class="detail-value">
-                    @if($user->location_country_code)
-                        <span class="fs-5 mr-1">{{ country_flag($user->location_country_code) }}</span>
-                    @endif
-                    {{ $user->location_city ?: 'Chưa xác định thành phố' }}{{ $user->location_country ? ', ' . $user->location_country : '' }}
-                </span>
-            </div>
-            <div class="detail-row"><span class="detail-label">Tọa độ</span><span class="detail-value">{{ $user->location_latitude !== null && $user->location_longitude !== null ? $user->location_latitude . ', ' . $user->location_longitude : 'Chưa có' }}</span></div>
-            <div class="detail-row"><span class="detail-label">Độ chính xác</span><span class="detail-value">{{ $user->location_accuracy !== null ? number_format($user->location_accuracy, 2) . ' m' : 'Chưa có' }}</span></div>
-            <div class="detail-row"><span class="detail-label">Cập nhật lần cuối</span><span class="detail-value">{{ $user->location_updated_at ? $user->location_updated_at->format('d/m/Y H:i:s') : 'Chưa có' }}</span></div>
-        </section>
-
-        <section class="user-detail-section">
-            <h5><i class="fas fa-building-columns mr-2"></i>Thông tin ngân hàng</h5>
-            <div class="detail-row"><span class="detail-label">Tên tài khoản</span><span class="detail-value">{{ $user->username_bank ?: 'Chưa liên kết' }}</span></div>
-            <div class="detail-row"><span class="detail-label">Số tài khoản</span><span class="detail-value">{{ $user->account_number ?: 'Chưa liên kết' }}</span></div>
-            <div class="detail-row"><span class="detail-label">Ngân hàng</span><span class="detail-value">{{ $user->bank_name ?: 'Chưa liên kết' }}</span></div>
-            <div class="detail-row"><span class="detail-label">Người giới thiệu</span><span class="detail-value">{{ optional($user->referrer)->full_name ?: 'Không có' }}</span></div>
-        </section>
-
-        <section class="user-detail-section">
-            <h5><i class="fas fa-chart-line mr-2"></i>Tiến trình</h5>
-            @if($user->user_spin_progress)
-                <div class="detail-row"><span class="detail-label">Cấp tiến trình</span><span class="detail-value">{{ $user->user_spin_progress->rank_id }}</span></div>
-                <div class="detail-row"><span class="detail-label">Đã xử lý</span><span class="detail-value">{{ $user->user_spin_progress->current_spin }}</span></div>
-            @else
-                <p class="text-muted mb-0">Chưa có tiến trình phân phối.</p>
-            @endif
-        </section>
-
-        <section class="user-detail-section full-width">
-            <h5><i class="fas fa-box mr-2"></i>Đơn hàng gần đây</h5>
-            <div class="table-responsive">
-                <table class="detail-table">
-                    <thead>
-                        <tr><th>Mã đơn</th><th>Loại</th><th>Trạng thái</th><th>Số tiền</th><th>Ngày cập nhật</th></tr>
-                    </thead>
-                    <tbody>
-                        @forelse($user->frozen_orders->sortByDesc('updated_at')->take(10) as $frozenOrder)
-                            <tr>
-                                <td>{{ $frozenOrder->order->order_code ?? 'N/A' }}</td>
-                                <td>{{ $frozenOrder->custom_price !== null ? 'Đặc biệt' : 'Bình thường' }}</td>
-                                <td>{{ $frozenOrder->status ?: 'Chưa có' }}</td>
-                                <td>{{ format_money($frozenOrder->custom_price ?? (($frozenOrder->order->price ?? 0) * ($frozenOrder->order->quantity ?? 0)), 5) }}$</td>
-                                <td>{{ optional($frozenOrder->updated_at)->format('d/m/Y H:i') }}</td>
-                            </tr>
-                        @empty
-                            <tr><td colspan="5" class="text-center text-muted">Chưa có đơn hàng.</td></tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-        </section>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <a href="{{ route('user.edit', ['user' => $user->id]) }}" class="btn-create-modern">
+                <i class="fas fa-pen-to-square"></i>
+                <span>Chỉnh sửa hồ sơ</span>
+            </a>
+        </div>
     </div>
+
+    {{-- KPI Cards: Tài chính & Tiến độ --}}
+    <div class="stats-grid">
+        <div class="stat-card-modern primary">
+            <div class="stat-content">
+                <span class="stat-label">Số dư khả dụng</span>
+                <span class="stat-number text-primary">{{ format_money($user->balance, 2) }}$</span>
+                <span class="stat-subtext text-muted">
+                    <i class="fas fa-wallet text-primary"></i> Khả dụng giao dịch
+                </span>
+            </div>
+            <div class="stat-icon-wrapper primary">
+                <i class="fas fa-dollar-sign"></i>
+            </div>
+        </div>
+
+        <div class="stat-card-modern info">
+            <div class="stat-content">
+                <span class="stat-label">Số dư đóng băng</span>
+                <span class="stat-number text-info">{{ format_money($user->frozen_balance, 2) }}$</span>
+                <span class="stat-subtext text-muted">
+                    <i class="fas fa-snowflake text-info"></i> Tạm giữ theo đơn
+                </span>
+            </div>
+            <div class="stat-icon-wrapper info">
+                <i class="fas fa-lock"></i>
+            </div>
+        </div>
+
+        <div class="stat-card-modern warning">
+            <div class="stat-content">
+                <span class="stat-label">Cấp độ (Rank)</span>
+                <span class="stat-number" style="font-size: 1.35rem; color: #b45309;">
+                    {{ $user->rank->name ?? 'Chưa có cấp' }}
+                </span>
+                <span class="stat-subtext text-muted">
+                    <i class="fas fa-percent text-warning"></i> Hoa hồng: {{ $user->rank->commission_percentage ?? 0 }}%
+                </span>
+            </div>
+            <div class="stat-icon-wrapper warning">
+                <i class="fas fa-crown"></i>
+            </div>
+        </div>
+
+        <div class="stat-card-modern success">
+            <div class="stat-content">
+                <span class="stat-label">Tiến độ đơn hàng</span>
+                <span class="stat-number text-success">
+                    {{ $user->user_spin_progress->current_spin ?? 0 }} / {{ $user->rank->spin_count ?? 0 }}
+                </span>
+                <span class="stat-subtext text-muted">
+                    <i class="fas fa-spinner text-success"></i> Vòng quay hiện tại
+                </span>
+            </div>
+            <div class="stat-icon-wrapper success">
+                <i class="fas fa-shopping-bag"></i>
+            </div>
+        </div>
+    </div>
+
+    {{-- 2-Column Detail Cards --}}
+    <div class="detail-grid-modern mb-4">
+        {{-- Card 1: Thông tin tài khoản --}}
+        <div class="detail-card-modern">
+            <h5 class="detail-card-title">
+                <i class="fas fa-user-shield"></i> Thông tin tài khoản & Bảo mật
+            </h5>
+            <div class="detail-row-modern">
+                <span class="detail-label-modern">Họ và tên</span>
+                <span class="detail-value-modern">{{ $user->full_name ?: 'Chưa cập nhật' }}</span>
+            </div>
+            <div class="detail-row-modern">
+                <span class="detail-label-modern">Tên đăng nhập</span>
+                <span class="detail-value-modern">@<span>{{ $user->username }}</span></span>
+            </div>
+            <div class="detail-row-modern">
+                <span class="detail-label-modern">Số điện thoại</span>
+                <span class="detail-value-modern">{{ $user->phone ?: 'Chưa cập nhật' }}</span>
+            </div>
+            <div class="detail-row-modern">
+                <span class="detail-label-modern">Email</span>
+                <span class="detail-value-modern">{{ $user->email ?: 'Chưa cập nhật' }}</span>
+            </div>
+            <div class="detail-row-modern">
+                <span class="detail-label-modern">Mã giới thiệu</span>
+                <span class="detail-value-modern"><span class="id-chip">{{ $user->referral_code ?: '—' }}</span></span>
+            </div>
+            <div class="detail-row-modern">
+                <span class="detail-label-modern">Người giới thiệu</span>
+                <span class="detail-value-modern">
+                    @if($user->referrer)
+                        <a href="{{ route('user.show', ['user' => $user->referrer->id]) }}" class="text-primary font-weight-bold text-decoration-none">
+                            {{ $user->referrer->full_name ?: $user->referrer->username }} (#{{ $user->referrer->id }})
+                        </a>
+                    @else
+                        <span class="text-muted">Không có</span>
+                    @endif
+                </span>
+            </div>
+            <div class="detail-row-modern">
+                <span class="detail-label-modern">Loại tài khoản</span>
+                <span class="detail-value-modern">
+                    @if($user->clone_account)
+                        <span class="badge-status-modern secondary">Tài khoản Clone</span>
+                    @else
+                        <span class="badge-status-modern info">Thành viên thực</span>
+                    @endif
+                </span>
+            </div>
+        </div>
+
+        {{-- Card 2: Thông tin giao dịch & Vị trí --}}
+        <div class="detail-card-modern">
+            <h5 class="detail-card-title">
+                <i class="fas fa-map-marker-alt"></i> Vị trí & Thiết bị đăng nhập
+            </h5>
+            <div class="detail-row-modern">
+                <span class="detail-label-modern">Địa chỉ IP gần nhất</span>
+                <span class="detail-value-modern"><code>{{ $user->ip_address ?: '—' }}</code></span>
+            </div>
+            <div class="detail-row-modern">
+                <span class="detail-label-modern">Quốc gia / Khu vực</span>
+                <span class="detail-value-modern">{{ $user->country ?: '—' }} ({{ $user->city ?: '—' }})</span>
+            </div>
+            <div class="detail-row-modern">
+                <span class="detail-label-modern">Thời gian đăng nhập cuối</span>
+                <span class="detail-value-modern">{{ $user->last_login_at ? \Carbon\Carbon::parse($user->last_login_at)->format('d/m/Y H:i:s') : '—' }}</span>
+            </div>
+            <div class="detail-row-modern">
+                <span class="detail-label-modern">Ngày đăng ký</span>
+                <span class="detail-value-modern">{{ $user->created_at ? $user->created_at->format('d/m/Y H:i:s') : '—' }}</span>
+            </div>
+            <div class="detail-row-modern">
+                <span class="detail-label-modern">Cập nhật gần nhất</span>
+                <span class="detail-value-modern">{{ $user->updated_at ? $user->updated_at->format('d/m/Y H:i:s') : '—' }}</span>
+            </div>
+        </div>
+    </div>
+
+    {{-- Card 3: Lịch sử biến động số dư gần nhất --}}
+    <div class="card-modern">
+        <div class="card-header-modern">
+            <h6 class="title-header">
+                <i class="fas fa-receipt"></i> Lịch sử biến động số dư gần nhất (10 giao dịch)
+            </h6>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-modern">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Loại giao dịch</th>
+                        <th>Số tiền</th>
+                        <th>Số dư trước</th>
+                        <th>Số dư sau</th>
+                        <th>Thời gian</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($user->wallet_balance_histories as $index => $history)
+                        <tr>
+                            <td><span class="id-chip">#{{ $index + 1 }}</span></td>
+                            <td>
+                                @if($history->type === 'deposit')
+                                    <span class="badge-status-modern success"><i class="fas fa-arrow-down"></i> Nạp tiền</span>
+                                @elseif($history->type === 'withdraw')
+                                    <span class="badge-status-modern danger"><i class="fas fa-arrow-up"></i> Rút tiền</span>
+                                @else
+                                    <span class="badge-status-modern info">{{ $history->type }}</span>
+                                @endif
+                            </td>
+                            <td>
+                                <strong class="{{ $history->value >= 0 ? 'text-success' : 'text-danger' }}">
+                                    {{ $history->value >= 0 ? '+' : '' }}{{ format_money($history->value, 2) }}$
+                                </strong>
+                            </td>
+                            <td>{{ format_money($history->initial_balance, 2) }}$</td>
+                            <td><strong>{{ format_money($history->final_balance, 2) }}$</strong></td>
+                            <td class="text-muted">{{ $history->created_at ? $history->created_at->format('d/m/Y H:i') : '—' }}</td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="6" class="text-center py-4 text-muted">
+                                <i class="fas fa-inbox fa-2x mb-2 d-block text-muted" style="opacity: 0.5;"></i>
+                                Chưa có lịch sử biến động số dư nào.
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+
 </div>
 @endsection

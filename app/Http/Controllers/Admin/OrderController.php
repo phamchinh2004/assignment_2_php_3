@@ -38,7 +38,7 @@ class OrderController extends Controller
             if ($rank !== "all" && $rank != "") {
                 $query->where('rank_id', $rank);
             }
-            $list_orders = $query->with('partner')->get();
+            $list_orders = $query->with(['partner', 'rank'])->get();
             $response = [
                 'status' => 200,
                 'message' => 'Lấy dữ liệu thành công!',
@@ -50,7 +50,16 @@ class OrderController extends Controller
             // Chỉ cần đếm tổng số đơn hàng để hiển thị trong nút "Tất cả"
             // Dữ liệu sẽ được load qua JavaScript
             $total_orders_count = Order::count();
-            return view('admin.order.index', compact('list_ranks', 'total_orders_count'));
+            $active_orders_count = Order::where('status', '1')->count();
+            $inactive_orders_count = Order::where('status', '0')->count();
+            $total_orders_value = Order::sum('price');
+            return view('admin.order.index', compact(
+                'list_ranks',
+                'total_orders_count',
+                'active_orders_count',
+                'inactive_orders_count',
+                'total_orders_value'
+            ));
         }
     }
     public function changeStatusOrder(Order $order)
@@ -734,6 +743,16 @@ class OrderController extends Controller
         } while ($exists);
         
         return $apiString;
+    }
+
+
+    /**
+     * Display the specified resource.
+     */
+    public function show(Order $order)
+    {
+        $order->load(['partner', 'rank', 'frozen_orders.user']);
+        return view('admin.order.show', compact('order'));
     }
 
     /**

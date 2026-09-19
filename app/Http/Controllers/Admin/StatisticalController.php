@@ -60,7 +60,7 @@ class StatisticalController extends Controller
     private function getSummaryData($startDate, $endDate)
     {
         // Tổng nạp tiền (completed)
-        $totalDeposit = Wallet_balance_history::where('type', 'deposit')
+        $totalDeposit = (float) Wallet_balance_history::where('type', 'deposit')
             ->where('transaction_type', 'normal')
             ->whereHas('user', function ($q) {
                 $q->where('clone_account', 0);
@@ -70,7 +70,7 @@ class StatisticalController extends Controller
             ->sum('value');
 
         // Tổng rút tiền (completed)
-        $totalWithdraw = Wallet_balance_history::where('type', 'withdraw')
+        $totalWithdraw = (float) Wallet_balance_history::where('type', 'withdraw')
             ->where('transaction_type', 'normal')
             ->whereHas('user', function ($q) {
                 $q->where('clone_account', 0);
@@ -79,10 +79,29 @@ class StatisticalController extends Controller
             ->whereBetween('created_at', [$startDate, $endDate])
             ->sum('value');
 
-        // Tổng doanh thu (nạp tiền - rút tiền)
+        // Tổng doanh thu ròng (nạp tiền - rút tiền)
         $totalRevenue = $totalDeposit - $totalWithdraw;
 
-        // Tổng số giao dịch
+        // Số giao dịch nạp / rút
+        $depositCount = Wallet_balance_history::where('type', 'deposit')
+            ->where('transaction_type', 'normal')
+            ->whereHas('user', function ($q) {
+                $q->where('clone_account', 0);
+            })
+            ->where('status', 'completed')
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->count();
+
+        $withdrawCount = Wallet_balance_history::where('type', 'withdraw')
+            ->where('transaction_type', 'normal')
+            ->whereHas('user', function ($q) {
+                $q->where('clone_account', 0);
+            })
+            ->where('status', 'completed')
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->count();
+
+        // Tổng số giao dịch tất cả trạng thái
         $totalTransactions = Wallet_balance_history::whereBetween('created_at', [$startDate, $endDate])
             ->whereHas('user', function ($q) {
                 $q->where('clone_account', 0);
@@ -90,11 +109,73 @@ class StatisticalController extends Controller
             ->where('transaction_type', 'normal')
             ->count();
 
+        // Số khách hàng thực hiện nạp tiền
+        $uniqueCustomers = Wallet_balance_history::where('type', 'deposit')
+            ->where('status', 'completed')
+            ->where('transaction_type', 'normal')
+            ->whereHas('user', function ($q) {
+                $q->where('clone_account', 0);
+            })
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->distinct('user_id')
+            ->count('user_id');
+
+        // Tính kỳ trước để so sánh trend
+        $diffInDays = max(1, $startDate->diffInDays($endDate) + 1);
+        $prevEndDate = $startDate->copy()->subSecond();
+        $prevStartDate = $startDate->copy()->subDays($diffInDays);
+
+        $prevDeposit = (float) Wallet_balance_history::where('type', 'deposit')
+            ->where('transaction_type', 'normal')
+            ->whereHas('user', function ($q) {
+                $q->where('clone_account', 0);
+            })
+            ->where('status', 'completed')
+            ->whereBetween('created_at', [$prevStartDate, $prevEndDate])
+            ->sum('value');
+
+        $prevWithdraw = (float) Wallet_balance_history::where('type', 'withdraw')
+            ->where('transaction_type', 'normal')
+            ->whereHas('user', function ($q) {
+                $q->where('clone_account', 0);
+            })
+            ->where('status', 'completed')
+            ->whereBetween('created_at', [$prevStartDate, $prevEndDate])
+            ->sum('value');
+
+        $prevRevenue = $prevDeposit - $prevWithdraw;
+
+        $calcGrowth = function ($current, $prev) {
+            if ($prev == 0.0) {
+                return $current > 0 ? 100.0 : 0.0;
+            }
+            return round((($current - $prev) / abs($prev)) * 100, 1);
+        };
+
+        $revenueGrowth = $calcGrowth($totalRevenue, $prevRevenue);
+        $depositGrowth = $calcGrowth($totalDeposit, $prevDeposit);
+        $withdrawGrowth = $calcGrowth($totalWithdraw, $prevWithdraw);
+
+        // Giá trị nạp trung bình mỗi lệnh nạp
+        $avgDeposit = $depositCount > 0 ? round($totalDeposit / $depositCount, 2) : 0;
+
         return [
             'total_revenue' => $totalRevenue,
+            'revenue_growth' => $revenueGrowth,
             'total_deposit' => $totalDeposit,
+            'deposit_growth' => $depositGrowth,
+            'deposit_count' => $depositCount,
             'total_withdraw' => $totalWithdraw,
-            'total_transactions' => $totalTransactions
+            'withdraw_growth' => $withdrawGrowth,
+            'withdraw_count' => $withdrawCount,
+            'total_transactions' => $totalTransactions,
+            'unique_customers' => $uniqueCustomers,
+            'avg_deposit' => $avgDeposit,
+            'previous_period' => [
+                'revenue' => $prevRevenue,
+                'deposit' => $prevDeposit,
+                'withdraw' => $prevWithdraw
+            ]
         ];
     }
 
@@ -468,6 +549,13 @@ class StatisticalController extends Controller
                 return $b['total_revenue'] <=> $a['total_revenue'];
             });
 
+            // Gắn thứ hạng và tỷ trọng đóng góp (%)
+            foreach ($tableData as $index => &$item) {
+                $item['rank'] = $index + 1;
+                $item['percent_share'] = $totalRevenue > 0 ? round(($item['total_revenue'] / $totalRevenue) * 100, 1) : 0;
+            }
+            unset($item);
+
             // Lấy top 5 để hiển thị chart
             $topStaff = array_slice($tableData, 0, 5);
             $topLabels = array_column($topStaff, 'staff_name');
@@ -660,13 +748,58 @@ class StatisticalController extends Controller
                 )
                 ->first();
 
+            $currentRevenue = (float) ($revenueData->total_revenue ?? 0);
+            $currentCustomers = (int) ($revenueData->total_customers ?? 0);
+
+            // Tính kỳ trước
+            $startDateObj = Carbon::parse($startDate)->startOfDay();
+            $endDateObj = Carbon::parse($endDate)->endOfDay();
+            $diffInDays = max(1, $startDateObj->diffInDays($endDateObj) + 1);
+            $prevEndDate = $startDateObj->copy()->subSecond();
+            $prevStartDate = $startDateObj->copy()->subDays($diffInDays);
+
+            $prevRevenueData = Wallet_balance_history::where('type', 'deposit')
+                ->whereHas('user', function ($q) {
+                    $q->where('clone_account', 0);
+                })
+                ->where('status', 'completed')
+                ->where('transaction_type', 'normal')
+                ->whereBetween('created_at', [$prevStartDate, $prevEndDate])
+                ->select(
+                    DB::raw('SUM(value) as total_revenue'),
+                    DB::raw('COUNT(DISTINCT user_id) as total_customers')
+                )
+                ->first();
+
+            $prevRevenue = (float) ($prevRevenueData->total_revenue ?? 0);
+            $prevCustomers = (int) ($prevRevenueData->total_customers ?? 0);
+
+            $revenueGrowth = $prevRevenue == 0.0 ? ($currentRevenue > 0 ? 100.0 : 0.0) : round((($currentRevenue - $prevRevenue) / abs($prevRevenue)) * 100, 1);
+            $customersGrowth = $prevCustomers == 0 ? ($currentCustomers > 0 ? 100.0 : 0.0) : round((($currentCustomers - $prevCustomers) / $prevCustomers) * 100, 1);
+
+            // Khách hàng nạp cao nhất
+            $topCustomer = Wallet_balance_history::join('users', 'wallet_balance_histories.user_id', '=', 'users.id')
+                ->where('users.clone_account', 0)
+                ->where('wallet_balance_histories.type', 'deposit')
+                ->where('wallet_balance_histories.status', 'completed')
+                ->where('wallet_balance_histories.transaction_type', 'normal')
+                ->whereBetween('wallet_balance_histories.created_at', [$startDateObj, $endDateObj])
+                ->select('users.full_name', DB::raw('SUM(wallet_balance_histories.value) as total_spent'))
+                ->groupBy('users.id', 'users.full_name')
+                ->orderBy('total_spent', 'desc')
+                ->first();
+
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'total_revenue' => $revenueData->total_revenue ?? 0,
+                    'total_revenue' => $currentRevenue,
+                    'revenue_growth' => $revenueGrowth,
                     'total_transactions' => $revenueData->total_transactions ?? 0,
-                    'total_customers' => $revenueData->total_customers ?? 0,
-                    'avg_transaction' => $revenueData->avg_transaction ?? 0
+                    'total_customers' => $currentCustomers,
+                    'customers_growth' => $customersGrowth,
+                    'avg_transaction' => (float) ($revenueData->avg_transaction ?? 0),
+                    'top_customer_name' => $topCustomer ? $topCustomer->full_name : 'Chưa có',
+                    'top_customer_amount' => $topCustomer ? (float) $topCustomer->total_spent : 0
                 ]
             ]);
         } catch (\Exception $e) {
@@ -879,15 +1012,109 @@ class StatisticalController extends Controller
     }
 
     /**
-     * API: Xuất báo cáo Excel (nếu cần trong tương lai)
+     * Xuất báo cáo CSV doanh thu theo nhân viên
      */
     public function exportRevenue(Request $request)
     {
-        // Implement export functionality if needed
-        return response()->json([
-            'success' => false,
-            'message' => 'Chức năng xuất báo cáo chưa được triển khai'
-        ]);
+        try {
+            $dateFrom = $request->get('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
+            $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
+            $staffId = $request->get('staff_id');
+
+            $dateFromParsed = Carbon::parse($dateFrom)->startOfDay();
+            $dateToParsed = Carbon::parse($dateTo)->endOfDay();
+
+            $query = User::where('role', User::ROLE_STAFF)
+                ->with(['invitedUsers' => function ($q) use ($dateFromParsed, $dateToParsed) {
+                    $q->with(['wallet_balance_histories' => function ($wq) use ($dateFromParsed, $dateToParsed) {
+                        $wq->where('type', 'deposit')
+                            ->where('status', 'completed')
+                            ->where('transaction_type', 'normal')
+                            ->whereBetween('created_at', [$dateFromParsed, $dateToParsed]);
+                    }])->where('clone_account', 0);
+                }]);
+
+            if ($staffId) {
+                $query->where('id', $staffId);
+            }
+
+            $staffList = $query->get();
+            $tableData = [];
+            $totalAllRevenue = 0;
+
+            foreach ($staffList as $staff) {
+                $invitedUsers = $staff->invitedUsers;
+                $staffRevenue = 0;
+                $staffTransactions = 0;
+
+                foreach ($invitedUsers as $user) {
+                    $userTransactions = $user->wallet_balance_histories;
+                    $staffTransactions += $userTransactions->count();
+                    $staffRevenue += $userTransactions->sum('value');
+                }
+
+                $tableData[] = [
+                    'staff_name' => $staff->full_name,
+                    'staff_email' => $staff->email,
+                    'staff_phone' => $staff->phone ?? '',
+                    'invited_users' => $invitedUsers->count(),
+                    'total_transactions' => $staffTransactions,
+                    'total_revenue' => $staffRevenue
+                ];
+                $totalAllRevenue += $staffRevenue;
+            }
+
+            usort($tableData, function ($a, $b) {
+                return $b['total_revenue'] <=> $a['total_revenue'];
+            });
+
+            $fileName = 'doanh_thu_nhan_vien_' . Carbon::now()->format('Y_m_d_H_i_s') . '.csv';
+
+            $headers = [
+                'Content-Type' => 'text/csv; charset=UTF-8',
+                'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
+            ];
+
+            $callback = function () use ($tableData, $totalAllRevenue) {
+                $file = fopen('php://output', 'w');
+                // UTF-8 BOM
+                fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
+
+                fputcsv($file, [
+                    'Thứ hạng',
+                    'Nhân viên',
+                    'Email',
+                    'Số điện thoại',
+                    'Số khách mời',
+                    'Tổng giao dịch',
+                    'Doanh thu (USD)',
+                    'Tỷ trọng (%)'
+                ]);
+
+                foreach ($tableData as $index => $item) {
+                    $share = $totalAllRevenue > 0 ? round(($item['total_revenue'] / $totalAllRevenue) * 100, 1) : 0;
+                    fputcsv($file, [
+                        $index + 1,
+                        $item['staff_name'],
+                        $item['staff_email'],
+                        $item['staff_phone'],
+                        $item['invited_users'],
+                        $item['total_transactions'],
+                        number_format($item['total_revenue'], 2, '.', ','),
+                        $share . '%'
+                    ]);
+                }
+
+                fclose($file);
+            };
+
+            return response()->stream($callback, 200, $headers);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Có lỗi xảy ra khi xuất báo cáo: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**

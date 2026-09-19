@@ -1,33 +1,94 @@
-#tittle {
-    font-size: 20px;
-    white-space: nowrap;
+/* ============================================================
+   ORDER CREATE — Modern styling
+   ============================================================ */
+
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #4a5568;
+    text-decoration: none;
+    transition: color 0.15s ease;
 }
 
-select {
-    font-size: 12px !important;
+.back-link:hover {
+    color: #2b6cb0;
+    text-decoration: none;
 }
 
-.section_1_content {
-    max-height: 500px;
-    overflow: hidden;
-    transition: max-height 0.5s ease-in-out;
+.create-order-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 12px;
 }
 
-.inactive {
-    max-height: 0;
-    padding: 0px !important;
+.create-card-header {
+    background: #ffffff;
+    border-bottom: 1px solid #edf2f7;
+    border-radius: 12px 12px 0 0 !important;
 }
 
+.create-header-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #ebf8ff 0%, #bee3f8 100%);
+    color: #2b6cb0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+}
+
+.create-form-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 8px;
+}
+
+.create-select {
+    height: 42px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e0;
+    font-size: 13px !important;
+    color: #2d3748;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.create-select:focus {
+    border-color: #3182ce;
+    box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.15);
+}
+
+.upload-dropzone {
+    border: 2px dashed #cbd5e0;
+    border-radius: 10px;
+    background: #f7fafc;
+    transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.upload-dropzone:hover {
+    border-color: #4299e1;
+    background: #ebf8ff;
+}
+
+/* Order item previews (if generated) */
 .order_item {
     width: 30%;
     margin-bottom: 25px !important;
-    padding: 20px 20px 20px 20px;
-    box-shadow: 0 5px 10px #000;
+    padding: 20px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08);
     display: flex;
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    border-radius: 0px 20px;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
 }
 
 .div_img {
@@ -35,7 +96,7 @@ select {
     border-radius: 6px;
 }
 
-.div_img>img {
+.div_img > img {
     width: 80px;
     height: 80px;
     object-fit: cover;
@@ -45,7 +106,7 @@ select {
     width: 70%;
 }
 
-.div_name>input {
+.div_name > input {
     font-size: 13px;
 }
 
@@ -61,15 +122,15 @@ select {
     position: absolute;
     bottom: 5px;
     right: 5px;
-    color: red;
+    color: #e53e3e;
     font-weight: bold;
 }
 
 #submit {
     position: fixed;
-    bottom: 0%;
+    bottom: 20px;
     left: 50%;
-    transform: translate(-50%, -50%);
+    transform: translateX(-50%);
     z-index: 999;
 }
 
@@ -79,48 +140,8 @@ select {
 }
 
 @media screen and (max-width: 768px) {
-    .price {
-        bottom: 0px;
-        right: 5px;
-        font-size: 8px;
-    }
-
-    .index {
-        font-size: 7px;
-    }
-
-    .div_name>label {
-        top: -9px !important;
-    }
-
-    .form-control {
-        min-height: 0px !important;
-    }
-
-    .div_name>input {
-        height: 30px !important;
-    }
-
-    .div_img>img {
-        width: 40px;
-        height: 40px;
-    }
-
-    .label_name {
-        font-size: 10px;
-    }
-
     .order_item {
-        width: 49%;
-        padding: 5px 10px 10px 10px;
-        margin-bottom: 10px;
-    }
-
-    #tittle {
-        font-size: 12px;
-    }
-
-    select {
-        font-size: 9px !important;
+        width: 100%;
+        margin-bottom: 15px;
     }
 }

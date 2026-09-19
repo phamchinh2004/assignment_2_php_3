@@ -150,6 +150,23 @@ class StaffController extends Controller
         }
         return redirect()->route('staff.index')->with('success', 'Tạo tài khoản nhân viên thành công!');
     }
+    public function show(string $id)
+    {
+        $staff = User::with([
+            'referrer',
+            'user_manager_settings.manager_setting',
+        ])
+        ->withSum(['deposits_made as total_deposit' => function ($q) {
+            $q->where('type', 'deposit')->where('status', 'completed');
+        }], 'value')
+        ->where('role', 'staff')
+        ->findOrFail($id);
+
+        $referrals = User::where('referrer_id', $staff->id)->latest()->paginate(10);
+
+        return view('admin.staff.show', compact('staff', 'referrals'));
+    }
+
     /**
      * Show the form for editing the specified resource.
      */

@@ -1,253 +1,370 @@
 document.addEventListener("DOMContentLoaded", async function () {
     let status = localStorage.getItem("order_index_filter_status") ?? "";
     let rank = localStorage.getItem("order_index_filter_rank") ?? "";
-    // Thông báo
+
+    // ---------- Thông báo từ localStorage ----------
     if (localStorage.getItem("success")) {
         notification("success", localStorage.getItem("success"));
         localStorage.removeItem("success");
     }
-    // Làm sáng nút nếu danh sách đơn hàng đang là trạng thái của nó
-    const active = document.getElementById("active");
-    const inactive = document.getElementById("inactive");
-    if (status == 1) {
-        if (active.classList.contains("btn-outline-primary")) {
-            active.classList.remove("btn-outline-primary");
-            active.classList.add("btn-primary");
-        }
-        if (inactive.classList.contains("btn-danger")) {
-            inactive.classList.remove("btn-danger");
-            inactive.classList.add("btn-outline-danger");
-        }
-    } else if (status == 0) {
-        if (inactive.classList.contains("btn-outline-danger")) {
-            inactive.classList.remove("btn-outline-danger");
-            inactive.classList.add("btn-danger");
-        }
-        if (active.classList.contains("btn-primary")) {
-            active.classList.remove("btn-primary");
-            active.classList.add("btn-outline-primary");
+
+    // ---------- Status filter pills (top header) ----------
+    const btnActiveTop    = document.getElementById("btn_active_top");
+    const btnInactiveTop  = document.getElementById("btn_inactive_top");
+    const btnAllStatus    = document.getElementById("btn_all_status");
+
+    function syncStatusPills(currentStatus) {
+        [btnActiveTop, btnInactiveTop, btnAllStatus].forEach(b => {
+            if (b) {
+                b.classList.remove("active");
+                b.classList.remove("selected");
+            }
+        });
+        if (currentStatus === "1") {
+            if (btnActiveTop) {
+                btnActiveTop.classList.add("active");
+                btnActiveTop.classList.add("selected");
+            }
+        } else if (currentStatus === "0") {
+            if (btnInactiveTop) {
+                btnInactiveTop.classList.add("active");
+                btnInactiveTop.classList.add("selected");
+            }
+        } else {
+            if (btnAllStatus) {
+                btnAllStatus.classList.add("active");
+                btnAllStatus.classList.add("selected");
+            }
         }
     }
-    // Nút cấp độ
-    const filter_ranks = document.getElementsByClassName("filter_rank");
-    for (const item of filter_ranks) {
-        item.addEventListener("click", async function () {
+    syncStatusPills(status);
+
+    if (btnActiveTop) {
+        btnActiveTop.addEventListener("click", async function () {
+            if (status === "1") return;
             spinner.hidden = false;
-            for (const item_2 of filter_ranks) {
-                if (item_2.classList.contains("btn-primary")) {
-                    item_2.classList.remove("btn-primary");
-                    item_2.classList.add("btn-outline-primary");
-                }
-            }
-            if (item.classList.contains("btn-outline-primary")) {
-                item.classList.remove("btn-outline-primary");
-                item.classList.add("btn-primary");
-            }
-            if (all_ranks.classList.contains("btn-primary")) {
-                all_ranks.classList.remove("btn-primary");
-                all_ranks.classList.add("btn-outline-primary");
-            }
-            const id = item.id;
-            localStorage.setItem("order_index_filter_rank", id);
-            rank = localStorage.getItem("order_index_filter_rank");
+            status = "1";
+            localStorage.setItem("order_index_filter_status", status);
+            syncStatusPills(status);
             await updateListOrders(status, rank);
             spinner.hidden = true;
         });
     }
-    // Nút tất cả
-    const all_ranks = document.getElementById("all_ranks");
-    all_ranks.addEventListener("click", async function () {
-        spinner.hidden = false;
+    if (btnInactiveTop) {
+        btnInactiveTop.addEventListener("click", async function () {
+            if (status === "0") return;
+            spinner.hidden = false;
+            status = "0";
+            localStorage.setItem("order_index_filter_status", status);
+            syncStatusPills(status);
+            await updateListOrders(status, rank);
+            spinner.hidden = true;
+        });
+    }
+    if (btnAllStatus) {
+        btnAllStatus.addEventListener("click", async function () {
+            if (status === "") return;
+            spinner.hidden = false;
+            status = "";
+            localStorage.setItem("order_index_filter_status", status);
+            syncStatusPills(status);
+            await updateListOrders(status, rank);
+            spinner.hidden = true;
+        });
+    }
+
+    // ---------- Rank filter chips ----------
+    const all_ranks    = document.getElementById("all_ranks");
+    const filter_ranks = document.getElementsByClassName("filter_rank");
+
+    function syncRankChips(currentRank) {
+        if (all_ranks) {
+            if (currentRank === "" || currentRank === "all") {
+                all_ranks.classList.add("selected");
+            } else {
+                all_ranks.classList.remove("selected");
+            }
+        }
         for (const item of filter_ranks) {
-            if (item.classList.contains("btn-primary")) {
-                item.classList.remove("btn-primary");
-                item.classList.add("btn-outline-primary");
+            if (item.id == currentRank) {
+                item.classList.add("selected");
+            } else {
+                item.classList.remove("selected");
             }
         }
-        if (all_ranks.classList.contains("btn-outline-primary")) {
-            all_ranks.classList.remove("btn-outline-primary");
-            all_ranks.classList.add("btn-primary");
-        }
-        localStorage.setItem("order_index_filter_rank", "");
-        rank = localStorage.getItem("order_index_filter_rank");
-        await updateListOrders(status, rank);
-        spinner.hidden = true;
-    });
-    // Làm sáng nút cấp độ nếu danh sách đơn hàng đang là trạng thái của nó
+    }
+    syncRankChips(rank);
+
     for (const item of filter_ranks) {
-        const id = item.id;
-        if (id == rank) {
-            if (item.classList.contains("btn-outline-primary")) {
-                item.classList.remove("btn-outline-primary");
-                item.classList.add("btn-primary");
-            }
-        }
+        item.addEventListener("click", async function () {
+            spinner.hidden = false;
+            rank = item.id;
+            localStorage.setItem("order_index_filter_rank", rank);
+            syncRankChips(rank);
+            await updateListOrders(status, rank);
+            spinner.hidden = true;
+        });
     }
-    if (rank == "") {
-        if (all_ranks.classList.contains("btn-outline-primary")) {
-            all_ranks.classList.remove("btn-outline-primary");
-            all_ranks.classList.add("btn-primary");
-        }
+    if (all_ranks) {
+        all_ranks.addEventListener("click", async function () {
+            spinner.hidden = false;
+            rank = "";
+            localStorage.setItem("order_index_filter_rank", rank);
+            syncRankChips(rank);
+            await updateListOrders(status, rank);
+            spinner.hidden = true;
+        });
     }
-    // Cập nhật danh sách đơn hàng
-    async function updateListOrders(status, rank) {
-        let dataTable = $("#dataTable_list_orders").DataTable();
 
-        // Xóa toàn bộ dữ liệu cũ
-        dataTable.clear();
+    // ---------- Copy to Clipboard Helper ----------
+    document.addEventListener("click", function (e) {
+        const copyBtn = e.target.closest(".btn-copy-text");
+        if (!copyBtn) return;
+        const textToCopy = copyBtn.getAttribute("data-copy");
+        if (!textToCopy) return;
 
-        // Luôn luôn load dữ liệu, bất kể có filter hay không
-        // Controller sẽ xử lý filter theo status và rank
-        let result = await loadListOrders(status, rank);
-        if (result.status == 200) {
-            let list_orders = result.data;
-            let i = 0;
-            if (list_orders.length > 0) {
-                list_orders.forEach((item) => {
-                    let nameShort =
-                        item.name.length > 30
-                            ? item.name.slice(0, 30) + "..."
-                            : item.name;
-                    let imageUrl = `/storage/${item.image}`;
+        navigator.clipboard.writeText(textToCopy).then(() => {
+            const originalHtml = copyBtn.innerHTML;
+            copyBtn.classList.add("copied");
+            copyBtn.innerHTML = `<span>Đã chép!</span> <i class="fas fa-check ms-1"></i>`;
+            setTimeout(() => {
+                copyBtn.classList.remove("copied");
+                copyBtn.innerHTML = originalHtml;
+            }, 1500);
+        }).catch(() => {
+            notification("error", "Không thể sao chép vào bộ nhớ tạm");
+        });
+    });
 
-                    let statusBadge =
-                        item.status == 1
-                            ? `<span class="text-white badge badge-success">Đang hoạt động</span>`
-                            : `<span class="text-white badge badge-danger">Ngừng hoạt động</span>`;
-                    let toggleButton =
-                        item.status == 1
-                            ? `<a href="/admin/order/change-status-order/${item.id}" class="btn btn-danger btn-sm mb-1"><i class="fas fa-lock fa-sm p-2"></i></a>`
-                            : `<a href="/admin/order/change-status-order/${item.id}" class="btn btn-success btn-sm mb-1"><i class="fas fa-lock-open fa-sm p-2"></i></a>`;
-
-                    let created_at = formatDateTime(item.created_at);
-                    let updated_at = formatDateTime(item.updated_at);
-
-                    // Tạo HTML cho thông tin cơ bản
-                    let basicInfoHtml = `<div class="d-flex flex-column">
-                        <span>Tên: <b><a class="cspt" href="#">${nameShort}</a></b></span>
-                        <span>Giá: <b>${item.price}$</b></span>
-                        <span>Số lượng: <b>${item.quantity}</b></span>
-                        <span>Hoa hồng: <b>${item.commission_percentage}%</b></span>
-                    </div>`;
-
-                    // Tạo HTML cho thông tin đơn hàng
-                    let orderInfoHtml = `<div class="d-flex flex-column">`;
-
-                    if (item.customer_name) {
-                        orderInfoHtml += `<span class="text-primary"><i class="fas fa-user"></i> Khách hàng: <b>${item.customer_name}</b></span>`;
-                    }
-                    if (item.customer_phone) {
-                        orderInfoHtml += `<span class="text-info"><i class="fas fa-phone"></i> SĐT: <b>${item.customer_phone}</b></span>`;
-                    }
-                    if (item.customer_address) {
-                        let addressShort =
-                            item.customer_address.length > 40
-                                ? item.customer_address.slice(0, 40) + "..."
-                                : item.customer_address;
-                        orderInfoHtml += `<span class="text-secondary"><i class="fas fa-map-marker-alt"></i> Địa chỉ: <b>${addressShort}</b></span>`;
-                    }
-                    if (item.partner && item.partner.name) {
-                        orderInfoHtml += `<span class="text-success"><i class="fas fa-store"></i> Nền tảng: <b>${item.partner.name}</b></span>`;
-                    }
-                    if (item.payment_method) {
-                        let paidBadge = item.is_paid
-                            ? `<span class="badge badge-success">Đã thanh toán</span>`
-                            : `<span class="badge badge-warning">Chưa thanh toán</span>`;
-                        orderInfoHtml += `<span class="text-warning"><i class="fas fa-credit-card"></i> Thanh toán: <b>${item.payment_method}</b> ${paidBadge}</span>`;
-                    }
-                    if (item.customer_note) {
-                        let noteShort =
-                            item.customer_note.length > 30
-                                ? item.customer_note.slice(0, 30) + "..."
-                                : item.customer_note;
-                        orderInfoHtml += `<span class="text-muted"><i class="fas fa-sticky-note"></i> Ghi chú: <b>${noteShort}</b></span>`;
-                    }
-                    if (item.api) {
-                        let apiShort =
-                            item.api.length > 20
-                                ? item.api.slice(0, 20) + "..."
-                                : item.api;
-                        orderInfoHtml += `<span class="text-dark" style="font-family: monospace; font-size: 11px;"><i class="fas fa-code"></i> API: <b>${apiShort}</b></span>`;
-                    }
-
-                    orderInfoHtml += `</div>`;
-
-                    // Gộp ngày tạo và cập nhật
-                    let dateHtml = `<div class="d-flex flex-column">
-                        <small><i class="fas fa-calendar-plus"></i> Tạo: ${created_at}</small>
-                        <small><i class="fas fa-calendar-edit"></i> Cập nhật: ${updated_at}</small>
-                    </div>`;
-
-                    // Tạo HTML cho cột Mã (có cả order_code và hình ảnh)
-                    let orderCodeHtml = `<div class="d-flex flex-column justify-content-center align-items-center">
-                        <span>${item.order_code}</span>
-                        <img class="order_image" src="${imageUrl}" alt="" />
-                    </div>`;
-
-                    dataTable.row.add([
-                        ++i,
-                        item.id,
-                        orderCodeHtml,
-                        basicInfoHtml,
-                        orderInfoHtml,
-                        statusBadge,
-                        dateHtml,
-                        `<div class="d-flex flex-column ">
-                            <a href="#" class="btn btn-secondary btn-sm mb-1"><i class="fas fa-eye fa-sm p-2"></i></a>
-                            ${toggleButton}
-                            <a href="/admin/order/${item.id}/edit" class="btn btn-warning btn-sm"><i class="fas fa-pen-to-square fa-sm p-2"></i></a>
-                    </div>`,
-                    ]);
-                });
-            }
-            dataTable.draw();
-        }
-    }
-    // Hàm định dạng ngày tháng chuẩn
+    // ---------- Helpers ----------
     function formatDateTime(datetime) {
-        let date = new Date(datetime);
+        if (!datetime) return "—";
+        const d = new Date(datetime);
         return (
-            date.getFullYear() +
-            "-" +
-            String(date.getMonth() + 1).padStart(2, "0") +
-            "-" +
-            String(date.getDate()).padStart(2, "0") +
+            d.getFullYear() + "-" +
+            String(d.getMonth() + 1).padStart(2, "0") + "-" +
+            String(d.getDate()).padStart(2, "0") +
             " " +
-            String(date.getHours()).padStart(2, "0") +
-            ":" +
-            String(date.getMinutes()).padStart(2, "0") +
-            ":" +
-            String(date.getSeconds()).padStart(2, "0")
+            String(d.getHours()).padStart(2, "0") + ":" +
+            String(d.getMinutes()).padStart(2, "0")
         );
     }
-    spinner.hidden = false;
-    await updateListOrders(status, rank);
-    spinner.hidden = true;
+
+    function paymentLabel(method) {
+        const map = {
+            "COD":           { label: "COD",          cls: "cod"     },
+            "vnpay":         { label: "VNPay",        cls: "vnpay"   },
+            "momo":          { label: "MoMo",         cls: "momo"    },
+            "paypal":        { label: "PayPal",       cls: "paypal"  },
+            "bank_transfer": { label: "Ngân hàng",    cls: "bank"    },
+            "other":         { label: "Khác",         cls: ""        },
+        };
+        const m = map[method] || { label: method || "—", cls: "" };
+        return `<span class="payment-chip ${m.cls}">${m.label}</span>`;
+    }
+
+    function paidBadge(isPaid, paymentMethod) {
+        if (paymentMethod === "COD") {
+            return `<span class="badge-unpaid"><i class="fas fa-truck" style="font-size:9px;"></i> COD</span>`;
+        }
+        return isPaid
+            ? `<span class="badge-paid"><i class="fas fa-check-circle" style="font-size:9px;"></i> Đã TT</span>`
+            : `<span class="badge-unpaid"><i class="fas fa-clock" style="font-size:9px;"></i> Chưa TT</span>`;
+    }
+
+    function truncate(str, len) {
+        if (!str) return "";
+        return str.length > len ? str.slice(0, len) + "…" : str;
+    }
+
+    // ---------- Build table rows ----------
+    async function updateListOrders(status, rank) {
+        const dataTable = $("#dataTable_list_orders").DataTable();
+        dataTable.clear();
+
+        const result = await loadListOrders(status, rank);
+        if (result.status == 200) {
+            const list = result.data;
+            if (list.length === 0) {
+                dataTable.draw();
+                return;
+            }
+
+            list.forEach((item, idx) => {
+                const imageUrl = `/storage/${item.image}`;
+
+                // Col 1: # (STT chip)
+                const colIndex = `<span class="user-id-chip">#${idx + 1}</span>`;
+
+                // Col 2: Sản phẩm & Đơn hàng (user-identity-cell style)
+                const colProduct = `
+                <div class="user-identity-cell">
+                    <div class="entity-thumbnail" title="${item.name}">
+                        <img src="${imageUrl}" alt="${item.name}" loading="lazy"/>
+                    </div>
+                    <div class="user-details">
+                        <div class="d-flex align-items-center gap-2">
+                            <a class="user-link text-truncate" href="/admin/order/${item.id}" title="${item.name}" style="max-width: 220px;">
+                                ${item.name}
+                            </a>
+                            <span class="user-id-chip">#${item.id}</span>
+                        </div>
+                        <div class="user-meta-row">
+                            <span class="copy-badge btn-copy-text" data-copy="${item.order_code}" title="Nhấp để sao chép mã đơn">
+                                <code>${item.order_code}</code>
+                                <i class="fas fa-copy ms-1"></i>
+                            </span>
+                            ${item.rank && item.rank.name ? `
+                                <span class="rank-pill">
+                                    <i class="fas fa-crown"></i> ${item.rank.name}
+                                </span>
+                            ` : `
+                                <span class="rank-pill no-rank">
+                                    <i class="fas fa-minus"></i> Mặc định
+                                </span>
+                            `}
+                            ${item.partner && item.partner.name ? `
+                                <span class="user-id-chip" style="background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0;">
+                                    <i class="fas fa-store"></i> ${item.partner.name}
+                                </span>
+                            ` : ""}
+                        </div>
+                    </div>
+                </div>`;
+
+                // Col 3: Giá bán & Hoa hồng (finance-box style)
+                const priceFormatted = parseFloat(item.price).toLocaleString("en-US", {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                const totalFormatted = (parseFloat(item.price) * parseInt(item.quantity || 1)).toLocaleString("en-US", {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                const colFinance = `
+                <div class="finance-box">
+                    <div>
+                        <span class="balance-highlight" title="Đơn giá x Số lượng">
+                            <i class="fas fa-dollar-sign text-success"></i>
+                            ${priceFormatted}$
+                        </span>
+                        <span class="user-id-chip font-weight-bold" style="margin-left: 4px;">x${item.quantity}</span>
+                    </div>
+                    <div>
+                        <span class="frozen-balance-chip" title="Tỷ lệ hoa hồng chiết khấu">
+                            <i class="fas fa-percent"></i>
+                            Hoa hồng: ${item.commission_percentage ?? 0}%
+                        </span>
+                        ${item.quantity > 1 ? `<small class="text-muted d-block mt-1">Tổng: <b>${totalFormatted}$</b></small>` : ""}
+                    </div>
+                </div>`;
+
+                // Col 4: Khách hàng & Giao hàng (location-box style)
+                let colCustomer = `<div class="location-box">`;
+                if (item.customer_name) {
+                    colCustomer += `
+                    <div class="location-place">
+                        <i class="fas fa-user-circle text-primary"></i>
+                        <span class="font-weight-bold">${truncate(item.customer_name, 22)}</span>
+                    </div>`;
+                }
+                if (item.customer_phone) {
+                    colCustomer += `
+                    <div>
+                        <span class="copy-badge btn-copy-text" data-copy="${item.customer_phone}" title="Nhấp để sao chép SĐT">
+                            <i class="fas fa-phone"></i> ${item.customer_phone}
+                            <i class="fas fa-copy ms-1"></i>
+                        </span>
+                    </div>`;
+                }
+                if (item.customer_address) {
+                    colCustomer += `
+                    <div class="time-item mt-1" title="${item.customer_address}">
+                        <i class="fas fa-location-dot text-danger"></i>
+                        <span class="text-truncate" style="max-width: 220px;">${truncate(item.customer_address, 28)}</span>
+                    </div>`;
+                }
+                if (item.payment_method) {
+                    colCustomer += `
+                    <div class="d-flex align-items-center gap-1 mt-1 flex-wrap">
+                        ${paymentLabel(item.payment_method)}
+                        ${paidBadge(item.is_paid, item.payment_method)}
+                    </div>`;
+                }
+                colCustomer += `</div>`;
+
+                // Col 5: Trạng thái (status-container style)
+                const colStatus = `
+                <div class="status-container">
+                    ${item.status == 1 ? `
+                        <span class="status-badge active">
+                            <span class="status-dot"></span> Đã kích hoạt
+                        </span>
+                    ` : `
+                        <span class="status-badge danger">
+                            <span class="status-dot"></span> Bị khóa
+                        </span>
+                    `}
+                    ${item.api ? `
+                        <span class="tag-pill tag-frozen" title="Mã API: ${item.api}">
+                            <i class="fas fa-code"></i> API
+                        </span>
+                    ` : ""}
+                </div>`;
+
+                // Col 6: Lịch sử (time-box style)
+                const colDate = `
+                <div class="time-box">
+                    <div class="time-item" title="Ngày tạo: ${formatDateTime(item.created_at)}">
+                        <i class="fas fa-calendar-plus"></i>
+                        <span>Tạo: ${formatDateTime(item.created_at)}</span>
+                    </div>
+                    <div class="time-item" title="Cập nhật lần cuối: ${formatDateTime(item.updated_at)}">
+                        <i class="fas fa-clock-rotate-left"></i>
+                        <span>Sửa: ${formatDateTime(item.updated_at)}</span>
+                    </div>
+                </div>`;
+
+                // Col 7: Thao tác (action-icon-group style)
+                const toggleBtn = item.status == 1
+                    ? `<a href="/admin/order/change-status-order/${item.id}" class="btn-icon-modern lock" title="Khóa đơn hàng"><i class="fas fa-lock"></i></a>`
+                    : `<a href="/admin/order/change-status-order/${item.id}" class="btn-icon-modern unlock" title="Kích hoạt đơn hàng"><i class="fas fa-lock-open"></i></a>`;
+
+                const colActions = `
+                <div class="action-icon-group justify-content-center">
+                    <a href="/admin/order/${item.id}" class="btn-icon-modern view" title="Xem chi tiết đơn hàng">
+                        <i class="fas fa-eye"></i>
+                    </a>
+                    <a href="/admin/order/${item.id}/edit" class="btn-icon-modern edit" title="Chỉnh sửa đơn hàng">
+                        <i class="fas fa-pen-to-square"></i>
+                    </a>
+                    ${toggleBtn}
+                </div>`;
+
+                dataTable.row.add([
+                    colIndex,
+                    colProduct,
+                    colFinance,
+                    colCustomer,
+                    colStatus,
+                    colDate,
+                    colActions,
+                ]);
+            });
+        }
+        dataTable.draw();
+    }
+
+    // ---------- AJAX load ----------
     function loadListOrders(status, rank) {
         return new Promise((resolve, reject) => {
             $.ajax({
                 url: route_index_order,
                 method: "GET",
-                data: {
-                    status: status,
-                    rank: rank,
-                },
+                data: { status, rank },
                 success: function (response) {
                     if (response.status === 400) {
-                        notification(
-                            "error",
-                            response.message ||
-                                "Có lỗi xảy ra, vui lòng thử lại!",
-                            "Lỗi!"
-                        );
+                        notification("error", response.message || "Có lỗi xảy ra, vui lòng thử lại!", "Lỗi!");
                         return reject(response);
                     }
                     resolve(response);
                 },
                 error: function (xhr) {
-                    const message =
-                        xhr.responseJSON?.message ||
-                        "Có lỗi xảy ra khi tải danh sách đơn hàng, vui lòng thử lại!";
+                    const message = xhr.responseJSON?.message || "Có lỗi xảy ra khi tải danh sách đơn hàng!";
                     notification("error", message, "Lỗi!");
                     reject(xhr);
                 },
@@ -255,48 +372,18 @@ document.addEventListener("DOMContentLoaded", async function () {
         });
     }
 
-    active.addEventListener("click", async function () {
-        if (active.classList.contains("btn-outline-primary")) {
-            spinner.hidden = false;
-            active.classList.remove("btn-outline-primary");
-            active.classList.add("btn-primary");
-            localStorage.setItem("order_index_filter_status", "1");
-            status = localStorage.getItem("order_index_filter_status");
-            await updateListOrders(status, rank);
-            spinner.hidden = true;
-        }
-        if (inactive.classList.contains("btn-danger")) {
-            inactive.classList.remove("btn-danger");
-            inactive.classList.add("btn-outline-danger");
-        }
-    });
-    inactive.addEventListener("click", async function () {
-        if (inactive.classList.contains("btn-outline-danger")) {
-            spinner.hidden = false;
-            inactive.classList.remove("btn-outline-danger");
-            inactive.classList.add("btn-danger");
-            localStorage.setItem("order_index_filter_status", "0");
-            status = localStorage.getItem("order_index_filter_status");
-            await updateListOrders(status, rank);
-            spinner.hidden = true;
-        }
-        if (active.classList.contains("btn-primary")) {
-            active.classList.remove("btn-primary");
-            active.classList.add("btn-outline-primary");
-        }
-    });
-
+    // ---------- Bulk action spinner ----------
     const update_order_rose = document.getElementById("update_order_rose");
     if (update_order_rose) {
-        update_order_rose.addEventListener("click", function () {
-            spinner.hidden = false;
-        });
+        update_order_rose.addEventListener("click", () => { spinner.hidden = false; });
     }
-
     const add_customer_info = document.getElementById("add_customer_info");
     if (add_customer_info) {
-        add_customer_info.addEventListener("click", function () {
-            spinner.hidden = false;
-        });
-    };
+        add_customer_info.addEventListener("click", () => { spinner.hidden = false; });
+    }
+
+    // ---------- Initial load ----------
+    spinner.hidden = false;
+    await updateListOrders(status, rank);
+    spinner.hidden = true;
 });

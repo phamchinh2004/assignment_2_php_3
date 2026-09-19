@@ -42,6 +42,13 @@ class RankController extends Controller
         return redirect()->route('rank.index')->with('success', 'Tạo cấp độ thành công!');
     }
 
+    public function show(Rank $rank)
+    {
+        $rank->loadCount('orders');
+        $users = \App\Models\User::where('rank_id', $rank->id)->latest()->paginate(10);
+        return view('admin.rank.show', compact('rank', 'users'));
+    }
+
     /**
      * Show the form for editing the specified resource.
      */

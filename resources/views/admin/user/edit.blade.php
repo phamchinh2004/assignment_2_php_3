@@ -4,6 +4,7 @@ Chỉnh sửa người dùng
 @endsection
 
 @section('style-libs')
+@vite('resources/css/admin/common-modern.css')
 @vite('resources/css/admin/user/edit.css')
 @endsection
 
@@ -16,9 +17,9 @@ Chỉnh sửa người dùng
 
 @section('content')
 <div class="container-fluid px-4 py-3">
-    <div class="mb-4">
-        <a href="{{route('user.index')}}" class="btn-back">
-            <i class="fas fa-arrow-left"></i> Quay lại
+    <div class="mb-3">
+        <a href="{{route('user.index')}}" class="btn-back-modern">
+            <i class="fas fa-arrow-left"></i> Quay lại danh sách
         </a>
     </div>
 

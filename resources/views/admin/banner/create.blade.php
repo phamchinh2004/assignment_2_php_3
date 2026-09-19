@@ -1,63 +1,87 @@
 @extends('admin.layouts.master')
 @section('title')
-Thêm mới banner
+    Thêm mới banner
 @endsection
 
 @section('style-libs')
-<!-- Custom styles for this page -->
-<link href="{{ asset('theme/admin/vendor/datatables/dataTables.bootstrap4.min.css') }}" rel="stylesheet">
-
-@endsection
-
-@section('script-libs')
-<!-- Page level plugins -->
-<script src="{{ asset('theme/admin/vendor/datatables/jquery.dataTables.min.js') }}"></script>
-<script src="{{ asset('theme/admin/vendor/datatables/dataTables.bootstrap4.min.js') }}"></script>
-@vite('resources/js/admin/banner/create.js')
-<!-- Page level custom scripts -->
-<script src="{{ asset('theme/admin/js/demo/datatables-demo.js') }}"></script>
-<script>
-    window.currentPermissionCode = "quan_ly_banner";
-</script>
+    @vite('resources/css/admin/common-modern.css')
 @endsection
 
 @section('content')
-<!-- Begin Page Content -->
-<div class="mb-2 ml-3">
-    <a href="{{route('banner.index')}}" class="btn btn-outline-dark btn-sm text-decoration-none"><i class="fas fa-arrow-left"></i> Quay lại</a>
-</div>
-<div class="container-fluid">
-    <!-- DataTales Example -->
-    <div class="card shadow mb-4 section_1">
-        <div class="card-header py-3 d-flex justify-content-between align-items-center">
-            <div class="d-flex flex-column">
-                <h6 class="m-0 font-weight-bold text-primary" id="tittle">Tạo banner</h6>
-            </div>
+<div class="container-fluid px-4 pb-5">
+
+    {{-- Back Link --}}
+    <a href="{{ route('banner.index') }}" class="btn-back-modern">
+        <i class="fas fa-arrow-left"></i> Quay lại danh sách banner
+    </a>
+
+    {{-- Page Header --}}
+    <div class="page-header-wrapper d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="page-title-main">
+                <span class="page-title-icon info"><i class="fas fa-panorama"></i></span>
+                Tạo bộ banner mới
+            </h1>
+            <p class="page-subtitle">Thêm tên bộ sưu tập và chọn các hình ảnh slide trình chiếu</p>
         </div>
     </div>
-    <section class="container-fluid">
-        <form action="{{ route('banner.store') }}" method="post" enctype="multipart/form-data" id="form">
+
+    {{-- Form Card --}}
+    <div class="form-card-modern">
+        <form action="{{ route('banner.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
-            @method('POST')
-            <div class="mt-2 fw-bold">
-                <label for="">Tên banner</label>
-                <input type="text" name="name" value="{{ old('name','') }}" class="form-control" placeholder="Nhập tên banner (VD: 30/4-1/5)">
-                @error('name')
-                <small class="text-danger">{{ $message }}</small>
-                @enderror
+
+            <div class="form-body-modern">
+                <div class="row">
+                    <div class="col-12 col-md-8 mx-auto">
+                        <div class="form-section-modern">
+                            <div class="form-section-title">
+                                <i class="fas fa-tag"></i> Tên bộ banner
+                            </div>
+
+                            <div class="form-group-modern">
+                                <label class="form-label-modern" for="name">
+                                    Tên hiển thị / Mô tả <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" name="name" id="name"
+                                       value="{{ old('name', '') }}"
+                                       class="form-control-modern @error('name') is-invalid @enderror"
+                                       placeholder="Ví dụ: Banner trang chủ mùa hè, Khuyến mãi Tết..." required>
+                                @error('name')
+                                    <span class="form-error-modern">{{ $message }}</span>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <div class="form-section-modern">
+                            <div class="form-section-title">
+                                <i class="fas fa-images"></i> Tải lên hình ảnh slide
+                            </div>
+
+                            <div class="image-upload-box">
+                                <i class="fas fa-cloud-arrow-up text-muted mb-2" style="font-size: 2.2rem;"></i>
+                                <p class="mb-1 font-weight-bold" style="font-size: 0.95rem;">Chọn các hình ảnh cho slide</p>
+                                <p class="text-muted mb-3" style="font-size: 0.78125rem;">Hỗ trợ chọn cùng lúc nhiều ảnh (JPG, PNG, WEBP, GIF)</p>
+                                <input type="file" name="images[]" id="images" accept="image/*" multiple class="form-control-file d-inline-block" style="max-width: 320px;" required>
+                                @error('images')
+                                    <span class="form-error-modern">{{ $message }}</span>
+                                @enderror
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="mt-2 fw-bold">
-                <label for="">Hình ảnh (chọn được nhiều)</label>
-                <input type="file" accept="image/*" name="images[]" class="form-control" multiple>
-                @error('images')
-                <small class="text-danger">{{ $message }}</small>
-                @enderror
-            </div>
-            <div class="d-flex mt-3 justify-content-center">
-                <button class="btn btn-success" type="button" id="btn_submit">Xong</button>
+
+            <div class="form-actions-bar">
+                <a href="{{ route('banner.index') }}" class="btn-cancel-modern">
+                    <i class="fas fa-times"></i> Hủy bỏ
+                </a>
+                <button type="submit" class="btn-submit-modern">
+                    <i class="fas fa-check"></i> Tạo banner
+                </button>
             </div>
         </form>
-    </section>
-</div>
+    </div>
 
+</div>
 @endsection

@@ -45,6 +45,15 @@ class ManagerSettingController extends Controller
         return redirect()->route('manager_setting.index')->with('success', 'Tạo mới chức năng thành công!');
     }
 
+    public function show(Manager_setting $manager_setting)
+    {
+        $users_with_permission = \App\Models\User_manager_setting::with('user')
+            ->where('manager_setting_id', $manager_setting->id)
+            ->where('is_active', true)
+            ->get();
+        return view('admin.manager_settings.show', compact('manager_setting', 'users_with_permission'));
+    }
+
     /**
      * Show the form for editing the specified resource.
      */

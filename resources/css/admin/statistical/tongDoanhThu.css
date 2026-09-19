@@ -1,224 +1,218 @@
-/* Custom CSS cho trang thống kê */
+/* ==========================================================================
+   STATISTICAL - TỔNG DOANH THU STYLESHEET
+   Sử dụng tokens & design system từ common-modern.css
+   ========================================================================== */
 
-.statistical-container {
-    background: #f8f9fc;
-    min-height: 100vh;
+/* Filter Card Controls */
+.filter-card-modern {
+    background: #ffffff;
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: var(--radius-lg, 16px);
+    padding: 1rem 1.25rem;
+    box-shadow: var(--shadow-card, 0 4px 6px -1px rgba(0, 0, 0, 0.05));
 }
 
-/* Card animations */
-.card {
-    transition: all 0.3s ease;
+.quick-preset-group {
+    background: #f1f5f9;
+    padding: 4px;
+    border-radius: var(--radius-md, 12px);
+}
+
+.preset-btn {
     border: none;
-    border-radius: 0.5rem;
-}
-
-.card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
-}
-
-/* Loading spinner */
-.loading-spinner {
-    display: inline-block;
-    width: 20px;
-    height: 20px;
-    border: 3px solid #f3f3f3;
-    border-top: 3px solid #3498db;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    0% {
-        transform: rotate(0deg);
-    }
-
-    100% {
-        transform: rotate(360deg);
-    }
-}
-
-/* Chart containers */
-.chart-area {
-    position: relative;
-    height: 400px;
-    width: 100%;
-}
-
-.chart-pie {
-    position: relative;
-    height: 300px;
-    width: 100%;
-}
-
-.chart-bar {
-    position: relative;
-    height: 400px;
-    width: 100%;
-}
-
-/* Stats cards */
-.border-left-primary {
-    border-left: 0.25rem solid #4e73df !important;
-}
-
-.border-left-success {
-    border-left: 0.25rem solid #1cc88a !important;
-}
-
-.border-left-warning {
-    border-left: 0.25rem solid #f6c23e !important;
-}
-
-.border-left-info {
-    border-left: 0.25rem solid #36b9cc !important;
-}
-
-/* Table responsive */
-.table-responsive {
-    border-radius: 0.5rem;
-}
-
-.table thead th {
-    background-color: #f8f9fc;
-    border-bottom: 2px solid #e3e6f0;
+    background: transparent;
+    padding: 0.5rem 0.85rem;
+    font-size: 0.8125rem;
     font-weight: 600;
-    text-transform: uppercase;
-    font-size: 0.8rem;
-    color: #5a5c69;
+    color: var(--text-muted, #64748b);
+    border-radius: var(--radius-sm, 8px);
+    transition: all 0.2s ease;
+    cursor: pointer;
+    white-space: nowrap;
 }
 
-.table tbody tr {
-    transition: all 0.3s ease;
+.preset-btn:hover {
+    color: var(--text-main, #0f172a);
+    background: rgba(255, 255, 255, 0.6);
 }
 
-.table tbody tr:hover {
-    background-color: #f8f9fc;
+.preset-btn.active {
+    background: #ffffff;
+    color: #4f46e5;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
-/* Badges */
-.badge {
+.input-date-wrapper {
+    display: flex;
+    align-items: center;
+    background: #ffffff;
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: var(--radius-md, 12px);
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+
+.input-date-wrapper:focus-within {
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.input-date-label {
+    background: #f8fafc;
+    color: var(--text-muted, #64748b);
+    padding: 0.45rem 0.65rem;
     font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    border-right: 1px solid var(--border-color, #e2e8f0);
+}
+
+.form-control-modern {
+    border: none !important;
+    padding: 0.45rem 0.75rem;
+    font-size: 0.8125rem;
+    color: var(--text-main, #0f172a);
+    background: transparent;
+    outline: none !important;
+}
+
+.btn-filter-apply {
+    background: #4f46e5;
+    color: #ffffff;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-md, 12px);
+    font-size: 0.8125rem;
     font-weight: 600;
-    padding: 0.375rem 0.75rem;
-    border-radius: 0.25rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
 }
 
-.badge-success {
-    background-color: #1cc88a;
-    color: white;
+.btn-filter-apply:hover {
+    background: #4338ca;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
 }
 
-.badge-warning {
-    background-color: #f6c23e;
-    color: white;
+.btn-light-modern {
+    background: #ffffff;
+    border: 1px solid var(--border-color, #e2e8f0);
+    color: var(--text-main, #0f172a);
+    padding: 0.55rem 1rem;
+    border-radius: var(--radius-md, 12px);
+    font-size: 0.875rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
 }
 
-.badge-danger {
-    background-color: #e74a3b;
-    color: white;
+.btn-light-modern:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+    transform: translateY(-1px);
 }
 
-.badge-info {
-    background-color: #36b9cc;
-    color: white;
+/* Trend Badges */
+.trend-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.15rem 0.45rem;
+    border-radius: var(--radius-sm, 8px);
 }
 
-/* Buttons */
-.btn-primary {
-    background-color: #4e73df;
-    border-color: #4e73df;
+.trend-badge.positive {
+    background: rgba(16, 185, 129, 0.12);
+    color: #059669;
 }
 
-.btn-primary:hover {
-    background-color: #375a7f;
-    border-color: #375a7f;
+.trend-badge.negative {
+    background: rgba(239, 68, 68, 0.12);
+    color: #dc2626;
 }
 
-/* Select dropdown */
-.form-control {
-    border-radius: 0.5rem;
-    border: 1px solid #d1d3e2;
-    padding: 0.375rem 0.75rem;
+.trend-badge.neutral {
+    background: #f1f5f9;
+    color: #64748b;
 }
 
-.form-control:focus {
-    border-color: #4e73df;
-    box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+.trend-label {
+    font-size: 0.75rem;
+    color: var(--text-muted, #64748b);
+    font-weight: 500;
+}
+
+.stat-card-modern.dark::before {
+    background: var(--dark-gradient, linear-gradient(135deg, #334155 0%, #1e293b 100%));
+}
+
+.stat-icon-wrapper.dark {
+    background: rgba(51, 65, 85, 0.1);
+    color: #334155;
+}
+
+.stat-number {
+    font-variant-numeric: tabular-nums;
+}
+
+/* Status Item in Summary List */
+.status-stat-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius-sm, 8px);
+    background: #f8fafc;
+    margin-bottom: 0.4rem;
+    font-size: 0.8125rem;
+}
+
+.status-stat-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 0.5rem;
+}
+
+.badge-light-modern {
+    background: #f1f5f9;
+    color: #475569;
+    font-weight: 600;
+    font-size: 0.75rem;
+    padding: 0.35rem 0.65rem;
+    border-radius: var(--radius-full, 9999px);
+}
+
+/* User Avatar Bubble */
+.user-avatar-bubble {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: #eef2ff;
+    color: #4f46e5;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.8125rem;
+    flex-shrink: 0;
 }
 
 /* Responsive adjustments */
-@media (max-width: 768px) {
-
-    .chart-area,
-    .chart-bar {
-        height: 300px;
+@media (max-width: 991px) {
+    .custom-range-inputs {
+        width: 100%;
     }
-
-    .chart-pie {
-        height: 250px;
+    .custom-range-inputs .input-date-wrapper {
+        flex: 1;
     }
-
-    .card-body {
-        padding: 1rem;
-    }
-
-    .table-responsive {
-        font-size: 0.875rem;
-    }
-}
-
-/* Page heading */
-.page-heading {
-    margin-bottom: 2rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid #e3e6f0;
-}
-
-/* Custom scrollbar */
-.table-responsive::-webkit-scrollbar {
-    height: 8px;
-}
-
-.table-responsive::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 10px;
-}
-
-.table-responsive::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
-    border-radius: 10px;
-}
-
-.table-responsive::-webkit-scrollbar-thumb:hover {
-    background: #a8a8a8;
-}
-
-/* Animation cho số liệu */
-.counter-animation {
-    animation: fadeInUp 0.8s ease-out;
-}
-
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* Tooltip custom */
-.custom-tooltip {
-    background: rgba(0, 0, 0, 0.8);
-    color: white;
-    padding: 8px 12px;
-    border-radius: 4px;
-    font-size: 12px;
-    pointer-events: none;
-    position: absolute;
-    z-index: 1000;
 }

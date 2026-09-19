@@ -54,6 +54,11 @@ class LanguageController extends Controller
         }
     }
 
+    public function show(Language $language)
+    {
+        return view('admin.language.show', compact('language'));
+    }
+
     /**
      * Show the form for editing the specified resource.
      */

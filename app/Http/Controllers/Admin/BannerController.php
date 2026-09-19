@@ -100,6 +100,12 @@ class BannerController extends Controller
             return redirect()->route('banner.index')->with('error', 'Không tìm thấy banner cần thay đổi trạng thái!');
         }
     }
+    public function show(Banner $banner)
+    {
+        $banner->load('banner_images');
+        return view('admin.banner.show', compact('banner'));
+    }
+
     /**
      * Show the form for editing the specified resource.
      */

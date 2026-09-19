@@ -1,72 +1,104 @@
 @extends('admin.layouts.master')
 @section('title')
-Thêm mới section
+    Thêm mới Section
 @endsection
 
 @section('style-libs')
-<!-- Custom styles for this page -->
-<link href="{{ asset('theme/admin/vendor/datatables/dataTables.bootstrap4.min.css') }}" rel="stylesheet">
+    @vite('resources/css/admin/common-modern.css')
+    <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
 @endsection
 
 @section('script-libs')
-<!-- Page level plugins -->
-<script src="{{ asset('theme/admin/vendor/datatables/jquery.dataTables.min.js') }}"></script>
-<script src="{{ asset('theme/admin/vendor/datatables/dataTables.bootstrap4.min.js') }}"></script>
-@vite('resources/js/admin/section/create.js')
-<!-- Page level custom scripts -->
-<script src="{{ asset('theme/admin/js/demo/datatables-demo.js') }}"></script>
-<script>
-    window.currentPermissionCode = "quan_ly_section";
-</script>
+    @vite('resources/js/admin/section/create.js')
+    <script>
+        window.currentPermissionCode = "quan_ly_thong_tin_trang_web";
+    </script>
 @endsection
 
 @section('content')
-<!-- Begin Page Content -->
-<div class="mb-2 ml-3">
-    <a href="{{route('section.index')}}" class="btn btn-outline-dark btn-sm text-decoration-none"><i class="fas fa-arrow-left"></i> Quay lại</a>
-</div>
-<div class="container-fluid">
-    <!-- DataTales Example -->
-    <div class="card shadow mb-4 section_1">
-        <div class="card-header py-3 d-flex justify-content-between align-items-center">
-            <div class="d-flex flex-column">
-                <h6 class="m-0 font-weight-bold text-primary" id="tittle">Tạo section</h6>
-            </div>
+<div class="container-fluid px-4 pb-5">
+
+    {{-- Back Link --}}
+    <a href="{{ route('section.index') }}" class="btn-back-modern">
+        <i class="fas fa-arrow-left"></i> Quay lại danh sách section
+    </a>
+
+    {{-- Page Header --}}
+    <div class="page-header-wrapper d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="page-title-main">
+                <span class="page-title-icon primary"><i class="fas fa-file-pen"></i></span>
+                Tạo khối Section mới
+            </h1>
+            <p class="page-subtitle">Nhập tiêu đề và soạn thảo nội dung theo từng ngôn ngữ hỗ trợ</p>
         </div>
     </div>
-    <section class="container-fluid">
-        <form action="{{ route('section.store') }}" method="post" enctype="multipart/form-data" id="form">
+
+    {{-- Form Card --}}
+    <div class="form-card-modern">
+        <form action="{{ route('section.store') }}" method="POST" id="form">
             @csrf
             @method('POST')
-            <div class="mt-2 fw-bold">
-                <label for="">Tên section</label>
-                <input type="text" name="name" value="{{ old('name','') }}" class="form-control" placeholder="Nhập tên section (VD: 30/4-1/5)">
-                @error('name')
-                <small class="text-danger">{{ $message }}</small>
-                @enderror
-            </div>
-            @if (!empty($languages))
-            <label class="mt-2 fw-bold text-secondary">Nhập các phiên bản ngôn ngữ</label>
-            @foreach ($languages as $language)
-            <div class="mt-2 fw-bold">
-                <label for="">
-                    <div class="d-flex flex-row align-items-center">
-                        <span class="mr-2">{{$language->name}}</span>
-                        <img width="20px" src="{{ Storage::url($language->image) }}" alt="">
+
+            <div class="form-body-modern">
+                <div class="row">
+                    <div class="col-12 col-md-10 mx-auto">
+                        <div class="form-section-modern">
+                            <div class="form-section-title">
+                                <i class="fas fa-heading"></i> Thông tin cơ bản
+                            </div>
+
+                            <div class="form-group-modern">
+                                <label class="form-label-modern" for="name">
+                                    Tên Section <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" name="name" id="name"
+                                       value="{{ old('name', '') }}"
+                                       class="form-control-modern @error('name') is-invalid @enderror"
+                                       placeholder="Ví dụ: Điều khoản dịch vụ, Giới thiệu công ty..." required>
+                                @error('name')
+                                    <span class="form-error-modern">{{ $message }}</span>
+                                @enderror
+                                <span class="form-hint-modern">Mã định danh (code) sẽ được hệ thống tự động sinh từ tên này.</span>
+                            </div>
+                        </div>
+
+                        @if (!empty($languages))
+                            <div class="form-section-modern">
+                                <div class="form-section-title">
+                                    <i class="fas fa-language"></i> Nội dung theo từng ngôn ngữ
+                                </div>
+
+                                @foreach ($languages as $language)
+                                    <div class="form-group-modern mb-4">
+                                        <label class="form-label-modern d-flex align-items-center gap-2">
+                                            @if($language->image)
+                                                <img width="20" height="14" src="{{ Storage::url($language->image) }}" alt="{{ $language->name }}" style="border-radius: 2px; object-fit: cover;">
+                                            @endif
+                                            <span>Nội dung ({{ $language->name }} - {{ strtoupper($language->code) }})</span>
+                                        </label>
+                                        <textarea name="content[{{ $language->id }}]" id="sectionContent" rows="6" class="form-control-modern"></textarea>
+                                        @error('content.' . $language->id)
+                                            <span class="form-error-modern">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
                     </div>
-                </label>
-                <textarea name="content[{{ $language->id }}]" id="sectionContent"></textarea>
-                @error('content')
-                <small class="text-danger">{{ $message }}</small>
-                @enderror
+                </div>
             </div>
-            @endforeach
-            @endif
-            <div class="d-flex mt-3 justify-content-center">
-                <button class="btn btn-success" type="button" id="btn_submit">Xong</button>
+
+            <div class="form-actions-bar">
+                <a href="{{ route('section.index') }}" class="btn-cancel-modern">
+                    <i class="fas fa-times"></i> Hủy bỏ
+                </a>
+                <button type="button" class="btn-submit-modern" id="btn_submit">
+                    <i class="fas fa-check"></i> Lưu khối Section
+                </button>
             </div>
         </form>
-    </section>
-</div>
+    </div>
 
+</div>
 @endsection

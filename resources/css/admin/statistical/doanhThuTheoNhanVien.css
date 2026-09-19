@@ -1,0 +1,246 @@
+/* ==========================================================================
+   STATISTICAL - DOANH THU THEO NHÂN VIÊN STYLESHEET
+   ========================================================================== */
+
+.filter-card-modern {
+    background: #ffffff;
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: var(--radius-lg, 16px);
+    padding: 1.25rem;
+    box-shadow: var(--shadow-card, 0 4px 6px -1px rgba(0, 0, 0, 0.05));
+}
+
+.quick-preset-group {
+    background: #f1f5f9;
+    padding: 4px;
+    border-radius: var(--radius-md, 12px);
+}
+
+.preset-btn {
+    border: none;
+    background: transparent;
+    padding: 0.45rem 0.85rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--text-muted, #64748b);
+    border-radius: var(--radius-sm, 8px);
+    transition: all 0.2s ease;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.preset-btn:hover {
+    color: var(--text-main, #0f172a);
+    background: rgba(255, 255, 255, 0.6);
+}
+
+.preset-btn.active {
+    background: #ffffff;
+    color: #0d9488;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.form-label-modern {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--text-muted, #64748b);
+    margin-bottom: 0.35rem;
+    display: block;
+}
+
+.input-date-wrapper {
+    display: flex;
+    align-items: center;
+    background: #ffffff;
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: var(--radius-md, 12px);
+    overflow: hidden;
+    padding: 0 0.5rem;
+}
+
+.input-date-wrapper:focus-within {
+    border-color: #0d9488;
+    box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+}
+
+.form-control-modern {
+    border: none !important;
+    padding: 0.55rem 0.25rem;
+    font-size: 0.875rem;
+    color: var(--text-main, #0f172a);
+    background: transparent;
+    outline: none !important;
+}
+
+.form-select-modern {
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: var(--radius-md, 12px);
+    padding: 0.55rem 0.85rem;
+    font-size: 0.875rem;
+    color: var(--text-main, #0f172a);
+    background: #ffffff;
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+.form-select-modern:focus {
+    border-color: #0d9488;
+    box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+}
+
+.btn-filter-apply {
+    background: #0d9488;
+    color: #ffffff;
+    border: none;
+    padding: 0.6rem 1rem;
+    border-radius: var(--radius-md, 12px);
+    font-size: 0.875rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-filter-apply:hover {
+    background: #0f766e;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(13, 148, 136, 0.25);
+}
+
+.btn-light-modern {
+    background: #ffffff;
+    border: 1px solid var(--border-color, #e2e8f0);
+    color: var(--text-main, #0f172a);
+    padding: 0.55rem 1rem;
+    border-radius: var(--radius-md, 12px);
+    font-size: 0.875rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-light-modern:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+    transform: translateY(-1px);
+}
+
+/* Ranking Medals */
+.rank-badge {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 0.8125rem;
+    margin: 0 auto;
+}
+
+.rank-1 {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: #ffffff;
+    box-shadow: 0 3px 8px rgba(245, 158, 11, 0.4);
+}
+
+.rank-2 {
+    background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%);
+    color: #ffffff;
+    box-shadow: 0 3px 8px rgba(148, 163, 184, 0.4);
+}
+
+.rank-3 {
+    background: linear-gradient(135deg, #b45309 0%, #78350f 100%);
+    color: #ffffff;
+    box-shadow: 0 3px 8px rgba(180, 83, 9, 0.4);
+}
+
+.rank-other {
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+/* User Avatar Bubble */
+.user-avatar-bubble {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: #ccfbf1;
+    color: #0f766e;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.8125rem;
+    flex-shrink: 0;
+}
+
+/* Progress Share Bar */
+.share-bar-container {
+    width: 100%;
+}
+
+.share-bar-track {
+    height: 6px;
+    background: #f1f5f9;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 4px;
+}
+
+.share-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #0d9488 0%, #14b8a6 100%);
+    border-radius: 3px;
+}
+
+.share-bar-text {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #0d9488;
+}
+
+.btn-detail-sm {
+    padding: 0.35rem 0.75rem;
+    border-radius: var(--radius-sm, 8px);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    background: #f0fdfa;
+    color: #0d9488;
+    border: 1px solid #ccfbf1;
+    transition: all 0.2s ease;
+}
+
+.btn-detail-sm:hover {
+    background: #0d9488;
+    color: #ffffff;
+}
+
+/* Modal stat pill */
+.modal-stat-pill {
+    background: #f8fafc;
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: var(--radius-md, 12px);
+    padding: 1rem;
+    text-align: center;
+}
+
+.modal-stat-pill .label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted, #64748b);
+    text-transform: uppercase;
+}
+
+.modal-stat-pill .value {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--text-main, #0f172a);
+    margin-top: 0.25rem;
+}

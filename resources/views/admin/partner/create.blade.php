@@ -1,69 +1,99 @@
 @extends('admin.layouts.master')
 @section('title')
-Thêm mới partner
+    Thêm mới đối tác
 @endsection
 
 @section('style-libs')
-<!-- Custom styles for this page -->
-<link href="{{ asset('theme/admin/vendor/datatables/dataTables.bootstrap4.min.css') }}" rel="stylesheet">
-@endsection
-
-@section('script-libs')
-<!-- Page level plugins -->
-<script src="{{ asset('theme/admin/vendor/datatables/jquery.dataTables.min.js') }}"></script>
-<script src="{{ asset('theme/admin/vendor/datatables/dataTables.bootstrap4.min.js') }}"></script>
-@vite('resources/js/admin/partner/create.js')
-<!-- Page level custom scripts -->
-<script src="{{ asset('theme/admin/js/demo/datatables-demo.js') }}"></script>
-<script>
-    window.currentPermissionCode = "quan_ly_partner";
-</script>
+    @vite('resources/css/admin/common-modern.css')
 @endsection
 
 @section('content')
-<!-- Begin Page Content -->
-<div class="mb-2 ml-3">
-    <a href="{{route('partner.index')}}" class="btn btn-outline-dark btn-sm text-decoration-none"><i class="fas fa-arrow-left"></i> Quay lại</a>
-</div>
-<div class="container-fluid">
-    <!-- DataTales Example -->
-    <div class="card shadow mb-4 section_1">
-        <div class="card-header py-3 d-flex justify-content-between align-items-center">
-            <div class="d-flex flex-column">
-                <h6 class="m-0 font-weight-bold text-primary" id="tittle">Tạo partner</h6>
-            </div>
+<div class="container-fluid px-4 pb-5">
+
+    {{-- Back Link --}}
+    <a href="{{ route('partner.index') }}" class="btn-back-modern">
+        <i class="fas fa-arrow-left"></i> Quay lại danh sách đối tác
+    </a>
+
+    {{-- Page Header --}}
+    <div class="page-header-wrapper d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="page-title-main">
+                <span class="page-title-icon success"><i class="fas fa-handshake"></i></span>
+                Thêm mới đối tác
+            </h1>
+            <p class="page-subtitle">Thêm thông tin thương hiệu đối tác liên kết vào hệ thống</p>
         </div>
     </div>
-    <partner class="container-fluid">
-        <form action="{{ route('partner.store') }}" method="post" enctype="multipart/form-data" id="form">
+
+    {{-- Form Card --}}
+    <div class="form-card-modern">
+        <form action="{{ route('partner.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
-            @method('POST')
-            <div class="fw-bold">
-                <label for="">Tên đối tác</label>
-                <input type="text" name="name" value="{{ old('name','') }}" class="form-control" placeholder="Nhập tên partner (VD: 30/4-1/5)">
-                @error('name')
-                <small class="text-danger">{{ $message }}</small>
-                @enderror
+
+            <div class="form-body-modern">
+                <div class="row">
+                    <div class="col-12 col-md-8 mx-auto">
+                        <div class="form-section-modern">
+                            <div class="form-section-title">
+                                <i class="fas fa-store"></i> Thông tin đối tác
+                            </div>
+
+                            <div class="form-group-modern">
+                                <label class="form-label-modern" for="name">
+                                    Tên đối tác / Thương hiệu <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" name="name" id="name"
+                                       value="{{ old('name', '') }}"
+                                       class="form-control-modern @error('name') is-invalid @enderror"
+                                       placeholder="Ví dụ: Shopee, Lazada, Tiki, Amazon..." required>
+                                @error('name')
+                                    <span class="form-error-modern">{{ $message }}</span>
+                                @enderror
+                            </div>
+
+                            <div class="form-group-modern">
+                                <label class="form-label-modern" for="link">
+                                    Đường dẫn liên kết (Website / URL)
+                                </label>
+                                <input type="url" name="link" id="link"
+                                       value="{{ old('link', '') }}"
+                                       class="form-control-modern @error('link') is-invalid @enderror"
+                                       placeholder="https://example.com">
+                                @error('link')
+                                    <span class="form-error-modern">{{ $message }}</span>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <div class="form-section-modern">
+                            <div class="form-section-title">
+                                <i class="fas fa-image"></i> Logo thương hiệu
+                            </div>
+
+                            <div class="image-upload-box">
+                                <i class="fas fa-cloud-arrow-up text-muted mb-2" style="font-size: 2rem;"></i>
+                                <p class="mb-1 font-weight-bold" style="font-size: 0.9rem;">Chọn ảnh logo đối tác</p>
+                                <input type="file" name="image" id="image" accept="image/*" class="form-control-file d-inline-block" style="max-width: 300px;">
+                                @error('image')
+                                    <span class="form-error-modern">{{ $message }}</span>
+                                @enderror
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="mt-2 fw-bold">
-                <label for="">Hình ảnh</label>
-                <input type="file" accept="image/*" name="image" class="form-control">
-                @error('image')
-                <small class="text-danger">{{ $message }}</small>
-                @enderror
-            </div>
-            <div class="mt-2 fw-bold">
-                <label for="">Đường dẫn tới trang web</label>
-                <input type="text" name="link" value="{{ old('link','') }}" class="form-control" placeholder="Nhập đường dẫn cho đối tác VD: https://www.facebook.com/">
-                @error('link')
-                <small class="text-danger">{{ $message }}</small>
-                @enderror
-            </div>
-            <div class="d-flex mt-3 justify-content-center">
-                <button class="btn btn-success" type="button" id="btn_submit">Xong</button>
+
+            <div class="form-actions-bar">
+                <a href="{{ route('partner.index') }}" class="btn-cancel-modern">
+                    <i class="fas fa-times"></i> Hủy bỏ
+                </a>
+                <button type="submit" class="btn-submit-modern">
+                    <i class="fas fa-check"></i> Lưu đối tác
+                </button>
             </div>
         </form>
-    </partner>
-</div>
+    </div>
 
+</div>
 @endsection

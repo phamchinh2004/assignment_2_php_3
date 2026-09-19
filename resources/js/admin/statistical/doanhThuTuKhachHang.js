@@ -1,161 +1,303 @@
-let revenueChart, topCustomersChart, revenueDistributionChart;
+/**
+ * Statistical Dashboard - Doanh thu từ khách hàng
+ * Customer spend analytics, VIP ranking & flow distribution
+ */
+
+let revenueChart = null;
+let topCustomersChart = null;
+let revenueDistributionChart = null;
+let customerTable = null;
 
 $(document).ready(function () {
-    // Khởi tạo DataTable
-    $('#customerRevenueTable').DataTable({
-        "language": {
-            "url": "/js/datatables/vi.json"
-        },
-        "pageLength": 25,
-        "order": [[4, "desc"]]
-    });
+    // Khởi tạo DataTable ban đầu
+    initDataTable();
 
-    // Load dữ liệu ban đầu
+    // Setup event handlers
+    setupEventListeners();
+
+    // Load dữ liệu
     loadData();
-
-    // Xử lý sự kiện lọc
-    $('#btnFilter').click(function () {
-        loadData();
-    });
-
-    // Xử lý thay đổi loại thống kê
-    $('#filterType').change(function () {
-        loadData();
-    });
 });
 
-function loadData() {
-    showLoading();
+function initDataTable() {
+    if ($.fn.DataTable.isDataTable('#customerRevenueTable')) {
+        $('#customerRevenueTable').DataTable().destroy();
+    }
 
+    customerTable = $('#customerRevenueTable').DataTable({
+        pageLength: 10,
+        order: [[4, "desc"]], // Sắp xếp theo tổng nạp giảm dần
+        language: {
+            emptyTable: "Không có dữ liệu khách hàng trong khoảng thời gian này",
+            info: "Hiển thị _START_ đến _END_ trong tổng số _TOTAL_ khách hàng",
+            infoEmpty: "Hiển thị 0 đến 0 trong 0 khách hàng",
+            infoFiltered: "(lọc từ _MAX_ khách hàng)",
+            lengthMenu: "Hiển thị _MENU_ dòng",
+            search: "Tìm kiếm khách:",
+            zeroRecords: "Không tìm thấy khách hàng phù hợp",
+            paginate: {
+                first: "Đầu",
+                last: "Cuối",
+                next: "Sau",
+                previous: "Trước"
+            }
+        },
+        columnDefs: [
+            { orderable: false, targets: [0] }
+        ]
+    });
+}
+
+function setupEventListeners() {
+    // Quick Presets
+    $('.preset-btn').on('click', function () {
+        $('.preset-btn').removeClass('active');
+        $(this).addClass('active');
+
+        const preset = $(this).data('preset');
+        const today = new Date();
+        let from = new Date();
+        let to = new Date();
+        let label = '';
+
+        if (preset === 'today') {
+            from = today;
+            to = today;
+            label = 'Hôm nay';
+            $('#filterType').val('daily');
+        } else if (preset === '7_days') {
+            from.setDate(today.getDate() - 6);
+            to = today;
+            label = '7 ngày qua';
+            $('#filterType').val('daily');
+        } else if (preset === 'this_month') {
+            from = new Date(today.getFullYear(), today.getMonth(), 1);
+            to = today;
+            label = 'Tháng này';
+            $('#filterType').val('daily');
+        } else if (preset === 'last_month') {
+            from = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+            to = new Date(today.getFullYear(), today.getMonth(), 0);
+            label = 'Tháng trước';
+            $('#filterType').val('daily');
+        } else if (preset === 'year') {
+            from = new Date(today.getFullYear(), 0, 1);
+            to = today;
+            label = 'Năm nay';
+            $('#filterType').val('monthly');
+        }
+
+        $('#startDate').val(formatDateInput(from));
+        $('#endDate').val(formatDateInput(to));
+        $('#filterStatusLabel').text(`Thống kê theo: ${label}`);
+
+        loadData();
+    });
+
+    // Button Filter
+    $('#btnFilter').on('click', function () {
+        $('.preset-btn').removeClass('active');
+        const start = $('#startDate').val();
+        const end = $('#endDate').val();
+        if (start && end && new Date(start) > new Date(end)) {
+            alert('Từ ngày không được lớn hơn đến ngày!');
+            return;
+        }
+        $('#filterStatusLabel').text(`Tùy chỉnh: ${start} đến ${end}`);
+        loadData();
+    });
+
+    // Button Refresh
+    $('#btnRefresh').on('click', function () {
+        loadData();
+    });
+
+    // Change filter type (daily, monthly, yearly)
+    $('#filterType').on('change', function () {
+        loadData();
+    });
+}
+
+function formatDateInput(date) {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+}
+
+function loadData() {
     const params = {
         type: $('#filterType').val(),
         start_date: $('#startDate').val(),
         end_date: $('#endDate').val()
     };
 
-    // Load tổng quan
+    $('#chartTimeBadge').text(`${params.start_date} đến ${params.end_date}`);
+
+    // 1. Tổng quan KPI
     $.ajax({
         url: '/api/revenue-overview',
         method: 'GET',
         data: params,
         success: function (response) {
-            updateOverview(response.data);
+            if (response.success && response.data) {
+                updateOverview(response.data);
+            }
         },
         error: function (xhr) {
             console.error('Error loading overview:', xhr);
-            showError('Không thể tải dữ liệu tổng quan');
         }
     });
 
-    // Load biểu đồ doanh thu theo thời gian
+    // 2. Biểu đồ doanh thu theo thời gian
     $.ajax({
         url: '/api/revenue-chart',
         method: 'GET',
         data: params,
         success: function (response) {
-            updateRevenueChart(response.data);
+            if (response.success && response.data) {
+                updateRevenueChart(response.data);
+            }
         },
         error: function (xhr) {
             console.error('Error loading revenue chart:', xhr);
-            showError('Không thể tải biểu đồ doanh thu');
         }
     });
 
-    // Load top khách hàng
+    // 3. Top khách hàng
     $.ajax({
         url: '/api/top-customers',
         method: 'GET',
         data: params,
         success: function (response) {
-            updateTopCustomersChart(response.data);
+            if (response.success && response.data) {
+                updateTopCustomersChart(response.data);
+            }
         },
         error: function (xhr) {
             console.error('Error loading top customers:', xhr);
-            showError('Không thể tải top khách hàng');
         }
     });
 
-    // Load phân bố doanh thu
+    // 4. Phân bổ doanh thu
     $.ajax({
         url: '/api/revenue-distribution',
         method: 'GET',
         data: params,
         success: function (response) {
-            updateRevenueDistributionChart(response.data);
+            if (response.success && response.data) {
+                updateRevenueDistributionChart(response.data);
+            }
         },
         error: function (xhr) {
             console.error('Error loading revenue distribution:', xhr);
-            showError('Không thể tải phân bố doanh thu');
         }
     });
 
-    // Load bảng chi tiết
+    // 5. Bảng chi tiết
     $.ajax({
         url: '/api/customer-revenue-detail',
         method: 'GET',
         data: params,
         success: function (response) {
-            console.log(response.data);            
-            updateCustomerTable(response.data);
+            if (response.success && response.data) {
+                updateCustomerTable(response.data);
+            }
         },
         error: function (xhr) {
             console.error('Error loading customer details:', xhr);
-            showError('Không thể tải chi tiết khách hàng');
-        },
-        complete: function () {
-            hideLoading();
         }
     });
 }
 
 function updateOverview(data) {
-    $('#totalRevenue').text(format_currency(data.total_revenue));
-    $('#totalTransactions').text(data.total_transactions.toLocaleString());
-    $('#totalCustomers').text(data.total_customers.toLocaleString());
-    $('#avgTransaction').text(format_currency(data.avg_transaction));
+    $('#totalRevenue').text(format_currency(data.total_revenue || 0));
+    renderTrendBadge('#revTrendBadge', data.revenue_growth);
+
+    $('#totalTransactions').text(new Intl.NumberFormat('vi-VN').format(data.total_transactions || 0));
+
+    $('#totalCustomers').text(new Intl.NumberFormat('vi-VN').format(data.total_customers || 0));
+    renderTrendBadge('#custTrendBadge', data.customers_growth);
+
+    $('#avgTransaction').text(format_currency(data.avg_transaction || 0));
+
+    // Khách hàng nạp cao nhất
+    if (data.top_customer_amount && data.top_customer_amount > 0) {
+        $('#topCustomerAmount').text(format_currency(data.top_customer_amount));
+        $('#topCustomerName').text(data.top_customer_name || 'Khách VIP');
+    } else {
+        $('#topCustomerAmount').text('0 USD');
+        $('#topCustomerName').text('Chưa có');
+    }
+}
+
+function renderTrendBadge(selector, growth) {
+    const el = $(selector);
+    if (growth === undefined || growth === null) {
+        el.attr('class', 'trend-badge neutral').text('--');
+        return;
+    }
+
+    const num = parseFloat(growth);
+    if (num > 0) {
+        el.attr('class', 'trend-badge positive').html(`<i class="fas fa-arrow-up"></i> +${num}%`);
+    } else if (num < 0) {
+        el.attr('class', 'trend-badge negative').html(`<i class="fas fa-arrow-down"></i> ${num}%`);
+    } else {
+        el.attr('class', 'trend-badge neutral').html(`<i class="fas fa-minus"></i> 0%`);
+    }
 }
 
 function updateRevenueChart(data) {
-    const ctx = document.getElementById('revenueChart').getContext('2d');
-
     if (revenueChart) {
         revenueChart.destroy();
     }
 
+    const canvas = document.getElementById('revenueChart');
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+    gradient.addColorStop(0, 'rgba(14, 165, 233, 0.28)');
+    gradient.addColorStop(1, 'rgba(14, 165, 233, 0.0)');
+
     revenueChart = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: data.labels,
+            labels: data.labels || [],
             datasets: [{
-                label: 'Doanh thu',
-                data: data.values,
-                borderColor: '#007bff',
-                backgroundColor: 'rgba(0, 123, 255, 0.1)',
-                borderWidth: 2,
+                label: 'Doanh thu nạp',
+                data: data.values || [],
+                borderColor: '#0ea5e9',
+                borderWidth: 2.5,
+                backgroundColor: gradient,
                 fill: true,
-                tension: 0.4
+                tension: 0.35,
+                pointBackgroundColor: '#0ea5e9',
+                pointBorderColor: '#ffffff',
+                pointBorderWidth: 2,
+                pointRadius: 3,
+                pointHoverRadius: 6
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        callback: function (value) {
-                            return format_currency(value);
-                        }
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: (c) => ` Doanh thu: ${format_currency(c.parsed.y)}`
                     }
                 }
             },
-            plugins: {
-                tooltip: {
-                    callbacks: {
-                        label: function (context) {
-                            return 'Doanh thu: ' + format_currency(context.parsed.y);
-                        }
-                    }
+            scales: {
+                x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+                y: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(226, 232, 240, 0.6)' },
+                    ticks: { callback: (v) => format_currency(v), font: { size: 11 } }
                 }
             }
         }
@@ -163,45 +305,47 @@ function updateRevenueChart(data) {
 }
 
 function updateTopCustomersChart(data) {
-    const ctx = document.getElementById('topCustomersChart').getContext('2d');
-
     if (topCustomersChart) {
         topCustomersChart.destroy();
     }
 
+    const canvas = document.getElementById('topCustomersChart');
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
     topCustomersChart = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: data.labels,
+            labels: data.labels || [],
             datasets: [{
-                label: 'Doanh thu',
-                data: data.values,
-                backgroundColor: [
-                    '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
-                    '#FF9F40', '#FF6384', '#C9CBCF', '#4BC0C0', '#FF6384'
-                ]
+                label: 'Tổng tiền nạp',
+                data: data.values || [],
+                backgroundColor: 'rgba(79, 70, 229, 0.85)',
+                hoverBackgroundColor: '#4338ca',
+                borderRadius: 4
             }]
         },
         options: {
+            indexAxis: 'y',
             responsive: true,
             maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        callback: function (value) {
-                            return format_currency(value);
-                        }
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: (c) => ` Nạp: ${format_currency(c.parsed.x)}`
                     }
                 }
             },
-            plugins: {
-                tooltip: {
-                    callbacks: {
-                        label: function (context) {
-                            return 'Doanh thu: ' + format_currency(context.parsed.y);
-                        }
-                    }
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(226, 232, 240, 0.6)' },
+                    ticks: { callback: (v) => format_currency(v), font: { size: 11 } }
+                },
+                y: {
+                    grid: { display: false },
+                    ticks: { font: { size: 11, weight: '600' } }
                 }
             }
         }
@@ -209,33 +353,39 @@ function updateTopCustomersChart(data) {
 }
 
 function updateRevenueDistributionChart(data) {
-    const ctx = document.getElementById('revenueDistributionChart').getContext('2d');
-
     if (revenueDistributionChart) {
         revenueDistributionChart.destroy();
     }
 
+    const canvas = document.getElementById('revenueDistributionChart');
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    const palette = ['#0ea5e9', '#6366f1', '#10b981', '#f59e0b', '#ec4899', '#94a3b8'];
+
     revenueDistributionChart = new Chart(ctx, {
         type: 'doughnut',
         data: {
-            labels: data.labels,
+            labels: data.labels || [],
             datasets: [{
-                data: data.values,
-                backgroundColor: [
-                    '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
-                    '#FF9F40', '#FF6384', '#C9CBCF', '#4BC0C0', '#FF6384'
-                ]
+                data: data.values || [],
+                backgroundColor: palette,
+                borderWidth: 0,
+                hoverOffset: 6
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            cutout: '68%',
             plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { boxWidth: 10, padding: 12, font: { size: 11, weight: '600' } }
+                },
                 tooltip: {
                     callbacks: {
-                        label: function (context) {
-                            return context.label + ': ' + format_currency(context.parsed);
-                        }
+                        label: (c) => ` ${c.label}: ${format_currency(c.parsed)}`
                     }
                 }
             }
@@ -244,36 +394,44 @@ function updateRevenueDistributionChart(data) {
 }
 
 function updateCustomerTable(data) {
-    let table = $('#customerRevenueTable').DataTable();
-    table.clear();
-    table.rows.add(data.map((item, index) => [
-        index + 1,
-        item.full_name,
-        item.phone,
-        item.transaction_count,
-        format_currency(item.total_revenue),
-        formatDate(item.last_transaction)
-    ]));
-    table.draw();
-}
+    if (!customerTable) {
+        initDataTable();
+    }
 
+    customerTable.clear();
+    $('#tableCustomerCountBadge').text(`${data ? data.length : 0} khách hàng`);
 
+    if (data && data.length > 0) {
+        data.forEach(function (c, index) {
+            const firstLetter = (c.full_name || 'K').charAt(0).toUpperCase();
+            const totalRev = parseFloat(c.total_revenue || 0);
+            const isVip = totalRev >= 1000;
+            const vipBadge = isVip ? '<span class="badge badge-vip ms-1"><i class="fas fa-crown me-1"></i>VIP</span>' : '';
 
+            const customerCol = `
+                <div class="d-flex align-items-center gap-2">
+                    <span class="user-avatar-bubble">${firstLetter}</span>
+                    <div>
+                        <span class="fw-bold text-dark d-block">${c.full_name || 'Không tên'} ${vipBadge}</span>
+                    </div>
+                </div>
+            `;
 
-function formatDate(dateString) {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('vi-VN');
-}
+            const phone = c.phone ? c.phone : '<span class="text-muted">--</span>';
+            const count = `<span class="badge bg-light text-dark px-2 py-1 rounded-pill">${c.transaction_count || 0}</span>`;
+            const revenue = `<span class="fw-bold text-success">+${format_currency(totalRev)}</span>`;
+            const lastDate = c.last_transaction ? new Date(c.last_transaction).toLocaleString('vi-VN') : '<span class="text-muted">--</span>';
 
-function showLoading() {
-    $('#loadingOverlay').show();
-}
+            customerTable.row.add([
+                index + 1,
+                customerCol,
+                phone,
+                count,
+                revenue,
+                lastDate
+            ]);
+        });
+    }
 
-function hideLoading() {
-    $('#loadingOverlay').hide();
-}
-
-function showError(message) {
-    alert(message);
+    customerTable.draw();
 }

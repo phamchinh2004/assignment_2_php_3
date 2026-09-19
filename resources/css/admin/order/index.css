@@ -1,91 +1,459 @@
-#tittle {
+/* ============================================================
+   ORDER INDEX — Synchronized with User Table Design System
+   ============================================================ */
+
+/* ---------- 1. Page Header ---------- */
+.order-page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 16px 20px 12px;
+}
+
+.order-page-title {
     font-size: 20px;
+    font-weight: 700;
+    color: #2d3748;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-#btn_create {
-    font-size: 15px;
-}
-
-.order_image {
-    max-width: 100px;
-    border-radius: 10px;
-}
-
-.filter_vip {
+/* ---------- 2. Rank Filter Chips ---------- */
+.rank-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    border: 1px solid #cbd5e1;
+    color: #475569;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.18s ease;
     background: #ffffff;
-    padding: 10px 16px;
-    box-shadow: 0px 5px 10px #cacaca;
-}
-.tittle_column{
-    text-align: center;
 }
 
-/* Cột thông tin đơn hàng rộng hơn (cột 5) */
-#dataTable_list_orders th:nth-child(5),
-#dataTable_list_orders td:nth-child(5) {
-    min-width: 300px;
-    width: 25%;
+.rank-chip:hover {
+    background: #f1f5f9;
+    color: #1e293b;
+    border-color: #94a3b8;
 }
 
-/* Cột trạng thái hẹp hơn (cột 6) */
-#dataTable_list_orders th:nth-child(6),
-#dataTable_list_orders td:nth-child(6) {
-    min-width: 120px;
-    width: 10%;
+.rank-chip.selected {
+    background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+    border-color: #4338ca;
+    color: #ffffff;
+    box-shadow: 0 2px 6px rgba(79, 70, 229, 0.25);
 }
-@media screen and (max-width: 768px) {
-    .tittle_column {
-        font-size: 9px;
-    }
 
-    .filter_vip {
-        padding: 5px 16px;
-    }
+.rank-chip .rank-count {
+    background: rgba(0, 0, 0, 0.08);
+    border-radius: 10px;
+    padding: 0 5px;
+    font-size: 10px;
+}
 
-    .filter_vip>button {
-        font-size: 8px;
-        padding: 2px 4px;
-    }
+.rank-chip.selected .rank-count {
+    background: rgba(255, 255, 255, 0.25);
+    color: #ffffff;
+}
 
-    td {
-        font-size: 8px;
-    }
+/* ---------- 3. Modern Table Design (User Table Mirror) ---------- */
+.user-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+}
 
-    .order_image {
-        width: 50px;
-        height: 50px;
-    }
+#dataTable_list_orders {
+    margin-bottom: 0;
+    width: 100% !important;
+    border-collapse: separate;
+    border-spacing: 0;
+}
 
-    .fa-eye,
-    .fa-lock,
-    .fa-lock-open,
-    .fa-pen-to-square {
-        font-size: 7px !important;
-        padding: 3px !important;
-    }
+#dataTable_list_orders thead th {
+    background: #f8fafc !important;
+    color: #475569 !important;
+    font-size: 0.74rem !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    padding: 0.85rem 1rem !important;
+    border-top: none !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    vertical-align: middle !important;
+    white-space: nowrap !important;
+}
 
-    #btn_create {
-        font-size: 7px;
-        padding: 2px 4px !important;
-    }
+#dataTable_list_orders tbody td {
+    padding: 0.9rem 1rem !important;
+    vertical-align: middle !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    font-size: 0.85rem !important;
+    color: #1e293b !important;
+    background: #ffffff !important;
+    transition: background 0.15s ease !important;
+}
 
-    #btn_create>i {
-        margin-right: 4px !important;
-    }
+#dataTable_list_orders tbody tr:hover td {
+    background: #f8fafc !important;
+}
 
-    #tittle {
-        font-size: 12px;
-        white-space: nowrap;
-    }
+/* ---------- 4. Table Cell Components (Identical to User Table) ---------- */
 
-    #active,
-    #inactive {
-        font-size: 7px;
-        white-space: nowrap;
-        padding: 2px 4px !important;
-    }
+/* STT chip */
+.user-id-chip {
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.15rem 0.45rem;
+    border-radius: 6px;
+    letter-spacing: 0.02em;
+    display: inline-block;
+}
 
-    #inactive {
-        margin-left: 5px !important;
-    }
+/* Identity cell (Product image + details) */
+.user-identity-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    min-width: 220px;
+}
+
+.entity-thumbnail {
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    flex-shrink: 0;
+    background: #f8fafc;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+.entity-thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.2s ease;
+}
+
+.user-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.user-link {
+    color: #1e293b;
+    font-weight: 700;
+    font-size: 0.88rem;
+    text-decoration: none !important;
+    transition: color 0.15s ease;
+    line-height: 1.3;
+}
+
+.user-link:hover {
+    color: #4f46e5;
+}
+
+.user-meta-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+.copy-badge {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #64748b;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.1rem 0.45rem;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    transition: all 0.2s ease;
+}
+
+.copy-badge:hover {
+    background: #ffffff;
+    border-color: #cbd5e1;
+    color: #334155;
+    transform: translateY(-1px);
+}
+
+.copy-badge.copied {
+    background: #ecfdf5;
+    border-color: #a7f3d0;
+    color: #059669;
+}
+
+.rank-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.15rem 0.5rem;
+    border-radius: 20px;
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    color: #92400e;
+    border: 1px solid #fcd34d;
+    box-shadow: 0 1px 3px rgba(245, 158, 11, 0.15);
+}
+
+.rank-pill.no-rank {
+    background: #f1f5f9;
+    color: #94a3b8;
+    border: 1px dashed #cbd5e1;
+    box-shadow: none;
+    font-weight: 500;
+}
+
+/* Finances Cell */
+.finance-box {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    min-width: 140px;
+}
+
+.balance-highlight {
+    font-weight: 800;
+    font-size: 0.95rem;
+    color: #059669;
+    letter-spacing: -0.01em;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.frozen-balance-chip {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #0284c7;
+    background: #f0f9ff;
+    border: 1px solid #bae6fd;
+    padding: 0.15rem 0.5rem;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    width: fit-content;
+}
+
+/* Location / Customer Cell */
+.location-box {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    min-width: 170px;
+}
+
+.location-place {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+/* Status Cell */
+.status-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.3rem;
+    min-width: 110px;
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.25rem 0.65rem;
+    border-radius: 20px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.status-badge.active {
+    background: #ecfdf5;
+    color: #065f46;
+    border: 1px solid #a7f3d0;
+}
+.status-badge.active .status-dot {
+    background: #10b981;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+}
+
+.status-badge.danger {
+    background: #fff1f2;
+    color: #9f1239;
+    border: 1px solid #fecdd3;
+}
+.status-badge.danger .status-dot {
+    background: #f43f5e;
+    box-shadow: 0 0 0 2px rgba(244, 63, 94, 0.2);
+}
+
+.tag-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.68rem;
+    font-weight: 600;
+    padding: 0.15rem 0.5rem;
+    border-radius: 20px;
+}
+
+.tag-pill.tag-frozen {
+    background: #ecfeff;
+    color: #0e7490;
+    border: 1px solid #a5f3fc;
+}
+
+.tag-pill.tag-clone {
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+}
+
+/* Time Box */
+.time-box {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    font-size: 0.75rem;
+    color: #64748b;
+    min-width: 130px;
+}
+
+.time-item {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.time-item i {
+    font-size: 0.7rem;
+    color: #94a3b8;
+}
+
+/* Action Buttons Group (User Table Mirror) */
+.action-icon-group {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    flex-wrap: wrap;
+}
+
+.btn-icon-modern {
+    width: 30px;
+    height: 30px;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    color: #475569;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.78rem;
+    transition: all 0.2s ease;
+    text-decoration: none !important;
+    cursor: pointer;
+}
+
+.btn-icon-modern:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+}
+
+.btn-icon-modern.view:hover {
+    background: #eff6ff;
+    border-color: #93c5fd;
+    color: #2563eb;
+}
+
+.btn-icon-modern.edit:hover {
+    background: #fffbeb;
+    border-color: #fcd34d;
+    color: #d97706;
+}
+
+.btn-icon-modern.lock:hover {
+    background: #fef2f2;
+    border-color: #fca5a5;
+    color: #dc2626;
+}
+
+.btn-icon-modern.unlock:hover {
+    background: #ecfdf5;
+    border-color: #6ee7b7;
+    color: #059669;
+}
+
+/* Payment Chip & Badge */
+.payment-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 7px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 600;
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+}
+.payment-chip.cod { background: #fff5f5; color: #c53030; border-color: #fecaca; }
+.payment-chip.vnpay { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
+.payment-chip.momo { background: #fdf2f8; color: #be185d; border-color: #fbcfe8; }
+.payment-chip.paypal { background: #eff6ff; color: #1e40af; border-color: #bfdbfe; }
+.payment-chip.bank { background: #f0fdf4; color: #15803d; border-color: #bbf7d0; }
+
+.badge-paid {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 7px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 700;
+    background: #dcfce7;
+    color: #15803d;
+}
+.badge-unpaid {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 7px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 700;
+    background: #fef3c7;
+    color: #b45309;
 }
