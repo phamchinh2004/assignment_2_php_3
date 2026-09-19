@@ -233,40 +233,54 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     //Xử lý đăng nhập tài khoản
+    const form_login = document.getElementById('form_login');
     const login_btn = document.getElementById('login');
-    if (login_btn) {
-        login_btn.addEventListener('click', async function () {
+    let login_submitting = false;
+    if (form_login) {
+        form_login.addEventListener('submit', function (event) {
+            event.preventDefault();
             check_and_submit_login();
-        })
-    }
-    if (password_login) {
-        password_login.addEventListener('keydown', async function (e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                await check_and_submit_login();
-            }
-        })
+        });
     }
     async function check_and_submit_login() {
+        if (login_submitting) {
+            return;
+        }
+        if (!username_login.value || !password_login.value) {
+            notification('warning', 'Vui lòng điền đầy đủ thông tin!', 'Cảnh báo!');
+            return;
+        }
+
+        login_submitting = true;
+        login_btn.disabled = true;
         spinner.hidden = false;
-        let valid = true;
-        const form_login = document.getElementById('form_login');
-        if (username_login.value && password_login.value) {
-            let check_username_existed = await check_username(username_login.value);
+        let navigating = false;
+        try {
+            const check_username_existed = await check_username(username_login.value);
             if (check_username_existed.refresh) {
                 localStorage.removeItem("remember_password");
                 localStorage.removeItem("username");
                 localStorage.removeItem("password");
                 notification('warning', check_username_existed.message, 'Cảnh báo!');
-                valid = false;
-                spinner.hidden = true;
                 return;
             }
             form_login.submit();
-        } else {
-            notification('warning', 'Vui lòng điền đầy đủ thông tin!', 'Cảnh báo!');
+            navigating = true;
+        } catch (error) {
+            if (error?.status === 419) {
+                // GET lại trang để kiểm tra phiên hiện tại và lấy token mới.
+                window.location.replace(form_login.action);
+                navigating = true;
+                return;
+            }
+            notification('error', 'Không thể đăng nhập. Vui lòng thử lại!', 'Lỗi');
+        } finally {
+            if (!navigating) {
+                login_submitting = false;
+                login_btn.disabled = false;
+                spinner.hidden = true;
+            }
         }
-        spinner.hidden = true;
     }
     function check_username(username) {
         return new Promise((resolve, reject) => {
@@ -278,16 +292,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     username: username
                 },
                 success: function (response) {
-                    if (response.success == false) {
-                        resolve(response);
-                    } else {
-                        resolve(response);
-                    }
+                    resolve(response);
                 },
                 error: function (xhr) {
-                    console.error(xhr.responseText);
-                    notification('error', 'Không thể kiểm tra dữ liệu!', 'Lỗi');
-                    reject();
+                    reject(xhr);
                 }
             });
         })

@@ -14,8 +14,8 @@ class LoginController extends Controller
 {
     public function index()
     {
-        //View trang đăng ký
-        return view('login');
+        return response()->view('login')
+            ->header('Cache-Control', 'no-store, private');
     }
     public function login(Request $request)
     {

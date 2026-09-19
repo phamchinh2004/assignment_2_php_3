@@ -5,74 +5,16 @@
 @push('css')
     @vite('resources/css/admin/chat.css')
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-    <style>
-        [x-cloak] {
-            display: none !important;
-        }
-
-        @keyframes spinner-border {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        @keyframes pulse {
-
-            0%,
-            100% {
-                transform: scale(1);
-                box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.7);
-            }
-
-            50% {
-                transform: scale(1.05);
-                box-shadow: 0 0 20px 10px rgba(102, 126, 234, 0.3);
-            }
-        }
-
-        .spinner-border {
-            display: inline-block;
-            width: 3rem;
-            height: 3rem;
-            vertical-align: -0.125em;
-            border: 0.25em solid currentColor;
-            border-right-color: transparent;
-            border-radius: 50%;
-            animation: spinner-border 0.75s linear infinite;
-        }
-
-        .message-item:hover .message-actions {
-            opacity: 1 !important;
-        }
-
-        .message-actions .btn-link {
-            transition: color 0.2s;
-        }
-
-        .message-actions .btn-link:hover {
-            color: #0d6efd !important;
-        }
-
-        .editing-banner {
-            animation: slideDown 0.3s ease-out;
-            border-left: 4px solid #0d6efd;
-        }
-
-        @keyframes slideDown {
-            from { transform: translateY(-10px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-    </style>
 @endpush
 
-<div class="d-flex flex-column flex-md-row" id="chat-root" style="height: 100vh; background-color: #f8f9fa;">
+<div class="chat-workspace d-flex flex-column flex-lg-row" id="chat-root">
     <!-- Sidebar trái -->
     <!-- SIDEBAR DẠNG OFFCANVAS (mobile) -->
-    <div class="offcanvas offcanvas-start d-md-none" tabindex="-1" id="mobileSidebar"
+    <div class="offcanvas offcanvas-start d-lg-none" tabindex="-1" id="mobileSidebar"
         aria-labelledby="mobileSidebarLabel">
         <div class="offcanvas-header">
-            <h5 class="offcanvas-title" id="mobileSidebarLabel">Danh sách Chat</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+            <h5 class="offcanvas-title" id="mobileSidebarLabel">Hộp thư hỗ trợ</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Đóng danh sách hội thoại"></button>
         </div>
         <div class="offcanvas-body p-0">
             @include('livewire.admin.sidebar-chat', ['isMobile' => true])
@@ -80,41 +22,41 @@
     </div>
 
     <!-- SIDEBAR CỐ ĐỊNH (desktop) -->
-    <div class="bg-white border-end shadow-sm d-none d-md-block"
-        style="width: 350px; min-width: 350px; max-width: 350px; flex-shrink: 0;">
+    <div class="chat-sidebar-shell d-none d-lg-block">
         @include('livewire.admin.sidebar-chat', ['isMobile' => false])
     </div>
 
     <!-- Khu vực chat chính -->
-    <div class="flex-grow-1 d-flex flex-column position-relative"
-        style="transition: all 0.3s ease; height: 100vh; min-width: 0; overflow: hidden;">
+    <div class="chat-main flex-grow-1 d-flex flex-column position-relative">
         <!-- Loading Spinner Overlay: Tự động hiện khi chọn cuộc hội thoại -->
         <div id="chat-loading-spinner"
             wire:loading.delay
             wire:target="selectConversation, selectUserForChat, openConversationFromNotification"
-            class="position-absolute w-100 h-100 d-none align-items-center justify-content-center"
-            style="z-index: 1000; top: 0; left: 0; background: rgba(255, 255, 255, 0.8); pointer-events: auto;"
+            class="chat-loading-overlay position-absolute w-100 h-100 d-none align-items-center justify-content-center"
+            role="status" aria-live="polite"
             wire:loading.class.remove="d-none"
             wire:loading.class="d-flex">
-            <div class="text-center">
+            <div class="chat-loading-card text-center">
                 <div class="spinner-border text-primary mb-3" role="status">
                     <span class="visually-hidden">Đang tải...</span>
                 </div>
-                <p class="text-muted fw-semibold">Đang tải hội thoại...</p>
+                <p class="text-muted fw-semibold mb-0">Đang tải hội thoại...</p>
             </div>
         </div>
 
-        <button class="btn btn-outline-primary d-md-none mb-2" type="button" data-bs-toggle="offcanvas"
-            data-bs-target="#mobileSidebar">
-            <i class="fas fa-bars me-1"></i> Mở danh sách Chat
-        </button>
+        <div class="chat-mobile-nav d-lg-none">
+            <button class="btn chat-mobile-toggle" type="button" data-bs-toggle="offcanvas"
+                data-bs-target="#mobileSidebar" aria-controls="mobileSidebar">
+                <i class="fas fa-bars me-2" aria-hidden="true"></i> Hộp thư hỗ trợ
+            </button>
+        </div>
         @if($this->selectedConversation)
             <!-- Header chat -->
             <div wire:key="chat-header-{{ $this->selectedConversation->id }}"
-                class="bg-white border-bottom p-3 shadow-sm chat-header" style="transition: all 0.3s ease;"
-                x-data="{ penaltyOpen: true, specialOpen: true, quickMsgOpen: true, generalMsgOpen: true }">
-                <div class="d-flex align-items-center">
-                    <div class="position-relative me-3" style="width: 45px; height: 45px;">
+                class="chat-header"
+                x-data="{ contextOpen: false, penaltyOpen: true, specialOpen: true, quickMsgOpen: true, generalMsgOpen: true }">
+                <div class="chat-identity-row d-flex align-items-center">
+                    <div class="chat-contact-avatar position-relative">
                         @if($this->selectedConversation->user->avatar && Storage::disk('public')->exists($this->selectedConversation->user->avatar))
                             <img src="{{ asset('storage/' . $this->selectedConversation->user->avatar) }}"
                                 alt="{{ $this->selectedConversation->user->full_name }}" class="rounded-circle"
@@ -133,20 +75,23 @@
                             style="width: 12px; height: 12px;"
                             title="{{ $isOnline ? 'Đang hoạt động' : ($this->selectedConversation->user->last_seen ? 'Hoạt động ' . $this->selectedConversation->user->last_seen->diffForHumans() : 'Chưa từng online') }}"></span>
                     </div>
-                    <div class="flex-grow-1">
-                        <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
-                            <div class="fw-bold text-dark fs-6 d-flex align-items-center">
+                    <div class="chat-contact-info flex-grow-1">
+                        <div class="chat-contact-heading d-flex flex-wrap align-items-center gap-2">
+                            <h2 class="chat-contact-name mb-0">
                                 @if($this->selectedConversation->user->hasPenalizedOrders())
                                     <i class="fas fa-exclamation-triangle text-warning me-1" title="Người dùng đang bị phạt"></i>
                                 @endif
                                 {{ $this->selectedConversation->user->full_name }}
-                            </div>
+                            </h2>
 
                             <span class="chat-header-chip">
                                 <span class="rounded-circle me-1 {{ $isOnline ? 'bg-success' : 'bg-secondary' }}" style="width: 7px; height: 7px; display: inline-block;"></span>
                                 {{ $isOnline ? 'Đang hoạt động' : ($this->selectedConversation->user->last_seen ? 'Hoạt động ' . $this->selectedConversation->user->last_seen->diffForHumans() : 'Chưa từng online') }}
                             </span>
 
+                        </div>
+                        <div class="chat-contact-meta d-flex flex-wrap align-items-center gap-2">
+                            <span class="chat-contact-username">{{ $this->selectedConversation->user->username }}</span>
                             @if(auth()->user()->role === 'admin' || auth()->user()->role === 'staff')
                                 <span class="chat-header-chip chip-staff">
                                     <i class="fas fa-user-shield me-1"></i>QL: {{ $this->selectedConversation->staff->full_name }}
@@ -179,6 +124,73 @@
                                 </a>
                             @endif
                         </div>
+                    </div>
+                    <div class="dropdown chat-header-actions">
+                        <button class="btn chat-icon-button" type="button" data-bs-toggle="dropdown"
+                            aria-expanded="false" title="Thao tác hội thoại" aria-label="Thao tác hội thoại">
+                            <i class="fas fa-ellipsis-h" aria-hidden="true"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <a class="dropdown-item text-primary"
+                                    href="{{ route('user.index') }}#user-{{ $this->selectedConversation->user->id }}">
+                                    <i class="fas fa-user-cog me-2"></i>Quản lý tài khoản
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item text-warning"
+                                    href="{{ route('user.frozen.order.interface', $this->selectedConversation->user->id) }}">
+                                    <i class="fas fa-snowflake me-2"></i>Đóng băng đơn hàng
+                                </a>
+                            </li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            @if($this->selectedConversation->user->status === "activated")
+                                <li>
+                                    <a class="dropdown-item text-danger" href="javascript:void(0)"
+                                        onclick="confirmChangeStatusOfUser({{ $this->selectedConversation->user->id }},'{{ $this->selectedConversation->user->status }}')">
+                                        <i class="fas fa-lock me-2"></i>Khóa tài khoản
+                                    </a>
+                                </li>
+                            @elseif($this->selectedConversation->user->status === "banned")
+                                <li>
+                                    <a class="dropdown-item text-success" href="javascript:void(0)"
+                                        onclick="confirmChangeStatusOfUser({{ $this->selectedConversation->user->id }},'{{ $this->selectedConversation->user->status }}')">
+                                        <i class="fas fa-lock-open me-2"></i>Mở khóa tài khoản
+                                    </a>
+                                </li>
+                            @endif
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            @if(auth()->user()->role === 'admin')
+                                <li>
+                                    <a class="dropdown-item text-warning" href="javascript:void(0)"
+                                        onclick="confirmDeleteMessages()">
+                                        <i class="fas fa-eraser me-2"></i>Xóa tin nhắn
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item text-danger" href="javascript:void(0)"
+                                        onclick="confirmDeleteConversation()">
+                                        <i class="fas fa-trash-alt me-2"></i>Xóa hội thoại
+                                    </a>
+                                </li>
+                            @endif
+                        </ul>
+                    </div>
+                </div>
+                <div class="chat-context-toolbar">
+                    <button type="button" class="chat-context-toggle" @click="contextOpen = !contextOpen"
+                        :aria-expanded="contextOpen" aria-controls="chat-context-panel">
+                        <i class="fas fa-bolt" aria-hidden="true"></i>
+                        <span>Thông tin &amp; trả lời nhanh</span>
+                        <i class="fas fa-chevron-down chat-context-chevron" :class="{ 'is-open': contextOpen }" aria-hidden="true"></i>
+                    </button>
+                    <span class="chat-context-hint d-none d-lg-inline">Chọn mẫu để sao chép nội dung</span>
+                </div>
+                <div id="chat-context-panel" class="chat-context-panel custom-scrollbar" x-show="contextOpen" x-cloak>
                     @if($this->selectedConversation->user->hasPenalizedOrders())
                             @php
                                 $penaltyInfo = $this->selectedConversation->user->penalty_info;
@@ -192,7 +204,7 @@
                                         Đang bị phạt ({{ $penaltyInfo['frozen_orders_count'] }} đơn)
                                     </div>
                                     <button class="btn btn-sm p-0 text-warning" type="button"
-                                        @click="penaltyOpen = !penaltyOpen" style="border: none; background: none;">
+                                        @click="penaltyOpen = !penaltyOpen" :aria-expanded="penaltyOpen" aria-label="Chi tiết đơn hàng bị phạt" style="border: none; background: none;">
                                         <i class="fas" :class="penaltyOpen ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
                                     </button>
                                 </div>
@@ -304,7 +316,7 @@
                                                 ({{ $specialInfo['orders_count'] }} đơn)</strong>
                                         </div>
                                         <button class="btn btn-sm p-0 text-success" type="button"
-                                            @click="specialOpen = !specialOpen" style="border: none; background: none;">
+                                            @click="specialOpen = !specialOpen" :aria-expanded="specialOpen" aria-label="Chi tiết đơn hàng đặc biệt" style="border: none; background: none;">
                                             <i class="fas" :class="specialOpen ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
                                         </button>
                                     </div>
@@ -362,7 +374,7 @@
                                     <div style="font-size: 10px;">
                                         <strong><i class="fas fa-bolt me-1"></i>Tin nhắn nhanh:</strong>
                                     </div>
-                                    <button class="btn btn-sm p-0 text-info" type="button" @click="quickMsgOpen = !quickMsgOpen"
+                                    <button class="btn btn-sm p-0 text-info" type="button" @click="quickMsgOpen = !quickMsgOpen" :aria-expanded="quickMsgOpen" aria-label="Mẫu trả lời nhanh"
                                         style="border: none; background: none;">
                                         <i class="fas" :class="quickMsgOpen ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
                                     </button>
@@ -395,7 +407,7 @@
                                         <strong><i class="fas fa-comments me-1"></i>Tin nhắn nhanh:</strong>
                                     </div>
                                     <button class="btn btn-sm p-0 text-secondary" type="button"
-                                        @click="generalMsgOpen = !generalMsgOpen" style="border: none; background: none;">
+                                        @click="generalMsgOpen = !generalMsgOpen" :aria-expanded="generalMsgOpen" aria-label="Mẫu trả lời nhanh" style="border: none; background: none;">
                                         <i class="fas" :class="generalMsgOpen ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
                                     </button>
                                 </div>
@@ -423,87 +435,29 @@
                                 </div>
                             </div>
                         @endif
-                    </div>
-                    <div class="dropdown ms-3">
-                        <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="dropdown"
-                            aria-expanded="false" title="Thao tác">
-                            <i class="fas fa-bars"></i>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li>
-                                <a class="dropdown-item text-primary"
-                                    href="{{ route('user.index') }}#user-{{ $this->selectedConversation->user->id }}">
-                                    <i class="fas fa-user-cog me-2"></i>Quản lý tài khoản
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item text-warning"
-                                    href="{{ route('user.frozen.order.interface', $this->selectedConversation->user->id) }}">
-                                    <i class="fas fa-snowflake me-2"></i>Đóng băng đơn hàng
-                                </a>
-                            </li>
-                            <li>
-                                <hr class="dropdown-divider">
-                            </li>
-                            @if($this->selectedConversation->user->status === "activated")
-                                <li>
-                                    <a class="dropdown-item text-danger" href="javascript:void(0)"
-                                        onclick="confirmChangeStatusOfUser({{ $this->selectedConversation->user->id }},'{{ $this->selectedConversation->user->status }}')">
-                                        <i class="fas fa-lock me-2"></i>Khóa tài khoản
-                                    </a>
-                                </li>
-                            @elseif($this->selectedConversation->user->status === "banned")
-                                <li>
-                                    <a class="dropdown-item text-success" href="javascript:void(0)"
-                                        onclick="confirmChangeStatusOfUser({{ $this->selectedConversation->user->id }},'{{ $this->selectedConversation->user->status }}')">
-                                        <i class="fas fa-lock-open me-2"></i>Mở khóa tài khoản
-                                    </a>
-                                </li>
-                            @endif
-                            <li>
-                                <hr class="dropdown-divider">
-                            </li>
-                            @if(auth()->user()->role === 'admin')
-                                <li>
-                                    <a class="dropdown-item text-warning" href="javascript:void(0)"
-                                        onclick="confirmDeleteMessages()">
-                                        <i class="fas fa-eraser me-2"></i>Xóa tin nhắn
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item text-danger" href="javascript:void(0)"
-                                        onclick="confirmDeleteConversation()">
-                                        <i class="fas fa-trash-alt me-2"></i>Xóa hội thoại
-                                    </a>
-                                </li>
-                            @endif
-                        </ul>
-                    </div>
                 </div>
             </div>
 
             <!-- Khu vực tin nhắn -->
             <div wire:key="messages-container-{{ $this->selectedConversation->id }}"
-                class="flex-grow-1 overflow-auto p-3 custom-scrollbar position-relative" id="messages-container"
-                style="background: linear-gradient(); display: flex; flex-direction: column-reverse; min-height: 0; flex: 1 1 auto;"
-                >
+                class="chat-message-list flex-grow-1 overflow-auto custom-scrollbar position-relative" id="messages-container"
+                aria-label="Tin nhắn trong hội thoại">
 
                 @if (empty($messages))
                     <div class="w-100 h-100 d-flex justify-content-center align-items-center">
                         <div class="flex-grow-1 d-flex align-items-center justify-content-center">
-                            <div class="text-center">
-                                <div class="bg-primary bg-opacity-10 rounded-circle mx-auto mb-4 d-flex align-items-center justify-content-center"
-                                    style="width: 100px; height: 100px; animation: pulse 2s infinite;">
-                                    <i class="fas fa-comments fa-3x text-primary"></i>
+                            <div class="chat-empty-state text-center">
+                                <div class="chat-empty-icon mx-auto">
+                                    <i class="far fa-comment-dots" aria-hidden="true"></i>
                                 </div>
-                                <h4 class="text-dark mb-3 fw-bold">Chưa có tin nhắn nào!</h4>
-                                <p class="text-muted mb-0">Nhắn tin ngay bây giờ...</p>
+                                <h3>Bắt đầu cuộc trò chuyện</h3>
+                                <p>Gửi lời chào đầu tiên hoặc mở mẫu trả lời nhanh để hỗ trợ khách hàng.</p>
                             </div>
                         </div>
                     </div>
                 @else
                     <!-- Nội dung tin nhắn: dùng column-reverse để đảo ngược CSS (tin nhắn mới nhất index 0 sẽ ghim xuống dưới đáy) -->
-                    <div style="display: flex; flex-direction: column-reverse; width: 100%;">
+                    <div class="chat-message-thread">
 
                         @foreach($messages as $index => $message)
                             @php
@@ -542,10 +496,9 @@
                                 }
                             @endphp
 
-                            <div class="message-item d-flex mb-3 {{ $containerClass }}"
-                                wire:key="message-{{ $message['id'] ?? $index }}" style="animation: slideIn 0.3s ease-out;">
-                                <div class="message-bubble px-3 py-2 position-relative {{ $bubbleClass }}"
-                                    style="max-width: 75%; transition: all 0.2s ease; overflow-wrap: break-word; word-break: break-word;">
+                            <div class="message-item d-flex {{ $containerClass }}"
+                                wire:key="message-{{ $message['id'] ?? $index }}">
+                                <div class="message-bubble position-relative {{ $bubbleClass }}">
 
                                     <!-- Hiển thị tên người gửi và role (chỉ với tin nhắn của người khác) -->
                                     @if(!$isCurrentUser)
@@ -553,19 +506,10 @@
                                             <small class="fw-bold opacity-90">
                                                 {{ $message['sender']['full_name'] ?? 'Unknown User' }}
                                             </small>
-                                            <span class="role-badge ms-2 text-right"
-                                                style="font-size: 9px; padding: 2px 6px; border-radius: 10px; 
-                                                                                                                                            @if($senderRole === 'admin') 
-                                                                                                                                                background-color: rgba(220, 53, 69, 0.2); color: rgb(149, 188, 247); border: 1px solid #dc3545;
-                                                                                                                                            @elseif($senderRole === 'staff')
-                                                                                                                                                background-color: rgba(25, 135, 84, 0.2); color: rgb(149, 188, 247); border: 1px solid #198754;
-                                                                                                                                            @else
-                                                                                                                                                background-color: rgba(0, 0, 0, 0.2); color:rgb(255, 255, 255); border: 1px solidrgb(255, 255, 255);
-                                                                                                                                            @endif
-                                                                                                                                        ">
-                                                @if($senderRole === 'admin') Admin
-                                                @elseif($senderRole === 'staff') Staff
-                                                @else Member
+                                            <span class="role-badge ms-2">
+                                                @if($senderRole === 'admin') Quản trị viên
+                                                @elseif($senderRole === 'staff') Nhân viên
+                                                @else Khách hàng
                                                 @endif
                                             </span>
                                         </div>
@@ -578,32 +522,32 @@
                                                 class="img-fluid rounded zoomable-image" style="max-height: 200px; cursor: pointer;">
                                         </div>
                                     @elseif($message['message'])
-                                        <div style="white-space: pre-line; word-wrap: break-word; overflow-wrap: break-word; word-break: break-word; margin: 0; max-width: 100%;">{{ trim($message['message']) }}</div>
+                                        <div class="chat-message-content">{{ trim($message['message']) }}</div>
                                     @endif
 
                                     <!-- Thao tác tin nhắn -->
-                                    <div class="message-actions position-absolute opacity-0 d-flex" 
-                                         style="transition: opacity 0.2s; top: 0; {{ $isCurrentUser ? 'left: -60px;' : 'right: -30px;' }} z-index: 10;">
+                                    @if(($isCurrentUser && ($message['type'] ?? 'text') === 'text') || auth()->user()->role === 'admin')
+                                    <div class="message-actions d-flex" aria-label="Thao tác tin nhắn">
                                         @if($isCurrentUser && ($message['type'] ?? 'text') === 'text')
-                                            <button class="btn btn-link btn-sm p-1 text-muted" title="Sửa" 
+                                            <button type="button" class="btn btn-link btn-sm text-muted" title="Sửa tin nhắn" aria-label="Sửa tin nhắn"
                                                     wire:click="editMessage({{ $message['id'] }})">
                                                 <i class="fas fa-edit"></i>
                                             </button>
                                         @endif
                                         @if(auth()->user()->role === 'admin')
-                                            <button class="btn btn-link btn-sm p-1 text-danger" title="Xóa"
+                                            <button type="button" class="btn btn-link btn-sm text-danger" title="Xóa tin nhắn" aria-label="Xóa tin nhắn"
                                                     onclick="confirmDeleteSingleMessage({{ $message['id'] }})">
                                                 <i class="fas fa-trash-alt"></i>
                                             </button>
                                         @endif
                                     </div>
+                                    @endif
 
                                     <!-- Thời gian và trạng thái -->
-                                    <div class="d-flex align-items-center justify-content-between">
-                                        <div class="small {{ $isCurrentUser ? 'text-white-50' : 'opacity-75' }}"
-                                            style="font-size: 10px;">
+                                    <div class="chat-message-meta d-flex align-items-center justify-content-end gap-2">
+                                        <time datetime="{{ \Carbon\Carbon::parse($message['created_at'])->toIso8601String() }}">
                                             {{ \Carbon\Carbon::parse($message['created_at'])->setTimezone('Asia/Ho_Chi_Minh')->format('d/m/Y H:i') }}
-                                        </div>
+                                        </time>
                                         @if($isCurrentUser)
                                             <div class="ms-2" data-message-id="{{ $message['id'] }}"
                                                 data-seen-status="{{ $message['is_read'] ? 'true' : 'false' }}">
@@ -654,68 +598,80 @@
 
             <!-- Input tin nhắn -->
             <div wire:key="message-input-{{ $this->selectedConversation->id }}"
-                class="bg-white border-top p-3 shadow-sm message-input position-relative"
-                style="transition: all 0.3s ease;">
+                class="message-input position-relative">
 
                 @if($editingMessageId)
                     <div class="editing-banner bg-light p-2 mb-2 border rounded-3 d-flex justify-content-between align-items-center">
                         <span class="small text-primary fw-semibold"><i class="fas fa-edit me-2"></i>Đang sửa tin nhắn...</span>
-                        <button type="button" class="btn-close" style="font-size: 0.7rem;" wire:click="cancelEdit"></button>
+                        <button type="button" class="btn-close" style="font-size: 0.7rem;" wire:click="cancelEdit" aria-label="Hủy sửa tin nhắn"></button>
                     </div>
                 @endif
 
                 @if ($image && !$editingMessageId)
-                    <div class="mb-2 d-flex align-items-center">
+                    <div class="chat-attachment-preview mb-2 d-flex align-items-center">
                         <div class="position-relative me-2">
-                            <img src="{{ $image->temporaryUrl() }}" alt="Preview" class="rounded"
+                            <img src="{{ $image->temporaryUrl() }}" alt="Ảnh đính kèm" class="rounded"
                                 style="height: 60px; object-fit: cover;">
                             <button type="button" class="btn-close position-absolute top-0 end-0 bg-white rounded-circle"
                                 style="transform: scale(0.7);" wire:click="$set('image', null)"
                                 aria-label="Xóa ảnh xem trước"></button>
                         </div>
+                        <span>Ảnh đính kèm <small class="d-block text-muted">Sẵn sàng gửi</small></span>
                     </div>
                 @endif
-                <form wire:submit.prevent="{{ $editingMessageId ? 'updateMessage' : 'sendMessage' }}" class="d-flex align-items-center gap-2">
+                <form wire:submit.prevent="{{ $editingMessageId ? 'updateMessage' : 'sendMessage' }}" class="chat-composer d-flex align-items-end gap-2">
                     @if(!$editingMessageId)
-                        <input type="file" wire:model="image" accept="image/*" class="d-none" id="upload-image-admin">
+                        <input type="file" wire:model="image" accept="image/*" class="visually-hidden" id="upload-image-admin" aria-label="Chọn ảnh để gửi">
                         <label for="upload-image-admin"
-                            class="btn btn-light btn-sm rounded-circle d-flex align-items-center justify-content-center m-0 border position-relative"
-                            style="width: 42px; height: 42px; flex-shrink: 0; cursor: pointer; color: #64748b;" title="Gửi ảnh">
+                            class="btn chat-attachment-button d-flex align-items-center justify-content-center m-0 position-relative"
+                            title="Đính kèm ảnh">
                             <i class="fas fa-image" style="font-size: 16px;" wire:loading.remove wire:target="image"></i>
                             <span class="spinner-border spinner-border-sm text-primary" wire:loading wire:target="image"></span>
                         </label>
                     @endif
                     <div class="flex-grow-1 position-relative">
                         <textarea id="message-input-textarea" wire:model="{{ $editingMessageId ? 'editingMessageText' : 'messageText' }}"
-                            placeholder="{{ $editingMessageId ? 'Sửa tin nhắn...' : 'Nhập tin nhắn... (Shift+Enter để xuống dòng)' }}" class="form-control px-4 py-2"
+                            placeholder="{{ $editingMessageId ? 'Sửa nội dung tin nhắn...' : 'Viết tin nhắn cho khách hàng...' }}" class="form-control"
+                            aria-label="{{ $editingMessageId ? 'Nội dung tin nhắn cần sửa' : 'Nội dung tin nhắn' }}"
+                            aria-describedby="chat-composer-hint"
                             rows="1"
-                            style="resize: none; overflow-y: hidden; max-height: 150px; font-size: 14px; line-height: 1.5;"></textarea>
+                            ></textarea>
                     </div>
                     <button type="submit"
-                        class="btn {{ $editingMessageId ? 'btn-success' : 'send-btn-gradient' }} rounded-circle d-flex align-items-center justify-content-center position-relative shadow-sm"
-                        style="width: 44px; height: 44px; flex-shrink: 0;" title="{{ $editingMessageId ? 'Cập nhật' : 'Gửi tin nhắn' }}">
+                        class="btn chat-send-button {{ $editingMessageId ? 'btn-success' : 'send-btn-gradient' }} d-flex align-items-center justify-content-center position-relative"
+                        title="{{ $editingMessageId ? 'Cập nhật' : 'Gửi tin nhắn' }}"
+                        aria-label="{{ $editingMessageId ? 'Cập nhật tin nhắn' : 'Gửi tin nhắn' }}">
                         <i class="fas {{ $editingMessageId ? 'fa-check' : 'fa-paper-plane' }}" style="font-size: 15px;" wire:loading.remove wire:target="{{ $editingMessageId ? 'updateMessage' : 'sendMessage' }}"></i>
                         <span class="spinner-border spinner-border-sm text-white" wire:loading wire:target="{{ $editingMessageId ? 'updateMessage' : 'sendMessage' }}"></span>
                     </button>
                 </form>
+                <div class="chat-composer-hint" id="chat-composer-hint">
+                    <span><i class="far fa-comment-dots me-1" aria-hidden="true"></i>{{ $editingMessageId ? 'Chỉnh sửa nội dung và nhấn nút cập nhật' : 'Enter để gửi · Shift + Enter để xuống dòng' }}</span>
+                </div>
+                @error('image') <div class="chat-input-error" role="alert">{{ $message }}</div> @enderror
+                @error('messageText') <div class="chat-input-error" role="alert">{{ $message }}</div> @enderror
+                @error('editingMessageText') <div class="chat-input-error" role="alert">{{ $message }}</div> @enderror
             </div>
         @else
             <!-- Trạng thái chưa chọn conversation -->
-            <div class="flex-grow-1 d-flex align-items-center justify-content-center p-4">
-                <div class="text-center" style="max-width: 420px;">
-                    <div class="rounded-circle mx-auto mb-4 d-flex align-items-center justify-content-center"
-                        style="width: 88px; height: 88px; background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%); box-shadow: 0 10px 25px rgba(79, 70, 229, 0.15); animation: pulse 2.5s infinite;">
-                        <i class="fas fa-comments fa-2x" style="color: #4f46e5;"></i>
+            <div class="chat-welcome flex-grow-1 d-flex align-items-center justify-content-center p-4">
+                <div class="chat-empty-state text-center">
+                    <div class="chat-empty-icon mx-auto">
+                        <i class="far fa-comments" aria-hidden="true"></i>
                     </div>
-                    <h5 class="text-dark mb-2 fw-bold" style="letter-spacing: -0.01em;">Chọn cuộc trò chuyện</h5>
-                    <p class="text-muted small mb-0" style="line-height: 1.6;">Chọn một hội thoại từ danh sách bên trái để xem tin nhắn, hỗ trợ khách hàng và xử lý đơn hàng.</p>
+                    <span class="chat-eyebrow">HỘP THƯ HỖ TRỢ</span>
+                    <h2>Chọn một cuộc trò chuyện</h2>
+                    <p>Chọn một hội thoại trong danh sách để xem tin nhắn và tiếp tục hỗ trợ khách hàng.</p>
+                    <button type="button" class="btn chat-empty-action d-lg-none" data-bs-toggle="offcanvas" data-bs-target="#mobileSidebar" aria-controls="mobileSidebar">
+                        <i class="fas fa-comments me-2" aria-hidden="true"></i>Mở danh sách hội thoại
+                    </button>
                 </div>
             </div>
         @endif
     </div>
     <!-- Modal Zoom -->
     <div class="zoom-modal" id="zoomModal">
-        <button class="zoom-close" id="closeModal">&times;</button>
+        <button type="button" class="zoom-close" id="closeModal" aria-label="Đóng ảnh phóng to">&times;</button>
         <div class="zoom-container" id="zoomContainer">
             <img src="" alt="Zoomed image" class="zoom-modal-image" id="zoomModalImage">
         </div>

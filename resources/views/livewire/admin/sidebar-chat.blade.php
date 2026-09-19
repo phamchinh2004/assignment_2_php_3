@@ -1,323 +1,196 @@
 @php
     use Illuminate\Support\Facades\Storage;
-    // Xác định prefix cho wire:key để tránh duplicate giữa mobile và desktop
+
+    // Keep distinct keys and element IDs for the desktop and mobile sidebars.
     $keyPrefix = ($isMobile ?? false) ? 'mobile-' : 'desktop-';
+    $isAdmin = auth()->user()->role === 'admin';
+    $ownConversations = $conversations->where('staff_id', auth()->id());
 @endphp
 
 @push('css')
     @vite('resources/css/admin/sidebar-chat.css')
 @endpush
 
-<div class="p-3 border-bottom bg-light">
-    <h5 class="mb-0 text-dark fw-bold">
-        @if(auth()->user()->role === 'admin')
-            <i class="fas fa-user-shield me-2 text-primary"></i>Quản lý Chat
-        @else
-            <i class="fas fa-comments me-2 text-primary"></i>Danh sách Chat
-        @endif
-    </h5>
-</div>
-<div class="px-3 pt-3 pb-1">
-    <div class="position-relative">
-        <i class="fas fa-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted" style="font-size: 13px;"></i>
-        <input type="text" class="form-control ps-5 rounded-pill sidebar-search-input" placeholder="Tìm kiếm người dùng..."
-            wire:model.debounce.300ms="searchTerm" style="font-size: 13px; background-color: #f8fafc;" />
-    </div>
-</div>
-<div class="overflow-auto custom-scrollbar" style="height: calc(100vh - 125px);">
-    @if(auth()->user()->role === 'admin')
-        <!-- Giao diện Admin -->
-        <div class="pt-3 pe-3 pb-5 ps-3">
-            <!-- Conversations của admin -->
-            <div class="mb-4">
-                <h6 class="text-muted mb-3 fw-semibold">
-                    <i class="fas fa-user-circle me-2"></i>Tin nhắn của tôi
-                </h6>
-                @foreach($conversations->where('staff_id', auth()->id()) as $conversation)
-                    @php
-                        $hasPenalty = $conversation->user->hasPenalizedOrders();
-                        // Tính trực tiếp unread count trong view
-                        $unreadCount = App\Models\Message::where('conversation_id', $conversation->id)
-                            ->where('sender_id', '!=', auth()->id())
-                            ->where('is_read', 0)
-                            ->count();
-                        $hasUnread = $unreadCount > 0;
-                        $isSelected = $this->selectedConversationId !== null && (int) $this->selectedConversationId === (int) $conversation->id;
-                        $bgClass = $isSelected
-                            ? 'bg-primary bg-opacity-10 border-start border-primary border-4 shadow-sm' 
-                            : ($hasPenalty ? 'bg-warning bg-opacity-10 shadow-sm' : ($hasUnread ? 'bg-info bg-opacity-5 shadow-sm' : 'bg-white shadow-sm'));
-                        $borderColor = $isSelected ? '#0d6efd' : ($hasPenalty ? '#ffc107' : ($hasUnread ? '#0dcaf0' : '#e9ecef'));
-                    @endphp
-                    <div wire:key="{{ $keyPrefix }}admin-conversation-{{ $conversation->id }}" class="conversation-item d-flex align-items-center p-3 mb-2 position-relative cursor-pointer {{ $bgClass }} {{ $isSelected ? 'is-selected active' : '' }}"
-                        style="cursor: pointer; transition: all 0.3s ease; border: 2px solid {{ $borderColor }};"
-                        wire:click="selectConversation({{ $conversation->id }})">
-                        <div class="avatar rounded-circle d-flex align-items-center justify-content-center text-white fw-bold me-3 position-relative"
-                            style="width: 45px; height: 45px; font-size: 16px;">
-                            @if($conversation->user->avatar && Storage::disk('public')->exists($conversation->user->avatar))
-                                <img src="{{ asset('storage/' . $conversation->user->avatar) }}"
-                                    alt="{{ $conversation->user->full_name }}"
-                                    class="rounded-circle"
-                                    style="width: 100%; height: 100%; object-fit: cover;">
-                            @else
-                                <div class="bg-primary w-100 h-100 d-flex align-items-center justify-content-center rounded-circle">
-                                    <i class="fas fa-user" style="font-size: 18px;"></i>
-                                </div>
-                            @endif
-                        </div>
-                        <div class="flex-grow-1 min-width-0">
-                            <div class="d-flex align-items-center justify-content-between mb-1">
-                                <div class="{{ $hasUnread ? 'fw-bold' : 'fw-semibold' }} text-dark text-truncate" style="font-size: 13px;">
-                                    @if($hasPenalty)
-                                        <i class="fas fa-exclamation-triangle text-warning me-1" title="Đang bị phạt"></i>
-                                    @endif
-                                    {{ $conversation->user->full_name }}
-                                </div>
-                                @if($hasUnread)
-                                    <span class="badge bg-danger rounded-pill ms-2" style="font-size: 9px;">
-                                        {{ $unreadCount > 99 ? '99+' : $unreadCount }}
-                                    </span>
-                                @endif
-                            </div>
-                            <div class="text-muted small text-truncate mb-1" style="font-size: 10px;">
-                                <i class="fas fa-user me-1" style="font-size: 8px;"></i>
-                                {{ $conversation->user->username }}
-                            </div>
-                            <div class="{{ $hasUnread ? 'fw-bold' : '' }} text-muted small text-truncate d-flex align-items-center mb-1">
-                                @if($conversation->messages->last())
-                                    <i class="fas fa-comment-dots me-1" style="font-size: 10px;"></i>
-                                    {{ Str::limit(trim($conversation->messages->last()->message) ?: "Hình ảnh", 20) }}
-                                @else
-                                    <i class="fas fa-clock me-1" style="font-size: 10px;"></i>
-                                    Chưa có tin nhắn
-                                @endif
-                            </div>
-                            @php
-                                $isOnline = $conversation->user->last_seen && 
-                                            $conversation->user->last_seen->diffInMinutes(now()) <= 5;
-                            @endphp
-                            <div style="font-size: 10px;">
-                                @if($isOnline)
-                                    <span class="bg-success rounded-circle me-1" style="width: 6px; height: 6px; display: inline-block;"></span>
-                                    <span class="text-success fw-semibold">Đang online</span>
-                                @elseif($conversation->user->last_seen)
-                                    <i class="fas fa-clock me-1"></i>
-                                    {{ $conversation->user->last_seen->diffForHumans() }}
-                                @else
-                                    <i class="fas fa-circle text-secondary me-1" style="font-size: 6px;"></i>
-                                    Offline
-                                @endif
-                            </div>
-                        </div>
-                    </div>
-                @endforeach
-            </div>
-
-            <!-- Danh sách nhân viên và người dùng của họ -->
-            <div>
-                <h6 class="text-muted mb-3 fw-semibold">
-                    <i class="fas fa-users me-2"></i>Nhân viên và khách hàng
-                </h6>
-                @foreach($staffUsers as $staff)
-                    <div wire:key="{{ $keyPrefix }}staff-section-{{ $staff['id'] }}" class="mb-3">
-                        <!-- Header nhân viên -->
-                        <div class="d-flex align-items-center p-3 bg-light rounded-3 cursor-pointer staff-header shadow-sm"
-                            style="cursor: pointer; transition: all 0.3s ease; border: 1px solid #e9ecef;"
-                            wire:click="toggleStaffExpansion({{ $staff['id'] }})">
-                            <div class="bg-success rounded-circle d-flex align-items-center justify-content-center text-white fw-bold me-3"
-                                style="width: 36px; height: 36px; font-size: 14px;">
-                                {{ substr($staff['full_name'], 0, 1) }}
-                            </div>
-                            <div class="flex-grow-1">
-                                <div class="fw-semibold text-dark" style="font-size: 13px;">{{ $staff['full_name'] }}</div>
-                                <div class="text-muted" style="font-size: 11px;">
-                                    <i class="fas fa-users me-1"></i>{{ count($staff['invited_users']) }} khách hàng
-                                </div>
-                            </div>
-                            <i class="fas fa-chevron-down text-muted transition-transform {{ in_array($staff['id'], $expandedStaff) ? 'rotated' : '' }}"
-                                style="font-size: 12px; transition: transform 0.3s ease;"></i>
-                        </div>
-
-                        <!-- Danh sách người dùng của nhân viên (có thể thu gọn) -->
-                        <div class="staff-users-list {{ in_array($staff['id'], $expandedStaff) ? 'expanded' : 'collapsed' }}"
-                            style="transition: all 0.3s ease;">
-                            @if(in_array($staff['id'], $expandedStaff))
-                                <div class="ms-4 mt-2">
-                                    @foreach($staff['invited_users'] as $user)
-                                        @php
-                                            // User data từ array
-                                            $userUnreadCount = $user['latest_conversation']['unread_count'] ?? 0;
-                                            $userHasUnread = $userUnreadCount > 0;
-                                            $userHasPenalty = isset($user['_user_model']) && $user['_user_model']->hasPenalizedOrders();
-                                            
-                                            // Kiểm tra xem có đang chọn conversation này không
-                                            $isSelected = ($this->selectedConversationId !== null &&
-                                                          isset($user['latest_conversation']) &&
-                                                          (int) $this->selectedConversationId === (int) $user['latest_conversation']['id'])
-                                                          || ($this->selectedConversation && (int) $this->selectedConversation->user_id === (int) $user['id'] && (int) $this->selectedConversation->staff_id === (int) $staff['id']);
-                                            
-                                            $bgClass = $isSelected 
-                                                ? 'bg-primary bg-opacity-10 border-start border-primary border-4 shadow-sm' 
-                                                : ($userHasPenalty ? 'bg-warning bg-opacity-10 shadow-sm' : ($userHasUnread ? 'bg-info bg-opacity-5 shadow-sm' : 'bg-white shadow-sm'));
-                                            $borderColor = $isSelected ? '#0d6efd' : ($userHasPenalty ? '#ffc107' : ($userHasUnread ? '#0dcaf0' : '#e9ecef'));
-                                        @endphp
-                                        <div wire:key="{{ $keyPrefix }}staff-{{ $staff['id'] }}-user-{{ $user['id'] }}"
-                                            class="conversation-item d-flex align-items-center p-3 mb-2 position-relative cursor-pointer {{ $bgClass }} {{ $isSelected ? 'is-selected active' : '' }}"
-                                            style="cursor: pointer; transition: all 0.3s ease; border: 2px solid {{ $borderColor }};"
-                                            wire:click="selectUserForChat({{ $user['id'] }}, {{ $staff['id'] }})">
-                                            <div class="avatar rounded-circle d-flex align-items-center justify-content-center text-white fw-bold me-3 position-relative"
-                                                style="width: 45px; height: 45px; font-size: 16px;">
-                                                @if($user['avatar'] && Storage::disk('public')->exists($user['avatar']))
-                                                    <img src="{{ asset('storage/' . $user['avatar']) }}" 
-                                                        alt="{{ $user['full_name'] }}"
-                                                        class="rounded-circle"
-                                                        style="width: 100%; height: 100%; object-fit: cover;">
-                                                @else
-                                                    <div class="bg-primary w-100 h-100 d-flex align-items-center justify-content-center rounded-circle">
-                                                        <i class="fas fa-user" style="font-size: 18px;"></i>
-                                                    </div>
-                                                @endif
-                                                @php
-                                                    $isUserOnline = $user['last_seen'] && 
-                                                                    $user['last_seen']->diffInMinutes(now()) <= 5;
-                                                @endphp
-                                                <span class="position-absolute bottom-0 end-0 {{ $isUserOnline ? 'bg-success' : 'bg-secondary' }} border border-2 border-white rounded-circle" 
-                                                      style="width: 12px; height: 12px;z-index:99" 
-                                                      title="{{ $isUserOnline ? 'Đang hoạt động' : ($user['last_seen'] ? 'Hoạt động ' . $user['last_seen']->diffForHumans() : 'Chưa từng online') }}"></span>
-                                            </div>
-                                            <div class="flex-grow-1 min-width-0">
-                                                <div class="d-flex align-items-center justify-content-between mb-1">
-                                                    <div class="{{ $userHasUnread ? 'fw-bold' : 'fw-semibold' }} text-dark text-truncate" style="font-size: 13px;">
-                                                        @if($userHasPenalty)
-                                                            <i class="fas fa-exclamation-triangle text-warning me-1" title="Đang bị phạt"></i>
-                                                        @endif
-                                                        {{ $user['full_name'] }}
-                                                    </div>
-                                                    @if($userHasUnread)
-                                                        <span class="badge bg-danger rounded-pill ms-2" style="font-size: 9px;">
-                                                            {{ $userUnreadCount > 99 ? '99+' : $userUnreadCount }}
-                                                        </span>
-                                                    @endif
-                                                </div>
-                                                <div class="text-muted small text-truncate mb-1" style="font-size: 10px;">
-                                                    <i class="fas fa-user me-1" style="font-size: 8px;"></i>
-                                                    {{ $user['username'] }}
-                                                </div>
-                                                <div class="{{ $userHasUnread ? 'fw-bold' : '' }} text-muted small text-truncate d-flex align-items-center mb-1">
-                                                    @if(isset($user['latest_conversation']) && !empty($user['latest_conversation']['messages']))
-                                                        <i class="fas fa-comment-dots me-1" style="font-size: 10px;"></i>
-                                                        @php
-                                                            $lastMsg = end($user['latest_conversation']['messages']);
-                                                        @endphp
-                                                        {{ Str::limit(trim($lastMsg['message']) ?: "Hình ảnh", 20) }}
-                                                    @else
-                                                        <i class="fas fa-clock me-1" style="font-size: 10px;"></i>
-                                                        Chưa có tin nhắn
-                                                    @endif
-                                                </div>
-                                                <div style="font-size: 10px;">
-                                                    @if($isUserOnline)
-                                                        <span class="bg-success rounded-circle me-1" style="width: 6px; height: 6px; display: inline-block;"></span>
-                                                        <span class="text-success fw-semibold">Đang online</span>
-                                                    @elseif($user['last_seen'])
-                                                        <i class="fas fa-clock me-1"></i>
-                                                        {{ $user['last_seen']->diffForHumans() }}
-                                                    @else
-                                                        Offline
-                                                    @endif
-                                                </div>
-                                            </div>
-                                        </div>
-                                    @endforeach
-                                </div>
-                            @endif
-                        </div>
-                    </div>
-                @endforeach
-            </div>
+<div class="chat-sidebar">
+    <div class="chat-sidebar-heading">
+        <div class="chat-sidebar-heading-icon" aria-hidden="true"><i class="fas fa-comments"></i></div>
+        <div>
+            <h2 class="chat-sidebar-title">Hộp thư</h2>
+            <p class="chat-sidebar-subtitle">{{ $isAdmin ? 'Quản lý hội thoại khách hàng' : 'Kết nối với khách hàng của bạn' }}</p>
         </div>
-    @else
-        <!-- Giao diện Staff -->
-        <div class="p-3">
-            <h6 class="text-muted mb-3 fw-semibold">
-                <i class="fas fa-user-friends me-2"></i>Khách hàng của tôi
-            </h6>
-            @foreach($conversations->where('staff_id', auth()->id()) as $conversation)
+    </div>
+
+    <div class="chat-sidebar-search">
+        <label class="visually-hidden" for="{{ $keyPrefix }}chat-search">Tìm kiếm người dùng</label>
+        <div class="chat-sidebar-search-field">
+            <i class="fas fa-search chat-search-icon" aria-hidden="true"></i>
+            <input id="{{ $keyPrefix }}chat-search" type="search" class="form-control sidebar-search-input"
+                placeholder="Tìm kiếm người dùng..." autocomplete="off" wire:model.debounce.300ms="searchTerm" />
+            <span class="chat-search-loading" wire:loading.delay wire:target="searchTerm" role="status">
+                <i class="fas fa-circle-notch fa-spin" aria-hidden="true"></i>
+                <span class="visually-hidden">Đang tìm kiếm...</span>
+            </span>
+        </div>
+    </div>
+
+    <div class="chat-sidebar-list custom-scrollbar">
+        <section class="chat-sidebar-section" aria-labelledby="{{ $keyPrefix }}my-chats-title">
+            <h3 class="sidebar-section-title" id="{{ $keyPrefix }}my-chats-title">
+                <span>{{ $isAdmin ? 'Tin nhắn của tôi' : 'Khách hàng của tôi' }}</span>
+                <span class="sidebar-section-count">{{ $ownConversations->count() }}</span>
+            </h3>
+
+            @forelse($ownConversations as $conversation)
                 @php
-                    $hasPenaltyStaff = $conversation->user->hasPenalizedOrders();
-                    // Tính trực tiếp unread count trong view
-                    $unreadCountStaff = App\Models\Message::where('conversation_id', $conversation->id)
+                    $hasPenalty = $conversation->user->hasPenalizedOrders();
+                    $unreadCount = App\Models\Message::where('conversation_id', $conversation->id)
                         ->where('sender_id', '!=', auth()->id())
                         ->where('is_read', 0)
                         ->count();
-                    $hasUnreadStaff = $unreadCountStaff > 0;
-                    $isSelectedStaff = $this->selectedConversationId !== null && (int) $this->selectedConversationId === (int) $conversation->id;
-                    $bgClassStaff = $isSelectedStaff
-                        ? 'bg-primary bg-opacity-10 border-start border-primary border-4 shadow-sm' 
-                        : ($hasPenaltyStaff ? 'bg-warning bg-opacity-10 shadow-sm' : ($hasUnreadStaff ? 'bg-info bg-opacity-5 shadow-sm' : 'bg-white shadow-sm'));
-                    $borderColorStaff = $isSelectedStaff ? '#0d6efd' : ($hasPenaltyStaff ? '#ffc107' : ($hasUnreadStaff ? '#0dcaf0' : '#e9ecef'));
+                    $hasUnread = $unreadCount > 0;
+                    $isSelected = $this->selectedConversationId !== null && (int) $this->selectedConversationId === (int) $conversation->id;
+                    $isOnline = $conversation->user->last_seen && $conversation->user->last_seen->diffInMinutes(now()) <= 5;
+                    $lastMessage = $conversation->messages->last();
                 @endphp
-                <div wire:key="{{ $keyPrefix }}staff-conversation-{{ $conversation->id }}" class="conversation-item d-flex align-items-center p-3 mb-2 position-relative cursor-pointer {{ $bgClassStaff }} {{ $isSelectedStaff ? 'is-selected active' : '' }}"
-                    style="cursor: pointer; transition: all 0.3s ease; border: 2px solid {{ $borderColorStaff }};"
-                    wire:click="selectConversation({{ $conversation->id }})">
-                    <div class="avatar rounded-circle d-flex align-items-center justify-content-center text-white fw-bold me-3 position-relative"
-                        style="width: 45px; height: 45px; font-size: 16px;">
+                <button type="button" wire:key="{{ $keyPrefix }}{{ $isAdmin ? 'admin' : 'staff' }}-conversation-{{ $conversation->id }}"
+                    class="conversation-item {{ $isSelected ? 'is-selected active bg-primary' : '' }} {{ $hasUnread ? 'has-unread' : '' }} {{ $hasPenalty ? 'has-penalty' : '' }}"
+                    aria-current="{{ $isSelected ? 'true' : 'false' }}" wire:click="selectConversation({{ $conversation->id }})">
+                    <span class="conversation-avatar">
                         @if($conversation->user->avatar && Storage::disk('public')->exists($conversation->user->avatar))
-                            <img src="{{ asset('storage/' . $conversation->user->avatar) }}"
-                                alt="{{ $conversation->user->full_name }}"
-                                class="rounded-circle"
-                                style="width: 100%; height: 100%; object-fit: cover;">
+                            <img src="{{ asset('storage/' . $conversation->user->avatar) }}" alt="" loading="lazy">
                         @else
-                            <div class="bg-primary w-100 h-100 d-flex align-items-center justify-content-center rounded-circle">
-                                <i class="fas fa-user" style="font-size: 18px;"></i>
-                            </div>
+                            <i class="fas fa-user" aria-hidden="true"></i>
                         @endif
-                    </div>
-                    <div class="flex-grow-1 min-width-0">
-                        <div class="d-flex align-items-center justify-content-between mb-1">
-                            <div class="{{ $hasUnreadStaff ? 'fw-bold' : 'fw-semibold' }} text-dark text-truncate" style="font-size: 13px;">
-                                @if($hasPenaltyStaff)
-                                    <i class="fas fa-exclamation-triangle text-warning me-1" title="Đang bị phạt"></i>
-                                @endif
-                                {{ $conversation->user->full_name }}
-                            </div>
-                            @if($hasUnreadStaff)
-                                <span class="badge bg-danger rounded-pill ms-2" style="font-size: 9px;">
-                                    {{ $unreadCountStaff > 99 ? '99+' : $unreadCountStaff }}
-                                </span>
+                        <span class="conversation-presence {{ $isOnline ? 'is-online' : '' }}" aria-hidden="true"></span>
+                    </span>
+                    <span class="conversation-details">
+                        <span class="conversation-topline">
+                            <span class="conversation-name" title="{{ $conversation->user->full_name }}">{{ $conversation->user->full_name }}</span>
+                            @if($hasPenalty)
+                                <span class="conversation-penalty" title="Đang bị phạt" aria-label="Đang bị phạt"><i class="fas fa-exclamation-triangle" aria-hidden="true"></i></span>
                             @endif
-                        </div>
-                        <div class="text-muted small text-truncate mb-1" style="font-size: 10px;">
-                            <i class="fas fa-user me-1" style="font-size: 8px;"></i>
-                            {{ $conversation->user->username }}
-                        </div>
-                        <div class="{{ $hasUnreadStaff ? 'fw-bold' : '' }} text-muted small text-truncate d-flex align-items-center mb-1">
-                            @if($conversation->messages->last())
-                                <i class="fas fa-comment-dots me-1" style="font-size: 10px;"></i>
-                                {{ Str::limit(trim($conversation->messages->last()->message) ?: "Hình ảnh", 20) }}
+                            @if($hasUnread)
+                                <span class="conversation-unread" aria-label="{{ $unreadCount }} tin nhắn chưa đọc">{{ $unreadCount > 99 ? '99+' : $unreadCount }}</span>
+                            @endif
+                        </span>
+                        <span class="conversation-username">{{ $conversation->user->username }}</span>
+                        <span class="conversation-preview">
+                            @if($lastMessage)
+                                @if(!trim($lastMessage->message))<i class="far fa-image" aria-hidden="true"></i>@endif
+                                {{ trim($lastMessage->message) ?: 'Hình ảnh' }}
                             @else
-                                <i class="fas fa-clock me-1" style="font-size: 10px;"></i>
-                                Chưa có tin nhắn
+                                <span class="conversation-no-messages">Chưa có tin nhắn</span>
                             @endif
-                        </div>
-                        @php
-                            $isOnlineStaff = $conversation->user->last_seen && 
-                                        $conversation->user->last_seen->diffInMinutes(now()) <= 5;
-                        @endphp
-                        <div style="font-size: 10px;">
-                            @if($isOnlineStaff)
-                                <span class="bg-success rounded-circle me-1" style="width: 6px; height: 6px; display: inline-block;"></span>
-                                <span class="text-success fw-semibold">Đang online</span>
+                        </span>
+                        <span class="conversation-status {{ $isOnline ? 'is-online' : '' }}">
+                            @if($isOnline)
+                                Đang hoạt động
                             @elseif($conversation->user->last_seen)
-                                <i class="fas fa-clock me-1"></i>
                                 {{ $conversation->user->last_seen->diffForHumans() }}
                             @else
-                                <i class="fas fa-circle text-secondary me-1" style="font-size: 6px;"></i>
-                                Offline
+                                Ngoại tuyến
+                            @endif
+                        </span>
+                    </span>
+                </button>
+            @empty
+                <div class="sidebar-empty-state {{ $isAdmin ? 'sidebar-empty-state-compact' : '' }}">
+                    <span class="sidebar-empty-icon" aria-hidden="true"><i class="{{ trim($searchTerm ?? '') !== '' ? 'fas fa-search' : 'far fa-comment-dots' }}"></i></span>
+                    <p>{{ trim($searchTerm ?? '') !== '' ? 'Không tìm thấy hội thoại' : 'Chưa có hội thoại' }}</p>
+                    <span>{{ trim($searchTerm ?? '') !== '' ? 'Thử tìm bằng tên hoặc tài khoản khác.' : 'Tin nhắn khách hàng sẽ xuất hiện tại đây.' }}</span>
+                </div>
+            @endforelse
+        </section>
+
+        @if($isAdmin)
+            <section class="chat-sidebar-section" aria-labelledby="{{ $keyPrefix }}team-chats-title">
+                <h3 class="sidebar-section-title" id="{{ $keyPrefix }}team-chats-title">
+                    <span>Nhân viên &amp; khách hàng</span>
+                    <span class="sidebar-section-count">{{ count($staffUsers) }}</span>
+                </h3>
+                @forelse($staffUsers as $staff)
+                    @php $isExpanded = in_array($staff['id'], $expandedStaff); @endphp
+                    <div wire:key="{{ $keyPrefix }}staff-section-{{ $staff['id'] }}" class="sidebar-staff-group">
+                        <button type="button" class="staff-header {{ $isExpanded ? 'is-expanded' : '' }}"
+                            aria-expanded="{{ $isExpanded ? 'true' : 'false' }}" aria-controls="{{ $keyPrefix }}staff-users-{{ $staff['id'] }}"
+                            wire:click="toggleStaffExpansion({{ $staff['id'] }})">
+                            <span class="staff-avatar" aria-hidden="true">{{ mb_strtoupper(mb_substr($staff['full_name'], 0, 1)) }}</span>
+                            <span class="staff-details">
+                                <span class="staff-name" title="{{ $staff['full_name'] }}">{{ $staff['full_name'] }}</span>
+                                <span class="staff-customer-count">{{ count($staff['invited_users']) }} khách hàng</span>
+                            </span>
+                            <i class="fas fa-chevron-down staff-chevron {{ $isExpanded ? 'rotated' : '' }}" aria-hidden="true"></i>
+                        </button>
+
+                        <div id="{{ $keyPrefix }}staff-users-{{ $staff['id'] }}" class="staff-users-list {{ $isExpanded ? 'expanded' : 'collapsed' }}">
+                            @if($isExpanded)
+                                @forelse($staff['invited_users'] as $user)
+                                    @php
+                                        $userUnreadCount = $user['latest_conversation']['unread_count'] ?? 0;
+                                        $userHasUnread = $userUnreadCount > 0;
+                                        $userHasPenalty = isset($user['_user_model']) && $user['_user_model']->hasPenalizedOrders();
+                                        $isSelected = ($this->selectedConversationId !== null &&
+                                            isset($user['latest_conversation']) &&
+                                            (int) $this->selectedConversationId === (int) $user['latest_conversation']['id'])
+                                            || ($this->selectedConversation && (int) $this->selectedConversation->user_id === (int) $user['id'] && (int) $this->selectedConversation->staff_id === (int) $staff['id']);
+                                        $isUserOnline = $user['last_seen'] && $user['last_seen']->diffInMinutes(now()) <= 5;
+                                        $lastMsg = isset($user['latest_conversation']) && !empty($user['latest_conversation']['messages'])
+                                            ? end($user['latest_conversation']['messages']) : null;
+                                    @endphp
+                                    <button type="button" wire:key="{{ $keyPrefix }}staff-{{ $staff['id'] }}-user-{{ $user['id'] }}"
+                                        class="conversation-item {{ $isSelected ? 'is-selected active bg-primary' : '' }} {{ $userHasUnread ? 'has-unread' : '' }} {{ $userHasPenalty ? 'has-penalty' : '' }}"
+                                        aria-current="{{ $isSelected ? 'true' : 'false' }}" wire:click="selectUserForChat({{ $user['id'] }}, {{ $staff['id'] }})">
+                                        <span class="conversation-avatar">
+                                            @if($user['avatar'] && Storage::disk('public')->exists($user['avatar']))
+                                                <img src="{{ asset('storage/' . $user['avatar']) }}" alt="" loading="lazy">
+                                            @else
+                                                <i class="fas fa-user" aria-hidden="true"></i>
+                                            @endif
+                                            <span class="conversation-presence {{ $isUserOnline ? 'is-online' : '' }}" aria-hidden="true"></span>
+                                        </span>
+                                        <span class="conversation-details">
+                                            <span class="conversation-topline">
+                                                <span class="conversation-name" title="{{ $user['full_name'] }}">{{ $user['full_name'] }}</span>
+                                                @if($userHasPenalty)
+                                                    <span class="conversation-penalty" title="Đang bị phạt" aria-label="Đang bị phạt"><i class="fas fa-exclamation-triangle" aria-hidden="true"></i></span>
+                                                @endif
+                                                @if($userHasUnread)
+                                                    <span class="conversation-unread" aria-label="{{ $userUnreadCount }} tin nhắn chưa đọc">{{ $userUnreadCount > 99 ? '99+' : $userUnreadCount }}</span>
+                                                @endif
+                                            </span>
+                                            <span class="conversation-username">{{ $user['username'] }}</span>
+                                            <span class="conversation-preview">
+                                                @if($lastMsg)
+                                                    @if(!trim($lastMsg['message']))<i class="far fa-image" aria-hidden="true"></i>@endif
+                                                    {{ trim($lastMsg['message']) ?: 'Hình ảnh' }}
+                                                @else
+                                                    <span class="conversation-no-messages">Chưa có tin nhắn</span>
+                                                @endif
+                                            </span>
+                                            <span class="conversation-status {{ $isUserOnline ? 'is-online' : '' }}">
+                                                @if($isUserOnline)
+                                                    Đang hoạt động
+                                                @elseif($user['last_seen'])
+                                                    {{ $user['last_seen']->diffForHumans() }}
+                                                @else
+                                                    Ngoại tuyến
+                                                @endif
+                                            </span>
+                                        </span>
+                                    </button>
+                                @empty
+                                    <p class="staff-empty-state">Chưa có khách hàng trong danh sách.</p>
+                                @endforelse
                             @endif
                         </div>
                     </div>
-                </div>
-            @endforeach
-        </div>
-    @endif
+                @empty
+                    <div class="sidebar-empty-state sidebar-empty-state-compact">
+                        <p>Chưa có nhân viên trong danh sách</p>
+                        @if(trim($searchTerm ?? '') !== '')<span>Thử tìm bằng tên hoặc tài khoản khác.</span>@endif
+                    </div>
+                @endforelse
+            </section>
+        @endif
+    </div>
 </div>

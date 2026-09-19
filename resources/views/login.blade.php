@@ -4,6 +4,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+        // Trang được khôi phục bằng nút Quay lại có thể giữ token của phiên cũ.
+        window.addEventListener('pageshow', function (event) {
+            if (event.persisted) {
+                window.location.reload();
+            }
+        });
+    </script>
     <meta name="description" content="TikTok Shop - Nền tảng mua sắm trực tuyến">
     <meta property="og:type" content="website">
     <meta property="og:title" content="TikTok Shop">
@@ -87,7 +95,7 @@
                     id="label_forgot_password">Quên mật khẩu?</a>
             </div>
             <div class="d-grid mt-4">
-                <button class="btn auth-submit" id="login" type="button">Đăng nhập <i class="fa-solid fa-arrow-right ms-2"></i></button>
+                <button class="btn auth-submit" id="login" type="submit">Đăng nhập <i class="fa-solid fa-arrow-right ms-2"></i></button>
             </div>
         </form>
         <div class="auth-switch text-center mt-4">
