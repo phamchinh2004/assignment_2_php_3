@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateFrozenOrderRequest;
 use App\Http\Requests\UpdateUserRequest;
+use App\Jobs\SendDepositNotificationEmail;
 use App\Models\Conversation;
 use App\Models\Frozen_order;
 use App\Models\Manager_setting;
@@ -20,7 +21,6 @@ use App\Models\User_spin_progress;
 use App\Models\Wallet_balance_history;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
@@ -640,23 +640,25 @@ class UserController extends Controller
             $adminName
         ));
         
-        // Gửi email thông báo nạp tiền
-        try {
-            Mail::to($get_user->email)->send(
-                new \App\Mail\DepositNotificationMail(
-                    $get_user,
-                    $value,
-                    $get_user->balance,
+        // Chỉ đưa email vào hàng đợi; phản hồi nạp tiền không phải chờ SMTP.
+        if ($get_user->email) {
+            try {
+                SendDepositNotificationEmail::dispatch(
+                    (int) $get_user->id,
+                    $get_user->email,
+                    (float) $value,
+                    (float) $get_user->balance,
                     $transactionType,
-                    $adminName
-                )
-            );
-        } catch (\Exception $e) {
-            // Log lỗi nhưng không fail transaction
-            Log::error('Lỗi gửi email nạp tiền: ' . $e->getMessage(), [
-                'user_id' => $user_id,
-                'amount' => $value
-            ]);
+                    $adminName,
+                );
+            } catch (\Throwable $exception) {
+                // Tiền đã được cộng; không trả lỗi để tránh quản trị viên nạp lại lần hai.
+                Log::error('Không thể đưa email nạp tiền vào hàng đợi.', [
+                    'user_id' => $get_user->id,
+                    'amount' => $value,
+                    'error' => $exception->getMessage(),
+                ]);
+            }
         }
         
         $message = 'Đã nạp thêm ' . $value . '$ vào tài khoản của người dùng ' . $get_user->full_name . '!';
