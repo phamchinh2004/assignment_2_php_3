@@ -37,10 +37,22 @@
                     @else
                         <span class="badge-status-modern danger"><span class="status-dot"></span> Đã bị khóa</span>
                     @endif
+
+                    {{-- Trạng thái trực tuyến --}}
+                    @if($staff->isOnline())
+                        <span class="badge-presence online" title="Lần cuối hoạt động: {{ $staff->last_seen_formatted }}">
+                            <span class="presence-dot"></span> Đang trực tuyến (Online)
+                        </span>
+                    @else
+                        <span class="badge-presence offline" title="Lần cuối hoạt động: {{ $staff->last_seen_formatted }}">
+                            <span class="presence-dot"></span> Ngoại tuyến (Offline)
+                        </span>
+                    @endif
                 </h1>
                 <p class="page-subtitle">
                     <span><i class="fas fa-at"></i> {{ $staff->username }}</span> •
                     <span><i class="fas fa-phone"></i> {{ $staff->phone ?: 'Chưa có SĐT' }}</span> •
+                    <span><i class="fas fa-clock"></i> Lần cuối online: {{ $staff->last_seen ? $staff->last_seen->diffForHumans() . ' (' . $staff->last_seen_formatted . ')' : 'Chưa từng online' }}</span> •
                     <span><i class="fas fa-calendar-alt"></i> Ngày tạo: {{ $staff->created_at ? $staff->created_at->format('d/m/Y H:i') : '—' }}</span>
                 </p>
             </div>
@@ -96,6 +108,22 @@
                 <i class="fas fa-shield-check"></i>
             </div>
         </div>
+
+        {{-- 4. Trạng thái hoạt động --}}
+        <div class="stat-card-modern {{ $staff->isOnline() ? 'success' : 'info' }}">
+            <div class="stat-content">
+                <span class="stat-label">Trực tuyến</span>
+                <span class="stat-number {{ $staff->isOnline() ? 'text-success' : 'text-muted' }}">
+                    {{ $staff->isOnline() ? 'Online' : 'Offline' }}
+                </span>
+                <span class="stat-subtext text-muted">
+                    <i class="fas fa-clock"></i> {{ $staff->last_seen ? $staff->last_seen->diffForHumans() : 'Chưa từng online' }}
+                </span>
+            </div>
+            <div class="stat-icon-wrapper {{ $staff->isOnline() ? 'success' : 'info' }}">
+                <i class="fas fa-wifi"></i>
+            </div>
+        </div>
     </div>
 
     {{-- 2-Column Detail Cards --}}
@@ -120,6 +148,32 @@
             <div class="detail-row-modern">
                 <span class="detail-label-modern">Mã giới thiệu</span>
                 <span class="detail-value-modern"><span class="id-chip">{{ $staff->referral_code ?: '—' }}</span></span>
+            </div>
+            <div class="detail-row-modern">
+                <span class="detail-label-modern">Trạng thái hoạt động</span>
+                <span class="detail-value-modern">
+                    @if($staff->isOnline())
+                        <span class="badge-presence online">
+                            <span class="presence-dot"></span> Đang trực tuyến (Online)
+                        </span>
+                    @else
+                        <span class="badge-presence offline">
+                            <span class="presence-dot"></span> Ngoại tuyến ({{ $staff->last_seen ? $staff->last_seen->diffForHumans() : 'Chưa từng online' }})
+                        </span>
+                    @endif
+                </span>
+            </div>
+            <div class="detail-row-modern">
+                <span class="detail-label-modern">Lần cuối hoạt động</span>
+                <span class="detail-value-modern">
+                    <strong>{{ $staff->last_seen_formatted }}</strong>
+                </span>
+            </div>
+            <div class="detail-row-modern">
+                <span class="detail-label-modern">IP đăng ký</span>
+                <span class="detail-value-modern">
+                    <code>{{ $staff->register_ip ?: 'Chưa ghi nhận' }}</code>
+                </span>
             </div>
             <div class="detail-row-modern">
                 <span class="detail-label-modern">Người quản lý / Tạo</span>

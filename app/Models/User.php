@@ -14,6 +14,7 @@ class User extends Authenticatable
     const ROLE_ADMIN = 'admin';
     const ROLE_STAFF = 'staff';
     const ROLE_MEMBER = 'member';
+    const ONLINE_THRESHOLD_MINUTES = 5;
     /**
      * The attributes that are mass assignable.
      *
@@ -290,7 +291,7 @@ class User extends Authenticatable
     }
 
     /**
-     * Kiểm tra user có online không (hoạt động trong 5 phút gần đây)
+     * Kiểm tra user có online không (hoạt động trong ONLINE_THRESHOLD_MINUTES phút gần đây)
      */
     public function isOnline()
     {
@@ -298,13 +299,13 @@ class User extends Authenticatable
             return false;
         }
         
-        return $this->last_seen->gt(now()->subMinutes(5));
+        return $this->last_seen->gt(now()->subMinutes(self::ONLINE_THRESHOLD_MINUTES));
     }
 
     /**
      * Kiểm tra user có online không (hoạt động trong X phút gần đây)
      */
-    public function isOnlineWithin($minutes = 5)
+    public function isOnlineWithin($minutes = self::ONLINE_THRESHOLD_MINUTES)
     {
         if (!$this->last_seen) {
             return false;
@@ -314,7 +315,7 @@ class User extends Authenticatable
     }
 
     /**
-     * Lấy thời gian lần cuối user online
+     * Lấy thời gian lần cuối user online (tương đối)
      */
     public function getLastSeenTextAttribute()
     {
@@ -327,6 +328,18 @@ class User extends Authenticatable
         }
 
         return $this->last_seen->diffForHumans();
+    }
+
+    /**
+     * Lấy thời gian lần cuối user online (tuyệt đối)
+     */
+    public function getLastSeenFormattedAttribute()
+    {
+        if (!$this->last_seen) {
+            return 'Chưa từng online';
+        }
+
+        return $this->last_seen->format('d/m/Y H:i:s');
     }
 
     /**

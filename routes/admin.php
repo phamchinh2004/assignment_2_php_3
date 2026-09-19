@@ -82,6 +82,7 @@ Route::middleware(['role:admin'])->group(function () {
     Route::resource('staffs', StaffController::class);
     Route::resource('manager_setting', ManagerSettingController::class);
     Route::resource('staff', StaffController::class);
+    Route::get('/staff-online-statuses', [StaffController::class, 'getOnlineStatuses'])->name('staff.online.statuses');
     
     // Quản lý thời gian chuyển trạng thái đơn hàng
     Route::get('/order-status-timing', [\App\Http\Controllers\Admin\OrderStatusTimingController::class, 'index'])->name('admin.order_status_timing.index');

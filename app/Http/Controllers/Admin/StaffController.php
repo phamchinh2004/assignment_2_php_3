@@ -28,7 +28,40 @@ class StaffController extends Controller
             ->where('role', 'staff')
             ->get();
 
-        return view('admin.staff.index', compact('list_staffs'));
+        $onlineStaffCount = $list_staffs->filter(fn($u) => $u->isOnline())->count();
+        $offlineStaffCount = $list_staffs->count() - $onlineStaffCount;
+
+        return view('admin.staff.index', compact('list_staffs', 'onlineStaffCount', 'offlineStaffCount'));
+    }
+
+    /**
+     * API trả về trạng thái trực tuyến của toàn bộ nhân viên (phục vụ polling nhẹ)
+     */
+    public function getOnlineStatuses()
+    {
+        $staffs = User::where('role', 'staff')
+            ->select('id', 'full_name', 'username', 'last_seen')
+            ->get()
+            ->map(function ($staff) {
+                return [
+                    'id' => $staff->id,
+                    'is_online' => $staff->isOnline(),
+                    'last_seen_text' => $staff->last_seen_text,
+                    'last_seen_formatted' => $staff->last_seen_formatted,
+                    'last_seen_diff' => $staff->last_seen ? $staff->last_seen->diffForHumans() : 'Chưa từng online'
+                ];
+            });
+
+        $onlineCount = $staffs->where('is_online', true)->count();
+        $totalCount = $staffs->count();
+
+        return response()->json([
+            'success' => true,
+            'online_count' => $onlineCount,
+            'offline_count' => $totalCount - $onlineCount,
+            'total_count' => $totalCount,
+            'staffs' => $staffs
+        ]);
     }
     public function change_status_staff($staff_id)
     {

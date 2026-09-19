@@ -25,6 +25,60 @@
                     table.search(filter).draw();
                 });
             });
+
+            // Polling nhẹ cập nhật trạng thái Online / Offline mỗi 60 giây
+            function refreshOnlineStatuses() {
+                fetch("{{ route('staff.online.statuses') }}", {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data && data.success) {
+                        // Cập nhật số đếm trên KPI và Tabs
+                        const onlineCountEl = document.getElementById('kpiOnlineCount');
+                        const onlineSubtextEl = document.getElementById('kpiOnlineSubtext');
+                        const tabOnlineCountEl = document.getElementById('tabOnlineCount');
+                        const tabOfflineCountEl = document.getElementById('tabOfflineCount');
+
+                        if (onlineCountEl) onlineCountEl.textContent = data.online_count;
+                        if (onlineSubtextEl) onlineSubtextEl.textContent = `${data.offline_count} đang ngoại tuyến`;
+                        if (tabOnlineCountEl) tabOnlineCountEl.textContent = data.online_count;
+                        if (tabOfflineCountEl) tabOfflineCountEl.textContent = data.offline_count;
+
+                        // Cập nhật từng dòng nhân viên
+                        if (data.staffs && Array.isArray(data.staffs)) {
+                            data.staffs.forEach(staff => {
+                                const cell = document.querySelector(`.staff-presence-cell[data-staff-id="${staff.id}"]`);
+                                if (cell) {
+                                    if (staff.is_online) {
+                                        cell.setAttribute('data-presence', 'online');
+                                        cell.innerHTML = `
+                                            <span class="badge-presence online" title="Lần cuối: ${staff.last_seen_formatted}">
+                                                <span class="presence-dot"></span> Online
+                                            </span>
+                                        `;
+                                    } else {
+                                        cell.setAttribute('data-presence', 'offline');
+                                        cell.innerHTML = `
+                                            <span class="badge-presence offline" title="Lần cuối: ${staff.last_seen_formatted}">
+                                                <span class="presence-dot"></span> ${staff.last_seen_diff}
+                                            </span>
+                                        `;
+                                    }
+                                }
+                            });
+                        }
+                    }
+                })
+                .catch(err => console.debug('Không thể làm mới trạng thái nhân viên:', err));
+            }
+
+            // Chạy polling sau mỗi 60 giây và khi quay lại tab
+            const presenceInterval = setInterval(refreshOnlineStatuses, 60000);
+            window.addEventListener('focus', refreshOnlineStatuses);
         });
     </script>
 @endsection
@@ -32,6 +86,8 @@
 @section('content')
 @php
     $totalStaff = !empty($list_staffs) ? $list_staffs->count() : 0;
+    $onlineStaff = $onlineStaffCount ?? 0;
+    $offlineStaff = $offlineStaffCount ?? ($totalStaff - $onlineStaff);
     $activeStaff = !empty($list_staffs) ? $list_staffs->where('status', 'activated')->count() : 0;
     $bannedStaff = !empty($list_staffs) ? $list_staffs->where('status', 'banned')->count() : 0;
     $totalRevenue = !empty($list_staffs) ? $list_staffs->sum('total_deposit') : 0;
@@ -46,7 +102,7 @@
                 <span class="page-title-icon teal"><i class="fas fa-user-tie"></i></span>
                 Quản lý nhân viên
             </h1>
-            <p class="page-subtitle">Quản lý đội ngũ nhân viên, phân quyền hạn và theo dõi doanh số đóng góp</p>
+            <p class="page-subtitle">Quản lý đội ngũ nhân viên, theo dõi trạng thái hoạt động trực tuyến và doanh số đóng góp</p>
         </div>
         <div class="d-flex align-items-center gap-2">
             <a href="{{ route('staff.create') }}" class="btn-create-modern text-decoration-none">
@@ -58,6 +114,7 @@
 
     {{-- KPI Cards --}}
     <div class="stats-grid">
+        {{-- 1. Tổng nhân viên --}}
         <div class="stat-card-modern teal">
             <div class="stat-content">
                 <span class="stat-label">Tổng nhân viên</span>
@@ -71,19 +128,36 @@
             </div>
         </div>
 
+        {{-- 2. Đang Online (Trực tuyến) --}}
         <div class="stat-card-modern success">
             <div class="stat-content">
-                <span class="stat-label">Đang hoạt động</span>
-                <span class="stat-number text-success">{{ number_format($activeStaff) }}</span>
+                <span class="stat-label">Trực tuyến (Online)</span>
+                <span class="stat-number text-success" id="kpiOnlineCount">{{ number_format($onlineStaff) }}</span>
                 <span class="stat-subtext text-muted">
-                    <i class="fas fa-check-circle text-success"></i> Có quyền truy cập
+                    <span class="presence-dot" style="background:#10b981; width:7px; height:7px;"></span>
+                    <span id="kpiOnlineSubtext">{{ number_format($offlineStaff) }} đang ngoại tuyến</span>
                 </span>
             </div>
             <div class="stat-icon-wrapper success">
+                <i class="fas fa-wifi"></i>
+            </div>
+        </div>
+
+        {{-- 3. Đã kích hoạt --}}
+        <div class="stat-card-modern info">
+            <div class="stat-content">
+                <span class="stat-label">Tài khoản kích hoạt</span>
+                <span class="stat-number text-info">{{ number_format($activeStaff) }}</span>
+                <span class="stat-subtext text-muted">
+                    <i class="fas fa-check-circle text-info"></i> Có quyền truy cập
+                </span>
+            </div>
+            <div class="stat-icon-wrapper info">
                 <i class="fas fa-user-check"></i>
             </div>
         </div>
 
+        {{-- 4. Tài khoản bị khóa --}}
         <div class="stat-card-modern danger">
             <div class="stat-content">
                 <span class="stat-label">Tài khoản bị khóa</span>
@@ -97,6 +171,7 @@
             </div>
         </div>
 
+        {{-- 5. Tổng doanh số nạp --}}
         <div class="stat-card-modern primary">
             <div class="stat-content">
                 <span class="stat-label">Tổng doanh số nạp</span>
@@ -125,8 +200,16 @@
                 <i class="fas fa-layer-group"></i> Tất cả
                 <span class="filter-tab-count">{{ $totalStaff }}</span>
             </button>
+            <button type="button" class="filter-tab-btn" data-filter="Online">
+                <span class="presence-dot" style="background:#10b981; width:7px; height:7px;"></span> Đang Online
+                <span class="filter-tab-count" id="tabOnlineCount">{{ $onlineStaff }}</span>
+            </button>
+            <button type="button" class="filter-tab-btn" data-filter="Offline">
+                <span class="presence-dot" style="background:#94a3b8; width:7px; height:7px;"></span> Ngoại tuyến
+                <span class="filter-tab-count" id="tabOfflineCount">{{ $offlineStaff }}</span>
+            </button>
             <button type="button" class="filter-tab-btn" data-filter="Đã kích hoạt">
-                <i class="fas fa-check-circle text-success"></i> Đang hoạt động
+                <i class="fas fa-check-circle text-success"></i> Đã kích hoạt
                 <span class="filter-tab-count">{{ $activeStaff }}</span>
             </button>
             <button type="button" class="filter-tab-btn" data-filter="Bị khóa">
@@ -142,6 +225,7 @@
                         <tr>
                             <th class="text-center" style="width: 50px;">#</th>
                             <th>Nhân viên</th>
+                            <th class="text-center" style="width: 140px;">Hoạt động</th>
                             <th>Người tạo / Giới thiệu</th>
                             <th>Tổng doanh số nạp</th>
                             <th class="text-center">Trạng thái</th>
@@ -152,6 +236,10 @@
                     <tbody>
                         @if (!empty($list_staffs))
                             @foreach ($list_staffs as $index => $item)
+                                @php
+                                    $isOnline = $item->isOnline();
+                                    $presenceText = $isOnline ? 'Online' : 'Offline';
+                                @endphp
                                 <tr>
                                     <td class="text-center">
                                         <span class="id-chip">#{{ $index + 1 }}</span>
@@ -171,6 +259,19 @@
                                                 </span>
                                             </div>
                                         </div>
+                                    </td>
+
+                                    {{-- Cột trạng thái hoạt động Online / Offline --}}
+                                    <td class="text-center staff-presence-cell" data-staff-id="{{ $item->id }}" data-presence="{{ $isOnline ? 'online' : 'offline' }}">
+                                        @if($isOnline)
+                                            <span class="badge-presence online" title="Lần cuối: {{ $item->last_seen_formatted }}">
+                                                <span class="presence-dot"></span> Online
+                                            </span>
+                                        @else
+                                            <span class="badge-presence offline" title="Lần cuối: {{ $item->last_seen_formatted }}">
+                                                <span class="presence-dot"></span> {{ $item->last_seen ? $item->last_seen->diffForHumans() : 'Chưa từng online' }}
+                                            </span>
+                                        @endif
                                     </td>
 
                                     <td>
