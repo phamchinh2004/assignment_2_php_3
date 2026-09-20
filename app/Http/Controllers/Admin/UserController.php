@@ -424,10 +424,9 @@ class UserController extends Controller
                 continue;
             }
 
-            $frozen_order = Frozen_order::create([
+            $frozen_order = Frozen_order::snapshotFromOrder($get_order_by_id, [
                 'custom_price' => $custom_price,
                 'commission_percentage' => $commission_percentage,
-                'order_id' => $order_id,
                 'user_id' => $user->id,
                 'is_frozen' => true,
                 'processing_time_limit' => $processing_time_limit,
@@ -463,7 +462,7 @@ class UserController extends Controller
             return back()->with('error', 'Không có quyền thực hiện thao tác này!');
         }
 
-        $order_name = $frozenOrder->order->name ?? 'Đơn hàng';
+        $order_name = $frozenOrder->snapshot_name ?? 'Đơn hàng';
 
         $frozenOrder->delete();
 
@@ -517,11 +516,11 @@ class UserController extends Controller
         $frozenOrder->notification_2_remaining_time = $notification_2_remaining_time;
         $frozenOrder->save();
 
-        $order_name = $frozenOrder->order->name ?? 'Đơn hàng';
+        $order_name = $frozenOrder->snapshot_name ?? 'Đơn hàng';
         
         $message = "Đã cập nhật giá giả của đơn hàng '{$order_name}' từ {$old_price}$ thành {$request->custom_price}$";
         if ($request->has('commission_percentage') && $request->commission_percentage !== null && $request->commission_percentage !== '') {
-            $old_commission_display = $old_commission ?? ($frozenOrder->order->commission_percentage ?? 0);
+            $old_commission_display = $old_commission ?? 0;
             $message .= " và phần trăm hoa hồng từ {$old_commission_display}% thành {$request->commission_percentage}%";
         }
         $message .= "!";
@@ -545,23 +544,15 @@ class UserController extends Controller
             return back()->with('error', 'Không có quyền thực hiện thao tác này!');
         }
 
-        $order = $frozenOrder->order;
-        if (!$order) {
-            return back()->with('error', 'Không tìm thấy đơn hàng!');
-        }
-
-        // Xóa ảnh cũ nếu có
-        if ($order->image && Storage::exists('public/' . $order->image)) {
-            Storage::delete('public/' . $order->image);
-        }
-
         // Lưu ảnh mới
         $file = $request->file('image');
-        $file_name = $file->store('uploads/images/orders', 'public');
-        $order->image = $file_name;
-        $order->save();
+        $file_name = $file->store('uploads/images/frozen-orders', 'public');
+        $oldSnapshotImage = $frozenOrder->snapshot_image;
+        $frozenOrder->snapshot_image = $file_name;
+        $frozenOrder->save();
+        Frozen_order::deleteOwnedSnapshotImage($oldSnapshotImage);
 
-        $order_name = $order->name ?? 'Đơn hàng';
+        $order_name = $frozenOrder->snapshot_name ?? 'Đơn hàng';
         return back()->with('success', "Đã thay ảnh cho đơn hàng '{$order_name}' thành công!");
     }
 

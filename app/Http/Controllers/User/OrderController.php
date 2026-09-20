@@ -32,7 +32,6 @@ class OrderController extends Controller
 
         // Bắt đầu từ bảng frozen_orders
         $query = Frozen_order::query()
-            ->join('orders', 'frozen_orders.order_id', '=', 'orders.id')
             ->where('frozen_orders.user_id', Auth::id())
             ->where('frozen_orders.spun', true);
 
@@ -80,7 +79,6 @@ class OrderController extends Controller
         $list_orders = $query
             ->orderBy('frozen_orders.id', 'desc')
             ->select('frozen_orders.*') // chỉ lấy dữ liệu từ frozen_orders
-            ->with('order') // eager load thông tin đơn hàng
             ->get();
 
         if (!$list_orders) {
@@ -218,8 +216,8 @@ class OrderController extends Controller
         }
 
         $currentBalance = (float) Auth::user()->balance;
-        $apiUrl = $frozen_order->order->api
-            ? rtrim(config('app.url'), '/') . '/order?api_key=' . urlencode($frozen_order->order->api)
+        $apiUrl = $frozen_order->snapshot_api
+            ? rtrim(config('app.url'), '/') . '/order?api_key=' . urlencode($frozen_order->snapshot_api)
             : null;
 
         return view('user.order_detail', compact(
@@ -259,9 +257,13 @@ class OrderController extends Controller
 
         // Kiểm tra số dư đủ để xử lý đơn hàng (chỉ kiểm tra khi xác nhận)
         $user = Auth::user();
-        $total_price = $frozen_order->custom_price
-            ? $frozen_order->custom_price
-            : ($frozen_order->order->price * $frozen_order->order->quantity);
+        $total_price = $frozen_order->snapshot_order_value;
+        if ($total_price === null) {
+            return response()->json([
+                'status' => 409,
+                'message' => 'Đơn hàng cũ chưa có dữ liệu snapshot chính xác. Vui lòng liên hệ quản trị viên.',
+            ]);
+        }
 
         // Nếu là đơn đặc biệt, cần kiểm tra số dư + tiền phạt
         $penalty_amount = $frozen_order->penalty_amount ?? 0;
@@ -284,44 +286,6 @@ class OrderController extends Controller
                 'message' => __('order.SoDuKhongDu') . ' Số tiền cần: $' . number_format($total_required, 2) . ', ' . $balance_type . ' hiện tại: $' . number_format($available_balance, 2),
             ]);
         }
-
-        // Lấy thông tin từ order nếu có
-        $order = $frozen_order->order;
-
-        // Cập nhật platform từ partner nếu có
-        if ($order && $order->partner) {
-            $frozen_order->platform = $order->partner->name;
-        } elseif (!$frozen_order->platform) {
-            // Nếu không có partner, tạo platform giả lập
-            $platforms = ['Shopee', 'Lazada', 'TikTok Shop', 'Sendo', 'Tiki', 'Amazon'];
-            $frozen_order->platform = $platforms[array_rand($platforms)];
-        }
-
-        // Cập nhật order_date nếu chưa có
-        if (!$frozen_order->order_date) {
-            $frozen_order->order_date = now()->subDays(rand(1, 7));
-        }
-
-        // Cập nhật customer_info từ order nếu có
-        if ($order && $order->customer_name) {
-            $frozen_order->customer_info = [
-                'name' => $order->customer_name,
-                'phone' => $order->customer_phone,
-                'address' => $order->customer_address,
-                'note' => $order->customer_note,
-            ];
-        } elseif (!$frozen_order->customer_info) {
-            // Nếu không có thông tin từ order, tạo thông tin giả lập
-            $customerNames = ['Nguyễn Văn A', 'Trần Thị B', 'Lê Văn C', 'Phạm Thị D', 'Hoàng Văn E'];
-            $frozen_order->customer_info = [
-                'name' => $customerNames[array_rand($customerNames)],
-                'phone' => '0' . rand(100000000, 999999999),
-                'address' => 'Số ' . rand(1, 999) . ', Đường ' . ['Nguyễn Trãi', 'Lê Lợi', 'Trần Hưng Đạo', 'Hoàng Diệu'][array_rand(['Nguyễn Trãi', 'Lê Lợi', 'Trần Hưng Đạo', 'Hoàng Diệu'])] . ', ' . ['Hà Nội', 'TP. Hồ Chí Minh', 'Đà Nẵng', 'Hải Phòng'][array_rand(['Hà Nội', 'TP. Hồ Chí Minh', 'Đà Nẵng', 'Hải Phòng'])]
-            ];
-        }
-
-        // Lưu các thay đổi
-        $frozen_order->save();
 
         // Kiểm tra status 'confirmed' có tồn tại không
         $confirmedStatus = \App\Models\Status::where('name', 'confirmed')->first();
@@ -347,9 +311,10 @@ class OrderController extends Controller
                     throw new \RuntimeException('Đơn hàng đã được xử lý.');
                 }
 
-                $orderTotal = $lockedOrder->custom_price !== null
-                    ? $lockedOrder->custom_price
-                    : ($lockedOrder->order->price * $lockedOrder->order->quantity);
+                $orderTotal = $lockedOrder->snapshot_order_value;
+                if ($orderTotal === null) {
+                    throw new \RuntimeException('Đơn hàng cũ chưa có dữ liệu snapshot chính xác.');
+                }
                 $penaltyAmount = $lockedOrder->penalty_amount ?? 0;
 
                 if ($lockedOrder->custom_price !== null) {
@@ -391,7 +356,7 @@ class OrderController extends Controller
                     'user_id' => $lockedUser->id,
                     'value' => $orderTotal,
                     'type' => 'order',
-                    'note' => $lockedOrder->order->order_code,
+                    'note' => $lockedOrder->snapshot_order_code ?? (string) $lockedOrder->order_id,
                 ]);
 
                 return $lockedOrder;

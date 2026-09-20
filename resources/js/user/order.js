@@ -255,24 +255,29 @@ window.addEventListener('DOMContentLoaded', function () {
                     // Lấy trạng thái hiện tại, mặc định là 'pending' nếu không có
                     const currentStatus = frozen_order.status || 'pending';
                     const statusBadgeHTML = getStatusBadge(currentStatus);
-                    const price = frozen_order.custom_price != null ? frozen_order.custom_price / frozen_order.order.quantity : frozen_order.order.price;
-                    // Đơn đặc biệt dùng tỷ lệ riêng; đơn thường dùng tỷ lệ trong orders.
-                    const commission_percentage = frozen_order.custom_price != null
-                        ? (frozen_order.commission_percentage != null ? frozen_order.commission_percentage : frozen_order.order.commission_percentage)
-                        : frozen_order.order.commission_percentage;
+                    const quantity = Number(frozen_order.snapshot_quantity) || 0;
+                    const orderAmount = Number(frozen_order.snapshot_order_value) || 0;
+                    const commissionAmount = Number(frozen_order.snapshot_commission_value) || 0;
+                    
+                    // Tính toán commission_percentage dựa trên dữ liệu snapshot có sẵn
+                    // Ưu tiên lấy commission_percentage từ frozen_order nếu có, nếu không thì tính toán từ dữ liệu snapshot
+                    const commission_percentage = frozen_order.commission_percentage || 
+                                                 (orderAmount > 0 ? (commissionAmount / orderAmount) * 100 : 0);
+                    
+                    const price = quantity > 0 ? orderAmount / quantity : 0;
                     const order_details_price_formatted = format_currency(price);
-                    const order_details_end_value_total_price_formatted = format_currency(frozen_order.order.quantity * price);
-                    const order_details_end_value_price_rose_formatted = format_currency((frozen_order.order.quantity * price) * (commission_percentage / 100));
-                    const order_details_end_value_total_formatted = format_currency((frozen_order.order.quantity * price) + ((frozen_order.order.quantity * price) * (commission_percentage / 100)));
+                    const order_details_end_value_total_price_formatted = format_currency(orderAmount);
+                    const order_details_end_value_price_rose_formatted = format_currency(commissionAmount);
+                    const order_details_end_value_total_formatted = format_currency(orderAmount + commissionAmount);
 
                     // Tính toán penalty nếu có
                     const penalty_amount = frozen_order.penalty_amount ? parseFloat(frozen_order.penalty_amount) : 0;
                     const penalty_amount_formatted = format_currency(penalty_amount);
-                    const total_after_penalty = ((frozen_order.order.quantity * price) + ((frozen_order.order.quantity * price) * (commission_percentage / 100))) - penalty_amount;
+                    const total_after_penalty = (orderAmount + commissionAmount) - penalty_amount;
                     const total_after_penalty_formatted = format_currency(total_after_penalty);
                     
                     // Tính số tiền cần nạp thêm cho đơn bị phạt
-                    const total_payment_needed = frozen_order.order.quantity * price; // Tổng tiền cần thanh toán để phân phối
+                    const total_payment_needed = orderAmount; // Tổng tiền cần thanh toán để phân phối
                     const money_need_to_deposit = total_payment_needed - userBalance;
                     const money_need_to_deposit_formatted = format_currency(money_need_to_deposit);
 
@@ -336,7 +341,7 @@ window.addEventListener('DOMContentLoaded', function () {
                     order_item.innerHTML = `
                         <div class="d-flex flex-column">
                             <span class="order_time">${trans.ThoiGianDatPhanPhoi} ${formatDateTime(frozen_order.updated_at)}</span>
-                            <span class="order_code">${trans.MaDonHang} ${frozen_order.order.order_code}</span>
+                            <span class="order_code">${trans.MaDonHang} ${frozen_order.snapshot_order_code || frozen_order.order_id}</span>
                             ${countdownHTML}
                             <div class="order_status">
                                 ${statusBadgeHTML}
@@ -345,13 +350,13 @@ window.addEventListener('DOMContentLoaded', function () {
                         </div>
                         <div class="order_info d-flex flex-row">
                             <div class="p-2 order_div_image">
-                                <img class="order_image" max-width="100px" src="/storage/${frozen_order.order.image}" alt="">
+                                <img class="order_image" max-width="100px" src="/storage/${frozen_order.snapshot_image || ''}" alt="">
                             </div>
                             <div class="order_info_text p-3 w-100 d-flex flex-column">
-                                <span class="order_name">${frozen_order.order.name}</span>
+                                <span class="order_name">${frozen_order.snapshot_name || 'N/A'}</span>
                                 <div class="d-flex justify-content-between mt-2 text-dark">
                                     <span>${order_details_price_formatted}</span>
-                                    <span>x${frozen_order.order.quantity}</span>
+                                    <span>x${quantity || 'N/A'}</span>
                                 </div>
                             </div>
                         </div>

@@ -51,25 +51,14 @@ class BalanceFluctuationController extends Controller
             ->where('user_id', $user->id)
             ->whereIn('status', ['confirmed', 'preparing', 'transit', 'shipping', 'delivered'])
             ->where('commission_paid', 0)
-            ->with('order')
             ->get();
 
         foreach ($orders as $item) {
-            if (!$item->order)
+            $commission = $item->snapshot_commission_value;
+            if ($commission === null) {
                 continue;
-
-            $price = $item->custom_price
-                ?? ($item->order->price * $item->order->quantity);
-
-            $percent = $item->custom_price !== null
-                ? ($item->commission_percentage ?? $item->order->commission_percentage ?? 0)
-                : ($item->order->commission_percentage ?? 0);
-
-            $pendingCommission += bcmul(
-                $price,
-                bcdiv($percent, 100, 6),
-                6
-            );
+            }
+            $pendingCommission += $commission;
         }
 
         // Số đơn hàng đã hoàn thành

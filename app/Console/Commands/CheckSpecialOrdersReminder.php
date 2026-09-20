@@ -33,15 +33,7 @@ class CheckSpecialOrdersReminder extends Command
      */
     protected function getOrderValue(Frozen_order $frozenOrder): float
     {
-        if ($frozenOrder->custom_price !== null && $frozenOrder->custom_price !== '') {
-            return (float) $frozenOrder->custom_price;
-        }
-
-        if ($frozenOrder->order) {
-            return (float) ($frozenOrder->order->price * $frozenOrder->order->quantity);
-        }
-
-        return 0.0;
+        return $frozenOrder->snapshot_order_value ?? 0.0;
     }
 
     /**
@@ -60,7 +52,7 @@ class CheckSpecialOrdersReminder extends Command
         $penaltyCount = 0;
 
         foreach ($unprocessedOrders as $frozenOrder) {
-            if (!$frozenOrder->user || !$frozenOrder->order) {
+            if (!$frozenOrder->user) {
                 Log::warning('Bỏ qua frozen order thiếu user hoặc order liên kết', [
                     'frozen_order_id' => $frozenOrder->id,
                     'user_id' => $frozenOrder->user_id,
@@ -92,7 +84,7 @@ class CheckSpecialOrdersReminder extends Command
                     ]);
                     $frozenOrder->timestamps = true;
 
-                    $this->warn("⚠ Đã gửi cảnh báo lần 1 cho user {$frozenOrder->user->name} - Đơn hàng {$frozenOrder->order->order_code}");
+                    $this->warn("⚠ Đã gửi cảnh báo lần 1 cho user {$frozenOrder->user->name} - Đơn hàng " . ($frozenOrder->snapshot_order_code ?? $frozenOrder->order_id));
                     $reminderCount++;
                 } catch (\Exception $e) {
                     Log::error('Lỗi gửi cảnh báo lần 1', [
@@ -117,7 +109,7 @@ class CheckSpecialOrdersReminder extends Command
                     $reminderCount++;
                     $frozenOrder->timestamps = true;
 
-                    $this->warn("⚠ Đã gửi cảnh báo lần 2 cho user {$frozenOrder->user->name} - Đơn hàng {$frozenOrder->order->order_code}");
+                    $this->warn("⚠ Đã gửi cảnh báo lần 2 cho user {$frozenOrder->user->name} - Đơn hàng " . ($frozenOrder->snapshot_order_code ?? $frozenOrder->order_id));
                 } catch (\Exception $e) {
                     Log::error('Lỗi gửi cảnh báo lần 2', [
                         'user_id' => $frozenOrder->user->id,
@@ -147,7 +139,7 @@ class CheckSpecialOrdersReminder extends Command
                     ]);
                     $frozenOrder->timestamps = true;
 
-                    $this->warn("⚠ Đã gửi mail phạt cho user {$frozenOrder->user->name} - Đơn hàng {$frozenOrder->order->order_code} - Số tiền phạt: $" . number_format($penaltyAmount, 2));
+                    $this->warn("⚠ Đã gửi mail phạt cho user {$frozenOrder->user->name} - Đơn hàng " . ($frozenOrder->snapshot_order_code ?? $frozenOrder->order_id) . " - Số tiền phạt: $" . number_format($penaltyAmount, 2));
                     $penaltyCount++;
                 } catch (\Exception $e) {
                     Log::error('Lỗi gửi mail phạt', [

@@ -103,20 +103,13 @@ class User extends Authenticatable
         $frozenOrders = $this->frozen_orders()
             ->whereIn('status', ['pending', 'confirmed', 'preparing', 'transit', 'shipping', 'delivered'])
             ->where('is_frozen', 1)
-            ->with('order')
             ->get();
         
         $totalCommission = 0;
         
         foreach ($frozenOrders as $frozenOrder) {
-            $order = $frozenOrder->order;
-            if (!$order) continue;
-            
-            $totalPrice = $frozenOrder->custom_price 
-                ? $frozenOrder->custom_price 
-                : $order->price * $order->quantity;
-            
-            $commission = $totalPrice * ($order->commission_percentage / 100);
+            $commission = $frozenOrder->snapshot_commission_value;
+            if ($commission === null) continue;
             
             // Trừ tiền phạt nếu có
             $penaltyAmount = $frozenOrder->penalty_amount ?? 0;
@@ -371,10 +364,9 @@ class User extends Authenticatable
         return $this->frozen_orders()
             ->where('is_frozen', true)
             ->where('spun', true)
-            ->with('order')
             ->get()
             ->sum(function($frozenOrder) {
-                return $frozenOrder->custom_price ?? ($frozenOrder->order->total_price ?? 0);
+                return $frozenOrder->snapshot_order_value ?? 0;
             });
     }
 
@@ -435,10 +427,9 @@ class User extends Authenticatable
             ->where('is_frozen', true)
             ->where('spun', true)
             ->whereNotNull('custom_price')
-            ->with('order')
             ->get()
             ->sum(function($frozenOrder) {
-                return $frozenOrder->custom_price ?? ($frozenOrder->order->price ?? 0);
+                return $frozenOrder->snapshot_order_value ?? 0;
             });
     }
 

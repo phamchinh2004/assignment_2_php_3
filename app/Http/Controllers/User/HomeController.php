@@ -301,7 +301,7 @@ class HomeController extends Controller
                         }
                         $query_current_spin->current_spin = $query_current_spin->current_spin + 1;
                         $query_current_spin->save();
-                        $new_frozen = Frozen_order::create([
+                        $new_frozen = Frozen_order::snapshotFromOrder($order, [
                             'user_id' => $user->id,
                             'order_id' => $order->id,
                             'spun' => true,
@@ -366,7 +366,7 @@ class HomeController extends Controller
                 }
                 $query_current_spin->current_spin = $query_current_spin->current_spin + 1;
                 $query_current_spin->save();
-                $new_frozen = Frozen_order::create([
+                $new_frozen = Frozen_order::snapshotFromOrder($order, [
                     'user_id' => $user->id,
                     'order_id' => $order->id,
                     'spun' => true,
@@ -436,15 +436,13 @@ class HomeController extends Controller
         $todays_expected_refund = 0;
         foreach ($today_confirmed_orders as $frozen_order) {
             // Tính tổng giá trị đơn hàng
-            $total_price = $frozen_order->custom_price !== null
-                ? $frozen_order->custom_price
-                : ($frozen_order->order->price * $frozen_order->order->quantity);
+            $total_price = $frozen_order->snapshot_order_value;
 
             // Tính hoa hồng dự tính = tổng giá * phần trăm hoa hồng
-            $percent = $frozen_order->custom_price !== null
-                ? ($frozen_order->commission_percentage ?? $frozen_order->order->commission_percentage ?? 0)
-                : ($frozen_order->order->commission_percentage ?? 0);
-            $commission = bcmul($total_price, bcdiv($percent, 100, 6), 6);
+            $commission = $frozen_order->snapshot_commission_value;
+            if ($total_price === null || $commission === null) {
+                continue;
+            }
             $todays_discount += $commission;
             $todays_expected_refund += bcadd($total_price, $commission, 6);
         }

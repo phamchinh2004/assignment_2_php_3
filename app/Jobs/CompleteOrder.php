@@ -112,18 +112,15 @@ class CompleteOrder implements ShouldQueue
             }
 
             $user = User::lockForUpdate()->find($frozenOrder->user_id);
-            $order = $frozenOrder->order;
-            if (!$user || !$order) {
-                throw new \RuntimeException('Không tìm thấy user hoặc order.');
+            if (!$user) {
+                throw new \RuntimeException('Không tìm thấy user.');
             }
 
-            $totalPrice = $frozenOrder->custom_price !== null
-                ? $frozenOrder->custom_price
-                : $order->price * $order->quantity;
-            $commissionPercentage = $frozenOrder->custom_price !== null
-                ? ($frozenOrder->commission_percentage ?? $order->commission_percentage ?? 0)
-                : ($order->commission_percentage ?? 0);
-            $commission = $totalPrice * ($commissionPercentage / 100);
+            $totalPrice = $frozenOrder->snapshot_order_value;
+            $commission = $frozenOrder->snapshot_commission_value;
+            if ($totalPrice === null || $commission === null) {
+                throw new \RuntimeException('Frozen order cũ chưa có dữ liệu snapshot tài chính chính xác.');
+            }
             $penaltyAmount = $frozenOrder->penalty_amount ?? 0;
             $actualProfit = $commission - $penaltyAmount;
             $creditAmount = $totalPrice + $actualProfit;
@@ -150,7 +147,7 @@ class CompleteOrder implements ShouldQueue
                 'user_id' => $user->id,
                 'value' => $commission,
                 'type' => 'profit',
-                'note' => $order->order_code
+                'note' => $frozenOrder->snapshot_order_code ?? (string) $frozenOrder->order_id
             ]);
 
             if ($penaltyAmount > 0) {
@@ -158,7 +155,7 @@ class CompleteOrder implements ShouldQueue
                     'user_id' => $user->id,
                     'value' => $penaltyAmount,
                     'type' => 'penalty',
-                    'note' => $order->order_code
+                    'note' => $frozenOrder->snapshot_order_code ?? (string) $frozenOrder->order_id
                 ]);
             }
 
@@ -173,7 +170,7 @@ class CompleteOrder implements ShouldQueue
 
             return [
                 'user_id' => $user->id,
-                'order_code' => $order->order_code,
+                'order_code' => $frozenOrder->snapshot_order_code ?? (string) $frozenOrder->order_id,
                 'total_price' => $totalPrice,
                 'commission' => $commission,
                 'penalty_amount' => $penaltyAmount,

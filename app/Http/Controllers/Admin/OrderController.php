@@ -331,7 +331,7 @@ class OrderController extends Controller
                     Log::info('Đã cập nhật hoa hồng đơn hàng đóng băng', [
                         'frozen_order_id' => $frozenOrder->id,
                         'order_id' => $frozenOrder->order_id,
-                        'order_code' => $frozenOrder->order->order_code ?? 'N/A',
+                        'order_code' => $frozenOrder->snapshot_order_code ?? $frozenOrder->order_id,
                         'user_id' => $frozenOrder->user_id,
                         'custom_price' => $frozenOrder->custom_price,
                         'commission_percentage' => 10

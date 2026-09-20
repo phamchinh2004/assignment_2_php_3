@@ -465,7 +465,7 @@
                     <!-- Current Balance -->
 
 
-                    <p style="margin: 8px 0 0 0; color: #666;">Mã đơn: {{ $frozen_order->order->order_code ?? 'N/A' }}</p>
+                    <p style="margin: 8px 0 0 0; color: #666;">Mã đơn: {{ $frozen_order->snapshot_order_code ?? 'N/A' }}</p>
                 </div>
                 <div class="order-status-badge status-{{ $frozen_order->status ?? 'pending' }}" @if($currentStatus && $currentStatus->color)
                     style="background: {{ $currentStatus->color }}20; color: {{ $currentStatus->color }}; border: 1px solid {{ $currentStatus->color }}40;"
@@ -504,34 +504,30 @@
                     Thông tin sản phẩm
                 </div>
                 <div class="d-flex gap-3 product-info-container">
-                    <img src="{{ Storage::url($frozen_order->order->image) }}" alt="{{ $frozen_order->order->name }}"
+                    <img src="{{ Storage::url($frozen_order->snapshot_image) }}" alt="{{ $frozen_order->snapshot_name }}"
                         class="product-image">
                     <div style="flex: 1; display: flex; flex-direction: column; justify-content: center;" class="w-100">
                         <h4 style="margin: 0 0 12px 0; font-weight: 600;" class="text-center">
-                            {{ $frozen_order->order->name }}</h4>
+                            {{ $frozen_order->snapshot_name ?? 'N/A' }}</h4>
                         <div class="info-row">
                             <div class="info-label">Giá:</div>
                             <div class="info-value">
-                                {{ format_money($frozen_order->custom_price ? ($frozen_order->custom_price / $frozen_order->order->quantity) : $frozen_order->order->price) }}$
+                                {{ format_money($frozen_order->snapshot_quantity ? ($frozen_order->snapshot_order_value / $frozen_order->snapshot_quantity) : 0) }}$
                             </div>
                         </div>
                         <div class="info-row">
                             <div class="info-label">Số lượng:</div>
-                            <div class="info-value">{{ $frozen_order->order->quantity }}</div>
+                            <div class="info-value">{{ $frozen_order->snapshot_quantity ?? 'N/A' }}</div>
                         </div>
                         @php
                             // Lấy phần trăm hoa hồng: đơn đặc biệt từ frozen_order, đơn thường từ order
-                            $commission_percentage = $frozen_order->custom_price != null
-                                ? ($frozen_order->commission_percentage ?? $frozen_order->order->commission_percentage ?? 0)
-                                : ($frozen_order->order->commission_percentage ?? 0);
+                            $commission_percentage = $frozen_order->commission_percentage ?? 0;
 
                             // Tính tổng giá trị đơn hàng
-                            $total_order_value = $frozen_order->custom_price
-                                ? $frozen_order->custom_price
-                                : ($frozen_order->order->price * $frozen_order->order->quantity);
+                            $total_order_value = $frozen_order->snapshot_order_value ?? 0;
 
                             // Tính hoa hồng
-                            $commission_amount = $total_order_value * ($commission_percentage / 100);
+                            $commission_amount = $frozen_order->snapshot_commission_value ?? 0;
                         @endphp
                         <div class="info-row">
                             <div class="info-label">Tổng giá trị:</div>
@@ -556,7 +552,7 @@
                                 <div class="info-label">Tổng giá trị đơn hàng:</div>
                                 <div class="info-value" style="font-weight: 600; color: #dc3545;">
                                     @php
-                                        $totalOrderValue = $frozen_order->custom_price ? $frozen_order->custom_price : ($frozen_order->order->price * $frozen_order->order->quantity);
+                                        $totalOrderValue = $frozen_order->snapshot_order_value ?? 0;
                                         $penaltyAmount = $frozen_order->penalty_amount ?? 0;
                                         $refundAmount = $totalOrderValue + $commission_amount - $penaltyAmount;
                                     @endphp
@@ -593,27 +589,27 @@
                         <i class="fas fa-user-circle" style="font-size: 80px; color: #0d6efd;"></i>
                     </div>
                     <div style="flex: 1; display: flex; flex-direction: column; justify-content: center;">
-                        @if($frozen_order->order->customer_name)
+                        @if(data_get($frozen_order->customer_info, 'name'))
                             <h4 style="margin: 0 0 12px 0; font-weight: 600; text-align: center;">
-                                {{ $frozen_order->order->customer_name }}</h4>
+                                {{ data_get($frozen_order->customer_info, 'name') }}</h4>
                         @endif
-                        @if($frozen_order->order->customer_phone)
+                        @if(data_get($frozen_order->customer_info, 'phone'))
                             <div class="info-row">
                                 <div class="info-label">Số điện thoại:</div>
-                                <div class="info-value">{{ $frozen_order->order->customer_phone }}</div>
+                                <div class="info-value">{{ data_get($frozen_order->customer_info, 'phone') }}</div>
                             </div>
                         @endif
-                        @if($frozen_order->order->customer_address)
+                        @if(data_get($frozen_order->customer_info, 'address'))
                             <div class="info-row">
                                 <div class="info-label">Địa chỉ nhận hàng:</div>
-                                <div class="info-value">{{ $frozen_order->order->customer_address }}</div>
+                                <div class="info-value">{{ data_get($frozen_order->customer_info, 'address') }}</div>
                             </div>
                         @endif
-                        @if($frozen_order->order->customer_note)
+                        @if(data_get($frozen_order->customer_info, 'note'))
                             <div class="info-row">
                                 <div class="info-label">Ghi chú:</div>
                                 <div class="info-value" style="font-style: italic; color: #666;">
-                                    {{ $frozen_order->order->customer_note }}</div>
+                                    {{ data_get($frozen_order->customer_info, 'note') }}</div>
                             </div>
                         @endif
                     </div>
@@ -626,10 +622,10 @@
                     <i class="fas fa-store"></i>
                     Nền tảng & Thanh toán
                 </div>
-                @if($frozen_order->order->partner)
+                @if($frozen_order->snapshot_partner_name)
                     <div class="info-row">
                         <div class="info-label">Nền tảng:</div>
-                        <div class="info-value" style="font-weight: 600;">{{ $frozen_order->order->partner->name }}</div>
+                        <div class="info-value" style="font-weight: 600;">{{ $frozen_order->snapshot_partner_name }}</div>
                     </div>
                 @elseif($frozen_order->platform)
                     <div class="info-row">
@@ -643,12 +639,12 @@
                         <div class="info-value">{{ $frozen_order->order_date->format('d/m/Y H:i') }}</div>
                     </div>
                 @endif
-                @if($frozen_order->order->payment_method)
+                @if($frozen_order->snapshot_payment_method)
                     <div class="info-row">
                         <div class="info-label">Hình thức thanh toán:</div>
                         <div class="info-value" style="font-weight: 600;">
-                            {{ $frozen_order->order->payment_method }}
-                            @if($frozen_order->order->is_paid)
+                            {{ $frozen_order->snapshot_payment_method }}
+                            @if($frozen_order->snapshot_is_paid)
                                 <span
                                     style="background: #198754; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; margin-left: 8px;">Đã
                                     thanh toán</span>
@@ -684,7 +680,7 @@
             @endif
 
             <!-- API Information -->
-            @if($frozen_order->order->api)
+            @if($frozen_order->snapshot_api)
                 <div class="info-section">
                     <div class="info-section-title">
                         <i class="fas fa-code"></i>
@@ -695,9 +691,9 @@
                         <div class="info-value" style="display: flex; align-items: center; gap: 8px;">
                             <span
                                 style="font-family: monospace; font-weight: 600; word-break: break-all; background: #f8f9fa; padding: 8px; border-radius: 4px; flex: 1;">
-                                {{ $frozen_order->order->api }}
+                                {{ $frozen_order->snapshot_api }}
                             </span>
-                            <button type="button" class="btn-copy-api" data-api="{{ $frozen_order->order->api }}"
+                            <button type="button" class="btn-copy-api" data-api="{{ $frozen_order->snapshot_api }}"
                                 title="Sao chép API Key">
                                 <i class="fas fa-copy"></i>
                             </button>

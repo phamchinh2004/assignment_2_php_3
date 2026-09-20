@@ -262,7 +262,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (bonusSpecialRow) bonusSpecialRow.style.display = 'none';
                     const order_details_price_formatted = format_currency(selectedOrder.price);
                     const order_details_end_value_total_price_formatted = format_currency(selectedOrder.quantity * selectedOrder.price);
-                    const commissionAmount = (selectedOrder.quantity * selectedOrder.price) * (selectedOrder.commission_percentage / 100);
+                    const commissionAmount = (selectedOrder.quantity * selectedOrder.price) * ((selectedOrder.commission_percentage || selectedOrder.commission_rate) / 100);
                     const order_details_end_value_price_rose_formatted = format_currency(commissionAmount, 5, 5);
                     const order_details_end_value_total_formatted = format_currency((selectedOrder.quantity * selectedOrder.price) + commissionAmount);
 
@@ -284,7 +284,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (bonusSpecialRow) bonusSpecialRow.style.display = 'flex';
                     const order_details_price_formatted = format_currency(fake_price / selectedOrder.quantity);
                     const order_details_end_value_total_price_formatted = format_currency(fake_price);
-                    const commissionAmount = fake_price * (selectedOrder.commission_percentage / 100);
+                    const commissionAmount = fake_price * ((selectedOrder.commission_percentage || selectedOrder.commission_rate) / 100);
                     const order_details_end_value_price_rose_formatted = format_currency(commissionAmount, 5, 5);
                     const order_details_end_value_total_formatted = format_currency(fake_price + commissionAmount);
 

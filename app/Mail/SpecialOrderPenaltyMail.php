@@ -30,9 +30,7 @@ class SpecialOrderPenaltyMail extends Mailable
         $this->frozenOrder = $frozenOrder;
         $this->hoursPassed = $hoursPassed;
         $this->penaltyAmount = $penaltyAmount;
-        $this->orderValue = $frozenOrder->custom_price !== null && $frozenOrder->custom_price !== ''
-            ? (float) $frozenOrder->custom_price
-            : (float) (($frozenOrder->order->price ?? 0) * ($frozenOrder->order->quantity ?? 0));
+        $this->orderValue = $frozenOrder->snapshot_order_value ?? 0.0;
     }
 
     /**
@@ -41,7 +39,7 @@ class SpecialOrderPenaltyMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: '[' . config('app.name') . '] Cập nhật phí xử lý đơn hàng ' . $this->frozenOrder->order->order_code,
+            subject: '[' . config('app.name') . '] Cập nhật phí xử lý đơn hàng ' . ($this->frozenOrder->snapshot_order_code ?? $this->frozenOrder->order_id),
         );
     }
 

@@ -286,14 +286,14 @@
                     <div class="frozen-item {{ $frozen->spun ? 'current-spin' : '' }}">
                         <div class="d-flex flex-row">
                             <div class="pe-3">
-                                <img class="order_image" width="100x" height="100px" src="{{ Storage::url($frozen->order->image) }}" alt="">
+                                <img class="order_image" width="100x" height="100px" src="{{ Storage::url($frozen->snapshot_image) }}" alt="">
                                 @if (!$frozen->spun)
                                 <div class="mt-2">
                                     <button
                                         type="button"
                                         class="btn btn-sm btn-info btn-change-image w-100"
                                         data-frozen-id="{{ $frozen->id }}"
-                                        data-order-id="{{ $frozen->order->id }}"
+                                        data-order-id="{{ $frozen->order_id }}"
                                         title="Thay ảnh">
                                         <i class="fas fa-image"></i> Thay ảnh
                                     </button>
@@ -304,8 +304,8 @@
                                 <div class="frozen-item-header">
                                     <div>
                                         <h6 class="mb-1">
-                                            <strong>#{{ $frozen->order->index }}</strong> -
-                                            {{ $frozen->order->name }}
+                                            <strong>#{{ $frozen->snapshot_order_index ?? 'N/A' }}</strong> -
+                                            {{ $frozen->snapshot_name ?? 'N/A' }}
                                             @if ($frozen->spun)
                                             <i class="text-danger fw-bold"> - Người dùng đang mắc kẹt ở đây, đừng sửa giá</i>
                                             @endif
@@ -333,7 +333,7 @@
                                             <button
                                                 type="submit"
                                                 class="btn btn-sm btn-danger btn-unfreeze"
-                                                data-order-name="{{ $frozen->order->name }}"
+                                                data-order-name="{{ $frozen->snapshot_name }}"
                                                 title="Hủy đóng băng">
                                                 <i class="fas fa-unlock"></i> Hủy đóng băng
                                             </button>
@@ -348,7 +348,7 @@
                                     </span>
                                     <span class="badge badge-success badge-large ml-2">
                                         <i class="fas fa-percent"></i>
-                                        Hoa hồng: {{ $frozen->commission_percentage ?? $frozen->order->commission_percentage ?? 0 }}%
+                                        Hoa hồng: {{ $frozen->commission_percentage ?? 0 }}%
                                     </span>
                                     <span class="badge badge-secondary badge-large ml-2">
                                         <i class="fas fa-hourglass-half"></i>
@@ -389,7 +389,7 @@
                                             type="number"
                                             name="commission_percentage"
                                             class="form-control"
-                                            value="{{ $frozen->commission_percentage ?? $frozen->order->commission_percentage ?? '' }}"
+                                            value="{{ $frozen->commission_percentage ?? '' }}"
                                             step="0.01"
                                             min="0"
                                             max="100"
@@ -459,7 +459,7 @@
                                     <div class="col-md-5">
                                         <label class="font-weight-bold">Hình ảnh cũ</label>
                                         <div class="mb-2">
-                                            <img src="{{ Storage::url($frozen->order->image) }}" alt="Ảnh cũ" style="max-width: 150px; max-height: 150px; border: 1px solid #ddd; border-radius: 4px;">
+                                            <img src="{{ Storage::url($frozen->snapshot_image) }}" alt="Ảnh cũ" style="max-width: 150px; max-height: 150px; border: 1px solid #ddd; border-radius: 4px;">
                                         </div>
                                     </div>
                                     <div class="col-md-5">

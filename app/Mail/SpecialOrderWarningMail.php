@@ -41,7 +41,7 @@ class SpecialOrderWarningMail extends Mailable
     public function envelope(): Envelope
     {
         $title = '[' . config('app.name') . '] Cập nhật thời hạn đơn hàng '
-            . $this->frozenOrder->order->order_code;
+            . ($this->frozenOrder->snapshot_order_code ?? $this->frozenOrder->order_id);
 
         return new Envelope(
             subject: $title,
