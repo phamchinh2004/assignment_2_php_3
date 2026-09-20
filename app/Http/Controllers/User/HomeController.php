@@ -455,7 +455,7 @@ class HomeController extends Controller
             ->get();
 
         // Lấy các order_code từ các đơn hàng đã hoàn thành hôm nay
-        $completed_order_codes = $today_completed_orders->pluck('order.order_code')->filter()->toArray();
+        $completed_order_codes = $today_completed_orders->pluck('display_order_code')->filter()->toArray();
 
         // Tính tổng hoa hồng đã được cộng từ Transaction_history
         // Lấy hoa hồng từ các đơn hàng đã completed hôm nay (không cần kiểm tra thời gian tạo Transaction_history)

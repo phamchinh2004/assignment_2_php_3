@@ -111,6 +111,16 @@
     </li>
 
     <!-- Đơn hàng bị báo cáo -->
+    @if (Auth::user()->role === 'admin')
+        <li class="nav-item">
+            <a class="nav-link collapsed" href="{{ route('order_distributions.index') }}">
+                <i class="fa-solid fa-route text-white"></i>
+                <span>Phân phối đơn hàng</span>
+            </a>
+        </li>
+    @endif
+
+    <!-- Đơn hàng bị báo cáo -->
     <li class="nav-item">
         <a class="nav-link collapsed" href="{{ route('order_reports.index') }}">
             <i class="fa-solid fa-flag text-white"></i>

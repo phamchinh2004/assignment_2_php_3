@@ -18,11 +18,16 @@ class MeController extends Controller
         $user = Auth::user();
         $rank = Rank::find($user->rank_id);
 
-        // Sử dụng các accessor methods đã định nghĩa trong User model
-        // Các thuộc tính này sẽ được tính toán tự động khi truy cập
-        // $user->total_deposit, $user->total_withdraw, $user->today_transactions
+        $accountSummary = [
+            'received_commission' => (float) $user->transaction_histories()
+                ->where('type', 'profit')
+                ->sum('value'),
+            'today_transactions' => $user->wallet_balance_histories()
+                ->whereDate('created_at', today())
+                ->count(),
+        ];
 
-        return view('user.me', compact('user', 'rank'));
+        return view('user.me', compact('user', 'rank', 'accountSummary'));
     }
     public function personal_information()
     {
@@ -146,8 +151,18 @@ class MeController extends Controller
     {
         $user = Auth::user();
         $rank = Rank::find($user->rank_id);
-        $list_ranks = Rank::get();
-        return view('user.vip', compact('user', 'rank', 'list_ranks'));
+        $list_ranks = Rank::query()
+            ->orderBy('upgrade_fee')
+            ->orderBy('id')
+            ->get();
+        $currentRankIndex = $rank
+            ? $list_ranks->search(fn (Rank $item) => $item->is($rank))
+            : false;
+        $nextRank = $currentRankIndex !== false
+            ? $list_ranks->get($currentRankIndex + 1)
+            : $list_ranks->first();
+
+        return view('user.vip', compact('user', 'rank', 'list_ranks', 'nextRank', 'currentRankIndex'));
     }
 
     public function upload_avatar(Request $request)

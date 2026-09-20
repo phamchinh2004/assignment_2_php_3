@@ -59,7 +59,7 @@
                         <tbody>
                             @foreach ($reports as $i => $report)
                                 @php
-                                    $orderCode = $report->frozenOrder?->order?->order_code ?? 'N/A';
+                                    $orderCode = $report->frozenOrder?->display_order_code ?? 'N/A';
                                     $orderOwner = $report->frozenOrder?->user;
                                 @endphp
                                 <tr>
@@ -104,5 +104,4 @@
         </div>
     </div>
 @endsection
-
 

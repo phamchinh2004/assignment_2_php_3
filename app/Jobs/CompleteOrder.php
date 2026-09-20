@@ -159,6 +159,14 @@ class CompleteOrder implements ShouldQueue
                 ]);
             }
 
+            $frozenOrder->settled_order_amount = $totalPrice;
+            $frozenOrder->settled_commission_amount = $commission;
+            $frozenOrder->settled_penalty_amount = $penaltyAmount;
+            $frozenOrder->settled_refund_amount = $creditAmount;
+            $frozenOrder->settled_balance_destination = $hasUnconfirmedSpecialOrder
+                ? 'frozen_balance'
+                : 'balance';
+            $frozenOrder->settled_at = now();
             $frozenOrder->commission_paid = true;
             if (!OrderStatusService::changeStatus(
                 $frozenOrder,

@@ -17,6 +17,7 @@
         "vite": "^6.3.5"
     },
     "dependencies": {
+        "apexcharts": "^5.16.0",
         "autonumeric": "^4.10.9",
         "fireworks-js": "^2.10.8",
         "slim-select": "^3.0.0",

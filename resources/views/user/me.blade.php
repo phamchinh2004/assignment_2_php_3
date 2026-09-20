@@ -7,195 +7,185 @@
     const trans = {
         VuiLongLienHeCskh: @json(__('me.VuiLongLienHeCskh')),
         ThongBao: @json(__('me.ThongBao')),
-    }
+    };
 </script>
 @vite('resources/js/user/me.js')
 @endsection
 @section('content')
-<div class="container-fluid px-0">
-    <!-- Header Section -->
-    <div class="me_top d-flex flex-column justify-content-center align-items-center">
-        <div class="me_top_1 d-flex flex-column align-items-center">
-            <img class="me_image" 
-                 src="{{ get_user_avatar($user) }}" 
-                 alt="Avatar"
-                 onerror="this.src='{{ asset('images/default-avatar-gray.svg') }}'">
-            @if ($rank && $rank->name)
-            <div class="mt-2">
-                <span class="badge bg-warning text-dark">{{$rank->name}}</span>
-            </div>
-            @endif
-        </div>
-        <div class="me_top_2 d-flex flex-column align-items-center text-center">
-            <h4 class="fw-bold mb-2 text-dark">{{$user->full_name}}</h4>
-            <span class="ma_moi">{{__('me.MaMoi').$user->referral_code}}</span>
-        </div>
-    </div>
-    <!-- Balance Section -->
-    <div class="balance-container">
-        <div class="balance-card">
-            <!-- Main Balance Display -->
-            <div class="balance-main">
-                <div class="balance-header">
-                    <div class="balance-icon">
-                        <i class="fas fa-wallet text-dark"></i>
-                    </div>
-                    <div class="balance-title">
-                        <h4>{{__('me.SoDuTaiKhoan')}}</h4>
-                        <span class="balance-subtitle">{{__('me.SoDuHienTai')}}</span>
-                    </div>
-                </div>
-                <div class="balance-amount">
-                    <h2 class="balance-number">{{format_money($user->balance)}}</h2>
-                    <span class="balance-currency">USD</span>
-                </div>
-            </div>
+@php
+    $statusClass = match ($user->status) {
+        'activated' => 'is-active',
+        'banned' => 'is-banned',
+        default => 'is-inactive',
+    };
+    $statusLabel = match ($user->status) {
+        'activated' => __('me.HoatDong'),
+        'banned' => __('me.BiCam'),
+        'inactivated' => __('me.ChuaKichHoat'),
+        default => __('me.KhongHoatDong'),
+    };
+    $hasBankAccount = filled($user->bank_name) && filled($user->account_number);
+    $hasWarehouse = filled($user->warehouse_area) && filled($user->warehouse_address);
+@endphp
 
-            <!-- Action Buttons -->
-            <div class="balance-actions">
-                <a href="{{ route('withdraw_money') }}" class="btn-action withdraw-btn">
-                    <i class="fas fa-money-bill-wave"></i>
-                    <span>{{__('me.Rut')}}</span>
-                </a>
-                <a onclick="thong_bao_lien_he_cskh()" class="btn-action deposit-btn">
-                    <i class="fas fa-credit-card"></i>
-                    <span>{{__('me.Nap')}}</span>
-                </a>
-            </div>
-
-            <!-- Quick Stats -->
-            <div class="balance-quick-stats">
-                <div class="quick-stat">
-                    <span class="quick-stat-label">{{__('me.GiaoDichHomNay')}}</span>
-                    <span class="quick-stat-value">{{$user->today_transactions ?? 0}}</span>
-                </div>
-                <div class="quick-stat">
-                    <span class="quick-stat-label">{{__('me.TrangThai')}}</span>
-                    <span class="quick-stat-status 
-                        @if($user->status === 'activated') active
-                        @elseif($user->status === 'inactivated') inactive
-                        @elseif($user->status === 'banned') banned
-                        @else inactive
-                        @endif">
-                        @if($user->status === 'activated')
-                            {{__('me.HoatDong')}}
-                        @elseif($user->status === 'inactivated')
-                            {{__('me.ChuaKichHoat')}}
-                        @elseif($user->status === 'banned')
-                            {{__('me.BiCam')}}
-                        @else
-                            {{__('me.KhongHoatDong')}}
-                        @endif
+<main class="me-page">
+    <section class="profile-hero" aria-labelledby="profile-name">
+        <div class="profile-hero__glow" aria-hidden="true"></div>
+        <div class="profile-identity">
+            <a href="{{ route('personal_information') }}" class="profile-avatar" aria-label="Cập nhật thông tin cá nhân">
+                <img src="{{ get_user_avatar($user) }}" alt="Ảnh đại diện của {{ $user->full_name }}"
+                     onerror="this.src='{{ asset('images/default-avatar-gray.svg') }}'">
+                <span class="profile-avatar__edit"><i class="fa-solid fa-pen"></i></span>
+            </a>
+            <div class="profile-copy">
+                <div class="profile-copy__badges">
+                    @if ($rank && $rank->name)
+                        <span class="account-badge account-badge--rank"><i class="fa-solid fa-crown"></i>{{ $rank->name }}</span>
+                    @endif
+                    <span class="account-badge account-badge--status {{ $statusClass }}">
+                        <span class="status-dot"></span>{{ $statusLabel }}
                     </span>
                 </div>
+                <h1 id="profile-name">{{ $user->full_name }}</h1>
+                <p class="profile-username"><i class="fa-regular fa-user"></i>{{ '@' . $user->username }}</p>
+                <div class="referral-code"><span>{{ __('me.MaMoi') }}</span><strong>{{ $user->referral_code }}</strong></div>
             </div>
+        </div>
+        <a href="{{ route('personal_information') }}" class="profile-edit-link">
+            <span>Chỉnh sửa hồ sơ</span><i class="fa-solid fa-chevron-right"></i>
+        </a>
+    </section>
 
-        </div>
-    </div>
-    <!-- Menu Blocks Section -->
-    <div class="row blocks g-2">
-        <div class="col-6 col-md-4 col-lg-3 col-xl-2">
-            <a href="{{ route('personal_information') }}" class="block_item">
-                <div class="d-flex justify-content-center mb-2">
-                    <img class="image_block_item" src="{{ asset('images/me/image_1.png') }}" alt="Thông tin cá nhân">
-                </div>
-                <span class="tittle_block_item">{{__('me.ThongTin')}}</span>
-            </a>
-        </div>
-        <div class="col-6 col-md-4 col-lg-3 col-xl-2">
-            <a href="{{ route('vip') }}" class="block_item">
-                <div class="d-flex justify-content-center mb-2">
-                    <img class="image_block_item" src="{{ asset('images/me/image_2.png') }}" alt="VIP">
-                </div>
-                <span class="tittle_block_item">{{__('me.Vip')}}</span>
-            </a>
-        </div>
-        <div class="col-6 col-md-4 col-lg-3 col-xl-2">
-            <a href="javascript:void(0)" class="block_item" data-bs-toggle="modal" data-bs-target="#warehouseAddressModal">
-                <div class="d-flex justify-content-center mb-2">
-                    <img class="image_block_item" src="{{ asset('images/me/image_3.png') }}" alt="Địa chỉ kho">
-                </div>
-                <span class="tittle_block_item">{{__('me.DiaChiKho')}}</span>
-            </a>
-        </div>
-        <div class="col-6 col-md-4 col-lg-3 col-xl-2">
-            <a href="{{ route('order') }}" class="block_item">
-                <div class="d-flex justify-content-center mb-2">
-                    <img class="image_block_item" src="{{ asset('images/me/image_4.png') }}" alt="Phân phối">
-                </div>
-                <span class="tittle_block_item">{{__('me.PhanPhoi')}}</span>
-            </a>
-        </div>
-        <div class="col-6 col-md-4 col-lg-3 col-xl-2">
-            <a href="{{ route('balance_fluctuation') }}?tab=distribution" class="block_item">
-                <div class="d-flex justify-content-center mb-2">
-                    <img class="image_block_item" src="{{ asset('images/me/image_5.png') }}" alt="Biến động">
-                </div>
-                <span class="tittle_block_item">{{__('me.BienDong')}}</span>
-            </a>
-        </div>
-        <div class="col-6 col-md-4 col-lg-3 col-xl-2">
-            <a href="{{ route('balance_fluctuation') }}?tab=deposit" class="block_item">
-                <div class="d-flex justify-content-center mb-2">
-                    <img class="image_block_item" src="{{ asset('images/me/image_6.png') }}" alt="Lịch sử nạp">
-                </div>
-                <span class="tittle_block_item">{{__('me.LichSuNap')}}</span>
-            </a>
-        </div>
-        <div class="col-6 col-md-4 col-lg-3 col-xl-2">
-            <a href="{{ route('balance_fluctuation') }}?tab=withdraw" class="block_item">
-                <div class="d-flex justify-content-center mb-2">
-                    <img class="image_block_item" src="{{ asset('images/me/image_7.png') }}" alt="Lịch sử rút">
-                </div>
-                <span class="tittle_block_item">{{__('me.LichSuRut')}}</span>
-            </a>
-        </div>
-        <div class="col-6 col-md-4 col-lg-3 col-xl-2">
-            <a href="" class="block_item">
-                <div class="d-flex justify-content-center mb-2">
-                    <img class="image_block_item" src="{{ asset('images/me/image_8.png') }}" alt="Báo cáo nhóm">
-                </div>
-                <span class="tittle_block_item">{{__('me.BaoCaoNhom')}}</span>
-            </a>
-        </div>
-        <div class="col-6 col-md-4 col-lg-3 col-xl-2">
-            <div class="dropdown">
-                <a href="javascript:void(0)" class="block_item dropdown-toggle" onclick="toggleLanguageDropdown()" id="languageDropdownButton" role="button">
-                    <div class="d-flex justify-content-center mb-2">
-                        <img src="{{ asset('images/me/image_9.png') }}" class="image_block_item" alt="Ngôn ngữ">
+    <div class="me-layout">
+        <div class="me-main-column">
+            <section class="wallet-card" aria-labelledby="wallet-title">
+                <div class="wallet-card__top">
+                    <div>
+                        <p class="section-eyebrow"><i class="fa-solid fa-wallet"></i>{{ __('me.SoDuTaiKhoan') }}</p>
+                        <h2 id="wallet-title" class="wallet-balance"><span>{{ format_money($user->balance) }}</span><small>USD</small></h2>
+                        <p class="wallet-caption">{{ __('me.SoDuHienTai') }}</p>
                     </div>
-                    <span class="tittle_block_item">{{__('me.NgonNgu')}}</span>
-                </a>
-                <div id="languageDropdown" class="dropdown-menu" aria-labelledby="languageDropdownButton">
-                    <form action="{{ route('language.change') }}" method="POST">
-                        @csrf
-                        @foreach (\App\Models\Language::all() as $lang)
-                        <button type="submit"
-                            name="locale"
-                            value="{{ $lang->code }}"
-                            class="dropdown-item d-flex align-items-center gap-2 text-white
-                       {{ App::getLocale() === $lang->code ? 'active fw-bold bg-light text-primary' : '' }}">
-                            <img src="{{ Storage::url($lang->image) }}" width="20" height="20" class="rounded">
-                            {{ $lang->name }}
-                        </button>
-                        @endforeach
-                    </form>
+                    <a href="{{ route('balance_fluctuation') }}" class="wallet-history-link" aria-label="Xem thống kê giao dịch">
+                        <i class="fa-solid fa-chart-line"></i>
+                    </a>
                 </div>
-            </div>
-        </div>
-    </div>
-    <!-- Logout Section -->
-    <div class="d-flex justify-content-center py-4">
-        <a onclick="log_out()" class="btn btn-dark">{{__('me.DangXuat')}}</a>
-    </div>
-</div>
+                <div class="wallet-metrics">
+                    <div class="wallet-metric"><span>Hoa hồng thực nhận</span><strong>{{ format_money($accountSummary['received_commission']) }} USD</strong></div>
+                    <div class="wallet-metric"><span>Số dư đang giữ</span><strong>{{ format_money($user->frozen_balance ?? 0) }} USD</strong></div>
+                    <div class="wallet-metric"><span>{{ __('me.GiaoDichHomNay') }}</span><strong>{{ $accountSummary['today_transactions'] }}</strong></div>
+                </div>
+                <div class="wallet-actions">
+                    <button type="button" class="wallet-action wallet-action--primary" onclick="thong_bao_lien_he_cskh()">
+                        <span class="wallet-action__icon"><i class="fa-solid fa-plus"></i></span><span>{{ __('me.Nap') }}</span>
+                    </button>
+                    <a href="{{ route('withdraw_money') }}" class="wallet-action">
+                        <span class="wallet-action__icon"><i class="fa-solid fa-arrow-up"></i></span><span>{{ __('me.Rut') }}</span>
+                    </a>
+                    <a href="{{ route('balance_fluctuation') }}" class="wallet-action">
+                        <span class="wallet-action__icon"><i class="fa-solid fa-clock-rotate-left"></i></span><span>Lịch sử</span>
+                    </a>
+                </div>
+            </section>
 
-<!-- Warehouse Address Modal -->
-<div class="modal fade" id="warehouseAddressModal" tabindex="-1" aria-labelledby="warehouseAddressLabel" aria-hidden="true">
+            <section class="me-section" aria-labelledby="quick-actions-title">
+                <div class="section-heading"><div><p class="section-eyebrow">Truy cập nhanh</p><h2 id="quick-actions-title">Hoạt động của bạn</h2></div></div>
+                <div class="quick-actions">
+                    <a href="{{ route('distribution') }}" class="quick-action">
+                        <span class="quick-action__icon is-pink"><i class="fa-solid fa-store"></i></span>
+                        <span><strong>{{ __('me.PhanPhoi') }}</strong><small>Nhận đơn mới</small></span>
+                    </a>
+                    <a href="{{ route('order') }}" class="quick-action">
+                        <span class="quick-action__icon is-blue"><i class="fa-solid fa-box"></i></span>
+                        <span><strong>Đơn hàng</strong><small>Theo dõi xử lý</small></span>
+                    </a>
+                    <a href="{{ route('balance_fluctuation') }}" class="quick-action">
+                        <span class="quick-action__icon is-green"><i class="fa-solid fa-chart-column"></i></span>
+                        <span><strong>{{ __('me.BienDong') }}</strong><small>Thống kê tài chính</small></span>
+                    </a>
+                    <a href="{{ route('vip') }}" class="quick-action">
+                        <span class="quick-action__icon is-gold"><i class="fa-solid fa-gem"></i></span>
+                        <span><strong>{{ __('me.Vip') }}</strong><small>Quyền lợi thành viên</small></span>
+                    </a>
+                </div>
+            </section>
+        </div>
+
+        <aside class="me-side-column">
+            <section class="me-section settings-card" aria-labelledby="account-title">
+                <div class="section-heading"><div><p class="section-eyebrow">Quản lý</p><h2 id="account-title">Tài khoản</h2></div></div>
+                <nav class="settings-list" aria-label="Quản lý tài khoản">
+                    <a href="{{ route('personal_information') }}" class="settings-item">
+                        <span class="settings-item__icon is-blue"><i class="fa-regular fa-id-card"></i></span>
+                        <span class="settings-item__copy"><strong>{{ __('me.ThongTin') }}</strong><small>Hồ sơ và tài khoản ngân hàng</small></span>
+                        <span class="settings-item__meta {{ $hasBankAccount ? 'is-complete' : '' }}">{{ $hasBankAccount ? 'Đã liên kết' : 'Chưa liên kết' }}</span>
+                        <i class="fa-solid fa-chevron-right settings-item__arrow"></i>
+                    </a>
+                    <button type="button" class="settings-item" data-bs-toggle="modal" data-bs-target="#warehouseAddressModal">
+                        <span class="settings-item__icon is-green"><i class="fa-solid fa-location-dot"></i></span>
+                        <span class="settings-item__copy"><strong>{{ __('me.DiaChiKho') }}</strong><small>{{ $user->warehouse_area ?: 'Thiết lập khu vực và địa chỉ' }}</small></span>
+                        <span class="settings-item__meta {{ $hasWarehouse ? 'is-complete' : '' }}">{{ $hasWarehouse ? 'Đã cập nhật' : 'Chưa có' }}</span>
+                        <i class="fa-solid fa-chevron-right settings-item__arrow"></i>
+                    </button>
+                    <a href="{{ route('balance_fluctuation') }}?tab=deposit" class="settings-item">
+                        <span class="settings-item__icon is-violet"><i class="fa-solid fa-arrow-down"></i></span>
+                        <span class="settings-item__copy"><strong>{{ __('me.LichSuNap') }}</strong><small>Giao dịch nạp tiền</small></span>
+                        <i class="fa-solid fa-chevron-right settings-item__arrow"></i>
+                    </a>
+                    <a href="{{ route('balance_fluctuation') }}?tab=withdraw" class="settings-item">
+                        <span class="settings-item__icon is-orange"><i class="fa-solid fa-arrow-up"></i></span>
+                        <span class="settings-item__copy"><strong>{{ __('me.LichSuRut') }}</strong><small>Giao dịch rút tiền</small></span>
+                        <i class="fa-solid fa-chevron-right settings-item__arrow"></i>
+                    </a>
+                </nav>
+            </section>
+
+            <section class="me-section settings-card" aria-labelledby="security-title">
+                <div class="section-heading"><div><p class="section-eyebrow">Thiết lập</p><h2 id="security-title">Bảo mật & tuỳ chọn</h2></div></div>
+                <div class="settings-list">
+                    <button type="button" class="settings-item" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
+                        <span class="settings-item__icon is-slate"><i class="fa-solid fa-lock"></i></span>
+                        <span class="settings-item__copy"><strong>Mật khẩu đăng nhập</strong><small>Thay đổi mật khẩu tài khoản</small></span>
+                        <i class="fa-solid fa-chevron-right settings-item__arrow"></i>
+                    </button>
+                    <button type="button" class="settings-item" data-bs-toggle="modal" data-bs-target="#changeTransactionPasswordModal">
+                        <span class="settings-item__icon is-pink"><i class="fa-solid fa-shield-halved"></i></span>
+                        <span class="settings-item__copy"><strong>Mật khẩu giao dịch</strong><small>{{ filled($user->transaction_password) ? 'Đã thiết lập' : 'Chưa thiết lập' }}</small></span>
+                        <i class="fa-solid fa-chevron-right settings-item__arrow"></i>
+                    </button>
+                    <div class="language-setting">
+                        <button type="button" class="settings-item" onclick="toggleLanguageDropdown()" id="languageDropdownButton" aria-expanded="false" aria-controls="languageDropdown">
+                            <span class="settings-item__icon is-violet"><i class="fa-solid fa-language"></i></span>
+                            <span class="settings-item__copy"><strong>{{ __('me.NgonNgu') }}</strong><small>{{ strtoupper(App::getLocale()) }}</small></span>
+                            <i class="fa-solid fa-chevron-right settings-item__arrow"></i>
+                        </button>
+                        <div id="languageDropdown" class="language-menu" hidden>
+                            <form action="{{ route('language.change') }}" method="POST">
+                                @csrf
+                                @foreach (\App\Models\Language::all() as $lang)
+                                    <button type="submit" name="locale" value="{{ $lang->code }}" class="language-option {{ App::getLocale() === $lang->code ? 'is-current' : '' }}">
+                                        <img src="{{ Storage::url($lang->image) }}" width="24" height="24" alt="">
+                                        <span>{{ $lang->name }}</span>
+                                        @if (App::getLocale() === $lang->code)<i class="fa-solid fa-check"></i>@endif
+                                    </button>
+                                @endforeach
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <button type="button" onclick="log_out()" class="logout-button">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i><span>{{ __('me.DangXuat') }}</span>
+            </button>
+        </aside>
+    </div>
+</main>
+
+<div class="modal fade me-modal" id="warehouseAddressModal" tabindex="-1" aria-labelledby="warehouseAddressLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="warehouseAddressLabel">{{ __('me.TieuDeModalDiaChiKho') }}</h5>
+                <div><p class="section-eyebrow">Tài khoản</p><h5 class="modal-title" id="warehouseAddressLabel">{{ __('me.TieuDeModalDiaChiKho') }}</h5></div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form method="POST" action="{{ route('warehouse_address.update') }}">
@@ -203,19 +193,16 @@
                 <div class="modal-body">
                     <div class="mb-3">
                         <label class="form-label required" for="warehouse_area">{{ __('me.KhuVuc') }}</label>
-                        <input type="text" class="form-control" id="warehouse_area" name="warehouse_area"
-                               placeholder="{{ __('me.NhapKhuVuc') }}"
-                               value="{{ old('warehouse_area', $user->warehouse_area) }}" required maxlength="191">
+                        <input type="text" class="form-control" id="warehouse_area" name="warehouse_area" placeholder="{{ __('me.NhapKhuVuc') }}" value="{{ old('warehouse_area', $user->warehouse_area) }}" required maxlength="191">
                     </div>
-                    <div class="mb-3">
+                    <div>
                         <label class="form-label required" for="warehouse_address">{{ __('me.DiaChiHienTai') }}</label>
-                        <textarea class="form-control" id="warehouse_address" name="warehouse_address" rows="3"
-                                  placeholder="{{ __('me.NhapDiaChiHienTai') }}" required maxlength="1000">{{ old('warehouse_address', $user->warehouse_address) }}</textarea>
+                        <textarea class="form-control" id="warehouse_address" name="warehouse_address" rows="3" placeholder="{{ __('me.NhapDiaChiHienTai') }}" required maxlength="1000">{{ old('warehouse_address', $user->warehouse_address) }}</textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ __('me.Dong') }}</button>
-                    <button type="submit" class="btn btn-primary">{{ __('me.Luu') }}</button>
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">{{ __('me.Dong') }}</button>
+                    <button type="submit" class="btn btn-dark">{{ __('me.Luu') }}</button>
                 </div>
             </form>
         </div>

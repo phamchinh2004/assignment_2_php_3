@@ -1,344 +1,109 @@
-// Balance Fluctuation Chart
-let balanceChart = null;
-let fullChartData = [];
+import ApexCharts from 'apexcharts';
 
-document.addEventListener('DOMContentLoaded', function() {
-    // Kiểm tra nếu có dữ liệu chart
-    if (typeof window.chartData !== 'undefined' && window.chartData.length > 0) {
-        fullChartData = window.chartData;
-        initializeChart(fullChartData);
-    }
-    
-    // Time filter buttons
-    const filterButtons = document.querySelectorAll('.filter-btn');
-    filterButtons.forEach(btn => {
-        btn.addEventListener('click', function() {
-            // Remove active class from all buttons
-            filterButtons.forEach(b => b.classList.remove('active'));
-            // Add active class to clicked button
-            this.classList.add('active');
-            
-            const period = this.getAttribute('data-period');
-            filterChartData(period);
-        });
-    });
-});
-
-function initializeChart(data) {
-    if (data.length === 0) {
-        document.getElementById('balanceChart').innerHTML = `
-            <div style="text-align: center; padding: 60px 20px; color: #9ca3af;">
-                <i class="fa-solid fa-chart-line fa-3x mb-3" style="color: #d1d5db;"></i>
-                <p style="color: #6b7280;">Chưa có dữ liệu để hiển thị biểu đồ</p>
-            </div>
-        `;
-        return;
-    }
-    
-    // Chuẩn bị dữ liệu cho ApexCharts
-    const chartSeries = data.map(item => ({
-        x: new Date(item.date).getTime(),
-        y: parseFloat(item.balance)
-    }));
-    
-    // Tính toán min/max để đặt range cho trục Y
-    const balances = data.map(item => parseFloat(item.balance));
-    const minBalance = Math.min(...balances);
-    const maxBalance = Math.max(...balances);
-    const padding = (maxBalance - minBalance) * 0.1 || 10;
-    
-    // Xác định màu sắc dựa trên xu hướng
-    const isPositiveTrend = balances[balances.length - 1] >= balances[0];
-    const lineColor = isPositiveTrend ? '#10b981' : '#ef4444';
-    const gradientColor = isPositiveTrend ? 
-        ['#10b981', 'rgba(16, 185, 129, 0.1)'] : 
-        ['#ef4444', 'rgba(239, 68, 68, 0.1)'];
-    
-    const options = {
-        series: [{
-            name: 'Số dư',
-            data: chartSeries
-        }],
-        chart: {
-            type: 'area',
-            height: 350,
-            fontFamily: 'inherit',
-            toolbar: {
-                show: true,
-                tools: {
-                    download: true,
-                    selection: true,
-                    zoom: true,
-                    zoomin: true,
-                    zoomout: true,
-                    pan: true,
-                    reset: true
-                },
-                autoSelected: 'zoom'
-            },
-            zoom: {
-                enabled: true,
-                type: 'x',
-                autoScaleYaxis: true
-            },
-            animations: {
-                enabled: true,
-                easing: 'easeinout',
-                speed: 800,
-                animateGradually: {
-                    enabled: true,
-                    delay: 150
-                },
-                dynamicAnimation: {
-                    enabled: true,
-                    speed: 350
-                }
-            }
-        },
-        dataLabels: {
-            enabled: false
-        },
-        stroke: {
-            curve: 'smooth',
-            width: 3,
-            colors: [lineColor]
-        },
-        fill: {
-            type: 'gradient',
-            gradient: {
-                shadeIntensity: 1,
-                opacityFrom: 0.4,
-                opacityTo: 0.05,
-                stops: [0, 100],
-                colorStops: [
-                    {
-                        offset: 0,
-                        color: gradientColor[0],
-                        opacity: 0.4
-                    },
-                    {
-                        offset: 100,
-                        color: gradientColor[1],
-                        opacity: 0.05
-                    }
-                ]
-            }
-        },
-        grid: {
-            show: true,
-            borderColor: '#f3f4f6',
-            strokeDashArray: 4,
-            position: 'back',
-            xaxis: {
-                lines: {
-                    show: false
-                }
-            },
-            yaxis: {
-                lines: {
-                    show: true
-                }
-            },
-            padding: {
-                top: 0,
-                right: 20,
-                bottom: 0,
-                left: 10
-            }
-        },
-        xaxis: {
-            type: 'datetime',
-            labels: {
-                style: {
-                    colors: '#6b7280',
-                    fontSize: '11px',
-                    fontWeight: 500
-                },
-                datetimeFormatter: {
-                    year: 'yyyy',
-                    month: 'MMM yyyy',
-                    day: 'dd MMM',
-                    hour: 'HH:mm'
-                }
-            },
-            axisBorder: {
-                show: true,
-                color: '#e5e7eb'
-            },
-            axisTicks: {
-                show: true,
-                color: '#e5e7eb'
-            }
-        },
-        yaxis: {
-            min: minBalance - padding,
-            max: maxBalance + padding,
-            labels: {
-                style: {
-                    colors: '#6b7280',
-                    fontSize: '11px',
-                    fontWeight: 500
-                },
-                formatter: function(value) {
-                    return '$' + value.toFixed(2);
-                }
-            }
-        },
-        tooltip: {
-            enabled: true,
-            theme: 'light',
-            style: {
-                fontSize: '12px',
-                fontFamily: 'inherit'
-            },
-            x: {
-                format: 'dd/MM/yyyy HH:mm'
-            },
-            y: {
-                formatter: function(value) {
-                    return '$' + value.toFixed(2);
-                }
-            },
-            marker: {
-                show: true
-            },
-            custom: function({series, seriesIndex, dataPointIndex, w}) {
-                const value = series[seriesIndex][dataPointIndex];
-                const date = new Date(w.config.series[seriesIndex].data[dataPointIndex].x);
-                const formattedDate = formatDate(date);
-                
-                // Xác định loại giao dịch từ dữ liệu gốc
-                const transType = fullChartData[dataPointIndex]?.type || '';
-                let transTypeText = '';
-                let transTypeColor = '#6b7280';
-                
-                if (transType === 'deposit') {
-                    transTypeText = '💰 Nạp tiền';
-                    transTypeColor = '#3b82f6';
-                } else if (transType === 'withdraw') {
-                    transTypeText = '💸 Rút tiền';
-                    transTypeColor = '#f59e0b';
-                } else if (transType === 'profit') {
-                    transTypeText = '📈 Lợi nhuận';
-                    transTypeColor = '#10b981';
-                } else if (transType === 'order') {
-                    transTypeText = '📦 Đặt hàng';
-                    transTypeColor = '#ef4444';
-                } else if (transType === 'penalty') {
-                    transTypeText = '⚠️ Phạt';
-                    transTypeColor = '#f59e0b';
-                }
-                
-                return `
-                    <div style="background: white; padding: 12px 16px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border: 1px solid #e5e7eb;">
-                        <div style="font-size: 11px; color: #9ca3af; margin-bottom: 6px; font-weight: 500;">
-                            ${formattedDate}
-                        </div>
-                        ${transTypeText ? `
-                            <div style="font-size: 12px; color: ${transTypeColor}; margin-bottom: 8px; font-weight: 600;">
-                                ${transTypeText}
-                            </div>
-                        ` : ''}
-                        <div style="font-size: 16px; font-weight: 700; color: #1f2937;">
-                            $${value.toFixed(2)}
-                        </div>
-                        <div style="font-size: 10px; color: #6b7280; margin-top: 4px;">
-                            Số dư tại thời điểm này
-                        </div>
-                    </div>
-                `;
-            }
-        },
-        markers: {
-            size: 0,
-            colors: [lineColor],
-            strokeColors: '#fff',
-            strokeWidth: 2,
-            hover: {
-                size: 6,
-                sizeOffset: 3
-            }
-        },
-        legend: {
-            show: false
-        },
-        responsive: [{
-            breakpoint: 768,
-            options: {
-                chart: {
-                    height: 250,
-                    toolbar: {
-                        show: false
-                    }
-                },
-                grid: {
-                    padding: {
-                        right: 10,
-                        left: 0
-                    }
-                },
-                xaxis: {
-                    labels: {
-                        style: {
-                            fontSize: '10px'
-                        }
-                    }
-                },
-                yaxis: {
-                    labels: {
-                        style: {
-                            fontSize: '10px'
-                        }
-                    }
-                }
-            }
-        }]
+const initTransactionCharts = () => {
+    const data = window.transactionStatistics || { profitLoss: [], status: {} };
+    const money = value => `${new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 5 }).format(value)}$`;
+    const axisMoney = value => `${new Intl.NumberFormat('vi-VN', { notation: 'compact', maximumFractionDigits: 2 }).format(value)}$`;
+    const signedMoney = value => `${value > 0 ? '+' : ''}${money(value)}`;
+    const dateTime = value => new Intl.DateTimeFormat('vi-VN', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value));
+    const escapeHtml = value => String(value ?? '').replace(/[&<>'"]/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#039;', '"': '&quot;' })[character]);
+    const empty = target => {
+        target.innerHTML = '<div class="empty-state"><i class="fas fa-chart-line"></i><strong>Chưa có dữ liệu biểu đồ</strong><span>Thử chọn khoảng thời gian khác.</span></div>';
     };
-    
-    // Render chart
-    if (balanceChart) {
-        balanceChart.destroy();
-    }
-    
-    balanceChart = new ApexCharts(document.querySelector("#balanceChart"), options);
-    balanceChart.render();
-}
+    const failed = target => {
+        target.innerHTML = '<div class="empty-state"><i class="fas fa-triangle-exclamation"></i><strong>Không thể tải biểu đồ</strong><span>Vui lòng tải lại trang.</span></div>';
+    };
+    const render = (target, options) => {
+        try {
+            target.replaceChildren();
+            const initialHeight = Math.round(target.getBoundingClientRect().height);
+            options.chart.height = initialHeight;
+            const chart = new ApexCharts(target, options);
+            chart.render().then(() => {
+                if (!window.ResizeObserver) return;
+                let renderedHeight = initialHeight;
+                const observer = new ResizeObserver(entries => {
+                    const nextHeight = Math.round(entries[0].contentRect.height);
+                    if (nextHeight <= 0 || nextHeight === renderedHeight) return;
+                    renderedHeight = nextHeight;
+                    chart.updateOptions({ chart: { height: nextHeight } }, false, false, false);
+                });
+                observer.observe(target);
+            }).catch(() => failed(target));
+        } catch (error) {
+            failed(target);
+        }
+    };
 
-function filterChartData(period) {
-    if (!fullChartData || fullChartData.length === 0) return;
-    
-    let filteredData = fullChartData;
-    
-    if (period !== 'all') {
-        const days = parseInt(period);
-        const cutoffDate = new Date();
-        cutoffDate.setDate(cutoffDate.getDate() - days);
-        
-        filteredData = fullChartData.filter(item => {
-            const itemDate = new Date(item.date);
-            return itemDate >= cutoffDate;
-        });
+    const profitLossTarget = document.querySelector('#profitLossChart');
+    if (profitLossTarget) {
+        if (!data.profitLoss.length) {
+            empty(profitLossTarget);
+        } else {
+            let previousTimestamp = Number.NEGATIVE_INFINITY;
+            const profitLossPoints = data.profitLoss.map(item => {
+                const actualTimestamp = new Date(item.occurred_at).getTime();
+                const chartTimestamp = actualTimestamp <= previousTimestamp ? previousTimestamp + 1 : actualTimestamp;
+                previousTimestamp = chartTimestamp;
+                return { x: chartTimestamp, y: item.cumulative };
+            });
+            const profitLossValues = data.profitLoss.map(item => Number(item.cumulative));
+            const minimumProfitLoss = Math.min(0, ...profitLossValues);
+            const maximumProfitLoss = Math.max(0, ...profitLossValues);
+            const profitLossPadding = (maximumProfitLoss - minimumProfitLoss) * 0.1 || 1;
+            const lineColor = profitLossValues.at(-1) >= 0 ? '#10b981' : '#ef4444';
+            render(profitLossTarget, {
+                chart: {
+                    type: 'area', height: '100%', width: '100%', parentHeightOffset: 0,
+                    redrawOnParentResize: true, redrawOnWindowResize: true, fontFamily: 'inherit',
+                    toolbar: {
+                        show: true, autoSelected: 'zoom', offsetX: 0, offsetY: 0,
+                        tools: { download: true, selection: true, zoom: true, zoomin: true, zoomout: true, pan: true, reset: true },
+                    },
+                    zoom: { enabled: true, type: 'x', autoScaleYaxis: true, allowMouseWheelZoom: true },
+                    selection: { enabled: true, type: 'x', fill: { color: '#fe2c55', opacity: 0.12 }, stroke: { color: '#fe2c55', width: 1, dashArray: 3 } },
+                    animations: { enabled: true, speed: 450 },
+                },
+                series: [{ name: 'Lãi/Lỗ lũy kế', data: profitLossPoints }],
+                xaxis: { type: 'datetime', tickAmount: Math.min(data.profitLoss.length, 6), labels: { datetimeUTC: false, hideOverlappingLabels: true, rotate: 0, style: { colors: '#758093', fontSize: '10px' } } },
+                yaxis: { min: minimumProfitLoss - profitLossPadding, max: maximumProfitLoss + profitLossPadding, labels: { formatter: axisMoney, minWidth: 38, maxWidth: 82, style: { colors: '#758093', fontSize: '10px' } } },
+                colors: [lineColor],
+                stroke: { curve: 'smooth', width: 3 },
+                fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.32, opacityTo: 0.04, stops: [0, 90, 100] } },
+                markers: { size: 0, colors: [lineColor], strokeWidth: 2, strokeColors: '#fff', hover: { size: 6, sizeOffset: 3 } },
+                dataLabels: { enabled: false },
+                grid: { borderColor: '#edf0f4', strokeDashArray: 4, padding: { left: 4, right: 10, top: 8, bottom: 2 } },
+                annotations: { yaxis: [{ y: 0, borderColor: '#98a2b3', strokeDashArray: 0, label: { text: 'Mốc 0', position: 'left', style: { background: '#667085', color: '#fff', fontSize: '9px' } } }] },
+                tooltip: { custom: ({ dataPointIndex }) => {
+                    const point = data.profitLoss[dataPointIndex];
+                    const eventLabel = point.event_type === 'commission' ? 'Hoa hồng' : point.event_type === 'penalty' ? 'Tiền phạt' : 'Mốc bắt đầu';
+                    const order = point.order_code ? `<span>Mã đơn: <b>${escapeHtml(point.order_code)}</b></span>` : '';
+                    return `<div class="pnl-tooltip"><strong>${dateTime(point.occurred_at)}</strong><span>Loại: <b>${eventLabel}</b></span><span>Biến động: <b class="${point.change >= 0 ? 'positive' : 'negative'}">${signedMoney(point.change)}</b></span><span>Lãi/Lỗ lũy kế: <b>${signedMoney(point.cumulative)}</b></span>${order}</div>`;
+                } },
+                responsive: [{ breakpoint: 576, options: { chart: { animations: { enabled: false } }, stroke: { width: 2.5 }, markers: { size: 3 }, grid: { padding: { left: 0, right: 5 } }, yaxis: { labels: { minWidth: 30, maxWidth: 58, style: { fontSize: '9px' } } } } }],
+            });
+        }
     }
-    
-    // Re-initialize chart with filtered data
-    if (filteredData.length > 0) {
-        initializeChart(filteredData);
-    } else {
-        document.getElementById('balanceChart').innerHTML = `
-            <div style="text-align: center; padding: 60px 20px; color: #9ca3af;">
-                <i class="fa-solid fa-chart-line fa-3x mb-3" style="color: #d1d5db;"></i>
-                <p style="color: #6b7280;">Không có dữ liệu trong khoảng thời gian này</p>
-            </div>
-        `;
-    }
-}
 
-function formatDate(date) {
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    
-    return `${day}/${month}/${year} ${hours}:${minutes}`;
+    const statusTarget = document.querySelector('#statusChart');
+    if (statusTarget) {
+        const statusValues = [data.status.completed || 0, data.status.pending || 0, data.status.cancelled || 0];
+        if (statusValues.every(value => value === 0)) {
+            empty(statusTarget);
+        } else {
+            render(statusTarget, {
+                chart: { type: 'donut', height: '100%', width: '100%', parentHeightOffset: 0, redrawOnParentResize: true, redrawOnWindowResize: true, fontFamily: 'inherit' },
+                series: statusValues, labels: ['Hoàn thành', 'Đang chờ', 'Đã huỷ'], colors: ['#0f8a5f', '#f4a524', '#fe2c55'],
+                stroke: { width: 0 }, dataLabels: { enabled: false }, legend: { show: true, position: 'bottom', fontSize: '10px', itemMargin: { horizontal: 6, vertical: 3 } },
+                plotOptions: { pie: { expandOnClick: false, donut: { size: '68%', labels: { show: true, name: { show: false }, value: { show: false }, total: { show: true, showAlways: true, label: 'Giao dịch', formatter: chart => chart.globals.seriesTotals.reduce((sum, value) => sum + value, 0) } } } } },
+                responsive: [{ breakpoint: 360, options: { legend: { fontSize: '9px', itemMargin: { horizontal: 3 } } } }],
+            });
+        }
+    }
+};
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initTransactionCharts, { once: true });
+} else {
+    initTransactionCharts();
 }

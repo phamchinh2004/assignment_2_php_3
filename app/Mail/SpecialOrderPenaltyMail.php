@@ -39,7 +39,7 @@ class SpecialOrderPenaltyMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: '[' . config('app.name') . '] Cập nhật phí xử lý đơn hàng ' . ($this->frozenOrder->snapshot_order_code ?? $this->frozenOrder->order_id),
+            subject: '[' . config('app.name') . '] Cập nhật phí xử lý đơn hàng ' . ($this->frozenOrder->display_order_code ?? $this->frozenOrder->order_id),
         );
     }
 

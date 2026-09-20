@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\StatisticalController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\TransactionHistoryController;
 use App\Http\Controllers\Admin\OrderReportController;
+use App\Http\Controllers\Admin\OrderDistributionController;
 use App\Http\Controllers\ConversationController;
 use App\Models\Language;
 use Illuminate\Support\Facades\Route;
@@ -79,6 +80,11 @@ Route::middleware(['role:staff|admin', 'checkBanned', 'auth'])->group(function (
 });
 
 Route::middleware(['role:admin'])->group(function () {
+    Route::get('/order-distributions', [OrderDistributionController::class, 'index'])->name('order_distributions.index');
+    Route::get('/order-distributions/{frozenOrder}', [OrderDistributionController::class, 'show'])->name('order_distributions.show');
+    Route::post('/order-distributions/{frozenOrder}/restore', [OrderDistributionController::class, 'restore'])->name('order_distributions.restore');
+    Route::post('/order-distributions/bulk-restore', [OrderDistributionController::class, 'bulkRestore'])->name('order_distributions.bulk_restore');
+
     Route::resource('staffs', StaffController::class);
     Route::resource('manager_setting', ManagerSettingController::class);
     Route::resource('staff', StaffController::class);

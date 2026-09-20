@@ -52,7 +52,7 @@
     </style>
 </head>
 <body>
-    <div style="display:none;max-height:0;overflow:hidden;opacity:0;">Cập nhật thời hạn xử lý đơn hàng {{ $frozenOrder->snapshot_order_code ?? $frozenOrder->order_id }}.</div>
+    <div style="display:none;max-height:0;overflow:hidden;opacity:0;">Cập nhật thời hạn xử lý đơn hàng {{ $frozenOrder->display_order_code ?? $frozenOrder->order_id }}.</div>
     <div class="header">
         <h2>Cập nhật thời hạn xử lý đơn hàng</h2>
     </div>
@@ -72,9 +72,9 @@
 
         <div class="order-info">
             <h3>Thông tin đơn hàng:</h3>
-            <p><strong>Mã đơn hàng:</strong> {{ $frozenOrder->snapshot_order_code ?? $frozenOrder->order_id }}</p>
-            <p><strong>Tên đơn hàng:</strong> {{ $frozenOrder->snapshot_name ?? 'N/A' }}</p>
-            <p><strong>Giá trị đơn hàng:</strong> ${{ number_format($frozenOrder->snapshot_order_value ?? 0, 2) }}</p>
+            <p><strong>Mã đơn hàng:</strong> {{ $frozenOrder->display_order_code ?? $frozenOrder->order_id }}</p>
+            <p><strong>Tên đơn hàng:</strong> {{ $frozenOrder->display_name ?? 'N/A' }}</p>
+            <p><strong>Giá trị đơn hàng:</strong> ${{ number_format($frozenOrder->display_order_amount ?? 0, 2) }}</p>
             <p><strong>Thời gian đã trôi qua:</strong> {{ $hoursPassed }} giờ</p>
             <p><strong>Thời gian còn lại:</strong> {{ $remainingHours }} giờ</p>
         </div>

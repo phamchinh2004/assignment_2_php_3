@@ -109,6 +109,10 @@
                 <i class="fas fa-snowflake"></i>
                 <span class="btn_status_text" id="btn_dong_bang">{{__('order.DongBang')}}</span>
             </button>
+            <button data-tab="bi-phat" class="tab-btn cspt">
+                <i class="fas fa-triangle-exclamation"></i>
+                <span class="btn_status_text" id="btn_bi_phat">Bị phạt</span>
+            </button>
         </div>
         <button class="tab-scroll-btn tab-scroll-right" id="tabScrollRight" aria-label="Scroll right">
             <i class="fas fa-chevron-right"></i>

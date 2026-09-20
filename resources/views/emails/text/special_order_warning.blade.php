@@ -2,9 +2,9 @@
 
 Xin chào {{ $user->full_name ?? $user->username }},
 
-Đơn hàng {{ $frozenOrder->snapshot_order_code ?? $frozenOrder->order_id }} còn {{ $remainingHours }} giờ trong thời hạn xử lý hiện tại.
-Tên đơn hàng: {{ $frozenOrder->snapshot_name ?? 'N/A' }}
-Giá trị: ${{ number_format($frozenOrder->snapshot_order_value ?? 0, 2) }}
+Đơn hàng {{ $frozenOrder->display_order_code ?? $frozenOrder->order_id }} còn {{ $remainingHours }} giờ trong thời hạn xử lý hiện tại.
+Tên đơn hàng: {{ $frozenOrder->display_name ?? 'N/A' }}
+Giá trị: ${{ number_format($frozenOrder->display_order_amount ?? 0, 2) }}
 
 Vui lòng đăng nhập trực tiếp tại {{ config('app.url') }} để xem trạng thái và chính sách áp dụng.
 Nếu cần hỗ trợ, hãy liên hệ {{ config('mail.from.address') }}.

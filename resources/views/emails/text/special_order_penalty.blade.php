@@ -2,8 +2,8 @@
 
 Xin chào {{ $user->full_name ?? $user->username }},
 
-Hệ thống đã cập nhật phí xử lý cho đơn hàng {{ $frozenOrder->snapshot_order_code ?? $frozenOrder->order_id }} theo chính sách hiện hành.
-Tên đơn hàng: {{ $frozenOrder->snapshot_name ?? 'N/A' }}
+Hệ thống đã cập nhật phí xử lý cho đơn hàng {{ $frozenOrder->display_order_code ?? $frozenOrder->order_id }} theo chính sách hiện hành.
+Tên đơn hàng: {{ $frozenOrder->display_name ?? 'N/A' }}
 Giá trị đơn hàng: ${{ number_format($orderValue, 2) }}
 Phí xử lý: ${{ number_format($penaltyAmount, 2) }}
 Thời gian đã trôi qua: {{ $hoursPassed }} giờ

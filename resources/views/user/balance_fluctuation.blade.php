@@ -1,356 +1,68 @@
 @extends('user.layouts.master')
 @section('css-libs')
-@vite('resources/css/user/balance_fluctuation.css')
+    @vite('resources/css/user/balance_fluctuation.css')
 @endsection
 @section('script-libs')
-<!-- ApexCharts CDN -->
-<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-@vite('resources/js/user/balance_fluctuation.js')
+    <script>window.transactionStatistics={!! json_encode(['profitLoss'=>$statistics['profit_loss_series'],'status'=>['completed'=>$statistics['summary']['completed_count'],'pending'=>$statistics['summary']['pending_count'],'cancelled'=>$statistics['summary']['cancelled_count']]]) !!};</script>
+    @vite('resources/js/user/balance_fluctuation.js')
 @endsection
 @section('content')
-<div class="bg-white d-flex flex-row position-relative border-bottom">
-    <a class="text-dark fw-bold text-decoration-none p-2 hover btn-back" href="{{ route('home') }}">
-        <i class="fa fa-arrow-left fa-sm pe-1"></i>{{__('balance_fluctuation.QuayLai')}}
-    </a>
-    <h3 class="position-absolute title">{{__('balance_fluctuation.ThongKeGiaoDich')}}</h3>
-</div>
+@php
+    $summary=$statistics['summary'];
+    $money=fn($value,$precision=2)=>format_money((float)$value,$precision).'$';
+    $labels=['deposit'=>'Nạp tiền','withdraw'=>'Rút tiền','order'=>'Thanh toán đơn','profit'=>'Hoa hồng','penalty'=>'Tiền phạt','settlement'=>'Hoàn nhập đơn','refund'=>'Hoàn tiền rút'];
+    $icons=['deposit'=>'fa-arrow-down','withdraw'=>'fa-arrow-up','order'=>'fa-bag-shopping','profit'=>'fa-coins','penalty'=>'fa-triangle-exclamation','settlement'=>'fa-rotate-left','refund'=>'fa-rotate-left'];
+    $statusLabels=['completed'=>'Hoàn thành','processing'=>'Đang xử lý','cancelled'=>'Đã huỷ','recorded'=>'Đã ghi sổ'];
+    $detailLabels=['normal'=>'Tiền thật','bonus'=>'Tiền thưởng','virtual_withdraw'=>'Rút tiền ảo','balance'=>'Số dư khả dụng','frozen_balance'=>'Số dư đóng băng'];
+    $trend=fn($value)=>($value>0?'+':'').format_money($value,1).'%';
+@endphp
+<main class="finance-page">
+    <header class="finance-header">
+        <a href="{{ route('home') }}" class="finance-back" aria-label="Quay lại"><i class="fas fa-arrow-left"></i></a>
+        <div><div class="finance-eyebrow">Tài chính cá nhân</div><h1>Thống kê giao dịch</h1><p>Theo dõi dòng tiền, đơn hàng và thu nhập của bạn.</p></div>
+    </header>
 
-<!-- Tab Navigation -->
-<div class="bg-white border-bottom sticky-tabs">
-    <div class="d-flex flex-row align-items-center p-2 justify-content-center">
-        <a href="{{ route('balance_fluctuation') }}?tab=overview" 
-           class="btn_tab cspt pt-2 pb-2 text-center {{ $tab === 'overview' ? 'active' : '' }}" 
-           id="btn_overview">
-            <i class="fa-solid fa-chart-line"></i>
-            <span>{{__('balance_fluctuation.TongQuan')}}</span>
-        </a>
-        <a href="{{ route('balance_fluctuation') }}?tab=distribution" 
-           class="btn_tab cspt pt-2 pb-2 text-center {{ $tab === 'distribution' ? 'active' : '' }}" 
-           id="btn_distribution">
-            <i class="fa-solid fa-boxes"></i>
-            <span>{{__('balance_fluctuation.PhanPhoi')}}</span>
-        </a>
-        <a href="{{ route('balance_fluctuation') }}?tab=deposit" 
-           class="btn_tab cspt pt-2 pb-2 text-center {{ $tab === 'deposit' ? 'active' : '' }}" 
-           id="btn_deposit">
-            <i class="fa-solid fa-arrow-down"></i>
-            <span>{{__('balance_fluctuation.NapTien')}}</span>
-        </a>
-        <a href="{{ route('balance_fluctuation') }}?tab=withdraw" 
-           class="btn_tab cspt pt-2 pb-2 text-center {{ $tab === 'withdraw' ? 'active' : '' }}" 
-           id="btn_withdraw">
-            <i class="fa-solid fa-arrow-up"></i>
-            <span>{{__('balance_fluctuation.RutTien')}}</span>
-        </a>
-    </div>
-</div>
+    <section class="balance-hero">
+        <div><div class="hero-label">Số dư khả dụng</div><div class="hero-balance">{{ $money($user->balance,5) }}</div><div class="hero-meta"><span><i class="fas fa-snowflake"></i> Đóng băng {{ $money($user->frozen_balance,5) }}</span><span><i class="fas fa-clock"></i> Hoa hồng chờ {{ $money($summary['pending_commission'],5) }}</span><span><i class="fas fa-receipt"></i> {{ number_format($summary['transaction_count']) }} bút toán</span></div></div>
+        <div class="hero-change"><span>Biến động kỳ này</span><strong class="{{ $summary['net_movement']>=0?'positive':'negative' }}">{{ $summary['net_movement']>=0?'+':'-' }}{{ $money(abs($summary['net_movement']),5) }}</strong><small class="{{ $summary['net_growth']>=0?'positive':'negative' }}">{{ $trend($summary['net_growth']) }} so với kỳ trước</small></div>
+    </section>
 
-<!-- Overview Tab - Biểu đồ và thống kê -->
-@if($tab === 'overview')
-<div class="statistics-container">
-    <!-- Stats Cards -->
-    <div class="stats-grid">
-        <!-- Số dư hiện tại -->
-        <div class="stat-card balance-card">
-            <div class="stat-icon">
-                <i class="fa-solid fa-wallet"></i>
-            </div>
-            <div class="stat-content">
-                <div class="stat-label">{{__('balance_fluctuation.SoDuHienTai')}}</div>
-                <div class="stat-value text-white">${{ number_format($stats['current_balance'], 6) }}</div>
-            </div>
-        </div>
-        
-        <!-- Tổng lợi nhuận -->
-        <div class="stat-card profit-card">
-            <div class="stat-icon">
-                <i class="fa-solid fa-arrow-trend-up"></i>
-            </div>
-            <div class="stat-content">
-                <div class="stat-label">{{__('balance_fluctuation.TongLoiNhuan')}}</div>
-                <div class="stat-value text-success">${{ number_format($stats['total_profit'], 6) }}</div>
-            </div>
-        </div>
-        
-        <!-- Hoa hồng tạm tính -->
-        <div class="stat-card deposit-card">
-            <div class="stat-icon">
-                <i class="fa-solid fa-money-bill-trend-up"></i>
-            </div>
-            <div class="stat-content">
-                <div class="stat-label">Hoa hồng tạm tính</div>
-                <div class="stat-value text-success">${{ number_format($stats['pending_commission'], 6) }}</div>
-            </div>
-        </div>
-        
-        <!-- Số đơn hàng đã hoàn thành -->
-        <div class="stat-card withdraw-card">
-            <div class="stat-icon">
-                <i class="fa-solid fa-check-circle"></i>
-            </div>
-            <div class="stat-content">
-                <div class="stat-label">Số đơn hàng đã hoàn thành</div>
-                <div class="stat-value text-white">{{ number_format($stats['completed_orders_count']) }}</div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Chart Container -->
-    <div class="chart-container">
-        <div class="chart-header">
-            <h4 class="chart-title">
-                <i class="fa-solid fa-chart-line me-2"></i>
-                {{__('balance_fluctuation.BieuDoBienDongDongTien')}}
-            </h4>
-            <div class="time-filter">
-                <button class="filter-btn active" data-period="all">
-                    {{__('balance_fluctuation.TatCa')}}
-                </button>
-                <button class="filter-btn" data-period="30">
-                    30 {{__('balance_fluctuation.Ngay')}}
-                </button>
-                <button class="filter-btn" data-period="7">
-                    7 {{__('balance_fluctuation.Ngay')}}
-                </button>
-            </div>
-        </div>
-        <div class="chart-body">
-            <div id="balanceChart"></div>
-        </div>
-    </div>
-    
-    <!-- Recent Transactions -->
-    <div class="recent-transactions">
-        <h5 class="section-title">
-            <i class="fa-solid fa-clock-rotate-left me-2"></i>
-            {{__('balance_fluctuation.GiaoDichGanDay')}}
-        </h5>
-        @php
-            $recentTransactions = \App\Models\Transaction_history::where('user_id', Auth::id())
-                ->orderByDesc('created_at')
-                ->limit(5)
-                ->get();
-        @endphp
-        
-        @if($recentTransactions->isNotEmpty())
-            @foreach($recentTransactions as $item)
-            <div class="transaction-item">
-                <div class="transaction-icon {{ $item->type === 'profit' ? 'success' : 'danger' }}">
-                    <i class="fa-solid {{ $item->type === 'profit' ? 'fa-arrow-up' : 'fa-arrow-down' }}"></i>
-                </div>
-                <div class="transaction-info">
-                    <div class="transaction-type text-white">
-                        @if($item->type === 'profit')
-                            {{__('balance_fluctuation.LoiNhuan')}}
-                        @elseif($item->type === 'order')
-                            {{__('balance_fluctuation.DatHang')}}
-                        @elseif($item->type === 'penalty')
-                            {{__('balance_fluctuation.TienPhat')}}
-                        @endif
-                    </div>
-                    <div class="transaction-date">{{ $item->created_at->format('d/m/Y H:i') }}</div>
-                </div>
-                <div class="transaction-amount {{ $item->type === 'profit' ? 'positive' : 'negative' }}">
-                    {{ $item->type === 'profit' ? '+' : '-' }}${{ number_format($item->value, 2) }}
-                </div>
-            </div>
-            @endforeach
-            
-            <a href="{{ route('balance_fluctuation') }}?tab=distribution" class="view-all-link">
-                {{__('balance_fluctuation.XemTatCa')}} <i class="fa-solid fa-arrow-right ms-1"></i>
-            </a>
-        @else
-            <div class="empty-state">
-                <i class="fa-solid fa-inbox fa-3x mb-3"></i>
-                <p>{{__('balance_fluctuation.ChuaCoGiaoDich')}}</p>
-            </div>
-        @endif
-    </div>
-</div>
+    <form class="finance-filter" method="GET" action="{{ route('balance_fluctuation') }}">
+        <input type="hidden" name="range" value="{{ $selectedRange }}">
+        <div class="preset-scroll">@foreach(['today'=>'Hôm nay','7d'=>'7 ngày','30d'=>'30 ngày','month'=>'Tháng này'] as $value=>$label)<a href="{{ route('balance_fluctuation',['range'=>$value,'type'=>$selectedType]) }}" class="preset {{ $selectedRange===$value?'active':'' }}">{{ $label }}</a>@endforeach</div>
+        <div class="filter-row"><select name="type" aria-label="Loại giao dịch">@foreach(['all'=>'Tất cả giao dịch','wallet'=>'Nạp / rút','order'=>'Tiền đơn','profit'=>'Hoa hồng','penalty'=>'Tiền phạt','refund'=>'Hoàn nhập'] as $value=>$label)<option value="{{ $value }}" @selected($selectedType===$value)>{{ $label }}</option>@endforeach</select><button class="filter-submit"><i class="fas fa-filter"></i> Lọc</button></div>
+        <div class="custom-range"><input type="date" name="start_date" value="{{ request('start_date',$statistics['range']['start']) }}"><input type="date" name="end_date" value="{{ request('end_date',$statistics['range']['end']) }}"><button type="submit" onclick="this.form.elements.range.value='custom'">Áp dụng ngày</button></div>
+    </form>
+    @error('start_date')<div class="finance-error">{{ $message }}</div>@enderror
 
-<!-- Pass chart data to JavaScript -->
-<script>
-    window.chartData = @json($chartData);
-</script>
-@endif
+    <section class="kpi-grid">
+        <article class="kpi-card income"><span class="kpi-icon"><i class="fas fa-coins"></i></span><div class="kpi-label">Hoa hồng đã nhận</div><div class="kpi-value">{{ $money($summary['commission_amount'],5) }}</div><div class="kpi-note">{{ $trend($summary['commission_growth']) }} so với kỳ trước</div></article>
+        <article class="kpi-card deposit"><span class="kpi-icon"><i class="fas fa-arrow-down"></i></span><div class="kpi-label">Tổng tiền nạp</div><div class="kpi-value">{{ $money($summary['deposit_amount']) }}</div><div class="kpi-note">{{ $trend($summary['deposit_growth']) }} so với kỳ trước</div></article>
+        <article class="kpi-card withdraw"><span class="kpi-icon"><i class="fas fa-arrow-up"></i></span><div class="kpi-label">Đã rút</div><div class="kpi-value">{{ $money($summary['withdraw_amount']) }}</div><div class="kpi-note">Đang chờ {{ $money($summary['pending_withdraw_amount']) }}</div></article>
+        <article class="kpi-card refund"><span class="kpi-icon"><i class="fas fa-rotate-left"></i></span><div class="kpi-label">Hoàn nhập thực tế</div><div class="kpi-value">{{ $money($summary['refund_amount'],5) }}</div><div class="kpi-note">Đơn {{ $money($summary['order_refund_amount'],5) }} · Huỷ rút {{ $money($summary['withdraw_refund_amount'],5) }}</div></article>
+        <article class="kpi-card order"><span class="kpi-icon"><i class="fas fa-bag-shopping"></i></span><div class="kpi-label">Đơn đã hoàn thành</div><div class="kpi-value">{{ number_format($summary['completed_order_count']) }}</div><div class="kpi-note">Hoàn thành trong kỳ đang chọn</div></article>
+        <article class="kpi-card penalty"><span class="kpi-icon"><i class="fas fa-triangle-exclamation"></i></span><div class="kpi-label">Tổng tiền phạt</div><div class="kpi-value">{{ $money($summary['penalty_amount']) }}</div><div class="kpi-note">Đã ghi nhận trong sổ giao dịch</div></article>
+    </section>
 
-<!-- Distribution Tab -->
-@if($tab === 'distribution')
-<div class="tab-content-shell" id="content_items">
-    @if(optional($list_distribution)->isNotEmpty())
-        @php
-            $grouped = $list_distribution->groupBy('note');
-            $sortedGroups = $grouped->sortByDesc(function($transactions) {
-                return $transactions->first()->created_at;
-            });
-        @endphp
+    <section class="analytics-grid">
+        <article class="finance-card"><div class="card-head"><div><h2>Xu hướng Lãi/Lỗ</h2><p>Hoa hồng thực nhận trừ tiền phạt thực tế, lũy kế từ đầu kỳ.</p></div></div><div id="profitLossChart" class="chart-box"><div class="chart-loading"><i class="fas fa-spinner fa-spin"></i> Đang tải biểu đồ</div></div></article>
+        <article class="finance-card"><div class="card-head"><div><h2>Trạng thái ví</h2><p>Nạp/rút theo trạng thái xử lý.</p></div></div><div id="statusChart" class="chart-box compact"></div><div class="status-summary"><span><b>{{ $summary['completed_count'] }}</b> hoàn thành</span><span><b>{{ $summary['pending_count'] }}</b> đang chờ</span><span><b>{{ $summary['cancelled_count'] }}</b> đã huỷ</span></div></article>
+    </section>
 
-        @foreach($sortedGroups as $orderCode => $transactions)
-            @php
-                $sortedTransactions = $transactions->sortBy(function($item) {
-                    $order = ['order' => 1, 'profit' => 2, 'penalty' => 3];
-                    return $order[$item->type] ?? 999;
-                });
-                $groupTotal = $transactions->sum(function ($transaction) {
-                    if ($transaction->type === 'profit') {
-                        return (float) $transaction->value;
-                    }
+    <section class="finance-card breakdown-card"><div class="card-head"><div><h2>Cơ cấu giao dịch</h2><p>Mỗi nguồn được tách riêng; không cộng chéo settlement với commission/phạt.</p></div></div><div class="breakdown-grid">@forelse($statistics['breakdown'] as $item)<div class="breakdown-item"><span class="transaction-icon {{ $item->direction }}"><i class="fas {{ $icons[$item->type]??'fa-receipt' }}"></i></span><div><strong>{{ $labels[$item->type]??$item->type }}</strong><small>{{ number_format($item->transaction_count) }} giao dịch</small></div><b>{{ $money($item->total_amount,5) }}</b></div>@empty<div class="empty-state">Chưa có dữ liệu trong kỳ.</div>@endforelse</div></section>
 
-                    if ($transaction->type === 'penalty') {
-                        return -(float) $transaction->value;
-                    }
-
-                    return 0;
-                });
-            @endphp
-
-            <div class="tab-card">
-                <div class="tab-card-header">
-                    <div class="tab-card-title-wrap">
-                        <span class="mini-pill">Order</span>
-                        <h4 class="tab-card-title">{{ $orderCode }}</h4>
-                    </div>
-                    <span class="tab-card-total {{ $groupTotal >= 0 ? 'positive' : 'negative' }}">
-                        {{ $groupTotal >= 0 ? '+' : '-' }}${{ format_money(abs($groupTotal)) }}
-                    </span>
-                </div>
-
-                <div class="transaction-stack">
-                    @foreach($sortedTransactions as $item)
-                        @php
-                            $amount = format_money($item->value);
-                            $isPositive = in_array($item->type, ['profit'], true);
-                        @endphp
-                        <div class="transaction-list-item {{ $isPositive ? 'profit' : 'expense' }}">
-                            <div class="transaction-icon-list {{ $item->type === 'profit' ? 'success' : ($item->type === 'penalty' ? 'warning' : 'danger') }}">
-                                <i class="fa-solid {{ $item->type === 'profit' ? 'fa-arrow-up' : 'fa-arrow-down' }}"></i>
-                            </div>
-                            <div class="transaction-details">
-                                <div class="transaction-type-name">
-                                    @if($item->type === 'profit')
-                                        {{__('balance_fluctuation.LoiNhuan')}}
-                                    @elseif($item->type === 'order')
-                                        {{__('balance_fluctuation.DatHang')}}
-                                    @elseif($item->type === 'penalty')
-                                        {{__('balance_fluctuation.TienPhat')}}
-                                    @endif
-                                </div>
-                                <div class="transaction-time">{{ $item->created_at->format('d/m/Y H:i') }}</div>
-                            </div>
-                            <div class="transaction-value {{ $isPositive ? 'positive' : 'negative' }}">
-                                {{ $isPositive ? '+' : '-' }}${{ $amount }}
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-            </div>
-        @endforeach
-    @else
-        <div class="empty-state">
-            <i class="fa-solid fa-inbox fa-3x mb-3"></i>
-            <p>{{__('balance_fluctuation.LichSuTrong')}}</p>
-        </div>
-    @endif
-</div>
-@endif
-
-<!-- Deposit Tab -->
-@if($tab === 'deposit')
-<div class="tab-content-shell" id="content_items">
-    @if(optional($list_deposit)->isNotEmpty())
-        @foreach($list_deposit->groupBy(fn($item) => $item->created_at->format('Y-m-d')) as $date => $transactions)
-            <div class="transaction-date-group">
-                @php $dailyTotal = $transactions->sum('value'); @endphp
-                <div class="tab-card">
-                    <div class="tab-card-header compact">
-                        <div class="tab-card-title-wrap">
-                            <span class="mini-pill success">Deposit</span>
-                            <h4 class="tab-card-title">{{ \Carbon\Carbon::parse($date)->format('d/m/Y') }} - {{__('balance_fluctuation.NapTien')}}</h4>
-                        </div>
-                        <span class="tab-card-total positive">+${{ format_money($dailyTotal) }}</span>
-                    </div>
-
-                    <div class="transaction-stack">
-                        @foreach($transactions as $item)
-                            <div class="transaction-list-item profit">
-                                <div class="transaction-icon-list success">
-                                    <i class="fa-solid fa-money-bill-wave"></i>
-                                </div>
-                                <div class="transaction-details">
-                                    <div class="transaction-type-name">{{__('balance_fluctuation.NapTien')}}</div>
-                                    <div class="transaction-time">{{ $item->created_at->format('d/m/Y H:i') }}</div>
-                                </div>
-                                <div class="transaction-value positive">+${{ format_money($item->value) }}</div>
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
-            </div>
-        @endforeach
-    @else
-        <div class="empty-state">
-            <i class="fa-solid fa-inbox fa-3x mb-3"></i>
-            <p>{{__('balance_fluctuation.LichSuTrong')}}</p>
-        </div>
-    @endif
-</div>
-@endif
-
-<!-- Withdraw Tab -->
-@if($tab === 'withdraw')
-<div class="tab-content-shell" id="content_items">
-    @if(optional($list_withdraw)->isNotEmpty())
-        @foreach($list_withdraw->groupBy(fn($item) => $item->created_at->format('Y-m-d')) as $date => $transactions)
-            <div class="transaction-date-group">
-                @php $dailyTotal = $transactions->sum('value'); @endphp
-                <div class="tab-card withdraw-card-shell">
-                    <div class="tab-card-header compact">
-                        <div class="tab-card-title-wrap">
-                            <span class="mini-pill danger">Withdraw</span>
-                            <h4 class="tab-card-title">{{ \Carbon\Carbon::parse($date)->format('d/m/Y') }} - {{__('balance_fluctuation.RutTien')}}</h4>
-                        </div>
-                        <span class="tab-card-total negative">-${{ format_money($dailyTotal) }}</span>
-                    </div>
-
-                    <div class="transaction-stack">
-                        @foreach($transactions as $item)
-                            @php
-                                $statusClass = match($item->status) {
-                                    'processing' => 'warning',
-                                    'completed' => 'success',
-                                    default => 'danger',
-                                };
-                                $statusLabel = match($item->status) {
-                                    'processing' => __('balance_fluctuation.ChoXacNhan'),
-                                    'completed' => __('balance_fluctuation.HoanThanh'),
-                                    default => __('balance_fluctuation.Huy'),
-                                };
-                            @endphp
-                            <div class="transaction-list-item expense">
-                                <div class="transaction-icon-list danger">
-                                    <i class="fa-solid fa-arrow-up"></i>
-                                </div>
-                                <div class="transaction-details">
-                                    <div class="transaction-type-name">{{__('balance_fluctuation.RutTien')}}</div>
-                                    <div class="transaction-time">{{ $item->created_at->format('d/m/Y H:i') }}</div>
-                                    <div class="transaction-time">{{ $item->username_bank }} - {{ $item->bank_name }}</div>
-                                </div>
-                                <div class="transaction-value negative">
-                                    -${{ format_money($item->value) }}
-                                    <span class="status-badge {{ $statusClass }}">{{ $statusLabel }}</span>
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
-            </div>
-        @endforeach
-    @else
-        <div class="empty-state">
-            <i class="fa-solid fa-inbox fa-3x mb-3"></i>
-            <p>{{__('balance_fluctuation.LichSuTrong')}}</p>
-        </div>
-    @endif
-</div>
-@endif
+    <section class="finance-card history-card">
+        <div class="card-head"><div><h2>Lịch sử giao dịch</h2><p>{{ number_format($statistics['transactions']->total()) }} bản ghi theo filter.</p></div></div>
+        <div class="transaction-list">@forelse($statistics['transactions'] as $item)
+            @php $isCancelled=$item->status==='cancelled'; $isIn=$item->direction==='in'; $isInfo=$item->direction==='info'; @endphp
+            <article class="transaction-row">
+                <span class="transaction-icon {{ $isCancelled?'cancelled':($isIn?'in':($isInfo?'info':'out')) }}"><i class="fas {{ $icons[$item->type]??'fa-receipt' }}"></i></span>
+                <div class="transaction-main"><div class="transaction-title">{{ $labels[$item->type]??$item->type }} <span class="status-pill {{ $item->status }}">{{ $statusLabels[$item->status]??$item->status }}</span></div><div class="transaction-meta">{{ \Carbon\Carbon::parse($item->created_at)->format('d/m/Y · H:i') }}@if($item->note) · {{ $item->note }}@endif</div>@if($item->detail)<div class="transaction-detail">{{ $detailLabels[$item->detail]??$item->detail }}</div>@endif</div>
+                <div class="transaction-money {{ $isCancelled?'muted':($isIn?'positive':($isInfo?'info':'negative')) }}">{{ $isCancelled?'':($isIn?'+':($isInfo?'+':'-')) }}{{ $money($item->value,5) }}</div>
+            </article>
+        @empty<div class="empty-state"><i class="fas fa-receipt"></i><strong>Chưa có giao dịch</strong><span>Thử chọn khoảng thời gian hoặc loại giao dịch khác.</span></div>@endforelse</div>
+        @if($statistics['transactions']->hasPages())<div class="pagination-wrap">{{ $statistics['transactions']->onEachSide(1)->links('user.partials.finance-pagination') }}</div>@endif
+    </section>
+    <div class="calculation-note"><i class="fas fa-circle-info"></i><span>Hoàn nhập chỉ ghi nhận khi có settlement bất biến, bộ bút toán hoàn tất đối chiếu được, hoặc khoản rút đã bị huỷ và thực tế cộng lại ví. Biến động kỳ tính từng dòng tiền tại đúng thời điểm phát sinh nên không cộng trùng hoa hồng, phạt hay hoàn nhập.</span></div>
+</main>
 @endsection

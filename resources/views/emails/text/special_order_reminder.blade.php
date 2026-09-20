@@ -2,8 +2,8 @@
 
 Xin chào {{ $user->full_name ?? $user->username }},
 
-Đơn hàng {{ $frozenOrder->snapshot_order_code ?? $frozenOrder->order_id }} đang chờ bạn xử lý.
-Tên đơn hàng: {{ $frozenOrder->snapshot_name ?? 'N/A' }}
+Đơn hàng {{ $frozenOrder->display_order_code ?? $frozenOrder->order_id }} đang chờ bạn xử lý.
+Tên đơn hàng: {{ $frozenOrder->display_name ?? 'N/A' }}
 Giá trị: ${{ number_format($frozenOrder->custom_price, 2) }}
 Thời gian đã trôi qua: {{ $hoursPassed }} giờ
 

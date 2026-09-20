@@ -47,7 +47,8 @@ window.addEventListener('DOMContentLoaded', function () {
         'da-giao-hang': 'btn_da_giao_hang',
         'hoan-thanh': 'btn_hoan_thanh',
         'da-huy': 'btn_da_huy',
-        'dong-bang': 'btn_dong_bang'
+        'dong-bang': 'btn_dong_bang',
+        'bi-phat': 'btn_bi_phat'
     };
 
     if (tabMap[tab]) {
@@ -156,7 +157,7 @@ window.addEventListener('DOMContentLoaded', function () {
                     // Ưu tiên: PHẠT > ĐẶC BIỆT
                     // Đơn bị phạt PHẢI được highlight dù có phải đơn đặc biệt hay không
                     if (isPenalized) {
-                        if (frozen_order.is_frozen == 1) {
+                        if (frozen_order.status !== 'completed' || !frozen_order.commission_paid) {
                             // Đơn bị phạt CHƯA hoàn thành - cảnh báo mạnh (ĐỎ)
                             order_item.classList.add('penalized');
                         } else {
@@ -255,13 +256,13 @@ window.addEventListener('DOMContentLoaded', function () {
                     // Lấy trạng thái hiện tại, mặc định là 'pending' nếu không có
                     const currentStatus = frozen_order.status || 'pending';
                     const statusBadgeHTML = getStatusBadge(currentStatus);
-                    const quantity = Number(frozen_order.snapshot_quantity) || 0;
-                    const orderAmount = Number(frozen_order.snapshot_order_value) || 0;
-                    const commissionAmount = Number(frozen_order.snapshot_commission_value) || 0;
+                    const quantity = Number(frozen_order.display_quantity) || 0;
+                    const orderAmount = Number(frozen_order.display_order_amount) || 0;
+                    const commissionAmount = Number(frozen_order.display_commission_amount) || 0;
                     
                     // Tính toán commission_percentage dựa trên dữ liệu snapshot có sẵn
                     // Ưu tiên lấy commission_percentage từ frozen_order nếu có, nếu không thì tính toán từ dữ liệu snapshot
-                    const commission_percentage = frozen_order.commission_percentage || 
+                    const commission_percentage = frozen_order.display_commission_percentage ||
                                                  (orderAmount > 0 ? (commissionAmount / orderAmount) * 100 : 0);
                     
                     const price = quantity > 0 ? orderAmount / quantity : 0;
@@ -273,8 +274,17 @@ window.addEventListener('DOMContentLoaded', function () {
                     // Tính toán penalty nếu có
                     const penalty_amount = frozen_order.penalty_amount ? parseFloat(frozen_order.penalty_amount) : 0;
                     const penalty_amount_formatted = format_currency(penalty_amount);
-                    const total_after_penalty = (orderAmount + commissionAmount) - penalty_amount;
-                    const total_after_penalty_formatted = format_currency(total_after_penalty);
+                    const penaltySettlement = frozen_order.penalty_settlement || null;
+                    const hasExactSettlement = penaltySettlement?.is_exact === true;
+                    const isPenaltySettled = isPenalized
+                        && frozen_order.status === 'completed'
+                        && frozen_order.commission_paid;
+                    const projectedRefund = (orderAmount + commissionAmount) - penalty_amount;
+                    const penaltyRefundFormatted = isPenaltySettled
+                        ? (hasExactSettlement
+                            ? format_currency(Number(penaltySettlement.refund_amount))
+                            : 'Chưa xác định')
+                        : `${format_currency(projectedRefund)} (dự kiến)`;
                     
                     // Tính số tiền cần nạp thêm cho đơn bị phạt
                     const total_payment_needed = orderAmount; // Tổng tiền cần thanh toán để phân phối
@@ -341,7 +351,7 @@ window.addEventListener('DOMContentLoaded', function () {
                     order_item.innerHTML = `
                         <div class="d-flex flex-column">
                             <span class="order_time">${trans.ThoiGianDatPhanPhoi} ${formatDateTime(frozen_order.updated_at)}</span>
-                            <span class="order_code">${trans.MaDonHang} ${frozen_order.snapshot_order_code || frozen_order.order_id}</span>
+                            <span class="order_code">${trans.MaDonHang} ${frozen_order.display_order_code || frozen_order.order_id}</span>
                             ${countdownHTML}
                             <div class="order_status">
                                 ${statusBadgeHTML}
@@ -350,10 +360,10 @@ window.addEventListener('DOMContentLoaded', function () {
                         </div>
                         <div class="order_info d-flex flex-row">
                             <div class="p-2 order_div_image">
-                                <img class="order_image" max-width="100px" src="/storage/${frozen_order.snapshot_image || ''}" alt="">
+                                <img class="order_image" max-width="100px" src="/storage/${frozen_order.display_image || ''}" alt="">
                             </div>
                             <div class="order_info_text p-3 w-100 d-flex flex-column">
-                                <span class="order_name">${frozen_order.snapshot_name || 'N/A'}</span>
+                                <span class="order_name">${frozen_order.display_name || 'N/A'}</span>
                                 <div class="d-flex justify-content-between mt-2 text-dark">
                                     <span>${order_details_price_formatted}</span>
                                     <span>x${quantity || 'N/A'}</span>
@@ -377,7 +387,7 @@ window.addEventListener('DOMContentLoaded', function () {
                                 </tr>` : ''}
                                 <tr>
                                     <td>${trans.SoTienHoanNhap}</td>
-                                    <th class="total ${isSpecialOrder ? 'special-total' : ''}">${isPenalized ? total_after_penalty_formatted : order_details_end_value_total_formatted}</th>
+                                    <th class="total ${isSpecialOrder ? 'special-total' : ''}">${isPenalized ? penaltyRefundFormatted : order_details_end_value_total_formatted}</th>
                                 </tr>
                             </tbody>
                         </table>
@@ -389,11 +399,12 @@ window.addEventListener('DOMContentLoaded', function () {
                             ${money_need_to_deposit > 0 ? `<p class="penalty_text_danger mb-1">• <strong>Cần nạp thêm: ${money_need_to_deposit_formatted}</strong> để có thể phân phối</p>` : ''}
                             <p class="penalty_text_danger mb-0">• Vui lòng ${money_need_to_deposit > 0 ? 'nạp tiền và ' : ''}hoàn thành phân phối sớm nhất</p>
                         </div>` : ''}
-                        ${isPenalized && frozen_order.is_frozen == 0 ? `
+                        ${isPenaltySettled ? `
                         <div class="penalty_info">
                             <p class="penalty_text mb-1"><strong>ℹ️ Thông tin phạt:</strong></p>
-                            <p class="penalty_text mb-1">• Đơn hàng đã phân phối nhưng bị phạt do quá hạn</p>
-                            <p class="penalty_text mb-0">• Tiền phạt <strong>${penalty_amount_formatted}</strong> đã được trừ khỏi số tiền hoàn nhập</p>
+                            <p class="penalty_text mb-1">• Đơn đã hoàn thành và xử lý phạt do quá hạn</p>
+                            <p class="penalty_text mb-0">• Tiền phạt <strong>${penalty_amount_formatted}</strong> đã trừ khỏi khoản hoàn nhập</p>
+                            ${hasExactSettlement ? `<p class="penalty_text mb-0">• Hoàn nhập thực tế: <strong>${penaltyRefundFormatted}</strong></p>` : `<p class="penalty_text text-danger mb-0">• Không đủ transaction history để xác định chính xác tiền hoàn nhập.</p>`}
                         </div>` : ''}
                         ${isSpecialOrder && frozen_order.is_frozen == 1 && !isPenalized ? `
                         <div class="special_info">
@@ -448,7 +459,7 @@ window.addEventListener('DOMContentLoaded', function () {
             } else {
                 div_list_orders.innerHTML = `
                 <div class="d-flex justify-content-center">
-                    <span class="text-center">${trans.KhongCoDuLieu}</span>
+                    <span class="text-center" style="color:#000;">${trans.KhongCoDuLieu}</span>
                 </div>
                 `;
             }

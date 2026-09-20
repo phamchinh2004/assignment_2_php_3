@@ -204,6 +204,9 @@
     @if(!$frozen)
         <div class="alert alert-danger">Không tìm thấy thông tin đơn hàng!</div>
     @else
+        @if($frozen->uses_snapshot_fallback)
+            <div class="alert alert-warning">Frozen order thiếu snapshot. Một phần thông tin bên dưới đang fallback từ Order hiện tại và không phải lịch sử đã xác minh.</div>
+        @endif
     <div class="row">
         <!-- Cột phải: Xử lý báo cáo -->
         <div class="col-lg-4 order-lg-2">
@@ -280,7 +283,7 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3"><strong>ID báo cáo:</strong> #{{ $orderReport->id }}</div>
-                            <div class="mb-3"><strong>Mã đơn:</strong> {{ $order?->order_code ?? 'N/A' }}</div>
+                            <div class="mb-3"><strong>Mã đơn:</strong> {{ $frozen->display_order_code ?? 'N/A' }}</div>
                             <div class="mb-3"><strong>Frozen Order ID:</strong> #{{ $orderReport->frozen_order_id }}</div>
                             <div class="mb-3">
                                 <strong>Người báo cáo:</strong><br>
@@ -360,7 +363,7 @@
                     <div class="order-detail-header">
                         <div>
                             <h5 style="margin: 0; font-size: 20px; font-weight: 600;">Chi tiết đơn hàng</h5>
-                            <p style="margin: 8px 0 0 0; color: #666;">Mã đơn: {{ $order?->order_code ?? 'N/A' }}</p>
+                            <p style="margin: 8px 0 0 0; color: #666;">Mã đơn: {{ $frozen->display_order_code ?? 'N/A' }}</p>
                         </div>
                         <div class="order-status-badge status-{{ $frozen->status ?? 'pending' }}" 
                              @if($currentStatus && $currentStatus->color) 
@@ -389,30 +392,24 @@
                             Thông tin sản phẩm
                         </div>
                         <div class="d-flex gap-3">
-                            @if($order && $order->image)
-                            <img src="{{ Storage::url($order->image) }}" alt="{{ $order->name }}" class="product-image">
+                            @if($frozen->display_image)
+                            <img src="{{ Storage::url($frozen->display_image) }}" alt="{{ $frozen->display_name }}" class="product-image">
                             @endif
                             <div style="flex: 1;">
-                                @if($order)
-                                <h5 style="margin: 0 0 12px 0; font-weight: 600;">{{ $order->name }}</h5>
+                                @if($frozen->display_name)
+                                <h5 style="margin: 0 0 12px 0; font-weight: 600;">{{ $frozen->display_name }}</h5>
                                 <div class="info-row">
                                     <div class="info-label">Giá:</div>
-                                    <div class="info-value">{{ format_money($frozen->custom_price ? ($frozen->custom_price / $order->quantity) : $order->price) }}$</div>
+                                    <div class="info-value">{{ format_money($frozen->display_unit_price ?? 0) }}$</div>
                                 </div>
                                 <div class="info-row">
                                     <div class="info-label">Số lượng:</div>
-                                    <div class="info-value">{{ $order->quantity }}</div>
+                                    <div class="info-value">{{ $frozen->display_quantity }}</div>
                                 </div>
                                 @php
-                                    $commission_percentage = $frozen->custom_price != null 
-                                        ? ($frozen->commission_percentage ?? $order->commission_percentage ?? 0)
-                                        : ($order->commission_percentage ?? 0);
-                                    
-                                    $total_order_value = $frozen->custom_price 
-                                        ? $frozen->custom_price 
-                                        : ($order->price * $order->quantity);
-                                    
-                                    $commission_amount = $total_order_value * ($commission_percentage / 100);
+                                    $commission_percentage = $frozen->display_commission_percentage ?? 0;
+                                    $total_order_value = $frozen->display_order_amount ?? 0;
+                                    $commission_amount = $frozen->display_commission_amount ?? 0;
                                 @endphp
                                 <div class="info-row">
                                     <div class="info-label">Tổng giá trị:</div>
@@ -460,25 +457,25 @@
                                 <i class="fas fa-user-circle" style="font-size: 80px; color: #0d6efd;"></i>
                             </div>
                             <div style="flex: 1;">
-                                @if($order && $order->customer_name)
-                                <h5 style="margin: 0 0 12px 0; font-weight: 600;">{{ $order->customer_name }}</h5>
+                                @if($frozen->display_customer_name)
+                                <h5 style="margin: 0 0 12px 0; font-weight: 600;">{{ $frozen->display_customer_name }}</h5>
                                 @endif
-                                @if($order && $order->customer_phone)
+                                @if($frozen->display_customer_phone)
                                 <div class="info-row">
                                     <div class="info-label">Số điện thoại:</div>
-                                    <div class="info-value">{{ $order->customer_phone }}</div>
+                                    <div class="info-value">{{ $frozen->display_customer_phone }}</div>
                                 </div>
                                 @endif
-                                @if($order && $order->customer_address)
+                                @if($frozen->display_customer_address)
                                 <div class="info-row">
                                     <div class="info-label">Địa chỉ nhận hàng:</div>
-                                    <div class="info-value">{{ $order->customer_address }}</div>
+                                    <div class="info-value">{{ $frozen->display_customer_address }}</div>
                                 </div>
                                 @endif
-                                @if($order && $order->customer_note)
+                                @if($frozen->display_customer_note)
                                 <div class="info-row" style="border-bottom: none;">
                                     <div class="info-label">Ghi chú:</div>
-                                    <div class="info-value" style="font-style: italic; color: #666;">{{ $order->customer_note }}</div>
+                                    <div class="info-value" style="font-style: italic; color: #666;">{{ $frozen->display_customer_note }}</div>
                                 </div>
                                 @endif
                             </div>
@@ -491,15 +488,10 @@
                             <i class="fas fa-store"></i>
                             Nền tảng & Thanh toán
                         </div>
-                        @if($order && $order->partner)
+                        @if($frozen->display_partner_name)
                         <div class="info-row">
                             <div class="info-label">Nền tảng:</div>
-                            <div class="info-value" style="font-weight: 600;">{{ $order->partner->name }}</div>
-                        </div>
-                        @elseif($frozen->platform)
-                        <div class="info-row">
-                            <div class="info-label">Nền tảng:</div>
-                            <div class="info-value" style="font-weight: 600;">{{ $frozen->platform }}</div>
+                            <div class="info-value" style="font-weight: 600;">{{ $frozen->display_partner_name }}</div>
                         </div>
                         @endif
                         @if($frozen->order_date)
@@ -508,12 +500,12 @@
                             <div class="info-value">{{ $frozen->order_date->format('d/m/Y H:i') }}</div>
                         </div>
                         @endif
-                        @if($order && $order->payment_method)
+                        @if($frozen->display_payment_method)
                         <div class="info-row">
                             <div class="info-label">Hình thức thanh toán:</div>
                             <div class="info-value" style="font-weight: 600;">
-                                {{ $order->payment_method }}
-                                @if($order->is_paid)
+                                {{ $frozen->display_payment_method }}
+                                @if($frozen->display_is_paid)
                                     <span class="badge badge-success ml-2">Đã thanh toán</span>
                                 @else
                                     <span class="badge badge-warning ml-2">Chưa thanh toán</span>
@@ -544,7 +536,7 @@
                     @endif
 
                     <!-- API Information -->
-                    @if($order && $order->api)
+                    @if($frozen->display_api)
                     <div class="info-section">
                         <div class="info-section-title">
                             <i class="fas fa-code"></i>
@@ -554,9 +546,9 @@
                             <div class="info-label">API Key:</div>
                             <div class="info-value" style="display: flex; align-items: center; gap: 8px;">
                                 <span style="font-family: monospace; font-weight: 600; word-break: break-all; background: #f8f9fa; padding: 8px; border-radius: 4px; flex: 1;">
-                                    {{ $order->api }}
+                                    {{ $frozen->display_api }}
                                 </span>
-                                <button type="button" class="btn-copy-api" data-api="{{ $order->api }}" title="Sao chép API Key">
+                                <button type="button" class="btn-copy-api" data-api="{{ $frozen->display_api }}" title="Sao chép API Key">
                                     <i class="fas fa-copy"></i>
                                 </button>
                             </div>

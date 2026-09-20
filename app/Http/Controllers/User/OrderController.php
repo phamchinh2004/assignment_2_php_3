@@ -11,6 +11,7 @@ use App\Models\Transaction_history;
 use App\Models\User;
 use App\Jobs\PrepareOrder;
 use App\Services\OrderStatusService;
+use App\Services\FrozenOrderSettlementService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -18,6 +19,10 @@ use Illuminate\Support\Facades\Log;
 
 class OrderController extends Controller
 {
+    public function __construct(private readonly FrozenOrderSettlementService $settlementService)
+    {
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -73,13 +78,41 @@ class OrderController extends Controller
             $query->where('frozen_orders.is_frozen', 1)
                 ->whereNotNull('frozen_orders.custom_price')
                 ->whereNotIn('frozen_orders.status', ['completed', 'cancelled']);
+        } elseif ($tab === "btn_bi_phat") {
+            $query->whereNotNull('frozen_orders.penalty_amount')
+                ->where('frozen_orders.penalty_amount', '>', 0);
         }
 
         // Sắp xếp theo index trong bảng orders
         $list_orders = $query
             ->orderBy('frozen_orders.id', 'desc')
             ->select('frozen_orders.*') // chỉ lấy dữ liệu từ frozen_orders
+            ->with('order.partner')
             ->get();
+
+        $penalizedOrders = $list_orders->filter(fn (Frozen_order $frozenOrder) => (float) $frozenOrder->penalty_amount > 0);
+        if ($penalizedOrders->isNotEmpty()) {
+            $notes = $penalizedOrders
+                ->flatMap(fn (Frozen_order $frozenOrder) => $this->settlementService->possibleNotes($frozenOrder))
+                ->unique()
+                ->values();
+            $transactions = Transaction_history::query()
+                ->where('user_id', Auth::id())
+                ->whereIn('note', $notes)
+                ->whereIn('type', ['order', 'profit', 'penalty'])
+                ->get();
+
+            $penalizedOrders->each(function (Frozen_order $frozenOrder) use ($transactions) {
+                $orderNotes = $this->settlementService->possibleNotes($frozenOrder);
+                $frozenOrder->setAttribute(
+                    'penalty_settlement',
+                    $this->settlementService->resolve(
+                        $frozenOrder,
+                        $transactions->whereIn('note', $orderNotes)
+                    )
+                );
+            });
+        }
 
         if (!$list_orders) {
             return response()->json([
@@ -162,7 +195,8 @@ class OrderController extends Controller
             'order.partner',
             'statusOrders.status',
             'statusOrders.changedBy',
-            'orderReport'
+            'orderReport.reporter',
+            'orderReport.resolver',
         ]);
 
         // Lấy lịch sử thay đổi trạng thái
@@ -219,6 +253,9 @@ class OrderController extends Controller
         $apiUrl = $frozen_order->snapshot_api
             ? rtrim(config('app.url'), '/') . '/order?api_key=' . urlencode($frozen_order->snapshot_api)
             : null;
+        $financial = $this->settlementService->detail($frozen_order);
+        $cancellation = $statusHistory
+            ->first(fn ($item) => in_array($item->status?->name, ['cancelled', 'canceled'], true));
 
         return view('user.order_detail', compact(
             'frozen_order',
@@ -226,7 +263,9 @@ class OrderController extends Controller
             'currentStatus',
             'allStatusesWithHistory',
             'currentBalance',
-            'apiUrl'
+            'apiUrl',
+            'financial',
+            'cancellation'
         ));
     }
 
@@ -403,7 +442,7 @@ class OrderController extends Controller
         Log::info('Đơn hàng đã được xác nhận', [
             'frozen_order_id' => $frozen_order->id,
             'order_id' => $frozen_order->order_id,
-            'platform' => $frozen_order->platform,
+            'platform' => $frozen_order->display_partner_name,
             'status' => $frozen_order->status,
             'is_frozen' => 0
         ]);

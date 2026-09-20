@@ -12,6 +12,34 @@ class Frozen_order extends Model
 {
     use HasFactory;
 
+    public const SNAPSHOT_REQUIRED_FIELDS = [
+        'snapshot_order_code',
+        'snapshot_name',
+        'snapshot_quantity',
+        'snapshot_unit_price',
+        'snapshot_order_amount',
+        'commission_percentage',
+        'snapshot_commission_amount',
+    ];
+
+    public const SNAPSHOT_FIELD_LABELS = [
+        'snapshot_order_code' => 'Mã đơn',
+        'snapshot_name' => 'Tên sản phẩm',
+        'snapshot_quantity' => 'Số lượng',
+        'snapshot_unit_price' => 'Đơn giá',
+        'snapshot_order_amount' => 'Tổng giá trị',
+        'commission_percentage' => 'Tỷ lệ commission',
+        'snapshot_commission_amount' => 'Tiền commission',
+    ];
+
+    public const SNAPSHOT_FINANCIAL_FIELDS = [
+        'snapshot_quantity',
+        'snapshot_unit_price',
+        'snapshot_order_amount',
+        'commission_percentage',
+        'snapshot_commission_amount',
+    ];
+
     protected static function booted(): void
     {
         static::saving(function (Frozen_order $frozenOrder) {
@@ -44,6 +72,20 @@ class Frozen_order extends Model
         'snapshot_is_paid',
         'snapshot_partner_name',
         'snapshot_api',
+        'snapshot_customer_name',
+        'snapshot_customer_phone',
+        'snapshot_customer_address',
+        'snapshot_customer_note',
+        'snapshot_source',
+        'snapshot_captured_at',
+        'snapshot_restored_at',
+        'snapshot_restored_by',
+        'settled_order_amount',
+        'settled_commission_amount',
+        'settled_penalty_amount',
+        'settled_refund_amount',
+        'settled_balance_destination',
+        'settled_at',
         'custom_price',
         'commission_percentage',
         'is_frozen',
@@ -58,8 +100,6 @@ class Frozen_order extends Model
         'penalty_amount',
         'status',
         'tracking_number',
-        'customer_info',
-        'platform',
         'order_date',
         'confirmed_at',
         'preparing_at',
@@ -68,8 +108,7 @@ class Frozen_order extends Model
         'delivered_at',
         'completed_at',
         'cancelled_at',
-        'shipping_carrier',
-        'shipping_address'
+        'shipping_carrier'
     ];
 
     protected $casts = [
@@ -77,7 +116,14 @@ class Frozen_order extends Model
         'snapshot_order_amount' => 'decimal:6',
         'snapshot_commission_amount' => 'decimal:6',
         'snapshot_is_paid' => 'boolean',
-        'customer_info' => 'array',
+        'snapshot_captured_at' => 'datetime',
+        'snapshot_restored_at' => 'datetime',
+        'settled_order_amount' => 'decimal:6',
+        'settled_commission_amount' => 'decimal:6',
+        'settled_penalty_amount' => 'decimal:6',
+        'settled_refund_amount' => 'decimal:6',
+        'settled_at' => 'datetime',
+        'penalty_notification_sent_at' => 'datetime',
         'order_date' => 'datetime',
         'confirmed_at' => 'datetime',
         'preparing_at' => 'datetime',
@@ -91,6 +137,25 @@ class Frozen_order extends Model
     protected $appends = [
         'snapshot_order_value',
         'snapshot_commission_value',
+        'snapshot_state',
+        'snapshot_missing_fields',
+        'uses_snapshot_fallback',
+        'display_order_code',
+        'display_name',
+        'display_image',
+        'display_quantity',
+        'display_unit_price',
+        'display_order_amount',
+        'display_commission_percentage',
+        'display_commission_amount',
+        'display_customer_name',
+        'display_customer_phone',
+        'display_customer_address',
+        'display_customer_note',
+        'display_partner_name',
+        'display_payment_method',
+        'display_is_paid',
+        'display_api',
     ];
 
     public static function snapshotFromOrder(Order $order, array $attributes = []): self
@@ -120,14 +185,12 @@ class Frozen_order extends Model
                 'snapshot_is_paid' => $order->is_paid,
                 'snapshot_partner_name' => $order->partner?->name,
                 'snapshot_api' => $order->api,
-                'customer_info' => [
-                    'name' => $order->customer_name,
-                    'phone' => $order->customer_phone,
-                    'address' => $order->customer_address,
-                    'note' => $order->customer_note,
-                ],
-                'platform' => $order->partner?->name,
-                'shipping_address' => $order->customer_address,
+                'snapshot_customer_name' => $order->customer_name,
+                'snapshot_customer_phone' => $order->customer_phone,
+                'snapshot_customer_address' => $order->customer_address,
+                'snapshot_customer_note' => $order->customer_note,
+                'snapshot_source' => 'captured',
+                'snapshot_captured_at' => now(),
                 'order_date' => now(),
             ], $attributes, [
                 'snapshot_image' => $snapshotImage,
@@ -141,7 +204,7 @@ class Frozen_order extends Model
         }
     }
 
-    protected static function copySnapshotImage(?string $source): ?string
+    public static function copySnapshotImage(?string $source): ?string
     {
         if (!$source || !Storage::disk('public')->exists($source)) {
             return null;
@@ -186,6 +249,188 @@ class Frozen_order extends Model
 
         return null;
     }
+
+    public function getSnapshotMissingFieldsAttribute(): array
+    {
+        return collect(self::SNAPSHOT_REQUIRED_FIELDS)
+            ->filter(fn (string $field) => $this->getAttribute($field) === null)
+            ->values()
+            ->all();
+    }
+
+    public function getSnapshotStateAttribute(): string
+    {
+        $hasNoSnapshot = $this->snapshot_order_code === null
+            && $this->snapshot_name === null
+            && $this->snapshot_order_amount === null
+            && $this->snapshot_commission_amount === null;
+
+        if ($hasNoSnapshot) {
+            return 'legacy';
+        }
+
+        if ($this->snapshot_missing_fields !== []) {
+            return 'incomplete';
+        }
+
+        $amount = (float) $this->snapshot_order_amount;
+        $expectedAmount = $this->custom_price !== null
+            ? (float) $this->custom_price
+            : (float) $this->snapshot_unit_price * (int) $this->snapshot_quantity;
+        $expectedCommission = $amount * ((float) $this->commission_percentage / 100);
+
+        if ((int) $this->snapshot_quantity <= 0
+            || $amount < 0
+            || (float) $this->commission_percentage < 0
+            || abs($amount - $expectedAmount) > 0.01
+            || abs((float) $this->snapshot_commission_amount - $expectedCommission) > 0.01) {
+            return 'invalid';
+        }
+
+        return 'complete';
+    }
+
+    public function getUsesSnapshotFallbackAttribute(): bool
+    {
+        return $this->snapshot_missing_fields !== []
+            || ($this->snapshot_customer_name === null && $this->order?->customer_name !== null)
+            || ($this->snapshot_customer_phone === null && $this->order?->customer_phone !== null)
+            || ($this->snapshot_customer_address === null && $this->order?->customer_address !== null)
+            || ($this->snapshot_customer_note === null && $this->order?->customer_note !== null)
+            || ($this->snapshot_partner_name === null && $this->order?->partner?->name !== null)
+            || ($this->snapshot_payment_method === null && $this->order?->payment_method !== null)
+            || ($this->snapshot_is_paid === null && $this->order !== null)
+            || ($this->snapshot_api === null && $this->order?->api !== null);
+    }
+
+    public function getDisplayOrderCodeAttribute(): ?string
+    {
+        return $this->snapshot_order_code ?? $this->order?->order_code;
+    }
+
+    public function getDisplayNameAttribute(): ?string
+    {
+        return $this->snapshot_name ?? $this->order?->name;
+    }
+
+    public function getDisplayImageAttribute(): ?string
+    {
+        return $this->snapshot_image ?? $this->order?->image;
+    }
+
+    public function getDisplayQuantityAttribute(): ?int
+    {
+        $value = $this->snapshot_quantity ?? $this->order?->quantity;
+        return $value === null ? null : (int) $value;
+    }
+
+    public function getDisplayUnitPriceAttribute(): ?float
+    {
+        $value = $this->snapshot_unit_price ?? $this->order?->price;
+        return $value === null ? null : (float) $value;
+    }
+
+    public function getDisplayOrderAmountAttribute(): ?float
+    {
+        if ($this->snapshot_order_value !== null) {
+            return $this->snapshot_order_value;
+        }
+
+        return $this->order
+            ? (float) $this->order->price * (int) $this->order->quantity
+            : null;
+    }
+
+    public function getDisplayCommissionPercentageAttribute(): ?float
+    {
+        $value = $this->commission_percentage ?? $this->order?->commission_percentage;
+        return $value === null ? null : (float) $value;
+    }
+
+    public function getDisplayCommissionAmountAttribute(): ?float
+    {
+        if ($this->snapshot_commission_value !== null) {
+            return $this->snapshot_commission_value;
+        }
+
+        return $this->display_order_amount !== null && $this->display_commission_percentage !== null
+            ? round($this->display_order_amount * ($this->display_commission_percentage / 100), 6)
+            : null;
+    }
+
+    public function getDisplayCustomerNameAttribute(): ?string
+    {
+        return $this->snapshot_customer_name ?? $this->order?->customer_name;
+    }
+
+    public function getDisplayCustomerPhoneAttribute(): ?string
+    {
+        return $this->snapshot_customer_phone ?? $this->order?->customer_phone;
+    }
+
+    public function getDisplayCustomerAddressAttribute(): ?string
+    {
+        return $this->snapshot_customer_address ?? $this->order?->customer_address;
+    }
+
+    public function getDisplayCustomerNoteAttribute(): ?string
+    {
+        return $this->snapshot_customer_note ?? $this->order?->customer_note;
+    }
+
+    /**
+     * Backward-compatibility accessor for legacy code expecting customer_info array
+     */
+    public function getCustomerInfoAttribute(): ?array
+    {
+        $name = $this->display_customer_name;
+        $phone = $this->display_customer_phone;
+        $address = $this->display_customer_address;
+        $note = $this->display_customer_note;
+
+        if ($name === null && $phone === null && $address === null && $note === null) {
+            return null;
+        }
+
+        return [
+            'name' => $name,
+            'phone' => $phone,
+            'address' => $address,
+            'note' => $note,
+        ];
+    }
+
+    public function getDisplayPartnerNameAttribute(): ?string
+    {
+        return $this->snapshot_partner_name ?? $this->order?->partner?->name;
+    }
+
+    /**
+     * Backward-compatibility accessor for legacy code expecting platform
+     */
+    public function getPlatformAttribute(): ?string
+    {
+        return $this->display_partner_name;
+    }
+
+    public function getDisplayPaymentMethodAttribute(): ?string
+    {
+        return $this->snapshot_payment_method ?? $this->order?->payment_method;
+    }
+
+    public function getDisplayIsPaidAttribute(): ?bool
+    {
+        if ($this->snapshot_is_paid !== null) {
+            return (bool) $this->snapshot_is_paid;
+        }
+
+        return $this->order ? (bool) $this->order->is_paid : null;
+    }
+
+    public function getDisplayApiAttribute(): ?string
+    {
+        return $this->snapshot_api ?? $this->order?->api;
+    }
     public function user()
     {
         return $this->belongsTo(User::class);
@@ -193,6 +438,11 @@ class Frozen_order extends Model
     public function order()
     {
         return $this->belongsTo(Order::class);
+    }
+
+    public function snapshotRestoredBy()
+    {
+        return $this->belongsTo(User::class, 'snapshot_restored_by');
     }
 
     /**
