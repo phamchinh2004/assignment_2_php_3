@@ -61,7 +61,7 @@ return [
     "PhanPhoiThanhCong2" => "Distribution successful!",
     "KhongTimThayDonHang" => "Order not found!",
     "KhongTimThayTienTrinhQuay" => "Spin process not found!",
-    "ChucMungBanNhanDuocDonHangDacBiet" => "Congratulations! You received a special order!",
+    "ChucMungBanNhanDuocDonHangGiaTriCao" => "Congratulations! You received a high-value order!",
     "CoDonHangDangBiDongBang" => "You have a frozen order, please check your order history to process it!",
     "CoDonHangChuaXuLy" => "You have an unprocessed order, please check your order history!",
     "LuotQuayDaDatDenGioiHanToiDa" => "Spin limit reached!",

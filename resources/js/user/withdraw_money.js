@@ -1,146 +1,190 @@
 document.addEventListener('DOMContentLoaded', function () {
+    const config = document.getElementById('withdrawal-config');
+    const amountInput = document.getElementById('amount_input_field');
+    const maxButton = document.getElementById('withdraw_all');
+    const submitButton = document.getElementById('btn_withdraw_now');
+    const amountError = document.getElementById('amount-error');
+    const passwordError = document.getElementById('password-error');
+    const transactionPassword = document.getElementById('transaction_password');
+    const confirmTransactionPassword = document.getElementById('confirm_transaction_password');
+    const usernameBank = document.getElementById('username_bank');
+    const bankName = document.getElementById('select_bank_name');
+    const accountNumber = document.getElementById('account_number');
 
-    // Khởi tạo SlimSelect
-    new SlimSelect({
-        select: '#select_bank_name',
-        settings: {
-            placeholderText: 'Chọn ngân hàng của bạn',
-            keepOrder: true,
-        },
-    });
+    if (!config || !amountInput || !submitButton) return;
 
-    const bankSelect = document.getElementById('select_bank_name');
-    const currentValue = bankSelect.getAttribute('value') || bankSelect.dataset.value;
-
-    if (currentValue) {
-        bankSelect.value = currentValue;
-    }
-
-    const withdraw_all = document.getElementById('withdraw_all');
-    const set_up_amount_input_field = new AutoNumeric('#amount_input_field', {
+    const maximumAmount = Number(config.dataset.maxAmount || 0);
+    const feeRate = Number(config.dataset.feeRate || 0);
+    const submitBlocked = config.dataset.submitBlocked === '1';
+    const hasPassword = config.dataset.hasPassword === '1';
+    const bankLabel = config.dataset.bankName || '';
+    const accountMask = config.dataset.accountMask || '';
+    const amountNumeric = new AutoNumeric('#amount_input_field', {
         currencySymbol: '$',
         decimalCharacter: '.',
         digitGroupSeparator: ',',
-        minimumValue: '0'
+        decimalPlaces: 2,
+        minimumValue: '0',
+        modifyValueOnWheel: false,
     });
-    const temple_amount = document.getElementById('temple_amount').value;
-    const amount_input_field = document.getElementById('amount_input_field');
-    amount_input_field.addEventListener('input', function () {
-        let unformatted_value = this.value.replace(/[^0-9.]/g, '');
-        let parts = unformatted_value.split('.');
-        if (parts.length > 1) {
-            unformatted_value = parts.shift() + '.' + parts.join('');
+
+    const formatMoney = (value) => new Intl.NumberFormat('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    }).format(Number(value) || 0);
+
+    const getAmount = () => Number(amountNumeric.getNumber()) || 0;
+
+    const setAmountError = (message = '') => {
+        if (!amountError) return;
+        amountError.textContent = message;
+        amountError.hidden = !message;
+        amountInput.classList.toggle('has-error', Boolean(message));
+    };
+
+    const updateReview = () => {
+        const amount = getAmount();
+        const fee = amount * feeRate;
+        const net = Math.max(0, amount - fee);
+        const reviewAmount = document.getElementById('review_amount');
+        const reviewFee = document.getElementById('review_fee');
+        const reviewNet = document.getElementById('review_net');
+        if (reviewAmount) reviewAmount.textContent = `${formatMoney(amount)} USD`;
+        if (reviewFee) reviewFee.innerHTML = `${formatMoney(fee)} USD <small>(0%)</small>`;
+        if (reviewNet) reviewNet.textContent = `${formatMoney(net)} USD`;
+        setAmountError(amount > maximumAmount ? `Số tiền tối đa có thể nhập lúc này là ${formatMoney(maximumAmount)} USD.` : '');
+    };
+
+    amountInput.addEventListener('input', updateReview);
+    maxButton?.addEventListener('click', function () {
+        amountNumeric.set(maximumAmount);
+        updateReview();
+        amountInput.focus();
+    });
+
+    document.querySelectorAll('.password-toggle').forEach((button) => {
+        button.addEventListener('click', function () {
+            const input = document.getElementById(this.dataset.target);
+            if (!input) return;
+            const showing = input.type === 'text';
+            input.type = showing ? 'password' : 'text';
+            const icon = this.querySelector('i');
+            if (icon) {
+                icon.classList.toggle('fa-eye', showing);
+                icon.classList.toggle('fa-eye-slash', !showing);
+            }
+        });
+    });
+
+    const validate = () => {
+        const amount = getAmount();
+        setAmountError('');
+        if (passwordError) {
+            passwordError.hidden = true;
+            passwordError.textContent = '';
         }
 
-        let numeric_value = parseFloat(unformatted_value) || 0;
-
-        if (numeric_value > temple_amount) {
-            this.value = temple_amount;
-            set_up_amount_input_field.set(this.value);
+        if (submitBlocked) return false;
+        if (amount <= 0) {
+            setAmountError(trans.VuiLongNhapSoTienRut);
+            amountInput.focus();
+            return false;
         }
-    })
-    withdraw_all.addEventListener('click', function () {
-        document.getElementById('amount_input_field').value = temple_amount;
-        set_up_amount_input_field.set(temple_amount);
-    })
-
-    const btn_withdraw_now = document.getElementById('btn_withdraw_now');
-    btn_withdraw_now.addEventListener('click', async function () {
-        // Add loading state to button
-        const originalText = this.innerHTML;
-        this.classList.add('loading');
-        this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xử lý...';
-        this.disabled = true;
-        
-        spinner.hidden = false;
-        if (amount_input_field.value == "") {
-            notification('warning', trans.VuiLongNhapSoTienRut, trans.CanhBao);
-            spinner.hidden = true;
-            btn_withdraw_now.classList.remove('loading');
-            btn_withdraw_now.innerHTML = originalText;
-            btn_withdraw_now.disabled = false;
-            return;
+        if (amount > maximumAmount) {
+            setAmountError(`Số tiền tối đa có thể nhập lúc này là ${formatMoney(maximumAmount)} USD.`);
+            amountInput.focus();
+            return false;
         }
-        const username_bank = document.getElementById('username_bank');
-        const account_number = document.getElementById('account_number');
-        const transaction_password = document.getElementById('transaction_password');
-        const confirm_transaction_password = document.getElementById('confirm_transaction_password');
-        if (username_bank.value == "" || account_number.value == "" || transaction_password.value == "") {
+        if (!usernameBank?.value || !bankName?.value || !accountNumber?.value) {
             notification('warning', trans.VuiLongNhapDayDuThongTinNganHang, trans.CanhBao);
-            spinner.hidden = true;
-            btn_withdraw_now.classList.remove('loading');
-            btn_withdraw_now.innerHTML = originalText;
-            btn_withdraw_now.disabled = false;
-            return;
+            return false;
         }
+        if (!transactionPassword?.value) {
+            notification('warning', 'Vui lòng nhập mật khẩu giao dịch.', trans.CanhBao);
+            transactionPassword?.focus();
+            return false;
+        }
+        if (!hasPassword && (!confirmTransactionPassword?.value || confirmTransactionPassword.value !== transactionPassword.value)) {
+            if (passwordError) {
+                passwordError.textContent = trans.XacNhanMatKhauGiaoDichKhongKhop;
+                passwordError.hidden = false;
+            }
+            confirmTransactionPassword?.focus();
+            return false;
+        }
+        return true;
+    };
 
-        const has_password = document.getElementById('has_password');
-        if (has_password.value === false) {
-            if (confirm_transaction_password.value != "" && confirm_transaction_password.value != transaction_password.value) {
-                notification('warning', trans.XacNhanMatKhauGiaoDichKhongKhop, trans.CanhBao);
-                spinner.hidden = true;
-                btn_withdraw_now.classList.remove('loading');
-                btn_withdraw_now.innerHTML = originalText;
-                btn_withdraw_now.disabled = false;
+    const setLoading = (loading) => {
+        submitButton.disabled = loading || submitBlocked;
+        submitButton.classList.toggle('is-loading', loading);
+        submitButton.innerHTML = loading
+            ? `<span>${trans.DangXuLy}</span><i class="fa-solid fa-spinner"></i>`
+            : '<span>Xác nhận rút tiền</span><i class="fa-solid fa-arrow-right"></i>';
+    };
+
+    const sendWithdrawRequest = async (amount) => {
+        const response = await fetch(route_handle_withdraw, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': csrf,
+            },
+            body: JSON.stringify({
+                amount,
+                username_bank: usernameBank.value,
+                bank_name: bankName.value,
+                account_number: accountNumber.value,
+                transaction_password: transactionPassword.value,
+                confirm_transaction_password: confirmTransactionPassword?.value || '',
+            }),
+        });
+
+        const body = await response.text();
+        try {
+            return JSON.parse(body);
+        } catch {
+            throw new Error('Unexpected withdrawal response');
+        }
+    };
+
+    submitButton.addEventListener('click', async function () {
+        if (!validate()) return;
+
+        const amount = getAmount();
+        const net = Math.max(0, amount - (amount * feeRate));
+        const destination = [bankLabel, accountMask].filter(Boolean).join(' · ');
+        const confirmed = await AppDialog.confirm({
+            title: trans.XacNhanRutTien,
+            text: `Rút ${formatMoney(amount)} USD về ${destination}. Phí xử lý 0%, thực nhận ${formatMoney(net)} USD.`,
+            confirmText: trans.XacNhan,
+            cancelText: trans.Huy,
+        });
+        if (!confirmed) return;
+
+        setLoading(true);
+        try {
+            const result = await sendWithdrawRequest(getAmount());
+            if (result.status === 200) {
+                const acknowledged = await AppDialog.alert({
+                    title: trans.ThanhCong,
+                    text: result.message,
+                    icon: 'success',
+                    button: 'OK',
+                });
+                if (acknowledged) location.reload();
                 return;
             }
+            notification('warning', result.message || trans.LoiKetNoi, trans.CanhBao);
+        } catch (error) {
+            console.error(error);
+            notification('warning', trans.LoiKetNoi, trans.CanhBao);
+        } finally {
+            setLoading(false);
         }
-        let unformatted_value = amount_input_field.value.replace(/[^0-9.]/g, '');
-        let parts = unformatted_value.split('.');
-        if (parts.length > 1) {
-            unformatted_value = parts.shift() + '.' + parts.join('');
-        }
+    });
 
-        let numeric_value = parseFloat(unformatted_value) || 0;
-
-        let result = await handle_withdraw(numeric_value, username_bank.value, bankSelect.value, account_number.value, transaction_password.value, confirm_transaction_password.value);
-        
-        spinner.hidden = true;
-        btn_withdraw_now.classList.remove('loading');
-        btn_withdraw_now.innerHTML = originalText;
-        btn_withdraw_now.disabled = false;
-        
-        if (result.status == 400) {
-            notification('warning', result.message, trans.CanhBao);
-        } else if (result.status == 200) {
-            swal({
-                title: trans.ThanhCong,
-                text: result.message,
-                icon: "success",
-                button: "OK",
-                dangerMode: true,
-            }).then((isConfirmed) => {
-                if (isConfirmed) {
-                    location.reload();
-                }
-            });
-        }
-    })
-    function handle_withdraw(amount, username_bank, bankSelect, account_number, transaction_password, confirm_transaction_password) {
-        return new Promise((resolve, reject) => {
-            fetch(route_handle_withdraw, {
-                method: "POST",
-                headers: {
-                    'Content-Type': "application/json",
-                    'X-CSRF-TOKEN': csrf
-                },
-                body: JSON.stringify({
-                    amount: amount,
-                    username_bank: username_bank,
-                    bank_name: bankSelect,
-                    account_number: account_number,
-                    transaction_password: transaction_password,
-                    confirm_transaction_password: confirm_transaction_password,
-                })
-            })
-                .then(response => response.json())
-                .then(data => {
-                    return resolve(data);
-                })
-                .catch(error => {
-                    console.log(error);
-                    reject(error);
-                });
-        })
-    }
-})
+    submitButton.disabled = submitBlocked;
+    updateReview();
+});

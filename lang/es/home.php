@@ -61,7 +61,7 @@ return [
     "PhanPhoiThanhCong2" => "¡Distribución exitosa!",
     "KhongTimThayDonHang" => "¡Pedido no encontrado!",
     "KhongTimThayTienTrinhQuay" => "¡Proceso de giro no encontrado!",
-    "ChucMungBanNhanDuocDonHangDacBiet" => "¡Felicidades! ¡Has recibido un pedido especial!",
+    "ChucMungBanNhanDuocDonHangGiaTriCao" => "¡Felicidades! ¡Has recibido un pedido de alto valor!",
     "CoDonHangDangBiDongBang" => "Hay un pedido congelado. ¡Por favor revisa el historial de pedidos!",
     "CoDonHangChuaXuLy" => "Hay un pedido sin procesar. ¡Revisa el historial de pedidos!",
     "LuotQuayDaDatDenGioiHanToiDa" => "¡Límite máximo de giros alcanzado!",

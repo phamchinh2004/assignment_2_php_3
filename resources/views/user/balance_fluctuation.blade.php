@@ -13,7 +13,7 @@
     $labels=['deposit'=>'Nạp tiền','withdraw'=>'Rút tiền','order'=>'Thanh toán đơn','profit'=>'Hoa hồng','penalty'=>'Tiền phạt','settlement'=>'Hoàn nhập đơn','refund'=>'Hoàn tiền rút'];
     $icons=['deposit'=>'fa-arrow-down','withdraw'=>'fa-arrow-up','order'=>'fa-bag-shopping','profit'=>'fa-coins','penalty'=>'fa-triangle-exclamation','settlement'=>'fa-rotate-left','refund'=>'fa-rotate-left'];
     $statusLabels=['completed'=>'Hoàn thành','processing'=>'Đang xử lý','cancelled'=>'Đã huỷ','recorded'=>'Đã ghi sổ'];
-    $detailLabels=['normal'=>'Tiền thật','bonus'=>'Tiền thưởng','virtual_withdraw'=>'Rút tiền ảo','balance'=>'Số dư khả dụng','frozen_balance'=>'Số dư đóng băng'];
+    $detailLabels=['normal'=>'Tiền nạp','bonus'=>'Tiền thưởng','virtual_withdraw'=>'Rút tiền','balance'=>'Số dư khả dụng','frozen_balance'=>'Số dư đóng băng'];
     $trend=fn($value)=>($value>0?'+':'').format_money($value,1).'%';
 @endphp
 <main class="finance-page">
@@ -39,7 +39,7 @@
         <article class="kpi-card income"><span class="kpi-icon"><i class="fas fa-coins"></i></span><div class="kpi-label">Hoa hồng đã nhận</div><div class="kpi-value">{{ $money($summary['commission_amount'],5) }}</div><div class="kpi-note">{{ $trend($summary['commission_growth']) }} so với kỳ trước</div></article>
         <article class="kpi-card deposit"><span class="kpi-icon"><i class="fas fa-arrow-down"></i></span><div class="kpi-label">Tổng tiền nạp</div><div class="kpi-value">{{ $money($summary['deposit_amount']) }}</div><div class="kpi-note">{{ $trend($summary['deposit_growth']) }} so với kỳ trước</div></article>
         <article class="kpi-card withdraw"><span class="kpi-icon"><i class="fas fa-arrow-up"></i></span><div class="kpi-label">Đã rút</div><div class="kpi-value">{{ $money($summary['withdraw_amount']) }}</div><div class="kpi-note">Đang chờ {{ $money($summary['pending_withdraw_amount']) }}</div></article>
-        <article class="kpi-card refund"><span class="kpi-icon"><i class="fas fa-rotate-left"></i></span><div class="kpi-label">Hoàn nhập thực tế</div><div class="kpi-value">{{ $money($summary['refund_amount'],5) }}</div><div class="kpi-note">Đơn {{ $money($summary['order_refund_amount'],5) }} · Huỷ rút {{ $money($summary['withdraw_refund_amount'],5) }}</div></article>
+        <article class="kpi-card hvo"><span class="kpi-icon"><i class="fas fa-gem"></i></span><div class="kpi-label">Đơn hàng giá trị cao</div><div class="kpi-value">{{ number_format($summary['high_value_order_received_count']) }}</div><div class="kpi-note">Số lượng HVO đã nhận trong kỳ</div></article>
         <article class="kpi-card order"><span class="kpi-icon"><i class="fas fa-bag-shopping"></i></span><div class="kpi-label">Đơn đã hoàn thành</div><div class="kpi-value">{{ number_format($summary['completed_order_count']) }}</div><div class="kpi-note">Hoàn thành trong kỳ đang chọn</div></article>
         <article class="kpi-card penalty"><span class="kpi-icon"><i class="fas fa-triangle-exclamation"></i></span><div class="kpi-label">Tổng tiền phạt</div><div class="kpi-value">{{ $money($summary['penalty_amount']) }}</div><div class="kpi-note">Đã ghi nhận trong sổ giao dịch</div></article>
     </section>

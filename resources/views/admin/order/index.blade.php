@@ -13,9 +13,6 @@
     <script src="{{ asset('theme/admin/vendor/datatables/jquery.dataTables.min.js') }}"></script>
     <script src="{{ asset('theme/admin/vendor/datatables/dataTables.bootstrap4.min.js') }}"></script>
     <script src="{{ asset('theme/admin/js/demo/datatables-demo.js') }}"></script>
-    <script>
-        window.currentPermissionCode = "quan_ly_don_hang";
-    </script>
     @vite('resources/js/admin/order/index.js')
     <script>
         function handleUpdateStatusHistory(event, element) {
@@ -84,9 +81,6 @@
                 </button>
                 <div class="dropdown-menu dropdown-menu-right shadow-sm border-0" aria-labelledby="orderActionsDropdown" style="border-radius: 10px; font-size: 13px;">
                     <h6 class="dropdown-header text-uppercase font-weight-bold" style="font-size: 10px; letter-spacing: 0.05em;">Cập nhật hàng loạt</h6>
-                    <a class="dropdown-item py-2" href="{{ route('order.update.commission.percentage') }}" id="update_order_rose">
-                        <i class="fas fa-percent text-primary mr-2"></i> Cập nhật hoa hồng đơn hàng
-                    </a>
                     <a class="dropdown-item py-2" href="{{ route('order.add.customer.info') }}" id="add_customer_info">
                         <i class="fas fa-user-plus text-info mr-2"></i> Thêm thông tin khách hàng
                     </a>

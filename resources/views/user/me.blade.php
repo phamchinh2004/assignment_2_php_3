@@ -181,30 +181,51 @@
     </div>
 </main>
 
-<div class="modal fade me-modal" id="warehouseAddressModal" tabindex="-1" aria-labelledby="warehouseAddressLabel" aria-hidden="true">
+<div class="modal fade account-security-modal me-warehouse-modal" id="warehouseAddressModal" tabindex="-1" aria-labelledby="warehouseAddressLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header">
-                <div><p class="section-eyebrow">Tài khoản</p><h5 class="modal-title" id="warehouseAddressLabel">{{ __('me.TieuDeModalDiaChiKho') }}</h5></div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="account-security-modal__header">
+                <span class="account-security-modal__icon is-green" aria-hidden="true">
+                    <i class="fa-solid fa-location-dot"></i>
+                </span>
+                <div class="account-security-modal__heading">
+                    <span class="account-security-modal__eyebrow">Thông tin nhận hàng</span>
+                    <h5 class="modal-title" id="warehouseAddressLabel">{{ __('me.TieuDeModalDiaChiKho') }}</h5>
+                    <p>Cập nhật khu vực và địa chỉ kho đang sử dụng cho tài khoản.</p>
+                </div>
+                <button type="button" class="account-security-modal__close" data-bs-dismiss="modal" aria-label="Đóng">
+                    <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                </button>
             </div>
-            <form method="POST" action="{{ route('warehouse_address.update') }}">
-                @csrf
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label required" for="warehouse_area">{{ __('me.KhuVuc') }}</label>
-                        <input type="text" class="form-control" id="warehouse_area" name="warehouse_area" placeholder="{{ __('me.NhapKhuVuc') }}" value="{{ old('warehouse_area', $user->warehouse_area) }}" required maxlength="191">
-                    </div>
-                    <div>
-                        <label class="form-label required" for="warehouse_address">{{ __('me.DiaChiHienTai') }}</label>
-                        <textarea class="form-control" id="warehouse_address" name="warehouse_address" rows="3" placeholder="{{ __('me.NhapDiaChiHienTai') }}" required maxlength="1000">{{ old('warehouse_address', $user->warehouse_address) }}</textarea>
-                    </div>
+            <div class="modal-body">
+                <div class="account-security-modal__notice me-warehouse-modal__notice">
+                    <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+                    <span>Kiểm tra lại thông tin trước khi lưu để tránh sai lệch địa chỉ.</span>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">{{ __('me.Dong') }}</button>
-                    <button type="submit" class="btn btn-dark">{{ __('me.Luu') }}</button>
-                </div>
-            </form>
+                <form method="POST" action="{{ route('warehouse_address.update') }}" id="warehouseAddressForm">
+                    @csrf
+                    <div class="account-security-field">
+                        <label for="warehouse_area">{{ __('me.KhuVuc') }}</label>
+                        <div class="account-security-field__control">
+                            <i class="fa-solid fa-map" aria-hidden="true"></i>
+                            <input type="text" class="form-control" id="warehouse_area" name="warehouse_area" placeholder="{{ __('me.NhapKhuVuc') }}" value="{{ old('warehouse_area', $user->warehouse_area) }}" required maxlength="191">
+                        </div>
+                    </div>
+                    <div class="account-security-field">
+                        <label for="warehouse_address">{{ __('me.DiaChiHienTai') }}</label>
+                        <div class="account-security-field__control account-security-field__control--textarea">
+                            <i class="fa-solid fa-location-crosshairs" aria-hidden="true"></i>
+                            <textarea class="form-control" id="warehouse_address" name="warehouse_address" rows="3" placeholder="{{ __('me.NhapDiaChiHienTai') }}" required maxlength="1000">{{ old('warehouse_address', $user->warehouse_address) }}</textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="account-security-modal__button is-secondary" data-bs-dismiss="modal">{{ __('me.Dong') }}</button>
+                <button type="submit" class="account-security-modal__button is-primary" form="warehouseAddressForm">
+                    <span>{{ __('me.Luu') }}</span><i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+                </button>
+            </div>
         </div>
     </div>
 </div>

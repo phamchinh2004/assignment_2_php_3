@@ -1,639 +1,505 @@
-// Hàm format datetime
-function formatDateTime(dateString) {
-    if (!dateString) return '';
-    
-    const date = new Date(dateString);
-    
-    // Option 1: Định dạng DD/MM/YYYY HH:mm
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    
-    return `${day}/${month}/${year} ${hours}:${minutes}`;
-}
+(() => {
+    const config = window.orderHistoryConfig || {};
+    const listRoute = config.routes?.list || '';
+    const orderRoute = config.routes?.order || '/order';
+    const csrf = config.csrf || document.querySelector('meta[name="csrf-token"]')?.content || '';
+    const userBalance = Number(config.userBalance || 0);
+    const labels = config.labels || {};
 
-// Helper để lấy biến global với fallback
-function getGlobalVar(name, defaultValue = null) {
-    if (typeof window !== 'undefined' && typeof window[name] !== 'undefined') {
-        return window[name];
-    }
-    if (typeof eval(name) !== 'undefined') {
-        return eval(name);
-    }
-    return defaultValue;
-}
-
-// Đảm bảo các biến được truy cập đúng cách
-const trans = getGlobalVar('trans', {});
-const userBalance = getGlobalVar('userBalance', 0);
-const route_order = getGlobalVar('route_order', '');
-const route_get_list_orders_by_tab = getGlobalVar('route_get_list_orders_by_tab', '');
-const route_accept_order = getGlobalVar('route_accept_order', '');
-const csrf = getGlobalVar('csrf', document.querySelector('meta[name="csrf-token"]')?.content || '');
-
-window.addEventListener('DOMContentLoaded', function () {
-    const tab = localStorage.getItem('tab_order') ?? "tat-ca";
-
-    // Map tab names to button IDs
-    const tabMap = {
-        'tat-ca': 'btn_tat_ca',
-        'cho-xu-ly': 'btn_cho_xu_ly',
-        'da-xac-nhan': 'btn_da_xac_nhan',
-        'dang-chuan-bi': 'btn_dang_chuan_bi',
-        'dang-trung-chuyen': 'btn_dang_trung_chuyen',
-        'dang-van-chuyen': 'btn_dang_van_chuyen',
-        'da-giao-hang': 'btn_da_giao_hang',
-        'hoan-thanh': 'btn_hoan_thanh',
-        'da-huy': 'btn_da_huy',
-        'dong-bang': 'btn_dong_bang',
-        'bi-phat': 'btn_bi_phat'
+    const statusConfig = {
+        pending: { label: 'Chờ xử lý', tone: 'warning' },
+        confirmed: { label: 'Đã xác nhận', tone: 'progress' },
+        preparing: { label: 'Đang chuẩn bị', tone: 'progress' },
+        transit: { label: 'Đang trung chuyển', tone: 'progress' },
+        shipping: { label: 'Đang vận chuyển', tone: 'progress' },
+        delivered: { label: 'Đã giao hàng', tone: 'success' },
+        completed: { label: 'Hoàn thành', tone: 'success' },
+        cancelled: { label: 'Đã huỷ', tone: 'danger' },
+        canceled: { label: 'Đã huỷ', tone: 'danger' },
     };
 
-    if (tabMap[tab]) {
-        activeTab(tabMap[tab]);
-    } else {
-        activeTab('btn_tat_ca');
-    }
+    let activeFilterId = 'btn_tat_ca';
+    let activeRequest = null;
 
-    const btn_status = document.getElementsByClassName('tab-btn');
-    for (const item of btn_status) {
-        item.addEventListener('click', async function () {
-            const tabName = item.dataset.tab;
-            if (tabMap[tabName]) {
-                await activeTab(tabMap[tabName]);
-            }
-        })
-    }
-    // Xử lý scroll tab navigation
-    function initTabScroll() {
-        const tabNavigation = document.getElementById('tabNavigation');
-        const scrollLeftBtn = document.getElementById('tabScrollLeft');
-        const scrollRightBtn = document.getElementById('tabScrollRight');
+    const escapeHtml = (value) => String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
 
-        if (!tabNavigation || !scrollLeftBtn || !scrollRightBtn) return;
+    const numberOrNull = (value) => {
+        if (value === null || value === undefined || value === '') return null;
+        const number = Number(value);
+        return Number.isFinite(number) ? number : null;
+    };
 
-        function updateScrollButtons() {
-            const { scrollLeft, scrollWidth, clientWidth } = tabNavigation;
-            
-            // Ẩn/hiện nút trái
-            if (scrollLeft <= 0) {
-                scrollLeftBtn.classList.add('hidden');
-            } else {
-                scrollLeftBtn.classList.remove('hidden');
-            }
+    const formatMoney = (value) => {
+        const number = numberOrNull(value);
+        if (number === null) return 'Chưa xác định';
 
-            // Ẩn/hiện nút phải
-            if (scrollLeft + clientWidth >= scrollWidth - 5) { // -5 để tránh lỗi làm tròn
-                scrollRightBtn.classList.add('hidden');
-            } else {
-                scrollRightBtn.classList.remove('hidden');
+        if (typeof window.format_currency === 'function') {
+            try {
+                return window.format_currency(number);
+            } catch (_) {
+                // Fall through to the local formatter.
             }
         }
 
-        // Scroll trái
-        scrollLeftBtn.addEventListener('click', () => {
-            tabNavigation.scrollBy({
-                left: -200,
-                behavior: 'smooth'
-            });
-        });
+        return `$${new Intl.NumberFormat('vi-VN', {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 6,
+        }).format(number)}`;
+    };
 
-        // Scroll phải
-        scrollRightBtn.addEventListener('click', () => {
-            tabNavigation.scrollBy({
-                left: 200,
-                behavior: 'smooth'
-            });
-        });
+    const formatPercent = (value) => {
+        const number = numberOrNull(value);
+        if (number === null) return '—';
+        return `${new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 2 }).format(number)}%`;
+    };
 
-        // Cập nhật khi scroll
-        tabNavigation.addEventListener('scroll', updateScrollButtons);
-        
-        // Cập nhật khi resize
-        window.addEventListener('resize', updateScrollButtons);
-        
-        // Kiểm tra ban đầu
-        updateScrollButtons();
-            }
+    const formatDateTime = (dateString) => {
+        if (!dateString) return 'Không có dữ liệu';
+        const date = new Date(dateString);
+        if (Number.isNaN(date.getTime())) return 'Không có dữ liệu';
 
-    // Khởi tạo scroll khi DOM ready
-    initTabScroll();
+        return new Intl.DateTimeFormat('vi-VN', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+        }).format(date);
+    };
 
-    async function activeTab(btnId) {
-        const buttons = document.querySelectorAll('.btn_status_text');
-        buttons.forEach(btn => btn.classList.remove('active-tab'));
+    const storageImage = (path) => {
+        if (!path) return '';
+        const normalized = String(path)
+            .replaceAll('\\', '/')
+            .replace(/^\/?storage\//, '')
+            .replace(/^\/+/, '');
 
-        const activeBtn = document.getElementById(btnId);
-        if (activeBtn) {
-            activeBtn.classList.add('active-tab');
-            await loadDanhSachTheoTab(btnId);
+        if (!normalized || normalized.includes('..')) return '';
+        return `/storage/${encodeURI(normalized)}`;
+    };
 
+    const getStatus = (status) => {
+        const key = status || 'pending';
+        return statusConfig[key] || { label: key, tone: 'neutral' };
+    };
+
+    const loadingMarkup = () => `
+        <div class="history-loading" aria-label="Đang tải lịch sử đơn hàng">
+            ${Array.from({ length: 3 }, () => `
+                <div class="history-skeleton">
+                    <span class="history-skeleton__line history-skeleton__line--short"></span>
+                    <span class="history-skeleton__block"></span>
+                    <span class="history-skeleton__line"></span>
+                </div>
+            `).join('')}
+        </div>
+    `;
+
+    const stateMarkup = (type, title, description, withRetry = false) => `
+        <div class="history-state history-state--${type}">
+            <span class="history-state__icon">
+                <i class="fas ${type === 'error' ? 'fa-rotate-right' : 'fa-box-open'}"></i>
+            </span>
+            <strong>${escapeHtml(title)}</strong>
+            <p>${escapeHtml(description)}</p>
+            ${withRetry ? '<button type="button" class="history-retry" data-history-retry><i class="fas fa-rotate-right"></i> Thử lại</button>' : ''}
+        </div>
+    `;
+
+    const deadlineMarkup = (order) => {
+        if (Number(order.is_frozen) !== 1 || Number(order.spun) !== 1) return '';
+
+        const receivedAt = new Date(order.updated_at || order.order_date || order.created_at);
+        if (Number.isNaN(receivedAt.getTime())) return '';
+
+        const limitHours = numberOrNull(order.processing_time_limit) || 24;
+        const durationMs = limitHours * 60 * 60 * 1000;
+        const deadline = new Date(receivedAt.getTime() + durationMs);
+        const left = deadline.getTime() - Date.now();
+
+        if (left <= 0) {
+            return `
+                <div class="history-deadline is-expired">
+                    <span class="history-deadline__icon"><i class="fas fa-triangle-exclamation"></i></span>
+                    <div>
+                        <strong>Đã quá thời hạn xử lý</strong>
+                        <small>Quá hạn có thể phát sinh tiền phạt 30% giá trị đơn theo quy định hệ thống.</small>
+                    </div>
+                </div>
+            `;
         }
-    }
 
-    async function loadDanhSachTheoTab(tabId) {
-        spinner.hidden = false;
-        const response = await load_orders(tabId);
-        if (response.status === 404) {
-            notification('warning', trans.KhongTimThayDuLieuDonHang, trans.KhongCoDuLieu);
-        } else if (response.status === 200) {
-            let list_orders = response.list_orders;
+        const hours = Math.floor(left / 3600000);
+        const minutes = Math.floor((left % 3600000) / 60000);
+        const seconds = Math.floor((left % 60000) / 1000);
+        let tone = 'is-safe';
+        if (left < 3600000) tone = 'is-critical';
+        else if (left < 3 * 3600000) tone = 'is-danger';
+        else if (left < 6 * 3600000) tone = 'is-warning';
+        const remainingPercent = Math.max(0, Math.min(100, (left / durationMs) * 100));
 
-            let div_list_orders = document.getElementById('list_orders');
-            div_list_orders.innerHTML = "";
-            if (list_orders.length > 0) {
-                for (let frozen_order of list_orders) {
-                    let order_item = document.createElement('div');
-                    order_item.classList.add('order_item');
-                    
-                    // Kiểm tra đơn hàng đặc biệt (có custom_price)
-                    const isSpecialOrder = frozen_order.custom_price != null && frozen_order.custom_price > 0;
-                    
-                    // Kiểm tra đơn bị phạt (có penalty_amount)
-                    const isPenalized = frozen_order.penalty_amount != null && frozen_order.penalty_amount > 0;
-                    
-                    // Ưu tiên: PHẠT > ĐẶC BIỆT
-                    // Đơn bị phạt PHẢI được highlight dù có phải đơn đặc biệt hay không
-                    if (isPenalized) {
-                        if (frozen_order.status !== 'completed' || !frozen_order.commission_paid) {
-                            // Đơn bị phạt CHƯA hoàn thành - cảnh báo mạnh (ĐỎ)
-                            order_item.classList.add('penalized');
-                        } else {
-                            // Đơn bị phạt ĐÃ hoàn thành - thông báo nhẹ (CAM)
-                            order_item.classList.add('penalized-completed');
-                        }
-                    } else if (isSpecialOrder) {
-                        // Chỉ add special-order nếu KHÔNG bị phạt
-                        order_item.classList.add('special-order');
-                    }
-                    
-                    order_item.id = frozen_order.id;
-                    
-                    // Hàm tạo badge trạng thái
-                    function getStatusBadge(status) {
-                        const statusConfig = {
-                            'pending': { 
-                                display: 'Chờ xử lý', 
-                                color: '#FF9800', 
-                                bgColor: '#FFF3E0',
-                                textColor: '#E65100'
-                            },
-                            'confirmed': { 
-                                display: 'Đã xác nhận', 
-                                color: '#2196F3', 
-                                bgColor: '#E3F2FD',
-                                textColor: '#1565C0'
-                            },
-                            'preparing': { 
-                                display: 'Đang chuẩn bị', 
-                                color: '#9C27B0', 
-                                bgColor: '#F3E5F5',
-                                textColor: '#6A1B9A'
-                            },
-                            'transit': { 
-                                display: 'Đang trung chuyển', 
-                                color: '#673AB7', 
-                                bgColor: '#EDE7F6',
-                                textColor: '#4A148C'
-                            },
-                            'shipping': { 
-                                display: 'Đang vận chuyển', 
-                                color: '#3F51B5', 
-                                bgColor: '#E8EAF6',
-                                textColor: '#1A237E'
-                            },
-                            'delivered': { 
-                                display: 'Đã giao hàng', 
-                                color: '#4CAF50', 
-                                bgColor: '#E8F5E9',
-                                textColor: '#1B5E20'
-                            },
-                            'completed': { 
-                                display: 'Hoàn thành', 
-                                color: '#8BC34A', 
-                                bgColor: '#F1F8E9',
-                                textColor: '#33691E'
-                            },
-                            'cancelled': { 
-                                display: 'Đã hủy', 
-                                color: '#F44336', 
-                                bgColor: '#FFEBEE',
-                                textColor: '#B71C1C'
-                            }
-                        };
-                        
-                        const config = statusConfig[status] || statusConfig['pending'];
-                        
-                        return `
-                            <span class="status-badge" style="
-                                background: ${config.bgColor};
-                                color: ${config.textColor};
-                                border: 2px solid ${config.color};
-                                padding: 6px 14px;
-                                border-radius: 20px;
-                                font-size: 12px;
-                                font-weight: 600;
-                                display: inline-flex;
-                                align-items: center;
-                                gap: 6px;
-                                white-space: nowrap;
-                                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-                            ">
-                                <span style="
-                                    width: 8px;
-                                    height: 8px;
-                                    border-radius: 50%;
-                                    background: ${config.color};
-                                    display: inline-block;
-                                "></span>
-                                ${config.display}
-                            </span>
-                        `;
-                    }
-                    
-                    // Lấy trạng thái hiện tại, mặc định là 'pending' nếu không có
-                    const currentStatus = frozen_order.status || 'pending';
-                    const statusBadgeHTML = getStatusBadge(currentStatus);
-                    const quantity = Number(frozen_order.display_quantity) || 0;
-                    const orderAmount = Number(frozen_order.display_order_amount) || 0;
-                    const commissionAmount = Number(frozen_order.display_commission_amount) || 0;
-                    
-                    // Tính toán commission_percentage dựa trên dữ liệu snapshot có sẵn
-                    // Ưu tiên lấy commission_percentage từ frozen_order nếu có, nếu không thì tính toán từ dữ liệu snapshot
-                    const commission_percentage = frozen_order.display_commission_percentage ||
-                                                 (orderAmount > 0 ? (commissionAmount / orderAmount) * 100 : 0);
-                    
-                    const price = quantity > 0 ? orderAmount / quantity : 0;
-                    const order_details_price_formatted = format_currency(price);
-                    const order_details_end_value_total_price_formatted = format_currency(orderAmount);
-                    const order_details_end_value_price_rose_formatted = format_currency(commissionAmount);
-                    const order_details_end_value_total_formatted = format_currency(orderAmount + commissionAmount);
-
-                    // Tính toán penalty nếu có
-                    const penalty_amount = frozen_order.penalty_amount ? parseFloat(frozen_order.penalty_amount) : 0;
-                    const penalty_amount_formatted = format_currency(penalty_amount);
-                    const penaltySettlement = frozen_order.penalty_settlement || null;
-                    const hasExactSettlement = penaltySettlement?.is_exact === true;
-                    const isPenaltySettled = isPenalized
-                        && frozen_order.status === 'completed'
-                        && frozen_order.commission_paid;
-                    const projectedRefund = (orderAmount + commissionAmount) - penalty_amount;
-                    const penaltyRefundFormatted = isPenaltySettled
-                        ? (hasExactSettlement
-                            ? format_currency(Number(penaltySettlement.refund_amount))
-                            : 'Chưa xác định')
-                        : `${format_currency(projectedRefund)} (dự kiến)`;
-                    
-                    // Tính số tiền cần nạp thêm cho đơn bị phạt
-                    const total_payment_needed = orderAmount; // Tổng tiền cần thanh toán để phân phối
-                    const money_need_to_deposit = total_payment_needed - userBalance;
-                    const money_need_to_deposit_formatted = format_currency(money_need_to_deposit);
-
-                    // Tính thời gian đếm ngược cho đơn chưa hoàn thành
-                    let countdownHTML = '';
-                    if (frozen_order.is_frozen == 1 && frozen_order.spun == 1) {
-                        const receivedTime = new Date(frozen_order.updated_at); // Thời điểm nhận đơn
-                        const processingTimeLimit = Number(frozen_order.processing_time_limit) > 0
-                            ? Number(frozen_order.processing_time_limit)
-                            : 24;
-                        const deadline = new Date(
-                            receivedTime.getTime() + processingTimeLimit * 60 * 60 * 1000
-                        );
-                        const now = new Date();
-                        const timeLeft = deadline - now;
-                        
-                        if (timeLeft > 0) {
-                            const hours = Math.floor(timeLeft / (1000 * 60 * 60));
-                            const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-                            const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
-                            
-                            // Xác định màu sắc dựa trên thời gian còn lại
-                            let countdownClass = 'countdown-safe'; // > 6 giờ: xanh
-                            if (hours < 1) {
-                                countdownClass = 'countdown-critical'; // < 1 giờ: đỏ
-                            } else if (hours < 3) {
-                                countdownClass = 'countdown-danger'; // < 3 giờ: cam
-                            } else if (hours < 6) {
-                                countdownClass = 'countdown-warning'; // < 6 giờ: vàng
-                            }
-                            
-                            countdownHTML = `
-                                <div class="countdown-container ${countdownClass}" data-deadline="${deadline.toISOString()}" data-order-id="${frozen_order.id}">
-                                    <div class="countdown-icon">⏰</div>
-                                    <div class="countdown-text">
-                                        <div class="countdown-label">Thời hạn xử lý đơn hàng: ${processingTimeLimit} giờ</div>
-                                        <div class="countdown-timer">
-                                            <span class="countdown-hours">${hours.toString().padStart(2, '0')}</span>:
-                                            <span class="countdown-minutes">${minutes.toString().padStart(2, '0')}</span>:
-                                            <span class="countdown-seconds">${seconds.toString().padStart(2, '0')}</span>
-                                        </div>
-                                        <div class="countdown-warning-text" style="font-size: 10px; margin-top: 4px; opacity: 0.8;">
-                                            Vui lòng xử lý đơn hàng trước hạn, nếu quá hạn sẽ bị phạt 30% tổng giá trị đơn hàng theo quy định của hệ thống.
-                                        </div>
-                                    </div>
-                                </div>`;
-                        } else {
-                            countdownHTML = `
-                                <div class="countdown-container countdown-expired">
-                                    <div class="countdown-icon">⚠️</div>
-                                    <div class="countdown-text">
-                                        <div class="countdown-label text-danger fw-bold">ĐÃ QUÁ HẠN!</div>
-                                        <div class="countdown-warning-text" style="font-size: 10px; margin-top: 4px; color: #dc3545;">
-                                            Đơn hàng đã quá hạn xử lý. Bạn sẽ bị phạt 30% tổng giá trị đơn hàng theo quy định của hệ thống.
-                                        </div>
-                                    </div>
-                                </div>`;
-                        }
-                    }
-                    
-                    order_item.innerHTML = `
-                        <div class="d-flex flex-column">
-                            <span class="order_time">${trans.ThoiGianDatPhanPhoi} ${formatDateTime(frozen_order.updated_at)}</span>
-                            <span class="order_code">${trans.MaDonHang} ${frozen_order.display_order_code || frozen_order.order_id}</span>
-                            ${countdownHTML}
-                            <div class="order_status">
-                                ${statusBadgeHTML}
-                            </div>
-                            ${isPenalized ? `<div class="penalty_badge">BỊ PHẠT</div>` : (isSpecialOrder ? `<div class="special_badge">✨ ĐẶC BIỆT</div>` : '')}
+        return `
+            <div class="history-deadline ${tone}" data-history-deadline="${escapeHtml(deadline.toISOString())}" data-history-duration-ms="${escapeHtml(durationMs)}" style="--deadline-progress: ${remainingPercent.toFixed(2)}%">
+                <span class="history-deadline__icon"><i class="fas fa-stopwatch"></i></span>
+                <div class="history-deadline__content">
+                    <div class="history-deadline__message">
+                        <strong>Thời hạn xử lý · ${escapeHtml(limitHours)} giờ</strong>
+                        <small>Xử lý trước hạn để tránh phát sinh mức phạt 30% giá trị đơn.</small>
+                    </div>
+                    <div class="history-deadline__countdown">
+                        <div class="history-deadline__timer-row">
+                            <strong class="history-deadline__timer">
+                                <span data-hours>${String(hours).padStart(2, '0')}</span>:<span data-minutes>${String(minutes).padStart(2, '0')}</span>:<span data-seconds>${String(seconds).padStart(2, '0')}</span>
+                            </strong>
+                            <span class="history-deadline__remaining">Còn lại</span>
                         </div>
-                        <div class="order_info d-flex flex-row">
-                            <div class="p-2 order_div_image">
-                                <img class="order_image" max-width="100px" src="/storage/${frozen_order.display_image || ''}" alt="">
+                        <span class="history-deadline__progress" aria-hidden="true"><span data-deadline-progress></span></span>
+                    </div>
+                </div>
+            </div>
+        `;
+    };
+
+    const penaltyMarkup = ({ order, penaltyAmount, orderAmount, isPenaltySettled, penaltySettlement }) => {
+        if (!(penaltyAmount > 0)) return '';
+
+        const penaltyRate = orderAmount > 0 ? (penaltyAmount / orderAmount) * 100 : null;
+        const penaltyRateLabel = penaltyRate === null ? '' : ` · ${formatPercent(penaltyRate)}`;
+
+        if (Number(order.is_frozen) === 1) {
+            const depositNeeded = orderAmount === null ? null : Math.max(0, orderAmount - userBalance);
+            return `
+                <div class="history-notice history-notice--danger">
+                    <span class="history-notice__icon"><i class="fas fa-triangle-exclamation"></i></span>
+                    <div>
+                        <strong>Đơn đang chịu tiền phạt quá hạn</strong>
+                        <p>Tiền phạt: <b>${escapeHtml(formatMoney(penaltyAmount))}${escapeHtml(penaltyRateLabel)}</b>. Hệ thống đã ghi nhận cảnh báo quá hạn cho đơn này.</p>
+                        ${depositNeeded !== null && depositNeeded > 0 ? `<small>Cần nạp thêm ${escapeHtml(formatMoney(depositNeeded))} để đủ giá trị xử lý đơn.</small>` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        if (isPenaltySettled) {
+            const exactRefund = penaltySettlement?.is_exact === true
+                ? formatMoney(penaltySettlement.refund_amount)
+                : 'Chưa đủ dữ liệu giao dịch để xác định chính xác';
+            return `
+                <div class="history-notice history-notice--settled">
+                    <span class="history-notice__icon"><i class="fas fa-circle-info"></i></span>
+                    <div>
+                        <strong>Tiền phạt đã được xử lý</strong>
+                        <p>${escapeHtml(formatMoney(penaltyAmount))}${escapeHtml(penaltyRateLabel)} đã được trừ khi hoàn tất đơn.</p>
+                        <small>Hoàn nhập thực tế: ${escapeHtml(exactRefund)}</small>
+                    </div>
+                </div>
+            `;
+        }
+
+        return '';
+    };
+
+    const highValueOrderMarkup = (order, isHighValueOrder, isPenalized) => {
+        if (!isHighValueOrder) return '';
+
+        const completed = Number(order.is_frozen) === 0 || order.status === 'completed';
+        return `
+            <div class="history-notice history-notice--hvo ${isPenalized ? 'has-penalty' : ''}">
+                <span class="history-notice__icon"><i class="fas fa-gem"></i></span>
+                <div class="history-hvo-copy">
+                    <strong>${isPenalized ? 'Đơn hàng giá trị cao có phát sinh tiền phạt' : (completed ? 'Đơn hàng giá trị cao đã hoàn thành' : 'Đơn hàng giá trị cao')}</strong>
+                    <p>${isPenalized
+                        ? 'Đây vẫn là đơn may mắn thuộc chương trình sự kiện cặp đôi; trạng thái phạt được hiển thị riêng bên cạnh.'
+                        : (completed
+                            ? 'Đơn may mắn từ chương trình sự kiện cặp đôi đã hoàn thành.'
+                            : 'Đơn may mắn thuộc chương trình sự kiện cặp đôi và được hệ thống đánh dấu đặc biệt.')}</p>
+                    <small><i class="fas fa-gift"></i> Chính sách hiện tại: thưởng 10% khi hoàn thành phân phối.</small>
+                </div>
+                <div class="history-hvo-features">
+                    <span><i class="fas fa-bolt"></i><b>Ưu tiên<br>xử lý</b></span>
+                    <span><i class="fas fa-shield-halved"></i><b>Hoa hồng<br>hấp dẫn</b></span>
+                    <span><i class="fas fa-gift"></i><b>Cơ hội<br>đặc biệt</b></span>
+                </div>
+            </div>
+        `;
+    };
+
+    const renderOrder = (order) => {
+        const statusKey = order.status || 'pending';
+        const status = getStatus(statusKey);
+        const isHighValueOrder = order.custom_price !== null && order.custom_price !== undefined;
+        const penaltyAmount = numberOrNull(order.penalty_amount) || 0;
+        const isPenalized = penaltyAmount > 0;
+        const isPenaltySettled = isPenalized && statusKey === 'completed' && Number(order.commission_paid) === 1;
+        const penaltySettlement = order.penalty_settlement || null;
+
+        const quantity = numberOrNull(order.display_quantity);
+        const unitPrice = numberOrNull(order.display_unit_price);
+        const orderAmount = numberOrNull(order.snapshot_order_value);
+        const commissionAmount = numberOrNull(order.snapshot_commission_value);
+        const commissionPercent = numberOrNull(order.commission_percentage);
+
+        let refundAmount = null;
+        let refundSuffix = '';
+        if (isPenaltySettled && penaltySettlement?.is_exact === true) {
+            refundAmount = numberOrNull(penaltySettlement.refund_amount);
+        } else if (orderAmount !== null && commissionAmount !== null) {
+            refundAmount = orderAmount + commissionAmount - (isPenalized ? penaltyAmount : 0);
+            if (isPenalized) refundSuffix = ' · dự kiến';
+        }
+
+        const code = order.display_order_code || order.order_id || `#${order.id}`;
+        const name = order.display_name || 'Sản phẩm chưa có dữ liệu';
+        const image = storageImage(order.display_image);
+        const detailUrl = `${orderRoute.replace(/\/$/, '')}/${encodeURIComponent(order.id)}`;
+        const cardClasses = [
+            'order_item',
+            isHighValueOrder ? 'high-value-order' : 'normal-order',
+            `status-${escapeHtml(statusKey)}`,
+            isPenalized && !isPenaltySettled ? 'penalized' : '',
+            isPenaltySettled ? 'penalized-completed' : '',
+        ].filter(Boolean).join(' ');
+
+        const productMeta = [
+            unitPrice !== null ? formatMoney(unitPrice) : 'Đơn giá chưa xác định',
+            quantity !== null ? `x${quantity}` : 'SL chưa xác định',
+        ];
+
+        return `
+            <article class="${cardClasses}" data-order-id="${escapeHtml(order.id)}">
+                <div class="order_item_inner">
+                    <div class="order_top">
+                        <div class="order_meta">
+                            <span class="order_time"><i class="far fa-clock"></i>${escapeHtml(labels.time || 'Thời gian đặt phân phối:')} ${escapeHtml(formatDateTime(order.updated_at || order.order_date || order.created_at))}</span>
+                            <span class="order_code"><i class="fas fa-hashtag"></i>${escapeHtml(labels.orderCode || 'Mã đơn hàng:')} <strong>${escapeHtml(code)}</strong></span>
+                        </div>
+                        <div class="order_badges">
+                            ${isHighValueOrder ? '<span class="order_badge hvo_badge"><i class="fas fa-gem"></i> Đơn hàng giá trị cao</span>' : ''}
+                            ${isPenalized ? '<span class="order_badge penalty_badge"><i class="fas fa-triangle-exclamation"></i> Bị phạt</span>' : ''}
+                            <span class="status-badge is-${escapeHtml(status.tone)}"><i></i>${escapeHtml(status.label)}</span>
+                        </div>
+                    </div>
+
+                    ${deadlineMarkup(order)}
+
+                    <div class="order_info">
+                        ${isHighValueOrder ? `
+                            <div class="order_hero_fx" aria-hidden="true">
+                                <span class="order_hero_glow"></span>
+                                <span class="order_hero_ribbon order_hero_ribbon--back"></span>
+                                <span class="order_hero_ribbon order_hero_ribbon--mid"></span>
+                                <span class="order_hero_ribbon order_hero_ribbon--front"></span>
+                                <span class="order_hero_streak order_hero_streak--one"></span>
+                                <span class="order_hero_streak order_hero_streak--two"></span>
+                                <span class="order_hero_spark order_hero_spark--one"></span>
+                                <span class="order_hero_spark order_hero_spark--two"></span>
+                                <span class="order_hero_spark order_hero_spark--three"></span>
                             </div>
-                            <div class="order_info_text p-3 w-100 d-flex flex-column">
-                                <span class="order_name">${frozen_order.display_name || 'N/A'}</span>
-                                <div class="d-flex justify-content-between mt-2 text-dark">
-                                    <span>${order_details_price_formatted}</span>
-                                    <span>x${quantity || 'N/A'}</span>
+                        ` : ''}
+                        <div class="order_product_main">
+                            <div class="order_div_image">
+                                ${image ? `<img class="order_image" src="${escapeHtml(image)}" alt="${escapeHtml(name)}" loading="lazy">` : '<span class="order_image_placeholder"><i class="fas fa-box-open" aria-hidden="true"></i></span>'}
+                                ${isHighValueOrder ? '<span class="order_image_premium"><i class="fas fa-gem"></i></span>' : ''}
+                            </div>
+                            <div class="order_info_text">
+                                <span class="order_name">${escapeHtml(name)}</span>
+                                <div class="order_product_meta">
+                                    <span><small>Đơn giá</small><strong>${escapeHtml(productMeta[0])}</strong></span>
+                                    <span><small>Số lượng</small><strong>${escapeHtml(productMeta[1])}</strong></span>
                                 </div>
                             </div>
                         </div>
-                        <table>
+                        ${isHighValueOrder ? `
+                            <div class="order_hvo_visual" aria-hidden="true">
+                                <span class="order_hvo_orb order_hvo_orb--one"></span>
+                                <span class="order_hvo_orb order_hvo_orb--two"></span>
+                                <i class="fas fa-leaf order_hvo_laurel order_hvo_laurel--left"></i>
+                                <i class="fas fa-leaf order_hvo_laurel order_hvo_laurel--right"></i>
+                                <i class="fas fa-crown"></i>
+                                <span>ĐƠN HÀNG</span>
+                                <strong>GIÁ TRỊ CAO</strong>
+                                <small>CƠ HỘI GIÁ TRỊ · ƯU TIÊN XỬ LÝ</small>
+                            </div>
+                        ` : ''}
+                    </div>
+
+                    <div class="order_financial">
+                        <table class="order_financial_table">
                             <tbody>
                                 <tr>
-                                    <td>${trans.TongTienDonHang}</td>
-                                    <th>${order_details_end_value_total_price_formatted}</th>
+                                    <td><span class="finance_label"><i class="fas fa-cart-shopping"></i><span>${escapeHtml(labels.orderTotal || 'Tổng tiền đơn hàng')}</span></span></td>
+                                    <th>${escapeHtml(formatMoney(orderAmount))}</th>
                                 </tr>
-                                <tr>
-                                    <td>${trans.ChietKhau} (${commission_percentage}%):</td>
-                                    <th>${order_details_end_value_price_rose_formatted}</th>
+                                <tr class="commission_row">
+                                    <td><span class="finance_label"><i class="fas fa-percent"></i><span>${escapeHtml(labels.commission || 'Chiết khấu')}</span><span class="finance_rate">${escapeHtml(formatPercent(commissionPercent))}</span></span></td>
+                                    <th>${escapeHtml(formatMoney(commissionAmount))}</th>
                                 </tr>
                                 ${isPenalized ? `
-                                <tr class="penalty_row">
-                                    <td>⚠ Tiền phạt (30%)</td>
-                                    <th class="penalty_amount">-${penalty_amount_formatted}</th>
-                                </tr>` : ''}
-                                <tr>
-                                    <td>${trans.SoTienHoanNhap}</td>
-                                    <th class="total ${isSpecialOrder ? 'special-total' : ''}">${isPenalized ? penaltyRefundFormatted : order_details_end_value_total_formatted}</th>
+                                    <tr class="penalty_row">
+                                        <td><span class="finance_label"><i class="fas fa-triangle-exclamation"></i><span>Tiền phạt quá hạn</span></span></td>
+                                        <th>-${escapeHtml(formatMoney(penaltyAmount))}</th>
+                                    </tr>
+                                ` : ''}
+                                <tr class="refund_row ${isHighValueOrder ? 'hvo_row' : ''}">
+                                    <td><span class="finance_label"><i class="fas fa-wallet"></i><span>${escapeHtml(labels.refund || 'Số tiền hoàn nhập')}</span></span> ${refundSuffix ? `<small>${escapeHtml(refundSuffix.replace('·', '').trim())}</small>` : ''}</td>
+                                    <th class="total ${isHighValueOrder ? 'hvo-total' : ''}">${escapeHtml(formatMoney(refundAmount))}</th>
                                 </tr>
                             </tbody>
                         </table>
-                        ${isPenalized && frozen_order.is_frozen == 1 ? `
-                        <div class="penalty_info_warning">
-                            <p class="penalty_text_danger mb-1"><strong>⚠ Đơn hàng bị phạt do quá thời hạn phân phối!</strong></p>
-                            <p class="penalty_text_danger mb-1">• Bạn đã nhận thông báo qua email</p>
-                            <p class="penalty_text_danger mb-1">• Tiền phạt: <strong>${penalty_amount_formatted}</strong> (30% giá trị đơn)</p>
-                            ${money_need_to_deposit > 0 ? `<p class="penalty_text_danger mb-1">• <strong>Cần nạp thêm: ${money_need_to_deposit_formatted}</strong> để có thể phân phối</p>` : ''}
-                            <p class="penalty_text_danger mb-0">• Vui lòng ${money_need_to_deposit > 0 ? 'nạp tiền và ' : ''}hoàn thành phân phối sớm nhất</p>
-                        </div>` : ''}
-                        ${isPenaltySettled ? `
-                        <div class="penalty_info">
-                            <p class="penalty_text mb-1"><strong>ℹ️ Thông tin phạt:</strong></p>
-                            <p class="penalty_text mb-1">• Đơn đã hoàn thành và xử lý phạt do quá hạn</p>
-                            <p class="penalty_text mb-0">• Tiền phạt <strong>${penalty_amount_formatted}</strong> đã trừ khỏi khoản hoàn nhập</p>
-                            ${hasExactSettlement ? `<p class="penalty_text mb-0">• Hoàn nhập thực tế: <strong>${penaltyRefundFormatted}</strong></p>` : `<p class="penalty_text text-danger mb-0">• Không đủ transaction history để xác định chính xác tiền hoàn nhập.</p>`}
-                        </div>` : ''}
-                        ${isSpecialOrder && frozen_order.is_frozen == 1 && !isPenalized ? `
-                        <div class="special_info">
-                            <p class="special_text mb-1"><strong>🎉 Chúc mừng! Đơn hàng may mắn!</strong></p>
-                            <p class="special_text mb-1">• Bạn đã quay trúng đơn hàng đặc biệt trong chương trình sự kiện cặp đôi</p>
-                            <p class="special_text mb-0">• <strong>Được thưởng 10%</strong> từ hệ thống khi hoàn thành phân phối</p>
-                        </div>` : ''}
-                        ${isSpecialOrder && frozen_order.is_frozen == 0 && !isPenalized ? `
-                        <div class="special_info">
-                            <p class="special_text mb-1"><strong>✅ Đã hoàn thành đơn hàng đặc biệt!</strong></p>
-                            <p class="special_text mb-1">• Đơn hàng may mắn từ chương trình sự kiện cặp đôi</p>
-                            <p class="special_text mb-0">• <strong>Được thưởng 10%</strong> từ hệ thống</p>
-                        </div>` : ''}
-                        ${isSpecialOrder && isPenalized ? `
-                        <div class="alert alert-warning mt-2 mb-0 py-2 px-3" style="font-size: 12px; border-left: 3px solid #fbbf24;">
-                            <p class="mb-1"><strong>ℹ️ Lưu ý:</strong></p>
-                            <p class="mb-0">• Đây là đơn hàng đặc biệt nhưng đã bị phạt do quá hạn. Bạn đã hoàn thành phân phối và đã bị xử lý tiền phạt.</p>
-                        </div>` : ''}
-                        ${(() => {
-                            // Luôn hiển thị nút "Xem chi tiết" cho mọi trạng thái
-                            const currentStatus = frozen_order.status || 'pending';
-                            
-                            // Đơn pending: nút primary (cần hành động)
-                            if (currentStatus === 'pending') {
-                                return `
-                                    <div class="mt-2 d-flex justify-content-center gap-2">
-                                        <a href="${route_order}/${frozen_order.id}" class="btn btn-primary btn-sm w-50">
-                                            <i class="fas fa-eye me-2"></i>Xem chi tiết
-                                        </a>
-                                    </div>`;
-                            }
-                            
-                            // Tất cả các trạng thái khác: nút outline
-                            // Xác định class dựa trên trạng thái
-                            let btnClass = 'btn-outline-primary';
-                            if (currentStatus === 'cancelled') {
-                                btnClass = 'btn-outline-secondary'; // Màu xám cho đơn đã hủy
-                            } else if (currentStatus === 'completed') {
-                                btnClass = 'btn-outline-success'; // Màu xanh lá cho đơn hoàn thành
-                            }
-                            
-                            return `
-                                <div class="mt-2 d-flex justify-content-center">
-                                    <a href="${route_order}/${frozen_order.id}" class="btn ${btnClass} btn-sm w-50">
-                                        <i class="fas fa-eye me-2"></i>Xem chi tiết
-                                    </a>
-                                </div>`;
-                        })()}
-                    `;
-                    div_list_orders.appendChild(order_item);
-                }
-            } else {
-                div_list_orders.innerHTML = `
-                <div class="d-flex justify-content-center">
-                    <span class="text-center" style="color:#000;">${trans.KhongCoDuLieu}</span>
+                    </div>
+
+                    ${penaltyMarkup({ order, penaltyAmount, orderAmount, isPenaltySettled, penaltySettlement })}
+                    ${highValueOrderMarkup(order, isHighValueOrder, isPenalized)}
+
+                    <div class="order_actions">
+                        <span class="order_source_note"><i class="fas fa-circle-info"></i>${isHighValueOrder ? 'Đơn hàng giá trị cao theo dữ liệu hệ thống' : 'Dữ liệu tại thời điểm phân phối'}</span>
+                        <a class="history-detail-btn ${statusKey === 'pending' ? 'is-primary' : ''}" href="${escapeHtml(detailUrl)}">
+                            <span>Xem chi tiết</span><i class="fas fa-arrow-right"></i>
+                        </a>
+                    </div>
                 </div>
+            </article>
+        `;
+    };
+
+    const updateCountdowns = () => {
+        document.querySelectorAll('[data-history-deadline]').forEach((deadline) => {
+            const target = new Date(deadline.dataset.historyDeadline);
+            const left = target.getTime() - Date.now();
+
+            if (Number.isNaN(target.getTime())) return;
+            if (left <= 0) {
+                deadline.className = 'history-deadline is-expired';
+                deadline.removeAttribute('data-history-deadline');
+                deadline.innerHTML = `
+                    <span class="history-deadline__icon"><i class="fas fa-triangle-exclamation"></i></span>
+                    <div>
+                        <strong>Đã quá thời hạn xử lý</strong>
+                        <small>Quá hạn có thể phát sinh tiền phạt 30% giá trị đơn theo quy định hệ thống.</small>
+                    </div>
                 `;
+                return;
             }
-            spinner.hidden = true;
-            
-            // Scroll tab được chọn vào view sau khi load xong
-            setTimeout(() => {
-                const activeBtn = document.querySelector('.tab-btn:has(.active-tab)');
-                if (activeBtn) {
-                    activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-                }
-            }, 100);
-        }
-    }
-    function load_orders(tabId) {
-        return new Promise((resolve, reject) => {
-            if (!route_get_list_orders_by_tab) {
-                return reject(new Error('route_get_list_orders_by_tab is not defined'));
+
+            const hours = Math.floor(left / 3600000);
+            const minutes = Math.floor((left % 3600000) / 60000);
+            const seconds = Math.floor((left % 60000) / 1000);
+            deadline.querySelector('[data-hours]')?.replaceChildren(String(hours).padStart(2, '0'));
+            deadline.querySelector('[data-minutes]')?.replaceChildren(String(minutes).padStart(2, '0'));
+            deadline.querySelector('[data-seconds]')?.replaceChildren(String(seconds).padStart(2, '0'));
+            const durationMs = Number(deadline.dataset.historyDurationMs);
+            if (Number.isFinite(durationMs) && durationMs > 0) {
+                const remainingPercent = Math.max(0, Math.min(100, (left / durationMs) * 100));
+                deadline.style.setProperty('--deadline-progress', `${remainingPercent.toFixed(2)}%`);
             }
-            
-            fetch(route_get_list_orders_by_tab, {
-                method: "POST",
+
+            deadline.classList.remove('is-safe', 'is-warning', 'is-danger', 'is-critical');
+            if (left < 3600000) deadline.classList.add('is-critical');
+            else if (left < 3 * 3600000) deadline.classList.add('is-danger');
+            else if (left < 6 * 3600000) deadline.classList.add('is-warning');
+            else deadline.classList.add('is-safe');
+        });
+    };
+
+    const setActiveFilter = (button) => {
+        document.querySelectorAll('.history-filter-chip').forEach((item) => {
+            item.classList.toggle('is-active', item === button);
+            item.setAttribute('aria-pressed', item === button ? 'true' : 'false');
+        });
+
+        activeFilterId = button.dataset.filterId || 'btn_tat_ca';
+        const tab = button.dataset.tab || 'tat-ca';
+        localStorage.setItem('tab_order', tab);
+
+        const title = button.querySelector('span')?.textContent?.trim() || 'Đơn hàng';
+        const feedTitle = document.getElementById('history-feed-title');
+        if (feedTitle) feedTitle.textContent = title === 'Tất cả' ? 'Tất cả đơn hàng' : title;
+
+        button.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    };
+
+    const loadOrders = async (filterId = activeFilterId) => {
+        const list = document.getElementById('list_orders');
+        const count = document.getElementById('historyResultCount');
+        if (!list || !listRoute) return;
+
+        activeRequest?.abort();
+        const request = new AbortController();
+        activeRequest = request;
+        list.setAttribute('aria-busy', 'true');
+        list.innerHTML = loadingMarkup();
+        if (count) count.textContent = 'Đang tải';
+
+        try {
+            const response = await fetch(listRoute, {
+                method: 'POST',
                 headers: {
-                    'Content-Type': "application/json",
-                    'X-CSRF-TOKEN': csrf
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrf,
                 },
-                body: JSON.stringify({
-                    tabId: tabId
-                })
-            })
-                .then(response => response.json())
-                .then(data => {
-                    return resolve(data);
-                })
-                .catch(error => {
-                    console.log(error);
-                    reject(error);
-                });
-        });
-    }
-    function sleep(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
-    }
-    // Function để cập nhật countdown
-    function updateCountdowns() {
-        const countdownElements = document.querySelectorAll('.countdown-container[data-deadline]');
-        
-        countdownElements.forEach(countdown => {
-            const deadline = new Date(countdown.getAttribute('data-deadline'));
-            const now = new Date();
-            const timeLeft = deadline - now;
-            
-            if (timeLeft > 0) {
-                const hours = Math.floor(timeLeft / (1000 * 60 * 60));
-                const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
-                
-                // Cập nhật số
-                const hoursEl = countdown.querySelector('.countdown-hours');
-                const minutesEl = countdown.querySelector('.countdown-minutes');
-                const secondsEl = countdown.querySelector('.countdown-seconds');
-                
-                if (hoursEl) hoursEl.textContent = hours.toString().padStart(2, '0');
-                if (minutesEl) minutesEl.textContent = minutes.toString().padStart(2, '0');
-                if (secondsEl) secondsEl.textContent = seconds.toString().padStart(2, '0');
-                
-                // Cập nhật class màu sắc
-                countdown.classList.remove('countdown-safe', 'countdown-warning', 'countdown-danger', 'countdown-critical');
-                if (hours < 1) {
-                    countdown.classList.add('countdown-critical');
-                } else if (hours < 3) {
-                    countdown.classList.add('countdown-danger');
-                } else if (hours < 6) {
-                    countdown.classList.add('countdown-warning');
-                } else {
-                    countdown.classList.add('countdown-safe');
-                }
-            } else {
-                // Hết thời gian - chuyển sang trạng thái expired
-                countdown.classList.remove('countdown-safe', 'countdown-warning', 'countdown-danger', 'countdown-critical');
-                countdown.classList.add('countdown-expired');
-                countdown.innerHTML = `
-                    <div class="countdown-icon">⚠️</div>
-                    <div class="countdown-text">
-                        <div class="countdown-label text-danger fw-bold">ĐÃ QUÁ HẠN!</div>
-                        <div class="countdown-warning-text" style="font-size: 10px; margin-top: 4px; color: #dc3545;">
-                            Đơn hàng đã quá hạn xử lý. Bạn sẽ bị phạt 30% tổng giá trị đơn hàng theo quy định của hệ thống.
-                        </div>
-                    </div>`;
+                body: JSON.stringify({ tabId: filterId }),
+                signal: request.signal,
+            });
+
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const payload = await response.json();
+            if (payload.status !== 200 || !Array.isArray(payload.list_orders)) {
+                throw new Error(payload.message || 'Không thể tải lịch sử đơn hàng');
             }
+
+            const orders = payload.list_orders;
+            if (count) count.textContent = `${orders.length} đơn`;
+            list.innerHTML = orders.length
+                ? orders.map(renderOrder).join('')
+                : stateMarkup('empty', 'Chưa có đơn hàng trong mục này', labels.empty || 'Không có dữ liệu');
+            updateCountdowns();
+        } catch (error) {
+            if (error.name === 'AbortError') return;
+            console.error('Order history load failed:', error);
+            if (count) count.textContent = 'Không tải được';
+            list.innerHTML = stateMarkup(
+                'error',
+                'Không thể tải lịch sử',
+                'Kết nối hoặc máy chủ đang có vấn đề. Bạn có thể thử tải lại danh sách.',
+                true,
+            );
+        } finally {
+            if (activeRequest === request) {
+                list.setAttribute('aria-busy', 'false');
+            }
+        }
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const savedTab = localStorage.getItem('tab_order') || 'tat-ca';
+        const initialButton = Array.from(document.querySelectorAll('.history-filter-chip'))
+            .find((button) => button.dataset.tab === savedTab)
+            || document.querySelector('.history-filter-chip[data-tab="tat-ca"]');
+
+        if (initialButton) {
+            setActiveFilter(initialButton);
+            loadOrders(activeFilterId);
+        }
+
+        document.querySelectorAll('.history-filter-chip').forEach((button) => {
+            button.addEventListener('click', () => {
+                if (button.classList.contains('is-active')) return;
+                setActiveFilter(button);
+                loadOrders(activeFilterId);
+            });
         });
-    }
-    
-    // Cập nhật countdown mỗi giây
-    setInterval(updateCountdowns, 1000);
-    
-    // Event listener cho nút phân phối đã được xóa vì giờ dùng link "Xem chi tiết" thay thế
-});
 
-// ======================= MODAL FUNCTIONS =======================
+        document.getElementById('list_orders')?.addEventListener('click', (event) => {
+            if (!event.target.closest('[data-history-retry]')) return;
+            loadOrders(activeFilterId);
+        });
 
-// Hàm hiển thị modal phân phối
-window.showDistributionModal = function() {
-    const modal = document.getElementById('distributionModalOverlay');
-    if (!modal) return;
-    
-    // Reset trạng thái các step
-    document.getElementById('dist-step-1').className = 'loading-step active';
-    document.getElementById('dist-step-2').className = 'loading-step';
-    document.getElementById('dist-step-3').className = 'loading-step';
-    document.getElementById('dist-progress-bar').style.width = '0%';
-    
-    // Hiển thị modal
-    modal.classList.add('show');
-    
-    setTimeout(() => {
-        document.getElementById('dist-progress-bar').style.width = '33%';
-        
-        setTimeout(() => {
-            document.getElementById('dist-step-1').classList.remove('active');
-            document.getElementById('dist-step-1').classList.add('completed');
-            document.getElementById('dist-step-2').classList.add('active');
-            document.getElementById('dist-progress-bar').style.width = '66%';
-            
-            setTimeout(() => {
-                document.getElementById('dist-step-2').classList.remove('active');
-                document.getElementById('dist-step-2').classList.add('completed');
-                document.getElementById('dist-step-3').classList.add('active');
-                document.getElementById('dist-progress-bar').style.width = '100%';
-            }, 400);
-        }, 400);
-    }, 10);
-}
-
-// Hàm đóng modal phân phối
-window.closeDistributionModal = function() {
-    const modal = document.getElementById('distributionModalOverlay');
-    if (modal) {
-        modal.classList.remove('show');
-    }
-}
-
-// Hàm hiển thị modal thành công
-window.showSuccessModal = function(profit, totalAmount, commission, penaltyAmount = 0) {
-    // Tính tổng tiền hoàn nhập = Giá trị đơn hàng + Hoa hồng - Tiền phạt (nếu có)
-    const totalRefund = totalAmount + commission - penaltyAmount;
-    
-    // Lấy modal và cập nhật nội dung
-    const modal = document.getElementById('successModalOverlay');
-    if (!modal) return;
-    
-                    document.getElementById('success_profit_amount').textContent = '+' + format_currency(profit);
-    document.getElementById('success_total_amount').textContent = '' + format_currency(totalAmount, 4, 4);
-                    document.getElementById('success_commission').textContent = '+' + format_currency(commission);
-    document.getElementById('success_total_refund').textContent = '+' + format_currency(totalRefund, 4, 4);
-    document.getElementById('success_time').textContent = new Date().toLocaleString('vi-VN');
-    
-    // Hiển thị/ẩn dòng tiền phạt
-    const penaltyRow = document.getElementById('success_penalty_row');
-    if (penaltyAmount > 0) {
-        document.getElementById('success_penalty_amount').textContent = '-' + format_currency(penaltyAmount, 4, 4);
-        penaltyRow.style.display = 'flex';
-    } else {
-        penaltyRow.style.display = 'none';
-    }
-    
-    // Hiển thị modal
-    modal.classList.add('show');
-}
-
-// Hàm đóng modal thành công
-window.closeSuccessModal = function() {
-    const modal = document.getElementById('successModalOverlay');
-    if (modal) {
-        modal.classList.remove('show');
-    }
-}
+        window.setInterval(updateCountdowns, 1000);
+    });
+})();

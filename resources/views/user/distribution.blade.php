@@ -25,75 +25,159 @@
 @endsection
 @section('content')
 <div id="fireworks-container"></div>
+@php
+    $remaining = max(0, $total_orders - $current_order);
+    $percentage = $total_orders > 0 ? min(100, round(($current_order / $total_orders) * 100, 1)) : 0;
+@endphp
 
-<!-- Header với gradient -->
-<div class="distribution-header">
-    <div class="header-overlay">
-        <a class="btn-back-modern" href="#" onclick="history.back(); return false;">
+<main class="distribution-page">
+    <header class="distribution-nav">
+        <a class="btn-back-modern" href="#" onclick="history.back(); return false;" aria-label="Quay lại">
             <i class="fa fa-arrow-left"></i>
         </a>
-        <div class="header-content">
+        <div>
+            <span class="nav-eyebrow">Distribution center</span>
             <h1 class="header-title">{{__('distribution.HeThongPhanPhoi')}}</h1>
-            @if($user_rank)
-                <div class="rank-badge">
-                    <i class="fas fa-crown me-2"></i>
-                    <span>{{$user_rank->name}}</span>
-                    <span class="commission-rate">{{$user_rank->commission_percentage}}%</span>
+        </div>
+        @if($user_rank)
+            <div class="rank-badge">
+                <i class="fas fa-crown"></i>
+                <span>{{$user_rank->name}}</span>
+                <strong>{{$user_rank->commission_percentage}}%</strong>
+            </div>
+        @else
+            <div class="rank-badge no-rank">
+                <i class="fas fa-circle-exclamation"></i>
+                <span>{{__('distribution.ChuaCoCapDo')}}</span>
+            </div>
+        @endif
+    </header>
+
+    <section class="distribution-command">
+        <div class="command-copy">
+            <span class="live-status"><i></i> Hệ thống đang hoạt động</span>
+            <h2>Đơn hàng tiếp theo<br><em>đang chờ bạn.</em></h2>
+            <p>{{__('distribution.TongPhanPhoi')}}</p>
+        </div>
+
+        <button class="btn-distribute-modern" id="btn_import" onclick="distribution()">
+            <span class="btn-pulse" aria-hidden="true"></span>
+            <span class="btn-icon"><i class="fas fa-box-open"></i></span>
+            <span class="btn-copy">
+                <small>Bắt đầu tác vụ</small>
+                <span class="btn-text">{{__('distribution.NhanDonHang')}}</span>
+            </span>
+            <i class="fas fa-arrow-right btn-arrow"></i>
+        </button>
+
+        @if($user_rank)
+            <div class="progress-card-modern">
+                <div class="progress-route" aria-hidden="true">
+                    <span class="route-start"></span>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-modern" id="progress-bar" style="width: {{ $percentage }}%">
+                            <span class="route-package"><i class="fas fa-box"></i></span>
+                        </div>
+                    </div>
+                    <span class="route-finish"><i class="fas fa-flag-checkered"></i></span>
                 </div>
+                <div class="progress-meta">
+                    <div>
+                        <span class="progress-label">Lộ trình hôm nay</span>
+                        <span class="progress-text" id="progress-text">Còn lại {{ $remaining }} đơn hàng • {{ $percentage }}% hoàn thành</span>
+                    </div>
+                    <div class="progress-numbers">
+                        <span class="current-number" id="progress-current">{{ $current_order }}</span>
+                        <span class="separator">/</span>
+                        <span class="total-number" id="progress-total">{{ $total_orders }}</span>
+                    </div>
+                </div>
+            </div>
+        @else
+            <div class="rank-notice">
+                <i class="fas fa-lock"></i>
+                <span>Nâng cấp cấp độ thành viên để mở lộ trình phân phối.</span>
+            </div>
+        @endif
+    </section>
+
+    <section class="distribution-ledger" aria-labelledby="ledger-title">
+        <div class="section-heading">
+            <div>
+                <span class="section-kicker">Tổng quan trực tiếp</span>
+                <h2 id="ledger-title">Dòng tiền hôm nay</h2>
+            </div>
+            <span class="ledger-date">{{ now()->format('d/m') }}</span>
+        </div>
+
+        <div class="balance-card stat-card">
+            <div class="metric-icon"><i class="fas fa-wallet"></i></div>
+            <div class="metric-copy">
+                <h3 class="stat-label">{{__('distribution.TongSoDu')}}</h3>
+                <p class="stat-value">${{format_money($user->balance)}}</p>
+            </div>
+            <span class="metric-note">Khả dụng</span>
+        </div>
+
+        <div class="ledger-strip">
+            <article class="distribution-card stat-card">
+                <span class="metric-index">01</span>
+                <h3 class="stat-label">{{__('distribution.PhanPhoiHomNay')}}</h3>
+                <p class="stat-value">+{{ $user->distribution_today ?? 0 }}</p>
+                <span class="metric-unit">đơn hàng</span>
+            </article>
+            <article class="commission-card stat-card">
+                <span class="metric-index">02</span>
+                <h3 class="stat-label">{{__('distribution.HoaHongDuTinhHomNay')}}</h3>
+                <p class="stat-value">${{format_money($todays_discount, 5)}}</p>
+                <span class="metric-unit">dự tính</span>
+            </article>
+            <article class="refund-card stat-card">
+                <span class="metric-index">03</span>
+                <h3 class="stat-label">Hoàn nhập dự tính</h3>
+                <p class="stat-value">${{format_money($todays_expected_refund, 5)}}</p>
+                <span class="metric-unit">hôm nay</span>
+            </article>
+            <article class="commission-added-card stat-card">
+                <span class="metric-index">04</span>
+                <h3 class="stat-label">Hoa hồng đã cộng</h3>
+                <p class="stat-value">${{format_money($today_commission_added ?? 0, 5)}}</p>
+                <span class="metric-unit">đã ghi nhận</span>
+            </article>
+        </div>
+
+        <div class="frozen-card stat-card">
+            <div class="frozen-symbol"><i class="fas fa-snowflake"></i></div>
+            <div class="metric-copy">
+                <h3 class="stat-label">{{__('distribution.SoDuDongBang')}}</h3>
+                <p class="stat-value">${{format_money($frozen_price ?? 0)}}</p>
+                <span class="metric-unit">Tách biệt khỏi số dư khả dụng</span>
+            </div>
+            @if($frozen_price > 0)
+                <span class="frozen-state"><i class="fas fa-lock"></i> Đang khóa</span>
             @else
-                <div class="rank-badge no-rank">
-                    <i class="fas fa-exclamation-circle me-2"></i>
-                    <span>{{__('distribution.ChuaCoCapDo')}}</span>
-                </div>
+                <span class="frozen-state"><i class="fas fa-lock-open"></i> Không có</span>
             @endif
         </div>
-    </div>
-</div>
+    </section>
 
-<!-- Action Button -->
-<div class="action-section">
-    <button class="btn-distribute-modern" id="btn_import" onclick="distribution()">
-        <span class="btn-icon">
-            <i class="fas fa-box-open"></i>
-        </span>
-        <span class="btn-text">{{__('distribution.NhanDonHang')}}</span>
-        <span class="btn-shine"></span>
-    </button>
-    <p class="action-hint">{{__('distribution.TongPhanPhoi')}}</p>
-    <!-- Progress Card -->
-    @if($user_rank)
-    <div class="progress-card-modern">
-        <div class="progress-header">
-            <div class="progress-info">
-                <i class="fas fa-chart-line"></i>
-                <span class="progress-label">Tiến độ phân phối</span>
+    <section class="description-section">
+        <div class="description-marker"><span>GUIDE</span></div>
+        <div class="description-card">
+            <div class="description-header">
+                <span class="description-icon"><i class="fas fa-route"></i></span>
+                <div><small>Thông tin vận hành</small><h2>{{__('distribution.MoTa')}}</h2></div>
             </div>
-            <div class="progress-numbers">
-                <span class="current-number" id="progress-current">{{ $current_order }}</span>
-                <span class="separator">/</span>
-                <span class="total-number" id="progress-total">{{ $total_orders }}</span>
+            <div class="description-content">
+                {!! $section_mo_ta?->getTranslatedContent() ?? __('distribution.DangCapNhat') !!}
             </div>
         </div>
-        <div class="progress-bar-container">
-            <div class="progress-bar-modern" id="progress-bar" style="width: {{ $total_orders > 0 ? ($current_order / $total_orders * 100) : 0 }}%">
-                <div class="progress-shine"></div>
-            </div>
-        </div>
-        <div class="progress-footer">
-            <span class="progress-text" id="progress-text">
-                @php
-                    $remaining = max(0, $total_orders - $current_order);
-                    $percentage = $total_orders > 0 ? round(($current_order / $total_orders) * 100, 1) : 0;
-                @endphp
-                Còn lại {{ $remaining }} đơn hàng • {{ $percentage }}% hoàn thành
-            </span>
-        </div>
-    </div>
-    @endif
+    </section>
+</main>
     
         <div class="dark_surface" id="order_award" hidden>
             <div class="order-modal-modern" id="order">
-                <!-- Header thường (ẩn khi là đơn đặc biệt) -->
+                <!-- Header thường (ẩn khi là đơn hàng giá trị cao) -->
                 <div class="order-header-normal">
                     <div class="normal-badge">
                         <i class="fas fa-box"></i>
@@ -104,7 +188,7 @@
                 </div>
 
                 <!-- Header đặc biệt (ẩn khi là đơn thường) -->
-                <div class="order-header-special" style="display: none;">
+                <div class="order-header-hvo" style="display: none;">
                     <div class="celebration-badge">
                         <i class="fas fa-gift"></i>
                         <span>ĐƠN HÀNG THƯỞNG</span>
@@ -115,7 +199,7 @@
                         <h2>Chúc mừng!</h2>
                         <i class="fas fa-star"></i>
                     </div>
-                    <p class="celebration-message">Bạn đã nhận được đơn hàng đặc biệt</p>
+                    <p class="celebration-message">Bạn đã nhận được đơn hàng giá trị cao</p>
                 </div>
 
                 <!-- Main Content -->
@@ -134,9 +218,9 @@
                         <div class="product-image-wrapper">
                             <div class="image-shine"></div>
                             <img id="order_details_img" src="{{ asset('images/orders/syglp5via6r7rxqjc1k8.jpg') }}" alt="" class="product-image">
-                            <div class="special-tag">
+                            <div class="hvo-tag">
                                 <i class="fas fa-crown"></i>
-                                SPECIAL
+                                HVO
                             </div>
                         </div>
                         <div class="product-info-modern">
@@ -170,10 +254,10 @@
                             </span>
                             <span class="summary-value profit" id="order_details_end_value_price_rose">+20$</span>
                         </div>
-                        <div class="summary-row" id="bonus_special_row" style="display: none; background: linear-gradient(135deg, #fff9e6 0%, #ffe8a1 100%); padding: 12px; border-radius: 8px; border: 2px solid #ffd700; margin: 8px 0;">
+                        <div class="summary-row" id="bonus_hvo_row" style="display: none; background: linear-gradient(135deg, #fff9e6 0%, #ffe8a1 100%); padding: 12px; border-radius: 8px; border: 2px solid #ffd700; margin: 8px 0;">
                             <span class="summary-label" style="color: #d4a100; font-weight: 600;">
                                 <i class="fas fa-gift" style="color: #ff6b6b;"></i>
-                                Thưởng đơn đặc biệt (10%)
+                                Thưởng đơn hàng giá trị cao (10%)
                             </span>
                             <span class="summary-value" style="color: #d4a100; font-weight: 700;">
                                 <i class="fas fa-star" style="color: #ffd700; font-size: 0.9em;"></i>
@@ -206,126 +290,6 @@
             </div>
         </div>
     
-</div>
-
-<!-- Statistics Cards -->
-<div class="stats-container">
-    <div class="stats-grid">
-        <!-- Tổng số dư -->
-        <div class="stat-card balance-card">
-            <div class="stat-icon-wrapper">
-                <div class="stat-icon">
-                    <i class="fas fa-wallet"></i>
-                </div>
-            </div>
-            <div class="stat-info">
-                <h4 class="stat-label">{{__('distribution.TongSoDu')}}</h4>
-                <p class="stat-value text-white">${{format_money($user->balance)}}</p>
-            </div>
-            <div class="stat-trend">
-                <i class="fas fa-arrow-up"></i>
-            </div>
-        </div>
-
-        <!-- Phân phối hôm nay -->
-        <div class="stat-card distribution-card">
-            <div class="stat-icon-wrapper">
-                <div class="stat-icon">
-                    <i class="fas fa-box"></i>
-                </div>
-            </div>
-            <div class="stat-info">
-                <h4 class="stat-label">{{__('distribution.PhanPhoiHomNay')}}</h4>
-                <p class="stat-value text-white">+{{ $user->distribution_today!=null?$user->distribution_today:0 }}</p>
-            </div>
-            <div class="stat-trend positive">
-                <i class="fas fa-chart-line"></i>
-            </div>
-        </div>
-
-        <!-- Hoa hồng dự tính hôm nay -->
-        <div class="stat-card commission-card">
-            <div class="stat-icon-wrapper">
-                <div class="stat-icon">
-                    <i class="fas fa-percentage"></i>
-                </div>
-            </div>
-            <div class="stat-info">
-                <h4 class="stat-label">{{__('distribution.HoaHongDuTinhHomNay')}}</h4>
-                <p class="stat-value text-success">${{format_money($todays_discount, 5)}}</p>
-            </div>
-            <div class="stat-trend positive">
-                <i class="fas fa-arrow-trend-up"></i>
-            </div>
-        </div>
-
-        <!-- Số tiền hoàn nhập dự tính hôm nay -->
-        <div class="stat-card refund-card">
-            <div class="stat-icon-wrapper">
-                <div class="stat-icon">
-                    <i class="fas fa-wallet"></i>
-                </div>
-            </div>
-            <div class="stat-info">
-                <h4 class="stat-label">Số tiền hoàn nhập dự tính hôm nay</h4>
-                <p class="stat-value text-success">${{format_money($todays_expected_refund, 5)}}</p>
-            </div>
-            <div class="stat-trend positive">
-                <i class="fas fa-arrow-trend-up"></i>
-            </div>
-        </div>
-
-        <!-- Hoa hồng đã được cộng hôm nay -->
-        <div class="stat-card commission-added-card">
-            <div class="stat-icon-wrapper">
-                <div class="stat-icon">
-                    <i class="fas fa-coins"></i>
-                </div>
-            </div>
-            <div class="stat-info">
-                <h4 class="stat-label">Hoa hồng đã được cộng hôm nay</h4>
-                <p class="stat-value text-success">${{format_money($today_commission_added ?? 0, 5)}}</p>
-            </div>
-            <div class="stat-trend positive">
-                <i class="fas fa-check-circle"></i>
-            </div>
-        </div>
-
-        <!-- Số dư đóng băng -->
-        <div class="stat-card frozen-card">
-            <div class="stat-icon-wrapper">
-                <div class="stat-icon">
-                    <i class="fas fa-snowflake"></i>
-                </div>
-            </div>
-            <div class="stat-info">
-                <h4 class="stat-label">{{__('distribution.SoDuDongBang')}}</h4>
-                <p class="stat-value text-white">${{format_money($frozen_price!=null?$frozen_price:0)}}</p>
-                @if($frozen_price > 0)
-                <button class="btn-withdraw-frozen mt-2" onclick="openWithdrawFrozenModal()" style="background: linear-gradient(135deg, #000000 0%, #000000 100%); color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 12px; cursor: pointer; transition: all 0.3s;">
-                    <i class="fas fa-money-bill-wave me-1"></i> Rút tiền
-                </button>
-                @endif
-            </div>
-            <div class="stat-trend frozen">
-                <i class="fas fa-lock"></i>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Description Section -->
-<div class="description-section">
-    <div class="description-card">
-        <div class="description-header">
-            <i class="fas fa-info-circle me-2"></i>
-            <h3>{{__('distribution.MoTa')}}</h3>
-        </div>
-        <div class="description-content">
-            {!! $section_mo_ta->getTranslatedContent()?? __('distribution.DangCapNhat')!!}
-        </div>
-    </div>
-</div>
 
 <!-- Searching Modal -->
 <div class="loading-modal-overlay" id="searchingModalOverlay">
@@ -468,7 +432,7 @@
                     <div class="detail-row" id="success_bonus_row" style="display: none; background: linear-gradient(135deg, #fff9e6 0%, #ffe8a1 100%); padding: 12px; border-radius: 8px; border: 2px solid #ffd700; margin: 8px 0;">
                         <span class="detail-label" style="color: #d4a100; font-weight: 600;">
                             <i class="fas fa-gift" style="color: #ff6b6b;"></i>
-                            Thưởng đơn đặc biệt (10%)
+                            Thưởng đơn hàng giá trị cao (10%)
                         </span>
                         <span class="detail-value" style="color: #d4a100; font-weight: 700; font-size: 1.1em;">
                             <i class="fas fa-star" style="color: #ffd700; font-size: 0.8em;"></i>
@@ -510,78 +474,6 @@
                 <span>Hoàn tất</span>
                 <i class="fas fa-arrow-right"></i>
             </button>
-        </div>
-    </div>
-</div>
-
-<!-- Modal Rút tiền từ số dư đóng băng -->
-<div id="withdrawFrozenModal" class="modal-overlay" style="display: none;">
-    <div class="modal-container" style="max-width: 500px;">
-        <div class="modal-header">
-            <h3 class="modal-title">
-                <i class="fas fa-snowflake me-2"></i>
-                Rút tiền từ số dư đóng băng
-            </h3>
-            <button class="modal-close" onclick="closeWithdrawFrozenModal()">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        
-        <div class="modal-body">
-            <div class="frozen-balance-info mb-3" style="background: linear-gradient(135deg, #000000 0%, #000000 100%); padding: 15px; border-radius: 10px; color: white;" data-frozen-balance="{{$frozen_price!=null?$frozen_price:0}}">
-                <div style="font-size: 14px; opacity: 0.9;">Số dư đóng băng hiện có</div>
-                <div style="font-size: 24px; font-weight: bold;">${{format_money($frozen_price!=null?$frozen_price:0)}}</div>
-            </div>
-            
-            <form id="withdrawFrozenForm">
-                <div class="form-group mb-3">
-                    <label class="form-label">
-                        <i class="fas fa-dollar-sign me-1"></i>
-                        Số tiền muốn rút
-                    </label>
-                    <div style="display: flex; gap: 8px;">
-                        <input type="number" 
-                               id="frozen_withdraw_amount" 
-                               name="amount" 
-                               class="form-control" 
-                               placeholder="Nhập số tiền muốn rút"
-                               step="0.0000001"
-                               min="0"
-                               required
-                               style="flex: 1;">
-                        <button type="button" 
-                                id="btn_withdraw_all_frozen" 
-                                class="btn-withdraw-all"
-                                style="background: linear-gradient(135deg, #000000 0%, #000000 100%); color: white; border: none; padding: 12px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: all 0.3s;">
-                            <i class="fas fa-coins me-1"></i>Rút tất cả
-                        </button>
-                    </div>
-                    <small class="form-text text-muted">Số tiền tối đa: ${{format_money($frozen_price!=null?$frozen_price:0)}}</small>
-                </div>
-                
-                <div class="form-group mb-3">
-                    <label class="form-label">
-                        <i class="fas fa-unlock-alt me-1"></i>
-                        Mật khẩu giao dịch
-                    </label>
-                    <input type="password" 
-                           id="frozen_transaction_password" 
-                           name="transaction_password" 
-                           class="form-control" 
-                           placeholder="Nhập mật khẩu giao dịch"
-                           required>
-                </div>
-                
-                <div class="alert alert-info" style="background: #e3f2fd; border-left: 4px solid #2196f3; padding: 12px;">
-                    <i class="fas fa-info-circle me-2"></i>
-                    <small>Bạn chỉ có thể rút tiền từ số dư đóng băng sau khi đã hoàn thành đơn hàng đặc biệt. Vui lòng hoàn thành đơn hàng đặc biệt trước khi rút tiền.</small>
-                </div>
-                
-                <button type="submit" class="btn-submit-frozen" style="width: 100%; background: linear-gradient(135deg, #000000 0%, #000000 100%); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer;">
-                    <i class="fas fa-money-bill-wave me-2"></i>
-                    Xác nhận rút tiền
-                </button>
-            </form>
         </div>
     </div>
 </div>

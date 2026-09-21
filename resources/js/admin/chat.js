@@ -33,7 +33,7 @@ function copyQuickMessage(message) {
  * Confirm delete all messages in conversation
  */
 function confirmDeleteMessages() {
-    swal({
+    AppDialog.confirm({
         title: "Xác nhận xóa",
         text: "Bạn có chắc muốn xóa tất cả tin nhắn trong đoạn chat này?",
         icon: "warning",
@@ -56,4 +56,3 @@ function confirmDeleteMessages() {
 // Export functions to window for global access
 window.copyQuickMessage = copyQuickMessage;
 window.confirmDeleteMessages = confirmDeleteMessages;
-

@@ -1,7 +1,7 @@
 import './bootstrap';
 import './echo';
-import swal from 'sweetalert';
-window.swal = swal;
+import './ui/dialog';
+import '../css/dialog.css';
 import Fireworks from 'fireworks-js';
 window.Fireworks = Fireworks;
 import AutoNumeric from 'autonumeric';

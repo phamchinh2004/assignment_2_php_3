@@ -1,4 +1,29 @@
 document.addEventListener('DOMContentLoaded', function () {
+    const selectAll = document.getElementById('select_all_permissions');
+    const permissionCheckboxes = Array.from(document.querySelectorAll('.permission-item-select'));
+    const selectedCount = document.getElementById('selected_permission_count');
+
+    function syncSelectionState() {
+        const checkedCount = permissionCheckboxes.filter(checkbox => checkbox.checked).length;
+
+        selectedCount.textContent = `${checkedCount} quyền đã chọn`;
+        selectAll.checked = permissionCheckboxes.length > 0 && checkedCount === permissionCheckboxes.length;
+        selectAll.indeterminate = checkedCount > 0 && checkedCount < permissionCheckboxes.length;
+    }
+
+    selectAll.addEventListener('change', function () {
+        permissionCheckboxes.forEach(checkbox => {
+            checkbox.checked = selectAll.checked;
+        });
+        syncSelectionState();
+    });
+
+    permissionCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', syncSelectionState);
+    });
+
+    syncSelectionState();
+
     document.getElementById('list_permissions').addEventListener('click', async function (e) {
         if (e.target.classList.contains('change_status_permission')) {
             let id = e.target.dataset.id;
@@ -8,13 +33,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 notification('error', result.message, 'Lỗi');
             } else if (result.status == 200) {
                 notification('success', result.message, 'Thành công!');
-                if (e.target.classList.contains('fa-toggle-on')) {
-                    e.target.classList.remove('fa-toggle-on');
-                    e.target.classList.add('fa-toggle-off');
-                } else if (e.target.classList.contains('fa-toggle-off')) {
-                    e.target.classList.remove('fa-toggle-off');
-                    e.target.classList.add('fa-toggle-on');
-                }
+                const isActive = Boolean(result.is_active);
+                e.target.classList.toggle('fa-toggle-on', isActive);
+                e.target.classList.toggle('fa-toggle-off', !isActive);
             }
             spinner.hidden = true;
         }

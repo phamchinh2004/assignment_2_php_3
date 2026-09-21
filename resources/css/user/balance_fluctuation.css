@@ -213,6 +213,10 @@
     background: #e9f8f2;
     color: var(--green);
 }
+.kpi-card.hvo .kpi-icon {
+    background: #fff6d8;
+    color: #9a6b00;
+}
 .kpi-card.deposit .kpi-icon {
     background: #edf4ff;
     color: #2870d9;

@@ -76,14 +76,6 @@
 .language-option.is-current { background:#fff; box-shadow:0 2px 8px rgba(16,24,40,.06); font-weight:700; }
 .language-option i { color:var(--me-green); }
 .logout-button { display:flex; align-items:center; justify-content:center; gap:9px; width:100%; min-height:50px; border:1px solid #f2d9df; border-radius:16px; color:#d91f49; background:#fff8fa; font:inherit; font-size:12px; font-weight:750; cursor:pointer; }
-.me-modal .modal-content { overflow:hidden; border:0; border-radius:20px; box-shadow:0 24px 70px rgba(16,24,40,.2); }
-.me-modal .modal-header { align-items:flex-start; padding:18px; border-bottom-color:var(--me-line); }
-.me-modal .modal-title { font-size:18px; font-weight:800; }
-.me-modal .modal-body { padding:18px; } .me-modal .modal-footer { padding:13px 18px; border-top-color:var(--me-line); }
-.me-modal .form-label { font-size:12px; font-weight:700; }
-.me-modal .form-control { min-height:46px; border-color:#dfe2e7; border-radius:11px; font-size:13px; }
-.me-modal textarea.form-control { min-height:95px; }
-.me-modal .btn { min-width:92px; min-height:42px; border-radius:11px; font-size:12px; font-weight:700; }
 @media (hover:hover) { .profile-edit-link:hover { color:#fff; background:rgba(255,255,255,.13); } .wallet-history-link:hover { color:#fff; border-color:rgba(255,255,255,.16); background:rgba(255,255,255,.09); } .wallet-action:hover { color:#fff; border-color:rgba(255,255,255,.13); background:rgba(255,255,255,.08); transform:translateY(-1px); } .wallet-action--primary:hover { color:#11151e; border-color:#fff; background:#fff; box-shadow:0 9px 22px rgba(0,0,0,.2); } .quick-action:hover,.settings-item:hover { color:var(--me-ink); background:#f6f7f9; } .logout-button:hover { background:#fff0f3; } }
 @media (min-width:390px) { .settings-item__meta { display:inline-flex; } }
 @media (min-width:768px) { .me-page { padding:22px 20px 112px; } .profile-hero { padding:28px; } .profile-avatar { width:92px; height:92px; border-radius:28px; } .profile-avatar img { border-radius:24px; } .profile-edit-link { display:flex; } .wallet-card { padding:25px 22px 20px; } .wallet-metric span { min-height:auto; font-size:10px; } .wallet-metric strong { font-size:13px; } .me-section { padding:20px; } .settings-card { padding-bottom:9px; } .quick-action strong,.settings-item__copy strong { font-size:13px; } .quick-action small,.settings-item__copy small { font-size:10px; } }

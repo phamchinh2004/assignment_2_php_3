@@ -406,10 +406,10 @@ class User extends Authenticatable
     }
 
     /**
-     * Kiểm tra user có đơn hàng đặc biệt chưa phân phối không
-     * (custom_price IS NOT NULL AND is_frozen = 1: đơn đặc biệt chưa hoàn thành)
+     * Kiểm tra user có đơn hàng giá trị cao chưa phân phối không
+     * (custom_price IS NOT NULL AND is_frozen = 1: đơn hàng giá trị cao chưa hoàn thành)
      */
-    public function hasSpecialOrders()
+    public function hasHighValueOrders()
     {
         return $this->frozen_orders()
             ->where('is_frozen', true)
@@ -419,9 +419,9 @@ class User extends Authenticatable
     }
 
     /**
-     * Lấy tổng giá trị đơn hàng đặc biệt (chưa hoàn thành)
+     * Lấy tổng giá trị đơn hàng giá trị cao (chưa hoàn thành)
      */
-    public function getTotalSpecialOrdersValueAttribute()
+    public function getTotalHighValueOrdersValueAttribute()
     {
         return $this->frozen_orders()
             ->where('is_frozen', true)
@@ -434,29 +434,29 @@ class User extends Authenticatable
     }
 
     /**
-     * Tính số tiền cần nạp cho đơn hàng đặc biệt (không tính tiền phạt)
+     * Tính số tiền cần nạp cho đơn hàng giá trị cao (không tính tiền phạt)
      */
-    public function getRequiredDepositForSpecialOrdersAttribute()
+    public function getRequiredDepositForHighValueOrdersAttribute()
     {
-        $needToDeposit = $this->total_special_orders_value - $this->balance;
+        $needToDeposit = $this->total_high_value_orders_value - $this->balance;
         return max(0, $needToDeposit);
     }
 
     /**
-     * Lấy thông tin chi tiết về đơn hàng đặc biệt (chưa hoàn thành)
+     * Lấy thông tin chi tiết về đơn hàng giá trị cao (chưa hoàn thành)
      */
-    public function getSpecialOrdersInfoAttribute()
+    public function getHighValueOrdersInfoAttribute()
     {
-        if (!$this->hasSpecialOrders()) {
+        if (!$this->hasHighValueOrders()) {
             return null;
         }
 
         return [
-            'total_value' => $this->total_special_orders_value,
+            'total_value' => $this->total_high_value_orders_value,
             'current_balance' => $this->balance,
-            'required_deposit' => $this->required_deposit_for_special_orders,
+            'required_deposit' => $this->required_deposit_for_high_value_orders,
             'orders_count' => $this->frozen_orders()->where('is_frozen', true)->where('spun', true)->whereNotNull('custom_price')->count(),
-            'bonus_amount' => $this->total_special_orders_value * 0.1 // 10% thưởng
+            'bonus_amount' => $this->total_high_value_orders_value * 0.1 // 10% thưởng
         ];
     }
 }

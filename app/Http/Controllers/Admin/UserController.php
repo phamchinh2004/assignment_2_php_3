@@ -13,12 +13,11 @@ use App\Http\Requests\UpdateUserRequest;
 use App\Jobs\SendDepositNotificationEmail;
 use App\Models\Conversation;
 use App\Models\Frozen_order;
-use App\Models\Manager_setting;
 use App\Models\Order;
 use App\Models\Rank;
-use App\Models\User_manager_setting;
 use App\Models\User_spin_progress;
 use App\Models\Wallet_balance_history;
+use App\Services\AuthorizationService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -30,20 +29,18 @@ class UserController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(AuthorizationService $authorization)
     {
         $query = User::with(['frozen_orders', 'referrer', 'rank'])->where('role', 'member');
-        if (Auth::user()->role === "staff") {
-            $get_quan_ly_tat_ca_nguoi_dung = Manager_setting::where('manager_code', 'quan_ly_tat_ca_nguoi_dung')->first();
-            if ($get_quan_ly_tat_ca_nguoi_dung) {
-                $get_user_manager_setting_by_user_id = User_manager_setting::where('manager_setting_id', $get_quan_ly_tat_ca_nguoi_dung->id)->where('user_id', Auth::user()->id)->first();
-                if ($get_user_manager_setting_by_user_id) {
-                    if (!$get_user_manager_setting_by_user_id->is_active) {
-                        $query->where('referrer_id', Auth::user()->id);
-                    }
-                }
-            }
+        $actor = Auth::user();
+
+        if (
+            $actor->role === User::ROLE_STAFF
+            && !$authorization->can($actor, config('authorization.capabilities.manage_all_users'))
+        ) {
+            $query->where('referrer_id', $actor->id);
         }
+
         $users = $query->latest('id')->get();
         return view('admin.user.index', compact('users'));
     }
@@ -51,9 +48,9 @@ class UserController extends Controller
     /**
      * Display the details of a member.
      */
-    public function show(User $user)
+    public function show(User $user, AuthorizationService $authorization)
     {
-        abort_unless($user->role === User::ROLE_MEMBER, 404);
+        $this->authorizeMemberAccess($user, $authorization);
 
         $user->load([
             'rank',
@@ -124,8 +121,9 @@ class UserController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(User $user)
+    public function edit(User $user, AuthorizationService $authorization)
     {
+        $this->authorizeMemberAccess($user, $authorization);
         $list_ranks = Rank::get();
         $banks = [
             'Ngân hàng Việt Nam' => [
@@ -246,8 +244,9 @@ class UserController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateUserRequest $request, User $user)
+    public function update(UpdateUserRequest $request, User $user, AuthorizationService $authorization)
     {
+        $this->authorizeMemberAccess($user, $authorization);
         $oldRankId = $user->rank_id;
         $data = $request->only([
             'full_name',
@@ -305,8 +304,9 @@ class UserController extends Controller
         }
         return redirect()->route('user.index')->with('success', 'Cập nhật tài khoản người dùng thành công!');
     }
-    public function changeStatusUser(User $user)
+    public function changeStatusUser(User $user, AuthorizationService $authorization)
     {
+        $this->authorizeMemberAccess($user, $authorization);
         $message = "";
         if ($user) {
             if ($user->status === "inactivated") {
@@ -331,18 +331,20 @@ class UserController extends Controller
             return redirect()->route('user.index')->with('error', 'Không tìm thấy người dùng cần thay đổi trạng thái!');
         }
     }
-    public function editFrozenOrderInterface(User $user, $id)
+    public function editFrozenOrderInterface(User $user, $id, AuthorizationService $authorization)
     {
+        $this->authorizeMemberAccess($user, $authorization);
         $list_orders = Order::where('rank_id', $user->rank_id)->get();
         $progress = User_spin_progress::where('user_id', $user->id)->where('rank_id', $user->rank_id)->first();
         $frozen_order_old = Frozen_order::where('id', $id)->first();
         return view('admin.user.edit_frozen_order', compact('list_orders', 'progress', 'user', 'frozen_order_old'));
     }
-    public function frozenOrderInterface(?User $user)
+    public function frozenOrderInterface(?User $user, AuthorizationService $authorization)
     {
         if (!$user) {
             abort(404, 'Không tìm thấy người dùng này');
         }
+        $this->authorizeMemberAccess($user, $authorization);
 
         if (!$user->rank_id) {
             return back()->with('error', 'Thằng này chưa có gian hàng!');
@@ -369,8 +371,9 @@ class UserController extends Controller
     }
 
 
-    public function frozenOrder(StoreFrozenOrderRequest $request, User $user)
+    public function frozenOrder(StoreFrozenOrderRequest $request, User $user, AuthorizationService $authorization)
     {
+        $this->authorizeMemberAccess($user, $authorization);
         $order_data = $request->order_data;
 
         if (empty($order_data) || !is_array($order_data)) {
@@ -456,8 +459,9 @@ class UserController extends Controller
     }
 
     // Hủy đóng băng đơn hàng
-    public function unfrozenOrder(User $user, Frozen_order $frozenOrder)
+    public function unfrozenOrder(User $user, Frozen_order $frozenOrder, AuthorizationService $authorization)
     {
+        $this->authorizeMemberAccess($user, $authorization);
         if ($frozenOrder->user_id !== $user->id) {
             return back()->with('error', 'Không có quyền thực hiện thao tác này!');
         }
@@ -470,8 +474,9 @@ class UserController extends Controller
     }
 
     // Cập nhật giá giả
-    public function updateFrozenOrder(Request $request, User $user, Frozen_order $frozenOrder)
+    public function updateFrozenOrder(Request $request, User $user, Frozen_order $frozenOrder, AuthorizationService $authorization)
     {
+        $this->authorizeMemberAccess($user, $authorization);
         $request->validate([
             'custom_price' => 'required|numeric|min:0',
             'commission_percentage' => 'nullable|numeric|min:0|max:100',
@@ -529,8 +534,9 @@ class UserController extends Controller
     }
 
     // Thay ảnh đơn hàng đã đóng băng
-    public function updateOrderImage(Request $request, User $user, Frozen_order $frozenOrder)
+    public function updateOrderImage(Request $request, User $user, Frozen_order $frozenOrder, AuthorizationService $authorization)
     {
+        $this->authorizeMemberAccess($user, $authorization);
         $request->validate([
             'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
         ], [
@@ -556,7 +562,7 @@ class UserController extends Controller
         return back()->with('success', "Đã thay ảnh cho đơn hàng '{$order_name}' thành công!");
     }
 
-    public function plus_money()
+    public function plus_money(AuthorizationService $authorization)
     {
         $value = request()->input('value');
         $user_id = request()->input('user_id');
@@ -580,19 +586,20 @@ class UserController extends Controller
                 'message' => 'Người dùng không tồn tại!'
             ]);
         }
+        $this->authorizeMemberAccess($get_user, $authorization);
         // Các tài khoản cũ có thể có balance NULL; lịch sử giao dịch yêu cầu giá trị số.
         $initial_balance = (float) ($get_user->balance ?? 0);
         $initial_frozen_balance = $get_user->frozen_balance ?? 0;
         
-        // Kiểm tra: nếu số dư đóng băng có tiền VÀ có đơn hàng đặc biệt chưa xác nhận
+        // Kiểm tra: nếu số dư đóng băng có tiền VÀ có đơn hàng giá trị cao chưa xác nhận
         $has_frozen_balance = ($get_user->frozen_balance ?? 0) > 0;
-        $has_unconfirmed_special_order = \App\Models\Frozen_order::where('user_id', $user_id)
+        $has_unconfirmed_hvo = \App\Models\Frozen_order::where('user_id', $user_id)
             ->where('custom_price', '!=', null)
             ->where('is_frozen', true)
             ->whereIn('status', ['pending', null])
             ->exists();
         
-        if ($has_frozen_balance && $has_unconfirmed_special_order) {
+        if ($has_frozen_balance && $has_unconfirmed_hvo) {
             // Chuyển toàn bộ số dư hiện tại + số tiền vừa nạp vào số dư đóng băng
             $current_balance = $initial_balance;
             $get_user->frozen_balance = ($get_user->frozen_balance ?? 0) + $current_balance + $value;
@@ -655,12 +662,29 @@ class UserController extends Controller
         $message = 'Đã nạp thêm ' . $value . '$ vào tài khoản của người dùng ' . $get_user->full_name . '!';
         if ($balance_type === 'frozen_balance') {
             $moved_balance = $initial_balance > 0 ? ' và số dư hiện tại ($' . number_format($initial_balance, 2) . ')' : '';
-            $message .= ' (Toàn bộ số tiền nạp' . $moved_balance . ' đã được chuyển vào số dư đóng băng vì có đơn hàng đặc biệt chưa xác nhận)';
+            $message .= ' (Toàn bộ số tiền nạp' . $moved_balance . ' đã được chuyển vào số dư đóng băng vì có đơn hàng giá trị cao chưa xác nhận)';
         }
         
         return response()->json([
             'status' => 200,
             'message' => $message
         ]);
+    }
+
+    private function authorizeMemberAccess(User $member, AuthorizationService $authorization): void
+    {
+        abort_unless($member->role === User::ROLE_MEMBER, 404);
+
+        $actor = Auth::user();
+        if ($actor->role !== User::ROLE_STAFF) {
+            return;
+        }
+
+        $canManageAll = $authorization->can(
+            $actor,
+            config('authorization.capabilities.manage_all_users')
+        );
+
+        abort_unless($canManageAll || (int) $member->referrer_id === (int) $actor->id, 403);
     }
 }

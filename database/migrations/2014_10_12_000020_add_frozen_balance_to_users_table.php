@@ -17,7 +17,7 @@ return new class extends Migration
 
         if (!Schema::hasColumn('users', 'frozen_balance')) {
             Schema::table('users', function (Blueprint $table) {
-                $table->double('frozen_balance')->default(0)->after('balance')->comment('Số dư đóng băng khi nhận đơn hàng đặc biệt');
+                $table->double('frozen_balance')->default(0)->after('balance')->comment('Số dư đóng băng khi nhận đơn hàng giá trị cao');
             });
         }
     }

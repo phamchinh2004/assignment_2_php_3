@@ -241,7 +241,7 @@ class Frozen_order extends Model
             return (float) $this->snapshot_commission_amount;
         }
 
-        // Legacy special orders already stored both effective values on frozen_orders,
+        // Legacy high-value orders already stored both effective values on frozen_orders,
         // so this calculation is deterministic and does not consult mutable orders.
         if ($this->custom_price !== null && $this->commission_percentage !== null) {
             return round((float) $this->custom_price * ((float) $this->commission_percentage / 100), 6);

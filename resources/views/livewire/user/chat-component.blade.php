@@ -1,8 +1,14 @@
+@php
+    $supportAgent = $conversation?->staff;
+    $supportIsOnline = $supportAgent?->isOnline() ?? false;
+@endphp
+
 <div id="chat-root">
     <div class="floating-chat-container" x-data="{
         isOpen: @entangle('showBox'),
         isLoading: false,
         showQuick: @entangle('showQuickReplies'),
+        showReferencePicker: @entangle('showReferencePicker'),
         dragging: false,
         moved: false,
         offsetX: 0,
@@ -61,12 +67,12 @@
             $el.style.setProperty('right', 'auto', 'important');
             $el.style.setProperty('bottom', 'auto', 'important');
         }
-    }" x-init="restorePosition()" @pointermove.window="drag($event)" @pointerup.window="endDrag()">
+    }" x-init="restorePosition()" :class="{ 'is-open': isOpen }" @pointermove.window="drag($event)" @pointerup.window="endDrag()">
         <!-- Floating Chat Button -->
         <button class="floating-chat-button"
             @pointerdown="startDrag($event)"
             @click="suppressClick($event); if (!moved) { isOpen = true; $wire.call('toggleBox', true) }"
-            x-show="!isOpen" type="button">
+            x-show="!isOpen" type="button" aria-label="Mở hỗ trợ khách hàng">
             <span x-show="!isLoading">
                 <i class="fa-solid fa-comments"></i>
                 @if($unreadCount > 0)
@@ -86,21 +92,22 @@
             <div class="p-3 d-flex justify-content-between align-items-center"
                 style="background: linear-gradient(135deg, #000000 0%, #000000 100%); color: white;">
                 <div class="d-flex align-items-center">
-                    <div class="position-relative">
-                        <img src="https://ui-avatars.com/api/?name=Support&background=ffffff&color=667eea&size=32&rounded=true&bold=true"
-                            alt="Support" class="rounded-circle" width="32" height="32">
-                        <span class="position-absolute bottom-0 end-0 bg-success rounded-circle"
-                            style="width: 10px; height: 10px; border: 2px solid white;"></span>
+                    <div class="chat-support-mark" aria-hidden="true">
+                        <i class="fa-solid fa-headset"></i>
                     </div>
                     <div class="ms-2">
                         <div class="fw-bold" style="font-size: 14px;">{{__('home.HoTroKhachHang')}}</div>
-                        <div class="text-start" style="font-size: 11px; opacity: 0.9;">{{__('home.DangTrucTuyen')}}
+                        <div class="text-start {{ $supportIsOnline ? 'is-online' : '' }}" style="font-size: 11px; opacity: 0.9;">
+                            Bộ phận CSKH
+                            @if($supportIsOnline)
+                                · {{ __('home.DangTrucTuyen') }}
+                            @endif
                         </div>
                     </div>
                 </div>
                 <button
                     @click="isOpen = false; $wire.call('toggleBox', false)"
-                    class="btn-close-chat" type="button">
+                    class="btn-close-chat" type="button" aria-label="Đóng trò chuyện">
                     <i class="fa-solid fa-times"></i>
                 </button>
             </div>
@@ -116,12 +123,14 @@
                     </div>
                 @endif
 
-                <div style="display: flex; flex-direction: column-reverse; width: 100%;">
+                <div class="chat-messages-content" style="display: flex; flex-direction: column-reverse; width: 100%;">
                     @foreach ($chatMessages as $msg)
                         @php
                             $isCurrentUser = (is_array($msg) ? $msg['sender_id'] : $msg->sender_id) == auth()->id();
                             $message = is_array($msg) ? $msg['message'] : $msg->message;
                             $type = is_array($msg) ? $msg['type'] : $msg->type;
+                            $kind = is_array($msg) ? ($msg['kind'] ?? $type) : ($msg->kind ?: $type);
+                            $isReference = str_ends_with($kind, '_reference');
                             $imagePath = is_array($msg) ? $msg['image_path'] : $msg->image_path;
                             $createdAt = is_array($msg) ? $msg['created_at'] : $msg->created_at;
                             $messageId = is_array($msg) ? $msg['id'] : $msg->id;
@@ -129,23 +138,43 @@
                             $senderName = is_array($msg)
                                 ? ($msg['sender']['full_name'] ?? 'User')
                                 : ($msg->sender->full_name ?? 'User');
+                            $messageDate = \Carbon\Carbon::parse($createdAt)->setTimezone('Asia/Ho_Chi_Minh');
+                            $nextMessage = $chatMessages->get($loop->index + 1);
+                            $nextCreatedAt = $nextMessage
+                                ? (is_array($nextMessage) ? $nextMessage['created_at'] : $nextMessage->created_at)
+                                : null;
+                            $showDateSeparator = !$nextCreatedAt
+                                || !$messageDate->isSameDay(\Carbon\Carbon::parse($nextCreatedAt)->setTimezone('Asia/Ho_Chi_Minh'));
                         @endphp
 
                         @if($isCurrentUser)
                             <!-- Tin nhắn của user -->
-                            <div class="d-flex justify-content-end mb-3"
+                            <div class="d-flex justify-content-end mb-3 chat-message-row {{ $isReference ? 'has-structured-message' : '' }}"
                                 wire:key="msg-{{ is_array($msg) ? $msg['id'] : $msg->id }}" style="min-width: 0;">
-                                <div class="d-flex align-items-end" style="max-width: 90%; min-width: 0;">
-                                    <div class="me-2"
-                                        style="display: flex; flex-direction: column; align-items: flex-end; min-width: 0; max-width: 100%;">
-                                        <div class="message-bubble text-start" style="background: linear-gradient(135deg, #000000 0%, #000000 100%); color: white; font-size: 13px; line-height: 1.4; word-wrap: break-word; overflow-wrap: break-word; word-break: break-word; white-space: pre-line; display: inline-block; padding: 6px 12px; margin: 0; {{ $type === 'text' ? 'width: fit-content; max-width: 100%;' : 'width: 200px; max-width: 200px;' }} {{ $type === 'text' ? 'border-radius: 16px;' : 'border-radius: 15px;' }}">@if($type === 'image')<img src="{{ Storage::disk('public')->url($imagePath) }}" alt="Sent image"
-                                                class="img-fluid rounded"
-                                                style="width: 100%; max-width: 200px; max-height: 200px; cursor: pointer;"
-                                            onclick="openImageModal(this.src)">@else{{ trim($message) }}
-                                                @endif </div>
+                                <div class="d-flex align-items-end chat-message-track {{ $isReference ? 'has-structured-message' : '' }}">
+                                    <div class="me-2 chat-message-stack chat-message-stack--sent {{ $isReference ? 'chat-message-stack--structured' : '' }}">
+                                        @if($isReference)
+                                            <div class="chat-structured-message">
+                                                <x-chat.reference-card :message="$msg" audience="user" />
+                                            </div>
+                                        @elseif($type === 'image' && $imagePath)
+                                            <div class="chat-image-message-block chat-image-message-block--sent">
+                                                <button type="button" class="chat-image-message" onclick="openImageModal(this.querySelector('img').src)" aria-label="Xem ảnh đã gửi">
+                                                    <span class="chat-image-loading" aria-hidden="true"><i class="fas fa-circle-notch fa-spin"></i></span>
+                                                    <img src="{{ Storage::disk('public')->url($imagePath) }}" alt="Ảnh đã gửi"
+                                                        loading="lazy" decoding="async">
+                                                    <span class="chat-image-error"><i class="fas fa-image"></i> Không thể tải ảnh</span>
+                                                </button>
+                                                @if(trim((string) $message) !== '')
+                                                    <div class="message-bubble chat-image-caption text-start">{{ trim($message) }}</div>
+                                                @endif
+                                            </div>
+                                        @else
+                                            <div class="message-bubble text-start" style="display: inline-block; width: fit-content; max-width: 100%; margin: 0; border-radius: 16px;">{{ trim($message) }}</div>
+                                        @endif
                                         <div class="text-end mt-1 d-flex align-items-center justify-content-end gap-1"
                                             style="font-size: 10px; color: #6c757d;">
-                                            <span>{{ \Carbon\Carbon::parse($createdAt)->setTimezone('Asia/Ho_Chi_Minh')->format('d/m/Y H:i') }}</span>
+                                            <span>{{ \Carbon\Carbon::parse($createdAt)->setTimezone('Asia/Ho_Chi_Minh')->format('H:i') }}</span>
                                             <span data-message-id="{{ $messageId }}"
                                                 data-seen-status="{{ $isRead ? 'true' : 'false' }}">
                                                 @if($isRead)
@@ -164,23 +193,43 @@
                             </div>
                         @else
                             <!-- Tin nhắn của support -->
-                            <div class="d-flex justify-content-start mb-3"
+                            <div class="d-flex justify-content-start mb-3 chat-message-row {{ $isReference ? 'has-structured-message' : '' }}"
                                 wire:key="msg-{{ is_array($msg) ? $msg['id'] : $msg->id }}" style="min-width: 0;">
-                                <div class="d-flex align-items-end" style="max-width: 90%; min-width: 0;">
+                                <div class="d-flex align-items-end chat-message-track {{ $isReference ? 'has-structured-message' : '' }}">
                                     <img src="https://ui-avatars.com/api/?name=Support&background=28a745&color=ffffff&size=28&rounded=true&bold=true"
                                         alt="Support" class="rounded-circle flex-shrink-0" width="28" height="28">
-                                    <div class="ms-2"
-                                        style="display: flex; flex-direction: column; align-items: flex-start; min-width: 0; max-width: 100%;">
-                                        <div class="message-bubble rounded-4 position-relative member-message text-start"
-                                            style="transition: all 0.2s ease; border: 1px solid #e9ecef; display: inline-block; background: white; font-size: 13px; line-height: 1.4; padding: 6px 12px; margin: 0; {{ $type === 'text' ? 'width: fit-content; max-width: 100%;' : 'width: 200px; max-width: 200px;' }} word-wrap: break-word; overflow-wrap: break-word; word-break: break-word; white-space: pre-line; color:black;">@if($type === 'image')<img src="{{ Storage::disk('public')->url($imagePath) }}" alt="Received image"
-                                                class="img-fluid rounded"
-                                                style="width: 100%; max-width: 200px; max-height: 200px; cursor: pointer;"
-                                            onclick="openImageModal(this.src)">@else{{ trim($message) }}@endif</div>
+                                    <div class="ms-2 chat-message-stack chat-message-stack--received {{ $isReference ? 'chat-message-stack--structured' : '' }}">
+                                        @if($isReference)
+                                            <div class="chat-structured-message">
+                                                <x-chat.reference-card :message="$msg" audience="user" />
+                                            </div>
+                                        @elseif($type === 'image' && $imagePath)
+                                            <div class="chat-image-message-block chat-image-message-block--received">
+                                                <button type="button" class="chat-image-message" onclick="openImageModal(this.querySelector('img').src)" aria-label="Xem ảnh hỗ trợ gửi">
+                                                    <span class="chat-image-loading" aria-hidden="true"><i class="fas fa-circle-notch fa-spin"></i></span>
+                                                    <img src="{{ Storage::disk('public')->url($imagePath) }}" alt="Ảnh hỗ trợ gửi"
+                                                        loading="lazy" decoding="async">
+                                                    <span class="chat-image-error"><i class="fas fa-image"></i> Không thể tải ảnh</span>
+                                                </button>
+                                                @if(trim((string) $message) !== '')
+                                                    <div class="message-bubble chat-image-caption member-message text-start">{{ trim($message) }}</div>
+                                                @endif
+                                            </div>
+                                        @else
+                                            <div class="message-bubble rounded-4 position-relative member-message text-start"
+                                                style="transition: all 0.2s ease; display: inline-block; width: fit-content; max-width: 100%; margin: 0;">{{ trim($message) }}</div>
+                                        @endif
                                         <div class="mt-1 ps-2" style="font-size: 10px; color: #6c757d;text-align:left;">
-                                            {{__('home.HoTro') . \Carbon\Carbon::parse($createdAt)->setTimezone('Asia/Ho_Chi_Minh')->format('d/m/Y H:i') }}
+                                            {{ __('home.HoTro') }} · {{ \Carbon\Carbon::parse($createdAt)->setTimezone('Asia/Ho_Chi_Minh')->format('H:i') }}
                                         </div>
                                     </div>
                                 </div>
+                            </div>
+                        @endif
+
+                        @if($showDateSeparator)
+                            <div class="chat-date-separator" aria-label="{{ $messageDate->format('d/m/Y') }}">
+                                <span>{{ $messageDate->locale(app()->getLocale())->translatedFormat('d M Y') }}</span>
                             </div>
                         @endif
                     @endforeach
@@ -281,10 +330,47 @@
             @endif
 
             <!-- Form nhập với design hiện đại -->
+            @if($showReferencePicker)
+                <section class="chat-reference-picker" aria-label="Chọn nội dung liên quan">
+                    <header class="chat-reference-picker-head">
+                        <div><small>Đính kèm ngữ cảnh</small><strong>Chọn nội dung cần hỗ trợ</strong></div>
+                        <button type="button" wire:click="closeReferencePicker" aria-label="Đóng"><i class="fas fa-xmark"></i></button>
+                    </header>
+                    <div class="chat-reference-tabs" role="tablist">
+                        <button type="button" wire:click="selectReferenceTab('order')" class="{{ $referenceTab === 'order' ? 'active' : '' }}"><i class="fas fa-box"></i> Đơn hàng</button>
+                        <button type="button" wire:click="selectReferenceTab('transaction')" class="{{ $referenceTab === 'transaction' ? 'active' : '' }}"><i class="fas fa-receipt"></i> Giao dịch</button>
+                    </div>
+                    <div class="chat-reference-options">
+                        @forelse($this->referenceItems as $item)
+                            @if($referenceTab === 'order')
+                                <button type="button" class="chat-reference-option" wire:click="sendOrderReference({{ $item['id'] }})" wire:loading.attr="disabled">
+                                    <span class="reference-option-icon"><i class="fas fa-box"></i></span>
+                                    <span class="reference-option-copy"><strong>{{ $item['code'] }}</strong><small>{{ $item['name'] ?: 'Đơn hàng' }} · {{ \Carbon\Carbon::parse($item['created_at'])->format('d/m/Y') }}</small></span>
+                                    @if($item['amount'] !== null)<b>{{ format_money($item['amount'], 5) }}$</b>@endif
+                                    <i class="fas fa-arrow-right"></i>
+                                </button>
+                            @else
+                                <button type="button" class="chat-reference-option" wire:click="sendTransactionReference('{{ $item['source'] }}', {{ $item['id'] }})" wire:loading.attr="disabled">
+                                    <span class="reference-option-icon"><i class="fas fa-receipt"></i></span>
+                                    <span class="reference-option-copy"><strong>{{ ['deposit'=>'Nạp tiền','withdraw'=>'Rút tiền','order'=>'Thanh toán đơn','profit'=>'Hoa hồng','penalty'=>'Tiền phạt'][$item['type']] ?? $item['type'] }}</strong><small>{{ strtoupper($item['source']) }}-{{ $item['id'] }} · {{ \Carbon\Carbon::parse($item['created_at'])->format('d/m/Y H:i') }}</small></span>
+                                    <b>{{ format_money($item['amount'], 5) }}$</b>
+                                    <i class="fas fa-arrow-right"></i>
+                                </button>
+                            @endif
+                        @empty
+                            <div class="chat-reference-empty"><i class="fas fa-inbox"></i><span>Chưa có dữ liệu để đính kèm.</span></div>
+                        @endforelse
+                    </div>
+                </section>
+            @endif
+
             <form class="p-3" style="background: white; border-top: 1px solid #e9ecef;" x-data="{ 
                   formSending: false,
-                  hasImage: {{ $selectedImage ? 'true' : 'false' }}
-              }" x-on:submit.prevent="
+                  hasImage: {{ $selectedImage ? 'true' : 'false' }},
+                  attachmentMenuOpen: false
+              }"
+              x-on:keydown.escape.window="attachmentMenuOpen = false"
+              x-on:submit.prevent="
                   if (!formSending) {
                       const input = $el.querySelector('#chat-input-field');
                       const val = input ? input.value.trim() : '';
@@ -326,22 +412,57 @@
                     </div>
                 @endif
 
-                <div class="d-flex align-items-center"
+                <div class="d-flex align-items-center chat-composer-main"
                     style="background: #f8f9fa; border-radius: 25px; padding: 5px 15px; border: 1px solid #e9ecef;">
-                    <!-- Nút chọn ảnh: Hiện spinner khi đang upload ảnh -->
-                    <div wire:loading wire:target="selectedImage"
-                        class="me-2 spinner-border spinner-border-sm text-primary" style="width: 18px; height: 18px; flex-shrink: 0;">
+                    <div class="chat-attachment-anchor" @click.outside="attachmentMenuOpen = false">
+                        <button type="button"
+                            class="chat-attachment-toggle"
+                            :class="{ 'is-open': attachmentMenuOpen }"
+                            @click="attachmentMenuOpen = !attachmentMenuOpen"
+                            :aria-expanded="attachmentMenuOpen.toString()"
+                            aria-haspopup="menu"
+                            aria-label="Mở menu đính kèm">
+                            <i class="fas fa-plus" wire:loading.remove wire:target="selectedImage" aria-hidden="true"></i>
+                            <i class="fas fa-spinner fa-spin" wire:loading wire:target="selectedImage" aria-hidden="true"></i>
+                        </button>
+
+                        <div class="chat-attachment-menu"
+                            x-cloak
+                            x-show="attachmentMenuOpen"
+                            x-transition:enter="attachment-menu-enter"
+                            x-transition:enter-start="attachment-menu-enter-start"
+                            x-transition:enter-end="attachment-menu-enter-end"
+                            x-transition:leave="attachment-menu-leave"
+                            x-transition:leave-start="attachment-menu-leave-start"
+                            x-transition:leave-end="attachment-menu-leave-end"
+                            role="menu"
+                            aria-label="Chọn nội dung đính kèm">
+                            <label for="image-upload" class="chat-attachment-action" role="menuitem" tabindex="0"
+                                @click="attachmentMenuOpen = false"
+                                @keydown.enter.prevent="$el.click()"
+                                @keydown.space.prevent="$el.click()">
+                                <span class="chat-attachment-action-icon is-image"><i class="fas fa-image" aria-hidden="true"></i></span>
+                                <span class="chat-attachment-action-copy"><strong>Ảnh</strong><small>Chọn từ thiết bị</small></span>
+                            </label>
+                            <button type="button" class="chat-attachment-action" role="menuitem"
+                                wire:click="openReferencePicker('order')" @click="attachmentMenuOpen = false">
+                                <span class="chat-attachment-action-icon is-order"><i class="fas fa-box" aria-hidden="true"></i></span>
+                                <span class="chat-attachment-action-copy"><strong>Đơn hàng</strong><small>Đính kèm đơn liên quan</small></span>
+                            </button>
+                            <button type="button" class="chat-attachment-action" role="menuitem"
+                                wire:click="openReferencePicker('transaction')" @click="attachmentMenuOpen = false">
+                                <span class="chat-attachment-action-icon is-transaction"><i class="fas fa-receipt" aria-hidden="true"></i></span>
+                                <span class="chat-attachment-action-copy"><strong>Giao dịch</strong><small>Đính kèm giao dịch</small></span>
+                            </button>
+                        </div>
+
+                        <input type="file" wire:model="selectedImage" id="image-upload" accept="image/*"
+                            style="display: none;" @change="hasImage = $event.target.files.length > 0; attachmentMenuOpen = false">
                     </div>
-                    <label for="image-upload" class="btn btn-link p-0 me-2 d-flex align-items-center justify-content-center" wire:loading.remove
-                        wire:target="selectedImage"
-                        style="color: #000000; font-size: 20px; cursor: pointer; flex-shrink: 0; width: 30px; height: 30px;">
-                        <i class="fa fa-image"></i>
-                    </label>
-                    <input type="file" wire:model="selectedImage" id="image-upload" accept="image/*"
-                        style="display: none;" @change="hasImage = $event.target.files.length > 0">
 
                     <textarea wire:model="newMessage" class="form-control border-0 bg-transparent flex-grow-1"
                         placeholder="{{__('home.NhapTinNhanCuaBan')}}" id="chat-input-field" autocomplete="off" rows="1"
+                        title="Enter để gửi · Shift+Enter để xuống dòng"
                         style="font-size: 13px; resize: none; overflow-y: hidden; max-height: 100px; padding: 8px 0; line-height: 1.5; box-shadow: none;"
                         x-on:input="
                         $el.style.height = 'auto';
@@ -363,19 +484,13 @@
                     "></textarea>
 
                     <button type="submit" class="btn btn-link p-0 ms-2 d-flex align-items-center justify-content-center"
+                        aria-label="Gửi tin nhắn"
                         style="color: #000000; font-size: 20px; flex-shrink: 0; width: 30px; height: 30px; text-decoration: none;"
                         onmouseover="this.style.textDecoration='none'" onfocus="this.style.textDecoration='none'"
                         x-bind:disabled="formSending">
                         <i class="fa fa-paper-plane" x-show="!formSending" style="text-decoration: none;"></i>
                         <i class="fa fa-spinner fa-spin" x-show="formSending" style="display: none; text-decoration: none;"></i>
                     </button>
-                </div>
-
-                <!-- Hướng dẫn phím tắt -->
-                <div class="d-flex justify-content-between align-items-center mt-2">
-                    <div style="font-size: 11px; color: #6c757d;">
-                        Enter: Gửi tin nhắn | Shift+Enter: Xuống dòng
-                    </div>
                 </div>
 
                 @error('newMessage')
@@ -392,16 +507,50 @@
             </form>
         </div> <!-- End floating-chat-window -->
 
-        <!-- Modal để xem ảnh phóng to -->
-        <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel">
-            <div class="modal-dialog modal-lg modal-dialog-centered">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="imageModalLabel">Xem ảnh</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <!-- Image viewer -->
+        <div class="chat-image-viewer-overlay user-chat-image-viewer" id="imageModal" role="dialog" aria-modal="true" aria-labelledby="imageModalLabel" aria-hidden="true" wire:ignore>
+            <div class="chat-image-viewer-shell">
+                <header class="chat-image-viewer-header">
+                    <div class="chat-image-viewer-title">
+                        <strong id="imageModalLabel">Xem ảnh</strong>
+                        <small>Ảnh trong cuộc trò chuyện</small>
                     </div>
-                    <div class="modal-body text-center">
-                        <img id="modalImage" src="" alt="Full size image" class="img-fluid">
+                    <div class="chat-image-viewer-header-actions">
+                        <span class="chat-image-viewer-counter" id="userImageViewerCounter" hidden></span>
+                        <a class="chat-image-viewer-action is-secondary is-open-original" id="userImageViewerOpenOriginal" href="#" target="_blank" rel="noopener" aria-label="Mở ảnh gốc" title="Mở ảnh gốc">
+                            <i class="fas fa-arrow-up-right-from-square" aria-hidden="true"></i>
+                        </a>
+                        <a class="chat-image-viewer-action is-secondary" id="userImageViewerDownload" href="#" download aria-label="Tải ảnh" title="Tải ảnh">
+                            <i class="fas fa-download" aria-hidden="true"></i>
+                        </a>
+                        <button type="button" class="chat-image-viewer-action is-close" id="userImageViewerClose" aria-label="Đóng viewer" title="Đóng">
+                            <i class="fas fa-xmark" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                </header>
+
+                <div class="chat-image-viewer-stage is-loading" id="userImageViewerStage">
+                    <span class="chat-image-viewer-loading" aria-hidden="true"><i class="fas fa-circle-notch fa-spin"></i></span>
+                    <div class="chat-image-viewer-error" role="status">
+                        <i class="fas fa-image" aria-hidden="true"></i>
+                        <strong>Không thể tải ảnh</strong>
+                        <small>Ảnh có thể đã được di chuyển hoặc không còn khả dụng.</small>
+                    </div>
+                    <button type="button" class="chat-image-viewer-nav is-prev" id="userImageViewerPrev" aria-label="Ảnh trước" hidden>
+                        <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                    </button>
+                    <img id="modalImage" src="" alt="Ảnh trong cuộc trò chuyện" class="chat-image-viewer-image" draggable="false">
+                    <button type="button" class="chat-image-viewer-nav is-next" id="userImageViewerNext" aria-label="Ảnh tiếp theo" hidden>
+                        <i class="fas fa-chevron-right" aria-hidden="true"></i>
+                    </button>
+                </div>
+
+                <div class="chat-image-viewer-toolbar">
+                    <div class="chat-image-viewer-controls">
+                        <button type="button" class="chat-image-viewer-control" id="userImageViewerZoomOut" aria-label="Thu nhỏ" title="Thu nhỏ"><i class="fas fa-minus"></i></button>
+                        <span class="chat-image-viewer-scale" id="userImageViewerScale">100%</span>
+                        <button type="button" class="chat-image-viewer-control" id="userImageViewerZoomIn" aria-label="Phóng to" title="Phóng to"><i class="fas fa-plus"></i></button>
+                        <button type="button" class="chat-image-viewer-control" id="userImageViewerReset" aria-label="Fit to screen" title="Fit to screen"><i class="fas fa-expand"></i></button>
                     </div>
                 </div>
             </div>
@@ -411,30 +560,388 @@
 
 
 <script>
-    // Function to open image modal
+    const userImageViewer = (() => {
+        let images = [];
+        let currentIndex = 0;
+        let scale = 1;
+        let panX = 0;
+        let panY = 0;
+        let isDragging = false;
+        let dragStartX = 0;
+        let dragStartY = 0;
+        let previousBodyOverflow = '';
+        let closeTimer = null;
+
+        const getElements = () => ({
+            modal: document.getElementById('imageModal'),
+            stage: document.getElementById('userImageViewerStage'),
+            image: document.getElementById('modalImage'),
+            counter: document.getElementById('userImageViewerCounter'),
+            prev: document.getElementById('userImageViewerPrev'),
+            next: document.getElementById('userImageViewerNext'),
+            zoomOut: document.getElementById('userImageViewerZoomOut'),
+            zoomIn: document.getElementById('userImageViewerZoomIn'),
+            reset: document.getElementById('userImageViewerReset'),
+            close: document.getElementById('userImageViewerClose'),
+            scaleLabel: document.getElementById('userImageViewerScale'),
+            openOriginal: document.getElementById('userImageViewerOpenOriginal'),
+            download: document.getElementById('userImageViewerDownload'),
+        });
+
+        function collectImages() {
+            const seen = new Set();
+            return Array.from(document.querySelectorAll('#chat-messages-container .chat-image-message img'))
+                .map(img => img.currentSrc || img.src)
+                .filter(src => src && !seen.has(src) && seen.add(src));
+        }
+
+        function updateTransform() {
+            const { image, scaleLabel, zoomOut, zoomIn } = getElements();
+            if (!image) return;
+            image.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+            image.style.cursor = scale > 1 ? (isDragging ? 'grabbing' : 'grab') : 'zoom-in';
+            if (scaleLabel) scaleLabel.textContent = `${Math.round(scale * 100)}%`;
+            if (zoomOut) zoomOut.disabled = scale <= 1;
+            if (zoomIn) zoomIn.disabled = scale >= 4;
+        }
+
+        function fitToScreen() {
+            const { stage, image } = getElements();
+            if (!stage || !image?.naturalWidth || !image?.naturalHeight) return;
+
+            const stageStyle = window.getComputedStyle(stage);
+            const horizontalPadding = parseFloat(stageStyle.paddingLeft || 0) + parseFloat(stageStyle.paddingRight || 0);
+            const verticalPadding = parseFloat(stageStyle.paddingTop || 0) + parseFloat(stageStyle.paddingBottom || 0);
+            const availableWidth = Math.max(1, stage.clientWidth - horizontalPadding);
+            const availableHeight = Math.max(1, stage.clientHeight - verticalPadding);
+            const fitRatio = Math.min(
+                1,
+                availableWidth / image.naturalWidth,
+                availableHeight / image.naturalHeight
+            );
+
+            image.style.width = `${image.naturalWidth * fitRatio}px`;
+            image.style.height = `${image.naturalHeight * fitRatio}px`;
+            scale = 1;
+            panX = 0;
+            panY = 0;
+            isDragging = false;
+            updateTransform();
+        }
+
+        function resetZoom() {
+            fitToScreen();
+        }
+
+        function render(index) {
+            const els = getElements();
+            if (!els.image || !images.length) return;
+
+            currentIndex = (index + images.length) % images.length;
+            const src = images[currentIndex];
+            scale = 1;
+            panX = 0;
+            panY = 0;
+            isDragging = false;
+            updateTransform();
+            els.stage?.classList.remove('is-ready', 'is-error');
+            els.stage?.classList.add('is-loading');
+            els.image.src = src;
+            els.openOriginal.href = src;
+            els.download.href = src;
+            els.counter.hidden = images.length <= 1;
+            els.counter.textContent = `${currentIndex + 1} / ${images.length}`;
+            els.prev.hidden = images.length <= 1;
+            els.next.hidden = images.length <= 1;
+        }
+
+        function open(imageSrc) {
+            const els = getElements();
+            if (!els.modal || !els.image) return;
+            if (closeTimer) {
+                window.clearTimeout(closeTimer);
+                closeTimer = null;
+            }
+            images = collectImages();
+            if (!images.includes(imageSrc)) images.push(imageSrc);
+            currentIndex = Math.max(0, images.indexOf(imageSrc));
+            if (!document.body.classList.contains('chat-image-viewer-open')) {
+                previousBodyOverflow = document.body.style.overflow;
+            }
+            els.modal.classList.remove('is-closing');
+            els.modal.classList.add('active');
+            els.modal.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('chat-image-viewer-open');
+            document.body.style.overflow = 'hidden';
+            render(currentIndex);
+            els.close?.focus({ preventScroll: true });
+        }
+
+        function close() {
+            const els = getElements();
+            if (!els.modal?.classList.contains('active')) return;
+
+            els.modal.classList.remove('active');
+            els.modal.classList.add('is-closing');
+            closeTimer = window.setTimeout(() => {
+                els.modal.classList.remove('is-closing');
+                els.modal.setAttribute('aria-hidden', 'true');
+                document.body.classList.remove('chat-image-viewer-open');
+                document.body.style.overflow = previousBodyOverflow;
+                scale = 1;
+                panX = 0;
+                panY = 0;
+                isDragging = false;
+                updateTransform();
+                els.image.removeAttribute('src');
+                els.image.style.removeProperty('width');
+                els.image.style.removeProperty('height');
+                els.stage.classList.remove('is-ready', 'is-error', 'is-loading');
+                images = [];
+                closeTimer = null;
+            }, 160);
+        }
+
+        function shift(direction) {
+            if (images.length > 1) render(currentIndex + direction);
+        }
+
+        function setScale(nextScale) {
+            scale = Math.min(4, Math.max(1, nextScale));
+            if (scale === 1) {
+                panX = 0;
+                panY = 0;
+            }
+            updateTransform();
+        }
+
+        function init() {
+            const els = getElements();
+            if (!els.modal || els.modal.dataset.viewerInitialized === 'true') return;
+            els.modal.dataset.viewerInitialized = 'true';
+
+            els.image.addEventListener('load', () => {
+                window.requestAnimationFrame(() => {
+                    fitToScreen();
+                    els.stage.classList.remove('is-loading', 'is-error');
+                    els.stage.classList.add('is-ready');
+                });
+            });
+            els.image.addEventListener('error', () => {
+                els.stage.classList.remove('is-loading', 'is-ready');
+                els.stage.classList.add('is-error');
+            });
+            els.image.addEventListener('dblclick', resetZoom);
+            els.image.addEventListener('pointerdown', (event) => {
+                if (scale <= 1) return;
+                isDragging = true;
+                dragStartX = event.clientX - panX;
+                dragStartY = event.clientY - panY;
+                els.image.setPointerCapture?.(event.pointerId);
+                updateTransform();
+            });
+            els.image.addEventListener('pointermove', (event) => {
+                if (!isDragging) return;
+                panX = event.clientX - dragStartX;
+                panY = event.clientY - dragStartY;
+                updateTransform();
+            });
+            const stopDragging = () => {
+                isDragging = false;
+                updateTransform();
+            };
+            els.image.addEventListener('pointerup', stopDragging);
+            els.image.addEventListener('pointercancel', stopDragging);
+            els.prev.addEventListener('click', () => shift(-1));
+            els.next.addEventListener('click', () => shift(1));
+            els.close.addEventListener('click', close);
+            els.zoomOut.addEventListener('click', () => setScale(scale - 0.25));
+            els.zoomIn.addEventListener('click', () => setScale(scale + 0.25));
+            els.reset.addEventListener('click', resetZoom);
+            els.stage.addEventListener('wheel', (event) => {
+                if (!els.modal.classList.contains('active')) return;
+                event.preventDefault();
+                setScale(scale + (event.deltaY < 0 ? 0.2 : -0.2));
+            }, { passive: false });
+
+            window.addEventListener('resize', () => {
+                if (els.modal.classList.contains('active')) fitToScreen();
+            });
+
+            els.modal.addEventListener('click', (event) => {
+                if (event.target === els.modal) close();
+            });
+
+            if (!window.__userChatImageViewerKeyboardBound) {
+                window.__userChatImageViewerKeyboardBound = true;
+                document.addEventListener('keydown', (event) => {
+                    const currentModal = document.getElementById('imageModal');
+                    if (!currentModal?.classList.contains('active')) return;
+                    if (event.key === 'Escape') close();
+                    if (event.key === 'ArrowLeft') shift(-1);
+                    if (event.key === 'ArrowRight') shift(1);
+                });
+            }
+        }
+
+        return { init, open };
+    })();
+
     function openImageModal(imageSrc) {
-        document.getElementById('modalImage').src = imageSrc;
-        var imageModal = new bootstrap.Modal(document.getElementById('imageModal'));
-        imageModal.show();
+        userImageViewer.init();
+        userImageViewer.open(imageSrc);
     }
 
     document.addEventListener('livewire:initialized', () => {
         let conversationId = @json($conversation->id ?? null);
         let currentUserId = @json(auth()->id());
         let isLoadingMore = false;
-        let previousScrollHeight = 0;
-        let previousScrollTop = 0;
+        let boundScrollContainer = null;
+        let observedContent = null;
+        let resizeObserver = null;
+        let scheduledScrollFrame = null;
+        let isNearBottom = true;
+        let isInitialOpenFollow = false;
+        const boundThumbnailImages = new WeakSet();
+        const nearBottomThreshold = 72;
 
-        function scrollToBottom(behavior = 'smooth') {
-            const container = document.getElementById('chat-messages-container');
-            if (container) {
-                setTimeout(() => {
-                    container.scrollTo({
-                        top: container.scrollHeight,
-                        behavior: behavior
-                    });
-                }, 100);
+        function getMessagesContainer() {
+            return document.getElementById('chat-messages-container');
+        }
+
+        function isContainerNearLatest(container) {
+            if (!container) return true;
+
+            // This conversation uses column-reverse, so the visual latest edge is scrollTop = 0.
+            // Browsers may report negative values while scrolling toward older messages.
+            return Math.abs(container.scrollTop) <= nearBottomThreshold;
+        }
+
+        function setThumbnailState(image, state) {
+            const frame = image.closest('.chat-image-message');
+            if (!frame) return;
+
+            frame.classList.remove('is-loaded', 'is-error');
+            if (state === 'loaded') frame.classList.add('is-loaded');
+            if (state === 'error') frame.classList.add('is-error');
+        }
+
+        function scheduleLatestScroll({ force = false, behavior = 'auto' } = {}) {
+            if (scheduledScrollFrame !== null) {
+                window.cancelAnimationFrame(scheduledScrollFrame);
             }
+
+            scheduledScrollFrame = window.requestAnimationFrame(() => {
+                scheduledScrollFrame = null;
+                const container = getMessagesContainer();
+                if (!container) return;
+
+                if (force || isInitialOpenFollow || isNearBottom) {
+                    container.scrollTo({ top: 0, behavior });
+                    isNearBottom = true;
+                }
+            });
+        }
+
+        function syncThumbnailImage(image) {
+            if (!boundThumbnailImages.has(image)) {
+                boundThumbnailImages.add(image);
+
+                image.addEventListener('load', () => {
+                    setThumbnailState(image, 'loaded');
+                    scheduleLatestScroll();
+                });
+
+                image.addEventListener('error', () => {
+                    setThumbnailState(image, 'error');
+                    scheduleLatestScroll();
+                });
+            }
+
+            if (!image.complete) {
+                setThumbnailState(image, 'loading');
+                return;
+            }
+
+            setThumbnailState(image, image.naturalWidth > 0 ? 'loaded' : 'error');
+        }
+
+        function syncThumbnailImages(scope = document) {
+            const container = scope?.id === 'chat-messages-container'
+                ? scope
+                : scope?.querySelector?.('#chat-messages-container');
+
+            container?.querySelectorAll('.chat-image-message img').forEach(syncThumbnailImage);
+        }
+
+        function onMessagesScroll() {
+            if (!boundScrollContainer) return;
+
+            isNearBottom = isContainerNearLatest(boundScrollContainer);
+            if (!isNearBottom) {
+                isInitialOpenFollow = false;
+            }
+        }
+
+        function refreshConversationLifecycle() {
+            const container = getMessagesContainer();
+            if (!container) return;
+
+            if (boundScrollContainer !== container) {
+                boundScrollContainer?.removeEventListener('scroll', onMessagesScroll);
+                boundScrollContainer = container;
+                boundScrollContainer.addEventListener('scroll', onMessagesScroll, { passive: true });
+                isNearBottom = isContainerNearLatest(container);
+            }
+
+            const content = container.querySelector('.chat-messages-content');
+            if (observedContent !== content) {
+                resizeObserver?.disconnect();
+                observedContent = content;
+
+                if (content && 'ResizeObserver' in window) {
+                    resizeObserver = new ResizeObserver(() => {
+                        if (isInitialOpenFollow || isNearBottom) {
+                            scheduleLatestScroll();
+                        }
+                    });
+                    resizeObserver.observe(content);
+                }
+            }
+
+            syncThumbnailImages(container);
+        }
+
+        function beginInitialOpenFollow() {
+            isInitialOpenFollow = true;
+            isNearBottom = true;
+            refreshConversationLifecycle();
+            scheduleLatestScroll({ force: true });
+        }
+
+        function followLatestIfAllowed(behavior = 'auto') {
+            refreshConversationLifecycle();
+            scheduleLatestScroll({ behavior });
+        }
+
+        refreshConversationLifecycle();
+
+        if (!window.__userChatLifecycleMorphHookBound) {
+            window.__userChatLifecycleMorphHookBound = true;
+            Livewire.hook('morph.updated', ({ el }) => {
+                const touchesUserChat = el?.id === 'chat-root'
+                    || el?.closest?.('#chat-root')
+                    || el?.querySelector?.('#chat-root');
+
+                if (!touchesUserChat) return;
+
+                window.requestAnimationFrame(() => {
+                    refreshConversationLifecycle();
+                    if (isInitialOpenFollow || isNearBottom) {
+                        scheduleLatestScroll();
+                    }
+                });
+            });
         }
 
         // Hàm load tin nhắn cũ hơn khi bấm nút
@@ -443,8 +950,6 @@
                 const container = document.getElementById('chat-messages-container');
                 if (container) {
                     isLoadingMore = true;
-                    previousScrollHeight = container.scrollHeight;
-                    previousScrollTop = container.scrollTop;
 
                     const root = document.getElementById('chat-root');
                     const component = Livewire.find(root.getAttribute('wire:id'));
@@ -461,16 +966,21 @@
                 input.style.height = 'auto';
                 input.focus();
             }
-            scrollToBottom();
+            followLatestIfAllowed('smooth');
         });
 
         Livewire.on('scroll-to-bottom', () => {
-            scrollToBottom();
+            followLatestIfAllowed('smooth');
+        });
+
+        Livewire.on('conversation-opened', () => {
+            beginInitialOpenFollow();
         });
 
         Livewire.on('messages-loaded', () => {
             // Với column-reverse, trình duyệt tự động neo vị trí scroll khi thêm phần tử vào "phần xa" (visual top)
             isLoadingMore = false;
+            refreshConversationLifecycle();
         });
 
         // Listen for WebSocket messages after the Echo module is ready.
@@ -569,20 +1079,4 @@
         // Không cần event listener nữa - Alpine.js đã xử lý
     });
 
-    // Ensure image modal/backdrop sit above floating chat
-    document.addEventListener('DOMContentLoaded', () => {
-        const modalEl = document.getElementById('imageModal');
-        if (modalEl) {
-            modalEl.addEventListener('shown.bs.modal', () => {
-                document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
-                    backdrop.classList.add('image-modal-backdrop');
-                });
-            });
-            modalEl.addEventListener('hidden.bs.modal', () => {
-                document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
-                    backdrop.classList.remove('image-modal-backdrop');
-                });
-            });
-        }
-    });
 </script>

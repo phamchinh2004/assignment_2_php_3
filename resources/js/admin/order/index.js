@@ -373,10 +373,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 
     // ---------- Bulk action spinner ----------
-    const update_order_rose = document.getElementById("update_order_rose");
-    if (update_order_rose) {
-        update_order_rose.addEventListener("click", () => { spinner.hidden = false; });
-    }
     const add_customer_info = document.getElementById("add_customer_info");
     if (add_customer_info) {
         add_customer_info.addEventListener("click", () => { spinner.hidden = false; });

@@ -2,36 +2,35 @@
 
 namespace App\Http\Middleware;
 
-use App\Models\Manager_setting;
+use App\Services\AuthorizationService;
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 
 class CheckPermission
 {
-    /**
-     * Handle an incoming request.
-     *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
-     */
-    public function handle(Request $request, Closure $next, $permission): Response
+    public function __construct(private AuthorizationService $authorization)
     {
-        if (Auth::user()->role == 'admin') {
+    }
+
+    public function handle(Request $request, Closure $next, ...$arguments): Response
+    {
+        $user = $request->user();
+        $requirement = $this->authorization->permissionRequirement($arguments);
+        $allowed = $requirement['mode'] === AuthorizationService::MODE_ANY
+            ? $this->authorization->canAny($user, $requirement['permissions'])
+            : $this->authorization->canAll($user, $requirement['permissions']);
+
+        if ($allowed) {
             return $next($request);
         }
-        $managerSetting = Manager_setting::where('manager_code', $permission)->first();
-        if (!$managerSetting) {
-            abort(403, 'Chức năng quản lý không tồn tại.');
-        }
-        $userHasPermission = Auth::user()->user_manager_settings()
-            ->where('manager_setting_id', $managerSetting->id)
-            ->where('is_active', 1) // Chỉ lấy những quyền đang active
-            ->exists();
 
-        if (!$userHasPermission) {
-            return redirect()->route('chat-panel')->with(['error' => 'Bạn không có quyền truy cập chức năng này.']);
+        if ($request->expectsJson()) {
+            abort(403, 'Bạn không có quyền thực hiện thao tác này.');
         }
-        return $next($request);
+
+        return redirect()
+            ->route(config('authorization.fallback_route', 'chat-panel'))
+            ->with('error', 'Bạn không có quyền truy cập chức năng này.');
     }
 }

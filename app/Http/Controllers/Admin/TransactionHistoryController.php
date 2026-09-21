@@ -6,10 +6,9 @@ use App\Models\Wallet_balance_history;
 use App\Http\Requests\StoreTransaction_historyRequest;
 use App\Http\Requests\UpdateTransaction_historyRequest;
 use App\Http\Controllers\Controller;
-use App\Models\Manager_setting;
 use App\Models\Transaction_history;
 use App\Models\User;
-use App\Models\User_manager_setting;
+use App\Services\AuthorizationService;
 use Illuminate\Support\Facades\Auth;
 
 class TransactionHistoryController extends Controller
@@ -17,31 +16,28 @@ class TransactionHistoryController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index_withdraw()
+    public function index_withdraw(AuthorizationService $authorization)
     {
         $query = Wallet_balance_history::with('user', 'byUser')
             // ->whereHas('user', function ($q) {
             //     $q->where('clone_account', 0);
             // })
             ->where('type', 'withdraw');
-        if (Auth::user()->role === "staff") {
-            $get_quan_ly_tat_ca_giao_dich_nguoi_dung = Manager_setting::where('manager_code', 'quan_ly_tat_ca_giao_dich_nguoi_dung')->first();
-            if ($get_quan_ly_tat_ca_giao_dich_nguoi_dung) {
-                $get_user_manager_setting_by_user_id = User_manager_setting::where('manager_setting_id', $get_quan_ly_tat_ca_giao_dich_nguoi_dung->id)->where('user_id', Auth::user()->id)->first();
-                if ($get_user_manager_setting_by_user_id) {
-                    if (!$get_user_manager_setting_by_user_id->is_active) {
-                        $query->whereHas('user', function ($q) {
-                            $q->where('referrer_id', Auth::user()->id);
-                        });
-                    }
-                }
-            }
+        $actor = Auth::user();
+        if (
+            $actor->role === User::ROLE_STAFF
+            && !$authorization->can($actor, config('authorization.capabilities.manage_all_user_transactions'))
+        ) {
+            $query->whereHas('user', function ($q) use ($actor) {
+                $q->where('referrer_id', $actor->id);
+            });
         }
         $list_withdraw_transactions = $query->orderByDesc("wallet_balance_histories.id")->get();
         return view('admin.transactions.withdraw', compact('list_withdraw_transactions'));
     }
-    public function confirm_withdraw(Wallet_balance_history $transaction)
+    public function confirm_withdraw(Wallet_balance_history $transaction, AuthorizationService $authorization)
     {
+        $this->authorizeTransactionAccess($transaction, $authorization, 'withdraw');
         $transaction_type = isset($_GET['transaction_type']) && $_GET['transaction_type'] === "true";
         if ($transaction) {
             if ($transaction->status === "completed") {
@@ -58,8 +54,9 @@ class TransactionHistoryController extends Controller
         }
         return back()->with('error', 'Giao dịch không xác định!');
     }
-    public function cancel_withdraw(Wallet_balance_history $transaction)
+    public function cancel_withdraw(Wallet_balance_history $transaction, AuthorizationService $authorization)
     {
+        $this->authorizeTransactionAccess($transaction, $authorization, 'withdraw');
         if ($transaction) {
             if ($transaction->status === "completed") {
                 return back()->with('error', value: 'Giao dịch đã được xác nhận!');
@@ -80,29 +77,26 @@ class TransactionHistoryController extends Controller
         }
         return back()->with('error', 'Giao dịch không xác định!');
     }
-    public function index_deposit()
+    public function index_deposit(AuthorizationService $authorization)
     {
         $query = Wallet_balance_history::with('user', 'byUser')
             // ->whereHas('user', function ($q) {
             //     $q->where('clone_account', 0);
             // })
             ->where('type', 'deposit');
-        if (Auth::user()->role === "staff") {
-            $get_quan_ly_tat_ca_giao_dich_nguoi_dung = Manager_setting::where('manager_code', 'quan_ly_tat_ca_giao_dich_nguoi_dung')->first();
-            if ($get_quan_ly_tat_ca_giao_dich_nguoi_dung) {
-                $get_user_manager_setting_by_user_id = User_manager_setting::where('manager_setting_id', $get_quan_ly_tat_ca_giao_dich_nguoi_dung->id)->where('user_id', Auth::user()->id)->first();
-                if ($get_user_manager_setting_by_user_id) {
-                    if (!$get_user_manager_setting_by_user_id->is_active) {
-                        $query->where('by_user_id', Auth::user()->id);
-                    }
-                }
-            }
+        $actor = Auth::user();
+        if (
+            $actor->role === User::ROLE_STAFF
+            && !$authorization->can($actor, config('authorization.capabilities.manage_all_user_transactions'))
+        ) {
+            $query->where('by_user_id', $actor->id);
         }
         $list_deposit_transactions = $query->orderByDesc('id')->get();
         return view('admin.transactions.deposit', compact('list_deposit_transactions'));
     }
-    public function destroy_deposit(Wallet_balance_history $transaction)
+    public function destroy_deposit(Wallet_balance_history $transaction, AuthorizationService $authorization)
     {
+        $this->authorizeTransactionAccess($transaction, $authorization, 'deposit');
         if (!$transaction) {
             return back()->with('error', 'Giao dịch không xác định!');
         }
@@ -122,8 +116,9 @@ class TransactionHistoryController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function change_withdraw_transaction_type(Wallet_balance_history $transaction)
+    public function change_withdraw_transaction_type(Wallet_balance_history $transaction, AuthorizationService $authorization)
     {
+        $this->authorizeTransactionAccess($transaction, $authorization, 'withdraw');
         if ($transaction) {
             if ($transaction->transaction_type === "normal") {
                 $transaction->transaction_type = "virtual_withdraw";
@@ -136,8 +131,9 @@ class TransactionHistoryController extends Controller
             return back()->with('success', 'Giao dịch không xác định!');
         }
     }
-    public function change_deposit_transaction_type(Wallet_balance_history $transaction)
+    public function change_deposit_transaction_type(Wallet_balance_history $transaction, AuthorizationService $authorization)
     {
+        $this->authorizeTransactionAccess($transaction, $authorization, 'deposit');
         if ($transaction) {
             if ($transaction->transaction_type === "normal") {
                 $transaction->transaction_type = "bonus";
@@ -149,5 +145,33 @@ class TransactionHistoryController extends Controller
         } else {
             return back()->with('success', 'Giao dịch không xác định!');
         }
+    }
+
+    private function authorizeTransactionAccess(
+        Wallet_balance_history $transaction,
+        AuthorizationService $authorization,
+        string $expectedType
+    ): void {
+        abort_unless($transaction->type === $expectedType, 404);
+
+        $actor = Auth::user();
+
+        if (
+            $actor->role !== User::ROLE_STAFF
+            || $authorization->can($actor, config('authorization.capabilities.manage_all_user_transactions'))
+        ) {
+            return;
+        }
+
+        if ($expectedType === 'deposit') {
+            abort_unless((int) $transaction->by_user_id === (int) $actor->id, 403);
+            return;
+        }
+
+        $transaction->loadMissing('user');
+        abort_unless(
+            $transaction->user && (int) $transaction->user->referrer_id === (int) $actor->id,
+            403
+        );
     }
 }

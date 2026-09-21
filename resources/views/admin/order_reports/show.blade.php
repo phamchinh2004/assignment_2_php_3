@@ -435,7 +435,7 @@
                                 <div class="info-row" style="border-bottom: none;">
                                     <div class="info-label">Loại đơn:</div>
                                     <div class="info-value" style="font-weight: 600; color: #fd7e14;">
-                                        <i class="fas fa-star mr-1"></i>Đơn đặc biệt
+                                        <i class="fas fa-star mr-1"></i>Đơn hàng giá trị cao
                                     </div>
                                 </div>
                                 @endif
@@ -566,9 +566,9 @@
                         <div class="timeline-container">
                             @foreach($allStatusesWithHistory as $index => $statusData)
                                 @php
-                                    $isSpecial = $statusData['isSpecial'] ?? false;
+                                    $isHighValueOrder = $statusData['isHighValueOrder'] ?? false;
                                     
-                                    if ($isSpecial && ($statusData['specialType'] ?? '') === 'commission_paid') {
+                                    if ($isHighValueOrder && ($statusData['highValueOrderType'] ?? '') === 'commission_paid') {
                                         $isReached = $statusData['isReached'] ?? false;
                                         $commissionPaid = $statusData['commissionPaid'] ?? false;
                                         $isOrderCompleted = $statusData['isOrderCompleted'] ?? false;
@@ -581,7 +581,7 @@
                                     }
                                 @endphp
                                 
-                                @if($isSpecial && ($statusData['specialType'] ?? '') === 'commission_paid')
+                                @if($isHighValueOrder && ($statusData['highValueOrderType'] ?? '') === 'commission_paid')
                                     @php
                                         $isPending = !$isOrderCompleted;
                                         $isWaiting = $isOrderCompleted && !$isReached;

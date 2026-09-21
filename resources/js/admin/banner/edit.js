@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const imageId = this.getAttribute('data-image-id');
             const imagePreview = this.closest('.image-preview');
             
-            swal({
+            AppDialog.confirm({
                 title: 'Xác nhận xóa?',
                 text: "Ảnh này sẽ bị xóa khi bạn cập nhật banner!",
                 icon: 'warning',
@@ -34,12 +34,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Ẩn ảnh khỏi giao diện
                     imagePreview.style.display = 'none';
                     
-                    swal({
+                    AppDialog.notice({
                         title: 'Đã đánh dấu xóa',
                         text: 'Ảnh sẽ bị xóa khi bạn cập nhật banner',
                         icon: 'success',
                         timer: 1500,
-                        buttons: false
                     });
                 }
             });
@@ -48,7 +47,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Xử lý submit form
     document.getElementById('btn_submit').addEventListener('click', function() {
-        swal({
+        AppDialog.confirm({
             title: 'Xác nhận cập nhật?',
             text: "Bạn có chắc chắn muốn cập nhật banner này?",
             icon: 'info',

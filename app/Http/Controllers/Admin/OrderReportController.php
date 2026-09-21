@@ -75,7 +75,7 @@ class OrderReportController extends Controller
                     'status' => $status,
                     'statusOrder' => $statusHistoryMap[$status->id] ?? null,
                     'isReached' => isset($statusHistoryMap[$status->id]),
-                    'isSpecial' => false,
+                    'isHighValueOrder' => false,
                 ];
                 
                 // Thêm mục "Đã cộng tiền" ngay sau trạng thái "completed"
@@ -87,8 +87,8 @@ class OrderReportController extends Controller
                         'status' => null,
                         'statusOrder' => null,
                         'isReached' => $isCommissionPaid,
-                        'isSpecial' => true,
-                        'specialType' => 'commission_paid',
+                        'isHighValueOrder' => true,
+                        'highValueOrderType' => 'commission_paid',
                         'commissionPaid' => $frozenOrder->commission_paid ?? false,
                         'isOrderCompleted' => $isCompleted,
                     ];
@@ -216,5 +216,4 @@ class OrderReportController extends Controller
         return redirect()->route('order_reports.show', $orderReport)->with('success', 'Đã hủy đơn hàng (xác nhận báo cáo đúng).');
     }
 }
-
 

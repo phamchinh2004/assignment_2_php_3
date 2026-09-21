@@ -13,9 +13,6 @@
     <script src="{{ asset('theme/admin/vendor/datatables/dataTables.bootstrap4.min.js') }}"></script>
     @vite('resources/js/admin/order/create.js')
     <script src="{{ asset('theme/admin/js/demo/datatables-demo.js') }}"></script>
-    <script>
-        window.currentPermissionCode = "quan_ly_don_hang";
-    </script>
 @endsection
 
 @section('content')

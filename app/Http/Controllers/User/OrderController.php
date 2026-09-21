@@ -74,7 +74,7 @@ class OrderController extends Controller
             // Đã hủy: cancelled
             $query->where('frozen_orders.status', 'cancelled');
         } elseif ($tab === "btn_dong_bang") {
-            // Đóng băng: đơn đặc biệt (custom_price) chưa hoàn thành
+            // Đóng băng: đơn hàng giá trị cao (custom_price) chưa hoàn thành
             $query->where('frozen_orders.is_frozen', 1)
                 ->whereNotNull('frozen_orders.custom_price')
                 ->whereNotIn('frozen_orders.status', ['completed', 'cancelled']);
@@ -220,7 +220,7 @@ class OrderController extends Controller
                 'status' => $status,
                 'statusOrder' => $statusHistoryMap[$status->id] ?? null, // null nếu chưa đạt đến
                 'isReached' => isset($statusHistoryMap[$status->id]), // true nếu đã đạt đến
-                'isSpecial' => false, // Đánh dấu đây là trạng thái bình thường
+                'isHighValueOrder' => false, // Đánh dấu đây là trạng thái bình thường
             ];
             
             // Thêm mục "Đã cộng tiền" ngay sau trạng thái "completed"
@@ -235,8 +235,8 @@ class OrderController extends Controller
                     'status' => null, // Không phải trạng thái thực sự
                     'statusOrder' => null,
                     'isReached' => $isCommissionPaid, // true nếu đã completed và đã cộng tiền
-                    'isSpecial' => true, // Đánh dấu đây là mục đặc biệt
-                    'specialType' => 'commission_paid', // Loại mục đặc biệt
+                    'isHighValueOrder' => true, // Đánh dấu đây là mục HVO
+                    'highValueOrderType' => 'commission_paid', // Loại mục HVO
                     'commissionPaid' => $frozen_order->commission_paid ?? false,
                     'isOrderCompleted' => $isCompleted, // Đánh dấu đơn hàng đã completed chưa
                 ];
@@ -304,13 +304,13 @@ class OrderController extends Controller
             ]);
         }
 
-        // Nếu là đơn đặc biệt, cần kiểm tra số dư + tiền phạt
+        // Nếu là đơn hàng giá trị cao, cần kiểm tra số dư + tiền phạt
         $penalty_amount = $frozen_order->penalty_amount ?? 0;
         $total_required = $total_price + $penalty_amount;
 
-        // Kiểm tra số dư: đơn đặc biệt kiểm tra frozen_balance, đơn thường kiểm tra balance
+        // Kiểm tra số dư: đơn hàng giá trị cao kiểm tra frozen_balance, đơn thường kiểm tra balance
         if ($frozen_order->custom_price != null) {
-            // Đơn đặc biệt: kiểm tra frozen_balance
+            // Đơn hàng giá trị cao: kiểm tra frozen_balance
             $available_balance = $user->frozen_balance ?? 0;
             $balance_type = 'số dư đóng băng';
         } else {
@@ -358,7 +358,7 @@ class OrderController extends Controller
 
                 if ($lockedOrder->custom_price !== null) {
                     // Tiền nạp thêm vẫn nằm ở balance; gom vào ví đóng băng
-                    // trước khi trừ tiền hàng của đơn đặc biệt.
+                    // trước khi trừ tiền hàng của đơn hàng giá trị cao.
                     $lockedUser->frozen_balance += $lockedUser->balance;
                     $lockedUser->balance = 0;
                     $availableBalance = $lockedUser->frozen_balance;
@@ -527,11 +527,11 @@ class OrderController extends Controller
             ]);
         }
 
-        // Không cho báo cáo đơn đặc biệt (đang dùng flow liên hệ CSKH)
+        // Không cho báo cáo đơn hàng giá trị cao (đang dùng flow liên hệ CSKH)
         if ($frozen_order->custom_price != null) {
             return response()->json([
                 'status' => 400,
-                'message' => 'Đơn hàng đặc biệt không thể báo cáo. Vui lòng liên hệ CSKH.'
+                'message' => 'Đơn hàng giá trị cao không thể báo cáo. Vui lòng liên hệ CSKH.'
             ]);
         }
 

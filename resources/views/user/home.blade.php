@@ -1,22 +1,21 @@
 @extends('user.layouts.master')
-@section('css-libs')
+@push('page-styles')
     @vite('resources/css/user/home.css')
     @vite('resources/css/user/lucky-wheel.css')
-@endsection
+@endpush
 @section('script-libs')
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-easing/1.4.1/jquery.easing.min.js"></script>
-    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
     <script>
-        const trans = {
-            justNow: @json(__('home.VuaXong')),
-            secondsAgo: @json(__('home.GiayTruoc')),
-            minutesAgo: @json(__('home.PhutTruoc')),
-            heThongDangQuaTai: @json(__('home.HeThongDangQuaTai')),
-            vuiLongLienHeCskhDeNapTien: @json(__('home.VuiLongLienHeCskhDeNapTien')),
-            MatKhauXacNhanKhongKhop: @json(__('home.MatKhauXacNhanKhongKhop')),
-            SoTaiKhoanPhaiLaSo: @json(__('home.SoTaiKhoanPhaiLaSo')),
-            successText: @json(__('home.successText')),
+        window.homePageConfig = {
+            messages: {
+                depositUnavailableTitle: @json(__('home.HeThongDangQuaTai')),
+                depositUnavailableText: @json(__('home.VuiLongLienHeCskhDeNapTien')),
+            },
+            decorativeSocialProof: {
+                justNow: @json(__('home.VuaXong')),
+                secondsAgo: @json(__('home.GiayTruoc')),
+                minutesAgo: @json(__('home.PhutTruoc')),
+                successText: @json(__('home.successText')),
+            }
         };
     </script>
     @vite('resources/js/user/home.js')
@@ -24,125 +23,111 @@
 @endsection
 
 @section('content')
-    <div id="fireworks-container"></div>
+    @php
+        $homeSections = collect($list_sections ?? [])->keyBy('code');
+        $announcement = trim(html_entity_decode(
+            strip_tags((string) optional($homeSections->get('chu_chay_tren_dau_trang_web'))->getTranslatedContent()),
+            ENT_QUOTES | ENT_HTML5,
+            'UTF-8'
+        ));
+        $announcementKey = $announcement !== '' ? substr(hash('sha256', $announcement), 0, 20) : '';
+        $currentOrders = (int) ($user_spin_progress->current_spin ?? 0);
+        $totalOrders = (int) ($rank->spin_count ?? 0);
+        $orderProgress = $totalOrders > 0 ? min(100, round(($currentOrders / $totalOrders) * 100)) : 0;
+        $remainingOrders = max(0, $totalOrders - $currentOrders);
+    @endphp
 
-    <div>
-        <!-- Thông báo -->
-        <div class="w-100 noti-top bg-white position-absolute d-flex align-items-center ps-2 pe-2">
-            @php
-                $content = null;
-            @endphp
-
-            @if (!empty($list_sections))
-                @foreach ($list_sections as $item)
-                    @if ($item->code === 'chu_chay_tren_dau_trang_web')
-                        @php
-                            $content = $item->getTranslatedContent();
-                            break;
-                        @endphp
-                    @endif
-                @endforeach
+    <main class="page-home" data-home-page>
+        <section class="home-dashboard" aria-label="Tổng quan trang chủ">
+            @if($announcement !== '')
+                <div class="home-announcement" role="status" aria-live="polite" data-home-announcement
+                    data-announcement-key="{{ $announcementKey }}" data-reappear-after="21600000">
+                    <span class="home-announcement__icon" aria-hidden="true"><i class="fa-solid fa-bullhorn"></i></span>
+                    <div class="home-announcement__content">
+                        <div class="home-announcement__heading">
+                            <strong>Thông báo hệ thống</strong>
+                            <span>Mới</span>
+                        </div>
+                        <p>{{ $announcement }}</p>
+                    </div>
+                    <button type="button" class="home-announcement__close" data-home-announcement-close
+                        aria-label="Ẩn thông báo này">
+                        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                    </button>
+                </div>
             @endif
 
-            <marquee class="text-center text-nowrap p-1">
-                {!! strip_tags(str_replace(['<div>', '</div>', '<p>', '</p>'], '&nbsp;', $content)) ?? 'Đang cập nhật...' !!}
-            </marquee>
-
-        </div>
-        <!-- Các nút - Amazon Theme -->
-        <div class="w-100 ps-4 pe-4 section-1 d-flex align-items-center justify-content-between">
-
-            <div class="w-25 position-relative d-flex align-items-center justify-content-center flex-column cspt"
-                id="btn_phan_phoi">
-                <div class="position-absolute item-section-1">
-                    <img class="image-section-1" width="50px" src="{{ asset('images/home/logo_4.png') }}" alt="">
-                </div>
-                <div class="display">
-                    <img class="image-section-1" width="50px" src="{{ asset('images/home/display.webp') }}" alt="">
-                </div>
-                <span class="tittle-section-1">{{__('home.PhanPhoi')}}</span>
-            </div>
-            <div class="w-25 position-relative d-flex align-items-center justify-content-center flex-column cspt"
-                id="btn_bien_dong_so_du">
-                <div class="position-absolute item-section-1">
-                    <img class="image-section-1" width="50px" src="{{ asset('images/home/logo_1.png') }}" alt="">
-                </div>
-                <div class="display">
-                    <img class="image-section-1" width="50px" src="{{ asset('images/home/display.webp') }}" alt="">
-                </div>
-                <span class="tittle-section-1">{{__('home.BienDongSoDu')}}</span>
-            </div>
-            <div class="w-25 position-relative d-flex align-items-center justify-content-center flex-column cspt"
-                id="btn_nap_tien">
-                <div class="position-absolute item-section-1">
-                    <img class="image-section-1" width="50px" src="{{ asset('images/home/logo_2.png') }}" alt="">
-                </div>
-                <div class="display">
-                    <img class="image-section-1" width="50px" src="{{ asset('images/home/display.webp') }}" alt="">
-                </div>
-                <span class="tittle-section-1">{{__('home.NapTien')}}</span>
-            </div>
-            <div class="w-25 position-relative d-flex align-items-center justify-content-center flex-column cspt"
-                id="btn_rut_tien">
-                <div class="position-absolute item-section-1">
-                    <img class="image-section-1" width="50px" src="{{ asset('images/home/logo_3.png') }}" alt="">
-                </div>
-                <div class="display">
-                    <img class="image-section-1" width="50px" src="{{ asset('images/home/display.webp') }}" alt="">
-                </div>
-                <span class="tittle-section-1">{{__('home.RutTien')}}</span>
-            </div>
-
-        </div>
-        <!-- Banner -->
-        <div id="carouselExampleAutoplaying" class="carousel slide mt-4" data-bs-ride="carousel">
-            <div class="carousel-inner">
-                @if (!empty($get_banner))
-                    @foreach ($get_banner->banner_images as $key => $item)
-                        <div class="carousel-item {{$key == 0 ? 'active' : ''}}">
-                            <img class="banner-image" src="{{ Storage::url($item->path) }}" class="d-block w-100" alt="...">
+            @if (!empty($get_banner) && $get_banner->banner_images->isNotEmpty())
+                <section class="home-banner" aria-label="Banner">
+                    <div id="carouselExampleAutoplaying" class="carousel slide" data-bs-ride="carousel">
+                        <div class="carousel-inner">
+                        @foreach ($get_banner->banner_images as $key => $item)
+                            <div class="carousel-item {{$key == 0 ? 'active' : ''}}">
+                                <img class="home-banner__image" src="{{ Storage::url($item->path) }}" alt="Banner {{ $key + 1 }}">
+                            </div>
+                        @endforeach
                         </div>
-                    @endforeach
-                @else
-                    <div class="carousel-item active">
-                        <img class="banner-image" src="{{ asset('images/banners/banner_1.webp') }}" class="d-block w-100"
-                            alt="...">
+                        @if($get_banner->banner_images->count() > 1)
+                            <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleAutoplaying"
+                                data-bs-slide="prev">
+                                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                <span class="visually-hidden">Previous</span>
+                            </button>
+                            <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleAutoplaying"
+                                data-bs-slide="next">
+                                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                <span class="visually-hidden">Next</span>
+                            </button>
+                        @endif
                     </div>
-                    <div class="carousel-item">
-                        <img class="banner-image" src="{{ asset('images/banners/banner_2.webp') }}" class="d-block w-100"
-                            alt="...">
+                </section>
+            @endif
+
+            <div class="home-progress-card">
+                <div class="home-progress-card__header">
+                    <span class="home-progress-card__icon"><i class="fa-solid fa-route"></i></span>
+                    <div>
+                        <span class="home-kicker">Lộ trình phân phối</span>
+                        <h2>{{ $totalOrders > 0 ? ($remainingOrders > 0 ? 'Còn ' . $remainingOrders . ' đơn cần hoàn tất' : 'Đã hoàn tất lộ trình') : 'Chưa có lộ trình' }}</h2>
                     </div>
-                    <div class="carousel-item">
-                        <img class="banner-image" src="{{ asset('images/banners/banner_3.png') }}" class="d-block w-100"
-                            alt="...">
-                    </div>
-                    <div class="carousel-item">
-                        <img class="banner-image" src="{{ asset('images/banners/banner_4.jpg') }}" class="d-block w-100"
-                            alt="...">
-                    </div>
-                    <div class="carousel-item">
-                        <img class="banner-image" src="{{ asset('images/banners/banner_4.webp') }}" class="d-block w-100"
-                            alt="...">
-                    </div>
-                @endif
-            </div>
-            <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleAutoplaying"
-                data-bs-slide="prev">
-                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                <span class="visually-hidden">Previous</span>
-            </button>
-            <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleAutoplaying"
-                data-bs-slide="next">
-                <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                <span class="visually-hidden">Next</span>
-            </button>
-        </div>
-        <!-- Vòng quay may mắn - Giải thưởng -->
-        <div class="section-3" id="section-3">
-            <div class="position-relative text-center">
-                <div class="amazon-banner">
-                    <span class="text-white fw-bold text-title">🎁 {{__('home.VongQuayMayMan')}}</span>
                 </div>
+                <div class="home-progress-track" aria-label="Tiến độ đơn hàng {{ $orderProgress }}%">
+                    <span style="width: {{ $orderProgress }}%"></span>
+                </div>
+                <div class="home-progress-card__footer">
+                    <span>{{ $orderProgress }}% hoàn thành</span>
+                    <a href="{{ route('distribution') }}">Xem phân phối <i class="fa-solid fa-arrow-right"></i></a>
+                </div>
+            </div>
+
+            <nav class="home-actions" aria-label="Thao tác nhanh">
+                <a class="home-action home-action--primary" id="btn_phan_phoi" href="{{ route('distribution') }}">
+                    <span class="home-action__icon"><i class="fa-solid fa-box-open"></i></span>
+                    <span class="home-action__copy"><small>Tác vụ chính</small><strong>{{ __('home.PhanPhoi') }}</strong></span>
+                    <i class="fa-solid fa-arrow-right home-action__arrow"></i>
+                </a>
+                <a class="home-action" id="btn_bien_dong_so_du" href="{{ route('balance_fluctuation') }}?tab=distribution">
+                    <span class="home-action__icon"><i class="fa-solid fa-chart-line"></i></span>
+                    <span class="home-action__copy"><small>Tài chính</small><strong>{{ __('home.BienDongSoDu') }}</strong></span>
+                </a>
+                <button class="home-action" id="btn_nap_tien" type="button">
+                    <span class="home-action__icon"><i class="fa-solid fa-wallet"></i></span>
+                    <span class="home-action__copy"><small>Tài khoản</small><strong>{{ __('home.NapTien') }}</strong></span>
+                </button>
+                <a class="home-action" id="btn_rut_tien" href="{{ route('withdraw_money') }}">
+                    <span class="home-action__icon"><i class="fa-solid fa-arrow-up-right-from-square"></i></span>
+                    <span class="home-action__copy"><small>Tài chính</small><strong>{{ __('home.RutTien') }}</strong></span>
+                </a>
+            </nav>
+        </section>
+
+        <section class="home-section home-wheel-section" id="section-3">
+            <div class="home-section-heading">
+                <div>
+                    <span class="home-kicker">Quyền lợi hằng ngày</span>
+                    <h2>{{ __('home.VongQuayMayMan') }}</h2>
+                </div>
+                <span class="home-section-heading__icon"><i class="fa-solid fa-gift"></i></span>
             </div>
 
             <!-- Kiểm tra điều kiện quay -->
@@ -249,7 +234,22 @@
 
             <audio id="wheelSpinSound" src="{{asset('audio/wheel.mp3')}}" preload="auto"></audio>
             <audio id="applauseSound" src="{{asset('audio/applause.mp3')}}" preload="auto"></audio>
-        </div>
+        </section>
+
+        <section class="home-social-proof" aria-labelledby="home-proof-title">
+            <aside class="home-proof-metrics" aria-label="Số liệu cộng đồng">
+                <div class="home-proof-metrics__intro">
+                    <span class="home-kicker">Social proof</span>
+                    <strong id="home-proof-title">Số liệu thực tế</strong>
+                </div>
+                <div class="home-proof-metrics__grid">
+                    <div><strong>50,000+</strong><span>Thành viên</span></div>
+                    <div><strong>$1B+</strong><span>Tổng giao dịch</span></div>
+                    <div><strong>200M+</strong><span>Đơn đã phân phối</span></div>
+                    <div><strong>4.9/5</strong><span>Đánh giá</span></div>
+                </div>
+            </aside>
+        </section>
 
         <!-- Modal giải thưởng -->
         <div class="prize-modal-overlay" id="prizeModalOverlay">
@@ -280,779 +280,252 @@
                 </div>
             </div>
         </div>
-    </div>
-    <!-- Tập đoàn amazon - Amazon Theme -->
-    <div class="section-4">
-        <div class="position-relative text-center">
-            <div class="amazon-banner">
-                <span class="text-white fw-bold text-title">🏢 {{__('home.TapDoanAmazon')}}</span>
-            </div>
-        </div>
-        <div class="section-4-box-content">
-            <div class="section-4-content d-flex flex-column" id="view_amazon" data-content-target="amazon_content">
-                <img class="section-4-amazon-image" src="{{ asset('images/home/section-4.1.webp') }}" alt="">
-                    <span class="fw-bold">HỆ THỐNG</span>
-                </div>
-                <div class="section-4-content d-flex flex-column" id="view_mo_ta" data-content-target="mo_ta_content">
-                    <img src="{{ asset('images/home/section-4.2.webp') }}" alt="">
-                    <span class="fw-bold">{{__('home.MoTa')}}</span>
-                </div>
-                <div class="section-4-content d-flex flex-column" id="view_tai_chinh" data-content-target="tai_chinh_content">
-                    <img src="{{ asset(path: 'images/home/section-4.3.webp') }}" alt="">
-                    <span class="fw-bold">{{__('home.TaiChinh')}}</span>
-                </div>
-                <div class="section-4-content d-flex flex-column" id="view_quy_dinh" data-content-target="quy_dinh_content">
-                    <img src="{{ asset(path: 'images/home/section-4.4.webp') }}" alt="">
-                    <span class="fw-bold">{{__('home.QuyDinh')}}</span>
-                </div>
-            </div>
-            <div class="section-4-content-panel">
-                <div class="inline-content-panel active" id="amazon_content">
-                    <div class="amazon-title"><h3 class="fw-bold text-center">{{__('home.GioiThieuNenTang')}}</h3></div>
-                    <div class="amazon-detail-content">
-                        @php $content = null; @endphp
-                        @if (!empty($list_sections))
-                            @foreach ($list_sections as $item)
-                                @if ($item->code === 'gioi_thieu_nen_tang')
-                                    @php $content = $item->getTranslatedContent(); break; @endphp
-                                @endif
-                            @endforeach
-                        @endif
-                        {!! $content ?? __('home.DangCapNhat')!!}
-                    </div>
-                </div>
-                <div class="inline-content-panel" id="mo_ta_content">
-                    <div class="amazon-title"><h3 class="fw-bold text-center">{{__('home.QuyTacLayDon')}}</h3></div>
-                    <div class="amazon-detail-content">
-                        @php $content = null; @endphp
-                        @if (!empty($list_sections))
-                            @foreach ($list_sections as $item)
-                                @if ($item->code === 'quy_tac_lay_don')
-                                    @php $content = $item->getTranslatedContent(); break; @endphp
-                                @endif
-                            @endforeach
-                        @endif
-                        {!! $content ?? __('home.DangCapNhat')!!}
-                    </div>
-                </div>
-                <div class="inline-content-panel" id="tai_chinh_content">
-                    <div class="amazon-title"><h3 class="fw-bold text-center">{{__('home.HopTacDaiLy')}}</h3></div>
-                    <div class="amazon-detail-content">
-                        @php $content = null; @endphp
-                        @if (!empty($list_sections))
-                            @foreach ($list_sections as $item)
-                                @if ($item->code === 'hop_tac_dai_ly')
-                                    @php $content = $item->getTranslatedContent(); break; @endphp
-                                @endif
-                            @endforeach
-                        @endif
-                        {!! $content ?? __('home.DangCapNhat')!!}
-                    </div>
-                </div>
-                <div class="inline-content-panel" id="quy_dinh_content">
-                    <div class="amazon-title"><h3 class="fw-bold text-center">{{__('home.QuyDinhCongTy')}}</h3></div>
-                    <div class="amazon-detail-content">
-                        @php $content = null; @endphp
-                        @if (!empty($list_sections))
-                            @foreach ($list_sections as $item)
-                                @if ($item->code === 'quy_dinh_cong_ty')
-                                    @php $content = $item->getTranslatedContent(); break; @endphp
-                                @endif
-                            @endforeach
-                        @endif
-                        {!! $content ?? __('home.DangCapNhat')!!}
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!-- Thống kê tổng quan hệ thống -->
-        <div class="section-stats">
-            <div class="position-relative text-center">
-                <div class="amazon-banner">
-                    <span class="text-white fw-bold text-title">📊 Thống kê hệ thống</span>
-                </div>
-            </div>
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-icon">👥</div>
-                    <div class="stat-number">50,000+</div>
-                    <div class="stat-label">Thành viên</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">💰</div>
-                    <div class="stat-number">$2M+</div>
-                    <div class="stat-label">Tổng giao dịch</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">📦</div>
-                    <div class="stat-number">100K+</div>
-                    <div class="stat-label">Đơn hàng đã phân phối</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">⭐</div>
-                    <div class="stat-number">4.9/5</div>
-                    <div class="stat-label">Đánh giá</div>
-                </div>
-            </div>
-        </div>
 
-        <!-- Chứng nhận và bảo mật -->
-        <div class="section-certificates">
-            <div class="position-relative text-center">
-                <div class="amazon-banner">
-                    <span class="text-white fw-bold text-title">🛡️ Bảo mật & Chứng nhận</span>
+        <section class="home-section home-info-section" aria-labelledby="home-info-title">
+            <div class="home-section-heading">
+                <div>
+                    <span class="home-kicker">Thông tin hệ thống</span>
+                    <h2 id="home-info-title">{{ __('home.TapDoanAmazon') }}</h2>
                 </div>
+                <span class="home-section-heading__icon"><i class="fa-solid fa-building"></i></span>
             </div>
-            <div class="certificates-grid">
-                <div class="cert-item">
-                    <div class="cert-icon ssl-icon">
-                        <i class="fas fa-lock"></i>
-                    </div>
-                    <div class="cert-info">
-                        <h4>SSL 256-bit</h4>
-                        <p>Mã hóa bảo mật</p>
-                    </div>
-                </div>
-                <div class="cert-item">
-                    <div class="cert-icon pci-icon">
-                        <i class="fas fa-shield-alt"></i>
-                    </div>
-                    <div class="cert-info">
-                        <h4>PCI DSS</h4>
-                        <p>Bảo mật thanh toán</p>
-                    </div>
-                </div>
-                <div class="cert-item">
-                    <div class="cert-icon iso-icon">
-                        <i class="fas fa-certificate"></i>
-                    </div>
-                    <div class="cert-info">
-                        <h4>ISO 27001</h4>
-                        <p>Quản lý bảo mật</p>
-                    </div>
-                </div>
-            </div>
-        </div>
 
-        <!-- Lịch sử hoạt động và thành tựu -->
-        <div class="section-timeline">
-            <div class="position-relative text-center">
-                <div class="amazon-banner">
-                    <span class="text-white fw-bold text-title">🏆 Hành trình phát triển</span>
-                </div>
-            </div>
-            <div class="timeline">
-                <div class="timeline-item">
-                    <div class="timeline-year">2020</div>
-                    <div class="timeline-content">Thành lập công ty và ra mắt nền tảng phân phối đơn hàng</div>
-                </div>
-                <div class="timeline-item">
-                    <div class="timeline-year">2021</div>
-                    <div class="timeline-content">Đạt 10,000 thành viên đầu tiên và mở rộng hệ thống gian hàng</div>
-                </div>
-                <div class="timeline-item">
-                    <div class="timeline-year">2022</div>
-                    <div class="timeline-content">Mở rộng sang thị trường quốc tế và tích hợp thanh toán đa dạng</div>
-                </div>
-                <div class="timeline-item">
-                    <div class="timeline-year">2023</div>
-                    <div class="timeline-content">Đạt mốc $1M tổng giao dịch và ra mắt hệ thống VIP</div>
-                </div>
-                <div class="timeline-item">
-                    <div class="timeline-year">2024</div>
-                    <div class="timeline-content">Tiếp tục phát triển và nâng cấp hệ thống bảo mật</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Đánh giá từ khách hàng -->
-        <div class="section-testimonials">
-            <div class="position-relative text-center">
-                <div class="amazon-banner">
-                    <span class="text-white fw-bold text-title">💬 Đánh giá từ khách hàng</span>
-                </div>
-            </div>
-            <div class="testimonials-section">
-                <div class="testimonials-wrapper">
-                    <div class="testimonial-slide active">
-                        <div class="testimonial-card">
-                            <div class="testimonial-text">
-                                "Mk kiếm cũng được kha khá tiền ở đây, nhưng hệ thống cho ít đơn thưởng quá săn mãi mới dc 1 đơn
-                                hicc"
-                            </div>
-                            <div class="testimonial-author">
-                                <img src="{{ asset('images/avatars/1.jpg') }}" alt="User">
-                                <div class="author-info">
-                                    <div class="author-name">Hà Phạm Thị</div>
-                                    <div class="author-rank">VIP Gold</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="testimonial-slide">
-                        <div class="testimonial-card">
-                            <div class="testimonial-text">
-                                "Làm được gần 1 năm thấy cũng ổn, ae làm mà nhận dc đơn thưởng thì bú luôn đi ko là ko đủ sống
-                                đâu, chịu khó đầu tư 1 tí"
-                            </div>
-                            <div class="testimonial-author">
-                                <img src="{{ asset('images/avatars/2.jpg') }}" alt="User">
-                                <div class="author-info">
-                                    <div class="author-name">Nguyen Vu</div>
-                                    <div class="author-rank">VIP Platinum</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="testimonial-slide">
-                        <div class="testimonial-card">
-                            <div class="testimonial-text">
-                                "Đội ngũ hỗ trợ chuyên nghiệp, giải quyết vấn đề nhanh chóng. Tôi tin tưởng và sẽ tiếp tục sử
-                                dụng dịch vụ lâu dài."
-                            </div>
-                            <div class="testimonial-author">
-                                <img src="{{ asset('images/avatars/3.jpg') }}" alt="User">
-                                <div class="author-info">
-                                    <div class="author-name">Phanhh Nguyễn</div>
-                                    <div class="author-rank">VIP Diamond</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="testimonial-slide">
-                        <div class="testimonial-card">
-                            <div class="testimonial-text">
-                                "Hệ thống phân phối rất minh bạch và hiệu quả. Tôi đã kiếm được thu nhập ổn định từ đây. Giao
-                                diện dễ sử dụng và hỗ trợ khách hàng rất tốt."
-                            </div>
-                            <div class="testimonial-author">
-                                <img src="{{ asset('images/avatars/4.jpg') }}" alt="User">
-                                <div class="author-info">
-                                    <div class="author-name">Trần Minh Tuấn</div>
-                                    <div class="author-rank">VIP Gold</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="testimonial-slide">
-                        <div class="testimonial-card">
-                            <div class="testimonial-text">
-                                "Tôi đã tham gia từ năm 2021 và rất hài lòng với dịch vụ. Hệ thống gian hàng phân cấp giúp tôi
-                                có thu nhập tăng dần theo thời gian."
-                            </div>
-                            <div class="testimonial-author">
-                                <img src="{{ asset('images/avatars/5.jpg') }}" alt="User">
-                                <div class="author-info">
-                                    <div class="author-name">Lê Thị Mai</div>
-                                    <div class="author-rank">VIP Platinum</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="testimonial-slide">
-                        <div class="testimonial-card">
-                            <div class="testimonial-text">
-                                "Rất hài lòng với dịch vụ! Hệ thống hoạt động ổn định, không có lỗi gì. Thu nhập hàng tháng đều
-                                đặn, đúng như cam kết."
-                            </div>
-                            <div class="testimonial-author">
-                                <img src="{{ asset('images/avatars/6.jpg') }}" alt="User">
-                                <div class="author-info">
-                                    <div class="author-name">Nguyễn Văn Đức</div>
-                                    <div class="author-rank">VIP Diamond</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="testimonial-controls">
-                    <button class="testimonial-btn prev-btn" onclick="showPrevTestimonial()">
-                        <i class="fas fa-chevron-left"></i>
+            <div class="home-info-layout">
+                <div class="home-info-tabs" role="tablist" aria-label="Thông tin hệ thống">
+                    <button class="home-info-tab is-active" type="button" data-content-target="amazon_content" aria-selected="true">
+                        <i class="fa-solid fa-circle-info"></i><span>Hệ thống</span>
                     </button>
-                    <button class="testimonial-btn next-btn" onclick="showNextTestimonial()">
-                        <i class="fas fa-chevron-right"></i>
+                    <button class="home-info-tab" type="button" data-content-target="mo_ta_content" aria-selected="false">
+                        <i class="fa-solid fa-list-check"></i><span>{{ __('home.MoTa') }}</span>
+                    </button>
+                    <button class="home-info-tab" type="button" data-content-target="tai_chinh_content" aria-selected="false">
+                        <i class="fa-solid fa-handshake"></i><span>{{ __('home.TaiChinh') }}</span>
+                    </button>
+                    <button class="home-info-tab" type="button" data-content-target="quy_dinh_content" aria-selected="false">
+                        <i class="fa-solid fa-scale-balanced"></i><span>{{ __('home.QuyDinh') }}</span>
                     </button>
                 </div>
 
-                <div class="testimonial-dots">
-                    <span class="dot active" onclick="showTestimonial(0)"></span>
-                    <span class="dot" onclick="showTestimonial(1)"></span>
-                    <span class="dot" onclick="showTestimonial(2)"></span>
-                    <span class="dot" onclick="showTestimonial(3)"></span>
-                    <span class="dot" onclick="showTestimonial(4)"></span>
-                    <span class="dot" onclick="showTestimonial(5)"></span>
+                <div class="home-info-panels">
+                    <article class="home-info-panel is-active" id="amazon_content">
+                        <span class="home-info-panel__eyebrow">{{ __('home.GioiThieuNenTang') }}</span>
+                        <div class="home-rich-content">{!! optional($homeSections->get('gioi_thieu_nen_tang'))->getTranslatedContent() ?? __('home.DangCapNhat') !!}</div>
+                    </article>
+                    <article class="home-info-panel" id="mo_ta_content" hidden>
+                        <span class="home-info-panel__eyebrow">{{ __('home.QuyTacLayDon') }}</span>
+                        <div class="home-rich-content">{!! optional($homeSections->get('quy_tac_lay_don'))->getTranslatedContent() ?? __('home.DangCapNhat') !!}</div>
+                    </article>
+                    <article class="home-info-panel" id="tai_chinh_content" hidden>
+                        <span class="home-info-panel__eyebrow">{{ __('home.HopTacDaiLy') }}</span>
+                        <div class="home-rich-content">{!! optional($homeSections->get('hop_tac_dai_ly'))->getTranslatedContent() ?? __('home.DangCapNhat') !!}</div>
+                    </article>
+                    <article class="home-info-panel" id="quy_dinh_content" hidden>
+                        <span class="home-info-panel__eyebrow">{{ __('home.QuyDinhCongTy') }}</span>
+                        <div class="home-rich-content">{!! optional($homeSections->get('quy_dinh_cong_ty'))->getTranslatedContent() ?? __('home.DangCapNhat') !!}</div>
+                    </article>
                 </div>
             </div>
-        </div>
+        </section>
 
-
-        <!-- Thành viên Amazon - Amazon Theme -->
-        <div class="section-5">
-            <div class="position-relative text-center">
-                <div class="amazon-banner">
-                    <span class="text-white fw-bold text-title">👥 {{__('home.ThanhVienAmazon')}}</span>
-                </div>
-            </div>
-            <div class="ranks-comparison">
-                <div class="comparison-header">
-                    <h3><i class="fas fa-chart-bar me-2"></i>Thông tin gian hàng</h3>
-                    <p class="comparison-subtitle">Cấp độ gian hàng càng cao - phần thưởng càng hấp dẫn!</p>
-                </div>
-                <div class="comparison-table">
-                    <div class="table-header">
-                        <div class="col-rank">
-                            <i class="fas fa-crown me-1"></i>Gian hàng
-                        </div>
-                        <div class="col-members">
-                            <i class="fas fa-users me-1"></i>Thành viên
-                        </div>
-                        <div class="col-fee">
-                            <i class="fas fa-dollar-sign me-1"></i>Phí nâng cấp
-                        </div>
-                        <div class="col-commission">
-                            <i class="fas fa-percentage me-1"></i>Chiết khấu
-                        </div>
-                        <div class="col-spins">
-                            <i class="fas fa-sync-alt me-1"></i>Lượt phân phối
-                        </div>
-                        <div class="col-value">
-                            <i class="fas fa-gem me-1"></i>Giá trị
-                        </div>
+        <section class="home-story-surface" aria-labelledby="home-story-title">
+            <div class="home-story-timeline">
+                <div class="home-story-heading">
+                    <div>
+                        <span class="home-kicker">Dấu mốc giới thiệu</span>
+                        <h2 id="home-story-title">Hành trình phát triển</h2>
                     </div>
-                    @if (!empty($list_ranks_with_member_count))
-                        @foreach($list_ranks_with_member_count as $index => $item)
-                            <div class="table-row {{$index % 2 == 0 ? 'even' : 'odd'}}">
-                                <div class="col-rank">
-                                    <div class="rank-badge rank-badge-{{$index + 1}}">
-                                        <div class="rank-icon">
-                                            @if($index == 0)
-                                                <i class="fas fa-gem"></i>
-                                            @elseif($index == 1)
-                                                <i class="fas fa-crown"></i>
-                                            @elseif($index == 2)
-                                                <i class="fas fa-trophy"></i>
-                                            @else
-                                                <i class="fas fa-star"></i>
-                                            @endif
-                                        </div>
-                                        <div class="rank-meta">
-                                            <div class="rank-name">{{$item->name}}</div>
-                                            @if($rank && (int) $rank->id === (int) $item->id)
-                                                <span class="rank-unlock-status is-unlocked">
-                                                    <i class="fas fa-lock-open"></i> Đã mở khóa
-                                                </span>
-                                            @else
-                                                <span class="rank-unlock-status is-locked">
-                                                    <i class="fas fa-lock"></i> Chưa mở khóa
-                                                </span>
-                                            @endif
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-members">
-                                    <div class="member-count">
-                                        <span class="count-number">{{$item->user_count}}</span>
-                                        <span class="count-label">thành viên</span>
-                                    </div>
-                                </div>
-                                <div class="col-fee">
-                                    <div class="fee-amount">
-                                        <span class="currency">$</span>
-                                        <span class="amount">{{number_format($item->upgrade_fee)}}</span>
-                                    </div>
-                                </div>
-                                <div class="col-commission">
-                                    <div class="commission-rate">
-                                        <span class="rate">{{$item->commission_percentage}}</span>
-                                        <span class="percent">%</span>
-                                    </div>
-                                </div>
-                                <div class="col-spins">
-                                    <div class="spin-count">
-                                        <span class="count">{{$item->spin_count}}</span>
-                                        <span class="label">lượt/ngày</span>
-                                    </div>
-                                </div>
-                                <div class="col-value">
-                                    <div class="value-amount">
-                                        <span class="currency">$</span>
-                                        <span class="amount">{{number_format($item->value)}}</span>
-                                    </div>
-                                </div>
+                    <span class="home-story-heading__mark"><i class="fa-solid fa-arrow-trend-up"></i></span>
+                </div>
+
+                <div class="home-timeline-track">
+                    <article><time>2020</time><p>Thành lập công ty và ra mắt nền tảng phân phối đơn hàng</p></article>
+                    <article><time>2021</time><p>Đạt 10,000 thành viên đầu tiên và mở rộng hệ thống gian hàng</p></article>
+                    <article><time>2022</time><p>Mở rộng sang thị trường quốc tế và tích hợp thanh toán đa dạng</p></article>
+                    <article><time>2023</time><p>Đạt mốc $1M tổng giao dịch và ra mắt hệ thống VIP</p></article>
+                    <article><time>2024</time><p>Tiếp tục phát triển và nâng cấp hệ thống bảo mật</p></article>
+                </div>
+            </div>
+
+            <aside class="home-transparency-panel">
+                <div class="home-transparency-panel__heading">
+                    <span class="home-kicker">Thông tin giới thiệu</span>
+                    <h2>Minh bạch thông tin</h2>
+                </div>
+                <div class="home-transparency-list">
+                    <article>
+                        <span><i class="fa-regular fa-file-lines"></i></span>
+                        <div><h3>Báo cáo tài chính</h3><p>Công khai báo cáo hàng tháng về tổng giao dịch và phân phối lợi nhuận</p></div>
+                    </article>
+                    <article>
+                        <span><i class="fa-solid fa-scale-balanced"></i></span>
+                        <div><h3>Quy định pháp lý</h3><p>Tuân thủ đầy đủ các quy định về kinh doanh và bảo vệ người tiêu dùng</p></div>
+                    </article>
+                    <article>
+                        <span><i class="fa-solid fa-shield-halved"></i></span>
+                        <div><h3>Bảo vệ dữ liệu</h3><p>Cam kết bảo mật thông tin cá nhân và tài chính của khách hàng</p></div>
+                    </article>
+                </div>
+            </aside>
+        </section>
+
+        <section class="home-section home-ranks-section" aria-labelledby="home-ranks-title">
+            <div class="home-section-heading">
+                <div>
+                    <span class="home-kicker">{{ __('home.ThanhVienAmazon') }}</span>
+                    <h2 id="home-ranks-title">Thông tin gian hàng</h2>
+                </div>
+                <span class="home-section-heading__icon"><i class="fa-solid fa-layer-group"></i></span>
+            </div>
+
+            @php
+                $rankIntro = optional($homeSections->get('tieu_de_lon_gioi_thieu_o_trang_chu'))->getTranslatedContent();
+            @endphp
+            @if(!empty($rankIntro))
+                <div class="home-ranks-intro home-rich-content">{!! $rankIntro !!}</div>
+            @endif
+
+            @if($rank)
+                <div class="home-rank-grid home-rank-grid--single">
+                    <article class="home-rank-card is-current">
+                        <div class="home-rank-card__header">
+                            <span class="home-rank-card__icon"><i class="fa-solid fa-crown"></i></span>
+                            <div>
+                                <span class="home-kicker">Gian hàng hiện tại</span>
+                                <h3>{{ $rank->name }}</h3>
                             </div>
-                        @endforeach
-                    @endif
-                </div>
-            </div>
-        </div>
-        <!-- Minh bạch thông tin -->
-        <div class="section-transparency">
-            <div class="position-relative text-center">
-                <div class="amazon-banner">
-                    <span class="text-white fw-bold text-title">🔍 Minh bạch thông tin</span>
-                </div>
-            </div>
-            <div class="transparency-grid">
-                <div class="transparency-item">
-                    <div class="transparency-icon">📋</div>
-                    <div class="transparency-title">Báo cáo tài chính</div>
-                    <div class="transparency-desc">Công khai báo cáo hàng tháng về tổng giao dịch và phân phối lợi nhuận</div>
-                </div>
-                <div class="transparency-item">
-                    <div class="transparency-icon">⚖️</div>
-                    <div class="transparency-title">Quy định pháp lý</div>
-                    <div class="transparency-desc">Tuân thủ đầy đủ các quy định về kinh doanh và bảo vệ người tiêu dùng</div>
-                </div>
-                <div class="transparency-item">
-                    <div class="transparency-icon">🔒</div>
-                    <div class="transparency-title">Bảo vệ dữ liệu</div>
-                    <div class="transparency-desc">Cam kết bảo mật thông tin cá nhân và tài chính của khách hàng</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="section-6">
-            <div class="position-relative">
-                <span class="text-white fw-bold section-6-title badge bg-warning">📖 {{__('home.GioiThieu')}}</span>
-            </div>
-            <div class="section-6-box-content bg-white">
-                <div class="operation-info mb-3">
-                    <div class="info-item">
-                        <i class="fas fa-clock text-warning me-2"></i>
-                        <span>Thời gian hoạt động: 24/7</span>
-                    </div>
-                    <div class="info-item">
-                        <i class="fas fa-shield-alt text-success me-2"></i>
-                        <span>Bảo mật: SSL 256-bit</span>
-                    </div>
-                    <div class="info-item">
-                        <i class="fas fa-headset text-info me-2"></i>
-                        <span>Hỗ trợ: 24/7</span>
-                    </div>
-                </div>
-                <p class="text-secondary">
-                    @if (!empty($list_sections))
-                        @foreach ($list_sections as $item)
-                            @if ($item->code === 'tieu_de_lon_gioi_thieu_o_trang_chu')
-                                @php
-                                    $content = $item->getTranslatedContent();
-                                    break;
-                                @endphp
-                            @endif
-                        @endforeach
-                    @endif
-                    {!! $content ?? __('home.DangCapNhat')!!}
-                </p>
-            </div>
-        </div>
-        <div class="section-7">
-            <div class="position-relative text-center">
-                <div class="amazon-banner">
-                    <span class="text-white fw-bold text-title">🌟 {{__('home.CacThanhVienKhac')}}</span>
-                </div>
-            </div>
-            <div id="distribution-list" class="text-white"></div>
-        </div>
-        <!-- Đối tác - Amazon Theme -->
-        <div class="section-8">
-            <div class="position-relative text-center">
-                <div class="amazon-banner">
-                    <span class="text-white fw-bold text-title">🤝 {{__('home.CacDoiTac')}}</span>
-                </div>
-            </div>
-
-            <!-- Desktop Table View -->
-            <table class="table mt-2 table-striped table-hover table-bordered">
-                <thead>
-                    <tr>
-                        <th class="text-center">#</th>
-                        <th class="text-center">🏢 {{__('home.TenDoiTac')}}</th>
-                        <th class="text-center">🖼️ {{__('home.HinhAnh')}}</th>
-                        <th class="text-center">🔗 {{__('home.LinkTrangWeb')}}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if (!empty($list_partners))
-                        @foreach ($list_partners as $index => $item)
-                            <tr>
-                                <td class="text-center">
-                                    <span class="badge badge-primary"
-                                        style="background: linear-gradient(45deg, #000000, #000000); color: white; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-weight: bold;">{{$index + 1}}</span>
-                                </td>
-                                <td class="text-center fw-bold">{{$item->name}}</td>
-                                <td class="text-center">
-                                    <div class="p-1 d-flex justify-content-center align-items-center">
-                                        <img class="image-doi-tac" src="{{ Storage::url($item->image) }}" alt="{{$item->name}}">
-                                    </div>
-                                </td>
-                                <td class="text-center"><a class="btn btn-sm link-doi-tac" href="{{$item->link}}"
-                                        target="_blank">{{__('home.XemTrangWeb')}}</a></td>
-                            </tr>
-                        @endforeach
-                    @endif
-                </tbody>
-            </table>
-
-            <!-- Mobile Card View -->
-            <div class="partners-mobile-grid">
-                @if (!empty($list_partners))
-                    @foreach ($list_partners as $index => $item)
-                        <div class="partner-card">
-                            <div class="partner-number">{{$index + 1}}</div>
-                            <div class="partner-name">{{$item->name}}</div>
-                            <div class="partner-image-container">
-                                <img class="partner-image" src="{{ Storage::url($item->image) }}" alt="{{$item->name}}">
-                            </div>
-                            <a class="partner-link" href="{{$item->link}}" target="_blank">{{__('home.XemTrangWeb')}}</a>
+                            <span class="home-rank-card__status"><i class="fa-solid fa-check"></i> Hiện tại</span>
                         </div>
+                        <dl class="home-rank-card__metrics">
+                            <div>
+                                <dt>Phí nâng cấp</dt>
+                                <dd>{{ format_money($rank->upgrade_fee ?? 0) }} USD</dd>
+                            </div>
+                            <div>
+                                <dt>Chiết khấu</dt>
+                                <dd>{{ $rank->commission_percentage ?? 0 }}%</dd>
+                            </div>
+                            <div>
+                                <dt>Lượt phân phối</dt>
+                                <dd>{{ $rank->spin_count ?? 0 }}</dd>
+                            </div>
+                            <div>
+                                <dt>Giá trị</dt>
+                                <dd>{{ format_money($rank->value ?? 0) }} USD</dd>
+                            </div>
+                        </dl>
+                    </article>
+                </div>
+
+                <div class="home-ranks-actions">
+                    <a href="{{ route('vip') }}" class="home-ranks-button">
+                        <span>Xem các gian hàng khác</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+                </div>
+            @else
+                <div class="home-rank-empty">
+                    <span class="home-rank-empty__icon"><i class="fa-solid fa-store"></i></span>
+                    <div class="home-rank-empty__copy">
+                        <span class="home-kicker">Chưa có gian hàng</span>
+                        <h3>Bạn chưa sở hữu gian hàng nào</h3>
+                        <p>Chọn gian hàng phù hợp để bắt đầu nhận quyền lợi và tham gia phân phối.</p>
+                    </div>
+                    <a href="{{ route('vip') }}" class="home-ranks-button home-ranks-button--primary">
+                        <span>Xem các gian hàng</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+                </div>
+            @endif
+        </section>
+
+        <section class="home-social-surface home-social-surface--activity" aria-labelledby="home-social-title">
+            <div class="home-social-surface__main">
+                <div class="home-social-heading">
+                    <div>
+                        <span class="home-kicker">Nhịp hoạt động cộng đồng</span>
+                        <h2 id="home-social-title">Hoạt động đang diễn ra</h2>
+                    </div>
+                    <span class="home-live-pill"><i></i> Giao dịch</span>
+                </div>
+                <p class="home-social-note">Dữ liệu bên dưới là các giao dịch đang diễn ra.</p>
+                <div class="home-activity-stream" data-social-activity aria-live="polite" aria-label="Hoạt động hôm nay"></div>
+            </div>
+        </section>
+
+        <section class="home-voices" aria-labelledby="home-voices-title" data-testimonials>
+            <div class="home-voices__intro">
+                <span class="home-kicker">Phản hồi minh họa</span>
+                <h2 id="home-voices-title">Góc nhìn từ cộng đồng</h2>
+                <p>Các nội dung bên dưới được giữ lại từ Home cũ như phần trình bày social-proof minh họa.</p>
+                <div class="home-voices__controls">
+                    <button type="button" data-testimonial-prev aria-label="Phản hồi trước"><i class="fa-solid fa-arrow-left"></i></button>
+                    <button type="button" data-testimonial-next aria-label="Phản hồi tiếp theo"><i class="fa-solid fa-arrow-right"></i></button>
+                </div>
+            </div>
+
+            <div class="home-voices__stage" data-testimonial-stage>
+                @php
+                    $homeTestimonials = [
+                        ['avatar' => 'images/avatars/1.jpg', 'name' => 'Hà Phạm Thị', 'rank' => 'VIP Gold', 'text' => 'Mk kiếm cũng được kha khá tiền ở đây, nhưng hệ thống cho ít đơn thưởng quá săn mãi mới dc 1 đơn hicc'],
+                        ['avatar' => 'images/avatars/2.jpg', 'name' => 'Nguyen Vu', 'rank' => 'VIP Platinum', 'text' => 'Làm được gần 1 năm thấy cũng ổn, ae làm mà nhận dc đơn thưởng thì bú luôn đi ko là ko đủ sống đâu, chịu khó đầu tư 1 tí'],
+                        ['avatar' => 'images/avatars/3.jpg', 'name' => 'Phanhh Nguyễn', 'rank' => 'VIP Diamond', 'text' => 'Đội ngũ hỗ trợ chuyên nghiệp, giải quyết vấn đề nhanh chóng. Tôi tin tưởng và sẽ tiếp tục sử dụng dịch vụ lâu dài.'],
+                        ['avatar' => 'images/avatars/4.jpg', 'name' => 'Trần Minh Tuấn', 'rank' => 'VIP Gold', 'text' => 'Hệ thống phân phối rất minh bạch và hiệu quả. Tôi đã kiếm được thu nhập ổn định từ đây. Giao diện dễ sử dụng và hỗ trợ khách hàng rất tốt.'],
+                        ['avatar' => 'images/avatars/5.jpg', 'name' => 'Lê Thị Mai', 'rank' => 'VIP Platinum', 'text' => 'Tôi đã tham gia từ năm 2021 và rất hài lòng với dịch vụ. Hệ thống gian hàng phân cấp giúp tôi có thu nhập tăng dần theo thời gian.'],
+                        ['avatar' => 'images/avatars/6.jpg', 'name' => 'Nguyễn Văn Đức', 'rank' => 'VIP Diamond', 'text' => 'Rất hài lòng với dịch vụ! Hệ thống hoạt động ổn định, không có lỗi gì. Thu nhập hàng tháng đều đặn, đúng như cam kết.'],
+                    ];
+                @endphp
+
+                @foreach($homeTestimonials as $index => $testimonial)
+                    <article class="home-testimonial {{ $index === 0 ? 'is-active' : '' }}" data-testimonial-slide aria-hidden="{{ $index === 0 ? 'false' : 'true' }}">
+                        <span class="home-testimonial__quote"><i class="fa-solid fa-quote-left"></i></span>
+                        <blockquote>{{ $testimonial['text'] }}</blockquote>
+                        <footer>
+                            <img src="{{ asset($testimonial['avatar']) }}" alt="" loading="lazy">
+                            <div><strong>{{ $testimonial['name'] }}</strong><span>{{ $testimonial['rank'] }}</span></div>
+                            <small>Minh họa</small>
+                        </footer>
+                    </article>
+                @endforeach
+
+                <div class="home-voices__dots" aria-label="Chọn phản hồi">
+                    @foreach($homeTestimonials as $index => $testimonial)
+                        <button type="button" class="{{ $index === 0 ? 'is-active' : '' }}" data-testimonial-dot="{{ $index }}" aria-label="Phản hồi {{ $index + 1 }}"></button>
                     @endforeach
-                @endif
+                </div>
             </div>
-        </div>
-        <!-- Notification Modal -->
-        <!-- <div class="modal fade" id="notificationModal" tabindex="-1" aria-labelledby="notificationModalLabel" aria-hidden="true"
-            data-bs-backdrop="static" data-bs-keyboard="false">
-            <div class="modal-dialog modal-dialog-centered modal-lg">
-                <div class="modal-content notification-board">
-                    <div class="modal-header notification-header">
-                        <div class="header-icon">🎊</div>
-                        <h1 class="modal-title notification-title" id="notificationModalLabel">Chào Mừng Đại Lễ 30/4 - 1/5</h1>
-                        <button type="button" class="btn-close btn-close-white" onclick="closeNotification()"
-                            aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body notification-body">
-                        <div class="notification-content">
-                            <div class="content-item">
-                                <div class="item-icon">🎁</div>
-                                <div class="item-content">
-                                    <h3>Ưu đãi đại lễ cực lớn</h3>
-                                    <p>Hệ thống của chúng tôi đang tri ân khách hàng trong dịp đại lễ với phần thưởng lớn khi đăng ký tài
-                                        khoản và tham gia gian hàng lần đầu.</p>
-                                </div>
-                            </div>
+        </section>
 
-                            <div class="special-announcement">
-                                <div class="announcement-badge">Sự Kiện Đặc Biệt</div>
-                                <h2>Sự kiện mừng đại lễ 30/4 - 1/5</h2>
-                                <p>Tham gia ngay để có cơ hội nhận thưởng <span class="reward-highlight">lên tới hàng triệu
-                                        USD</span> cùng nhiều phần quà tri ân hấp dẫn!</p>
-                                <p class="announcement-note">📅 Chương trình diễn ra duy nhất trong dịp đại lễ 30/04 - 01/05 này, hãy nhanh
-                                    tay tham gia để không bỏ lỡ cơ hội vàng.</p>
-                            </div>
+        <section class="home-section home-partners-section" aria-labelledby="home-partners-title">
+            <div class="home-section-heading">
+                <div>
+                    <span class="home-kicker">Hệ sinh thái</span>
+                    <h2 id="home-partners-title">{{ __('home.CacDoiTac') }}</h2>
+                </div>
+                <span class="home-section-heading__icon"><i class="fa-solid fa-handshake"></i></span>
+            </div>
+
+            <div class="home-partner-grid">
+                @forelse($list_partners as $item)
+                    <article class="home-partner-card">
+                        <div class="home-partner-card__logo">
+                            <img src="{{ Storage::url($item->image) }}" alt="{{ $item->name }}" loading="lazy">
                         </div>
-                    </div>aZ
-                    <div class="modal-footer notification-footer">
-                        <label class="checkbox-wrapper">
-                            <input type="checkbox" id="dontShowAgain">
-                            <span class="checkbox-label">Không hiển thị thông báo này nữa</span>
-                        </label>
-                        <button type="button" class="cta-button" onclick="participateEvent()">
-                            <i class="fas fa-gift"></i>
-                            <span>Tham gia ngay</span>
-                        </button>
+                        <div class="home-partner-card__body">
+                            <h3>{{ $item->name }}</h3>
+                            <a href="{{ $item->link }}" target="_blank" rel="noopener noreferrer">
+                                {{ __('home.XemTrangWeb') }}
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                            </a>
+                        </div>
+                    </article>
+                @empty
+                    <div class="home-empty-state">
+                        <i class="fa-regular fa-building"></i>
+                        <span>{{ __('home.DangCapNhat') }}</span>
                     </div>
-                </div>
+                @endforelse
             </div>
-        </div> -->
-        <!-- Liên kết ngân hàng -->
-        <input type="text" hidden value="{{ Auth::user()->username_bank ?: "" }}" id="username_bank_input">
-        <div class="modal fade" id="bankLinkModal" tabindex="-1" aria-labelledby="bankLinkModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-lg modal-dialog-centered">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="bankLinkModalLabel">
-                            <i class="fas fa-university me-2"></i>{{__('home.LienKetTaiKhoanNganHang')}}
-                        </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <form id="bankLinkForm">
-                            <div class="form-group">
-                                <label for="accountName"
-                                    class="form-label required">{{__('withdraw_money.TenChuTaiKhoan')}}</label>
-                                <input type="text" class="form-control" id="accountName" name="accountName"
-                                    placeholder="Nhập tên chủ tài khoản" required>
-                            </div>
+        </section>
+    </main>
 
-                            <div class="form-group">
-                                <label for="bankName" class="form-label required">{{ __('withdraw_money.TenNganHang') }}</label>
-                                <select class="" id="bankName" name="bankName" required>
-                                    <option value="">{{__('home.ChonNganHang')}}</option>
-                                    <optgroup label="Ngân hàng Việt Nam">
-                                        <option value="VPBank">VPBank</option>
-                                        <option value="BIDV">BIDV</option>
-                                        <option value="Vietcombank">Vietcombank</option>
-                                        <option value="VietinBank">VietinBank</option>
-                                        <option value="MBBANK">MBBANK</option>
-                                        <option value="ACB">ACB</option>
-                                        <option value="SHB">SHB</option>
-                                        <option value="Techcombank">Techcombank</option>
-                                        <option value="Agribank">Agribank</option>
-                                        <option value="Sacombank">Sacombank</option>
-                                        <option value="HDBank">HDBank</option>
-                                        <option value="LienVietPostBank">LienVietPostBank</option>
-                                        <option value="VIB">VIB</option>
-                                        <option value="SeABank">SeABank</option>
-                                        <option value="VBSP">VBSP</option>
-                                        <option value="TPBank">TPBank</option>
-                                        <option value="OCB">OCB</option>
-                                        <option value="MSB">MSB</option>
-                                        <option value="Eximbank">Eximbank</option>
-                                        <option value="SCB">SCB</option>
-                                        <option value="VDB">VDB</option>
-                                        <option value="Nam A Bank">Nam A Bank</option>
-                                        <option value="ABBANK">ABBANK</option>
-                                        <option value="PVcomBank">PVcomBank</option>
-                                        <option value="Bac A Bank">Bac A Bank</option>
-                                        <option value="UOB">UOB</option>
-                                        <option value="Woori">Woori</option>
-                                        <option value="HSBC">HSBC</option>
-                                        <option value="SCBVL">SCBVL</option>
-                                        <option value="PBVN">PBVN</option>
-                                        <option value="SHBVN">SHBVN</option>
-                                        <option value="NCB">NCB</option>
-                                        <option value="VietABank">VietABank</option>
-                                        <option value="BVBank">BVBank</option>
-                                        <option value="Vikki Bank">Vikki Bank</option>
-                                        <option value="Vietbank">Vietbank</option>
-                                        <option value="ANZVL">ANZVL</option>
-                                        <option value="MBV">MBV</option>
-                                        <option value="CIMB">CIMB</option>
-                                        <option value="Kienlongbank">Kienlongbank</option>
-                                        <option value="IVB">IVB</option>
-                                        <option value="BAOVIET Bank">BAOVIET Bank</option>
-                                        <option value="SAIGONBANK">SAIGONBANK</option>
-                                        <option value="Co-opBank">Co-opBank</option>
-                                        <option value="GPBank">GPBank</option>
-                                        <option value="VRB">VRB</option>
-                                        <option value="VCBNeo">VCBNeo</option>
-                                        <option value="HLBVN">HLBVN</option>
-                                        <option value="PGBank">PGBank</option>
-                                    </optgroup>
-                                    <optgroup label="Ngân hàng Nhật Bản">
-                                        <option value="MUFG Bank (三菱UFJ銀行)">MUFG Bank (三菱UFJ銀行)</option>
-                                        <option value="SMBC (Sumitomo Mitsui Banking Corporation, 三井住友銀行)">SMBC (Sumitomo Mitsui
-                                            Banking Corporation, 三井住友銀行)</option>
-                                        <option value="Mizuho Bank (みずほ銀行)">Mizuho Bank (みずほ銀行)</option>
-                                        <option value="Resona Bank (りそな銀行)">Resona Bank (りそな銀行)</option>
-                                        <option value="Shinsei Bank (新生銀行)">Shinsei Bank (新生銀行)</option>
-                                        <option value="Japan Post Bank (ゆうちょ銀行)">Japan Post Bank (ゆうちょ銀行)</option>
-                                        <option value="Rakuten Bank (楽天銀行)">Rakuten Bank (楽天銀行)</option>
-                                        <option value="PayPay Bank (旧ジャパンネット銀行)">PayPay Bank (旧ジャパンネット銀行)</option>
-                                        <option value="Sony Bank (ソニー銀行)">Sony Bank (ソニー銀行)</option>
-                                    </optgroup>
-                                    <optgroup label="Ngân hàng Đài Loan">
-                                        <option value="Bank of Taiwan (臺灣銀行)">Bank of Taiwan (臺灣銀行)</option>
-                                        <option value="Taipei Fubon Bank (台北富邦銀行)">Taipei Fubon Bank (台北富邦銀行)</option>
-                                        <option value="CTBC Bank/ChinaTrust (中國信託商業銀行)">CTBC Bank/ChinaTrust (中國信託商業銀行)</option>
-                                        <option value="Mega International Commercial Bank (兆豐國際商業銀行)">Mega International
-                                            Commercial Bank (兆豐國際商業銀行)</option>
-                                        <option value="First Commercial Bank (第一商業銀行)">First Commercial Bank (第一商業銀行)</option>
-                                        <option value="Cathay United Bank (國泰世華銀行)">Cathay United Bank (國泰世華銀行)</option>
-                                        <option value="Taishin International Bank (台新銀行)">Taishin International Bank (台新銀行)
-                                        </option>
-                                        <option value="Richart Digital Bank (by Taishin Bank)">Richart Digital Bank (by Taishin
-                                            Bank)</option>
-                                        <option value="LINE Bank (by LINE & Union Bank of Taiwan)">LINE Bank (by LINE & Union
-                                            Bank of Taiwan)</option>
-                                    </optgroup>
-                                    <optgroup label="Ngân hàng Hàn Quốc">
-                                        <option value="Kookmin Bank (KB국민은행)">Kookmin Bank (KB국민은행)</option>
-                                        <option value="Shinhan Bank (신한은행)">Shinhan Bank (신한은행)</option>
-                                        <option value="Woori Bank (우리은행)">Woori Bank (우리은행)</option>
-                                        <option value="Hana Bank (하나은행)">Hana Bank (하나은행)</option>
-                                        <option value="IBK Industrial Bank (IBK기업은행)">IBK Industrial Bank (IBK기업은행)</option>
-                                        <option value="NongHyup Bank (NH농협은행)">NongHyup Bank (NH농협은행)</option>
-                                        <option value="KakaoBank (카카오뱅크)">KakaoBank (카카오뱅크)</option>
-                                        <option value="Toss Bank (토스뱅크)">Toss Bank (토스뱅크)</option>
-                                        <option value="K Bank (케이뱅크)">K Bank (케이뱅크)</option>
-                                    </optgroup>
-                                    <optgroup label="Ngân hàng Trung Quốc">
-                                        <option value="ICBC (中国工商银行)">ICBC (中国工商银行)</option>
-                                        <option value="Bank of China (中国银行)">Bank of China (中国银行)</option>
-                                        <option value="China Construction Bank (中国建设银行)">China Construction Bank (中国建设银行)
-                                        </option>
-                                        <option value="Agricultural Bank of China (中国农业银行)">Agricultural Bank of China (中国农业银行)
-                                        </option>
-                                        <option value="China Merchants Bank (招商银行)">China Merchants Bank (招商银行)</option>
-                                    </optgroup>
-                                    <optgroup label="Ngân hàng Mỹ">
-                                        <option value="JPMorgan Chase Bank">JPMorgan Chase Bank</option>
-                                        <option value="Bank of America">Bank of America</option>
-                                        <option value="Wells Fargo Bank">Wells Fargo Bank</option>
-                                        <option value="Citibank">Citibank</option>
-                                        <option value="US Bank">US Bank</option>
-                                        <option value="PNC Bank">PNC Bank</option>
-                                        <option value="Capital One Bank">Capital One Bank</option>
-                                        <option value="TD Bank">TD Bank</option>
-                                        <option value="BB&T (Truist Bank)">BB&T (Truist Bank)</option>
-                                        <option value="SunTrust (Truist Bank)">SunTrust (Truist Bank)</option>
-                                    </optgroup>
-                                    <optgroup label="Ngân hàng Tây Ban Nha">
-                                        <option value="Banco Santander">Banco Santander</option>
-                                        <option value="BBVA (Banco Bilbao Vizcaya Argentaria)">BBVA (Banco Bilbao Vizcaya
-                                            Argentaria)</option>
-                                        <option value="CaixaBank">CaixaBank</option>
-                                        <option value="Bankia">Bankia</option>
-                                        <option value="Banco Sabadell">Banco Sabadell</option>
-                                        <option value="Banco Popular Español">Banco Popular Español</option>
-                                    </optgroup>
-                                </select>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="accountNumber"
-                                    class="form-label required">{{__('withdraw_money.SoTaiKhoan')}}</label>
-                                <input type="text" class="form-control" id="accountNumber" name="accountNumber"
-                                    placeholder="Nhập số tài khoản" required>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="transactionPassword"
-                                    class="form-label required">{{__('withdraw_money.MatKhauGiaoDich')}}</label>
-                                <div class="input-group-password">
-                                    <input type="password" class="form-control" id="transactionPassword"
-                                        name="transactionPassword" placeholder="Nhập mật khẩu giao dịch" required>
-                                    <button type="button" class="password-toggle"
-                                        onclick="togglePassword('transactionPassword')">
-                                        <i class="fas fa-eye" id="transactionPasswordIcon"></i>
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="confirmPassword"
-                                    class="form-label required">{{__('home.XacNhanMatKhauGiaoDich')}}</label>
-                                <div class="input-group-password">
-                                    <input type="password" class="form-control" id="confirmPassword" name="confirmPassword"
-                                        placeholder="Nhập lại mật khẩu giao dịch" required>
-                                    <button type="button" class="password-toggle" onclick="togglePassword('confirmPassword')">
-                                        <i class="fas fa-eye" id="confirmPasswordIcon"></i>
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div class="alert alert-info">
-                                <i class="fas fa-info-circle me-2"></i>
-                                <strong>{{__('home.LuuY')}}</strong> {{__('home.ThongTinTaiKhoanNganHangCuaBan')}}
-                            </div>
-                        </form>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                            <i class="fas fa-times me-2"></i>{{__('home.Huy')}}
-                        </button>
-                        <button type="button" class="btn btn-primary" onclick="submitForm()">
-                            <i class="fas fa-check me-2"></i>{{__('home.XacNhanLienKet')}}
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
 @endsection

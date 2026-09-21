@@ -2,15 +2,17 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Events\PermissionRevoked;
+use App\Events\AuthorizationUpdated;
 use App\Events\StaffLocked;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\Manager_setting;
 use App\Models\User;
 use App\Models\User_manager_setting;
+use App\Services\AuthorizationService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 
 class StaffController extends Controller
 {
@@ -104,9 +106,12 @@ class StaffController extends Controller
                 ]);
             }
         }
+
+        $get_user_manager_setting = User_manager_setting::where('user_id', $staff_id)->get();
+
         return view('admin.staff.edit_permission', compact('list_manager_settings', 'get_user_manager_setting', 'get_user'));
     }
-    public function change_status_permission()
+    public function change_status_permission(AuthorizationService $authorization)
     {
         $id = request()->input('id');
         $get_user_manager_setting = User_manager_setting::find($id);
@@ -118,15 +123,84 @@ class StaffController extends Controller
         }
         $get_user_manager_setting->is_active = !$get_user_manager_setting->is_active;
         $get_user_manager_setting->save();
-        if (!$get_user_manager_setting->is_active) {
-            $managerSetting = $get_user_manager_setting->manager_setting;
-            event(new PermissionRevoked($get_user_manager_setting->user_id, $managerSetting->manager_code));
+
+        $staff = User::find($get_user_manager_setting->user_id);
+        if ($staff) {
+            $staff->unsetRelation('user_manager_settings');
+            $state = $authorization->state($staff);
+
+            try {
+                event(new AuthorizationUpdated($staff->id, $state['version']));
+            } catch (\Throwable $exception) {
+                Log::error('Không thể broadcast thay đổi phân quyền realtime.', [
+                    'staff_id' => $staff->id,
+                    'authorization_version' => $state['version'],
+                    'error' => $exception->getMessage(),
+                ]);
+            }
         }
+
         return response()->json([
             'status' => 200,
-            'message' => 'Chỉnh sửa quyền hạn thành công!'
+            'message' => 'Chỉnh sửa quyền hạn thành công!',
+            'is_active' => (bool) $get_user_manager_setting->is_active,
         ]);
     }
+    public function change_status_permissions(Request $request, AuthorizationService $authorization)
+    {
+        $data = $request->validate([
+            'staff_id' => ['required', 'integer'],
+            'assignment_ids' => ['required', 'array', 'min:1'],
+            'assignment_ids.*' => ['required', 'integer', 'distinct'],
+            'is_active' => ['required', 'boolean'],
+        ]);
+
+        $staff = User::whereKey($data['staff_id'])
+            ->where('role', User::ROLE_STAFF)
+            ->first();
+
+        if (!$staff) {
+            return back()->with('error', 'Không tìm thấy nhân viên cần phân quyền!');
+        }
+
+        $assignmentIds = collect($data['assignment_ids'])
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values();
+
+        $assignments = User_manager_setting::where('user_id', $staff->id)
+            ->whereIn('id', $assignmentIds)
+            ->get();
+
+        if ($assignments->count() !== $assignmentIds->count()) {
+            return back()->with('error', 'Danh sách quyền không hợp lệ hoặc không thuộc nhân viên này!');
+        }
+
+        User_manager_setting::where('user_id', $staff->id)
+            ->whereIn('id', $assignmentIds)
+            ->update(['is_active' => (bool) $data['is_active']]);
+
+        $staff->unsetRelation('user_manager_settings');
+        $state = $authorization->state($staff);
+
+        try {
+            event(new AuthorizationUpdated($staff->id, $state['version']));
+        } catch (\Throwable $exception) {
+            Log::error('Unable to broadcast bulk authorization update.', [
+                'staff_id' => $staff->id,
+                'authorization_version' => $state['version'],
+                'error' => $exception->getMessage(),
+            ]);
+        }
+
+        return back()->with(
+            'success',
+            (bool) $data['is_active']
+                ? 'Cấp quyền hàng loạt thành công!'
+                : 'Bỏ quyền hàng loạt thành công!'
+        );
+    }
+
     /**
      * Show the form for creating a new resource.
      */

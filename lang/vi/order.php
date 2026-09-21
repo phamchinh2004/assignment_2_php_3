@@ -12,7 +12,7 @@ return [
     "DaGiaoHang" => "Đã giao hàng",
     "HoanThanh" => "Hoàn Thành",
     "DaHuy" => "Đã hủy",
-    "DongBang" => "Đóng băng",
+    "GiaTriCao" => "Giá trị cao",
 
     "ThoiGianDatPhanPhoi" => "Thời gian đặt phân phối: ",
     "MaDonHang" => "Mã đơn hàng: ",

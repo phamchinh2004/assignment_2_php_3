@@ -10,6 +10,7 @@ use App\Jobs\SendChatNotificationEmail;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
+use App\Services\ChatReferenceService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -37,6 +38,8 @@ class ChatComponent extends Component
     public $showQuickReplies = false;
     public $quickReplySuggestions = [];
     public $quickReplyLoading = false;
+    public $showReferencePicker = false;
+    public $referenceTab = 'order';
 
     protected $listeners = [
         'message-received' => 'messageReceived',
@@ -86,7 +89,7 @@ class ChatComponent extends Component
     {
         $messages = Message::where('conversation_id', $this->conversation->id)
             ->with('sender:id,full_name,role')
-            ->select('id', 'message', 'type', 'image_path', 'sender_id', 'conversation_id', 'is_read', 'created_at')
+            ->select('id', 'message', 'type', 'kind', 'image_path', 'reference_type', 'reference_id', 'reference_payload', 'sender_id', 'conversation_id', 'is_read', 'created_at')
             ->orderBy('created_at', 'desc')
             ->limit($this->messagesPerLoad)
             ->get()
@@ -112,7 +115,7 @@ class ChatComponent extends Component
 
         $olderMessages = Message::where('conversation_id', $this->conversation->id)
             ->with('sender:id,full_name,role')
-            ->select('id', 'message', 'type', 'image_path', 'sender_id', 'conversation_id', 'is_read', 'created_at')
+            ->select('id', 'message', 'type', 'kind', 'image_path', 'reference_type', 'reference_id', 'reference_payload', 'sender_id', 'conversation_id', 'is_read', 'created_at')
             ->orderBy('created_at', 'desc')
             ->offset($this->offset)
             ->limit($this->messagesPerLoad)
@@ -142,7 +145,11 @@ class ChatComponent extends Component
             'id' => $message->id,
             'message' => $message->message,
             'type' => $message->type,
+            'kind' => $message->kind ?: $message->type,
             'image_path' => $message->image_path,
+            'reference_type' => $message->reference_type,
+            'reference_id' => $message->reference_id,
+            'reference_payload' => $message->reference_payload,
             'sender_id' => $message->sender_id,
             'conversation_id' => $message->conversation_id,
             'is_read' => $message->is_read ?? false,
@@ -166,6 +173,79 @@ class ChatComponent extends Component
     {
         $this->selectedImage = null;
         $this->resetErrorBag('selectedImage');
+    }
+
+    public function openReferencePicker(string $tab = 'order'): void
+    {
+        $this->referenceTab = in_array($tab, ['order', 'transaction'], true) ? $tab : 'order';
+        $this->showReferencePicker = true;
+    }
+
+    public function closeReferencePicker(): void
+    {
+        $this->showReferencePicker = false;
+    }
+
+    public function selectReferenceTab(string $tab): void
+    {
+        if (in_array($tab, ['order', 'transaction'], true)) {
+            $this->referenceTab = $tab;
+        }
+    }
+
+    public function getReferenceItemsProperty(): array
+    {
+        $references = app(ChatReferenceService::class);
+
+        return $this->referenceTab === 'transaction'
+            ? $references->recentTransactions(Auth::id())
+            : $references->recentOrders(Auth::id());
+    }
+
+    public function sendOrderReference(int $orderId): void
+    {
+        $payload = app(ChatReferenceService::class)->orderForUser(Auth::id(), $orderId);
+        $this->sendReference('order_reference', 'frozen_order', $orderId, $payload);
+    }
+
+    public function sendTransactionReference(string $source, int $transactionId): void
+    {
+        $payload = app(ChatReferenceService::class)->transactionForUser(Auth::id(), $source, $transactionId);
+        $this->sendReference('transaction_reference', $source, $transactionId, $payload);
+    }
+
+    private function sendReference(string $kind, string $referenceType, int $referenceId, array $payload): void
+    {
+        abort_unless((int) $this->conversation->user_id === (int) Auth::id(), 403);
+
+        $isFirstCustomerMessage = Message::where('conversation_id', $this->conversation->id)->count() === 0;
+        $message = Message::create([
+            'conversation_id' => $this->conversation->id,
+            'sender_id' => Auth::id(),
+            'message' => null,
+            'type' => 'text',
+            'kind' => $kind,
+            'image_path' => null,
+            'reference_type' => $referenceType,
+            'reference_id' => $referenceId,
+            'reference_payload' => $payload,
+        ]);
+
+        $message->setRelation('sender', Auth::user());
+        $this->chatMessages = collect($this->chatMessages)->prepend($this->formatMessage($message));
+        $this->conversation->touch();
+        $this->showReferencePicker = false;
+        $this->showQuickReplies = false;
+
+        \App\Jobs\BroadcastMessageSent::dispatch($message->id);
+        $this->dispatch('message-sent');
+        $this->dispatch('scroll-to-bottom');
+        $notificationText = $kind === 'order_reference'
+            ? 'Đã gửi đơn hàng liên quan'
+            : 'Đã gửi giao dịch liên quan';
+        event(new UserSentMessage(Auth::user()->full_name, $notificationText, Auth::id()));
+        $this->checkAndSendEmailNotification($notificationText);
+        $this->sendAutoReplyIfNeeded($isFirstCustomerMessage);
     }
 
     public function sendMessage()
@@ -203,6 +283,7 @@ class ChatComponent extends Component
                 'sender_id' => $userId,
                 'message' => null,
                 'type' => 'image',
+                'kind' => 'image',
                 'image_path' => $imagePath,
             ]);
 
@@ -210,7 +291,11 @@ class ChatComponent extends Component
                 'id' => $imageMessage->id,
                 'message' => $imageMessage->message,
                 'type' => $imageMessage->type,
+                'kind' => 'image',
                 'image_path' => $imageMessage->image_path,
+                'reference_type' => null,
+                'reference_id' => null,
+                'reference_payload' => null,
                 'sender_id' => $userId,
                 'conversation_id' => $conversationId,
                 'is_read' => false,
@@ -234,6 +319,7 @@ class ChatComponent extends Component
                 'sender_id' => $userId,
                 'message' => $messageText,
                 'type' => 'text',
+                'kind' => 'text',
                 'image_path' => null,
             ]);
 
@@ -241,7 +327,11 @@ class ChatComponent extends Component
                 'id' => $textMessage->id,
                 'message' => $textMessage->message,
                 'type' => $textMessage->type,
+                'kind' => 'text',
                 'image_path' => $textMessage->image_path,
+                'reference_type' => null,
+                'reference_id' => null,
+                'reference_payload' => null,
                 'sender_id' => $userId,
                 'conversation_id' => $conversationId,
                 'is_read' => false,
@@ -359,7 +449,7 @@ class ChatComponent extends Component
             $this->markMessagesAsRead();
             // Reset unread count về 0
             $this->unreadCount = 0;
-            $this->dispatch('scroll-to-bottom');
+            $this->dispatch('conversation-opened');
         }
     }
 

@@ -9,9 +9,6 @@
 
 @section('script-libs')
     @vite('resources/js/admin/order/edit.js')
-    <script>
-        window.currentPermissionCode = "quan_ly_don_hang";
-    </script>
 @endsection
 
 @section('content')

@@ -1,10 +1,14 @@
 // ======================= LUCKY WHEEL - VÒNG QUAY MAY MẮN ======================= 
 
 document.addEventListener('DOMContentLoaded', function() {
-    const prizeWheel = document.getElementById('prizeWheel');
-    const spinButton = document.getElementById('wheelSpinButton');
-    const wheelSpinSound = document.getElementById('wheelSpinSound');
-    const applauseSound = document.getElementById('applauseSound');
+    const root = document.querySelector('[data-home-page]');
+    if (!root) return;
+
+    const prizeWheel = root.querySelector('#prizeWheel');
+    const spinButton = root.querySelector('#wheelSpinButton');
+    const wheelSpinSound = root.querySelector('#wheelSpinSound');
+    const applauseSound = root.querySelector('#applauseSound');
+    if (!prizeWheel || !spinButton) return;
     
     let isSpinning = false;
     let currentRotation = 0;
@@ -73,11 +77,11 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (!data.success) {
                 // Nếu không được phép quay, hiển thị thông báo và reset
-                Swal.fire({
+                AppDialog.alert({
                     icon: 'warning',
                     title: 'Thông báo',
                     text: data.message,
-                    confirmButtonText: 'Đóng'
+                    confirmText: 'Đóng'
                 });
                 
                 isSpinning = false;
@@ -127,11 +131,11 @@ document.addEventListener('DOMContentLoaded', function() {
             
         } catch (error) {
             console.error('Error spinning wheel:', error);
-            Swal.fire({
+            AppDialog.alert({
                 icon: 'error',
                 title: 'Lỗi',
                 text: 'Có lỗi xảy ra. Vui lòng thử lại!',
-                confirmButtonText: 'Đóng'
+                confirmText: 'Đóng'
             });
             
             isSpinning = false;
@@ -141,16 +145,15 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     
     // Thêm event listener cho nút quay
-    if (spinButton) {
-        spinButton.addEventListener('click', spinWheel);
-    }
+    spinButton.addEventListener('click', spinWheel);
     
     // Hàm hiển thị modal giải thưởng
     function showPrizeModal(prize) {
-        const modal = document.getElementById('prizeModalOverlay');
-        const prizeIconDisplay = document.getElementById('prizeIconDisplay');
-        const prizeTextDisplay = document.getElementById('prizeTextDisplay');
-        const confettiContainer = document.getElementById('prizeConfetti');
+        const modal = root.querySelector('#prizeModalOverlay');
+        const prizeIconDisplay = root.querySelector('#prizeIconDisplay');
+        const prizeTextDisplay = root.querySelector('#prizeTextDisplay');
+        const confettiContainer = root.querySelector('#prizeConfetti');
+        if (!modal || !prizeIconDisplay || !prizeTextDisplay || !confettiContainer) return;
         
         // Set icon và text
         prizeIconDisplay.className = 'prize-icon-display';
@@ -171,11 +174,12 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Hàm đóng modal
     window.closePrizeModal = function() {
-        const modal = document.getElementById('prizeModalOverlay');
+        const modal = root.querySelector('#prizeModalOverlay');
+        if (!modal) return;
         modal.classList.remove('show');
         
         // Xóa confetti
-        const confettiContainer = document.getElementById('prizeConfetti');
+        const confettiContainer = root.querySelector('#prizeConfetti');
         if (confettiContainer) {
             confettiContainer.innerHTML = '';
         }
@@ -213,4 +217,3 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 6000);
     }
 });
-

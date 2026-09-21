@@ -1,7 +1,49 @@
 import Modal from 'bootstrap/js/dist/modal';
 
+function setupAccountSecurityModals() {
+    const transactionPasswordModalElement = document.getElementById('changeTransactionPasswordModal');
+    const resetTransactionPasswordModalElement = document.getElementById('resetTransactionPasswordModal');
+    const resetTransactionPasswordTrigger = document.querySelector('[data-reset-transaction-password]');
+
+    if (!resetTransactionPasswordTrigger || !resetTransactionPasswordModalElement) return;
+
+    const cleanupModalState = () => {
+        if (document.querySelector('.modal.show')) return;
+
+        document.querySelectorAll('.modal-backdrop').forEach((backdrop) => backdrop.remove());
+        document.body.classList.remove('modal-open');
+        document.body.style.removeProperty('overflow');
+        document.body.style.removeProperty('padding-right');
+    };
+
+    resetTransactionPasswordTrigger.addEventListener('click', () => {
+        const resetModal = Modal.getOrCreateInstance(resetTransactionPasswordModalElement);
+
+        if (!transactionPasswordModalElement) {
+            resetModal.show();
+            return;
+        }
+
+        const transactionModal = Modal.getOrCreateInstance(transactionPasswordModalElement);
+        const openResetModal = () => resetModal.show();
+
+        if (transactionPasswordModalElement.classList.contains('show')) {
+            transactionPasswordModalElement.addEventListener('hidden.bs.modal', openResetModal, { once: true });
+            transactionModal.hide();
+            return;
+        }
+
+        resetModal.show();
+    });
+
+    resetTransactionPasswordModalElement.addEventListener('hidden.bs.modal', () => {
+        window.setTimeout(cleanupModalState, 0);
+    });
+}
+
 // Show/Hide Password
 document.addEventListener('DOMContentLoaded', function () {
+    setupAccountSecurityModals();
     const password_login = document.getElementById('password_login');
     const username_login = document.getElementById('username_login');
     const remember_checkbox = document.getElementById('remember_password');
@@ -462,7 +504,11 @@ window.reset_transaction_password = async function () {
     const result = await reset_transaction_password(present_login_password);
     if (result.status === 200) {
         notification('success', result.message, 'Successfully!');
-        swal("Mật khẩu giao dịch mới là: " + result.data + ", bạn nên đổi nó ngay bây giờ!");
+        AppDialog.alert({
+            title: 'Mật khẩu giao dịch mới',
+            text: "Mật khẩu giao dịch mới là: " + result.data + ", bạn nên đổi nó ngay bây giờ!",
+            icon: 'success',
+        });
         const modalElement = document.getElementById('resetTransactionPasswordModal');
         let modal = Modal.getInstance(modalElement);
         if (!modal) {

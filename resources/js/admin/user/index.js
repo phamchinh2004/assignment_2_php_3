@@ -435,7 +435,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 method: "POST",
                 headers: {
                     'Content-Type': "application/json",
-                    'X-CSRF-TOKEN': csrf
+                    'X-CSRF-TOKEN': csrf,
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
                 },
                 body: JSON.stringify({
                     value: value,

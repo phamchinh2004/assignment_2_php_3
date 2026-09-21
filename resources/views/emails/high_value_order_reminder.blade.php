@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="x-apple-disable-message-reformatting">
-    <title>Nhắc nhở đơn hàng đặc biệt</title>
+    <title>Nhắc nhở đơn hàng giá trị cao</title>
     <!--[if mso]>
     <noscript>
         <xml>
@@ -61,11 +61,11 @@
 <body>
     <!-- Preheader text -->
     <div style="display:none;font-size:1px;color:#ffffff;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">
-        Bạn có đơn hàng đặc biệt đang chờ xử lý. Vui lòng kiểm tra ngay.
+        Bạn có đơn hàng giá trị cao đang chờ xử lý. Vui lòng kiểm tra ngay.
     </div>
     
     <div class="header">
-        <h2>Thông báo đơn hàng đặc biệt</h2>
+        <h2>Thông báo đơn hàng giá trị cao</h2>
     </div>
     
     <div class="content">
@@ -75,7 +75,7 @@
             Đơn hàng đang chờ xử lý ({{ $hoursPassed }} giờ).
         </div>
         
-        <p>Chúng tôi nhận thấy bạn đã nhận được đơn hàng đặc biệt nhưng chưa thực hiện phân phối. Để đảm bảo đơn hàng được giao đến khách hàng đúng hạn, vui lòng thực hiện phân phối sớm nhất có thể.</p>
+        <p>Chúng tôi nhận thấy bạn đã nhận được đơn hàng giá trị cao nhưng chưa thực hiện phân phối. Để đảm bảo đơn hàng được giao đến khách hàng đúng hạn, vui lòng thực hiện phân phối sớm nhất có thể.</p>
         
         <div class="order-info">
             <h3>Thông tin đơn hàng:</h3>

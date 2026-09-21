@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Rank;
 use App\Http\Requests\StoreRankRequest;
 use App\Http\Requests\UpdateRankRequest;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class RankController extends Controller
@@ -71,7 +72,18 @@ class RankController extends Controller
             $file_name = $file->store('uploads/images/ranks', 'public');
             $data['image'] = $file_name;
         }
-        $rank->update($data);
+        DB::transaction(function () use ($rank, $data) {
+            $oldCommissionPercentage = $rank->commission_percentage;
+
+            $rank->update($data);
+
+            if ((float) $oldCommissionPercentage !== (float) $rank->commission_percentage) {
+                $rank->orders()->update([
+                    'commission_percentage' => $rank->commission_percentage,
+                ]);
+            }
+        });
+
         return redirect()->route('rank.index')->with('success', 'Cập nhật cấp độ thành công!');
     }
 }

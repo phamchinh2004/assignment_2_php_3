@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', function () {
             button.addEventListener('click', async function (e) {
                 e.preventDefault();
 
-                const isConfirmed = await swal({
+                const isConfirmed = await AppDialog.confirm({
                     title: options.title,
                     text: options.text,
                     icon: options.icon,
@@ -17,21 +17,21 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
 
                 if (isConfirmed) {
-                    const isRealWithdraw = await swal({
+                    const isRealWithdraw = await AppDialog.choose({
                         title: "Xác nhận",
                         text: "Đây có phải là tiền rút thực không? Nếu chọn 'Không' sẽ là tiền rút ảo, nếu là 'Có' sẽ là tiền rút thực!",
                         icon: "warning",
-                        buttons: {
-                            no: { text: "Không", value: false },
-                            yes: { text: "Có", value: true },
-                        },
+                        choices: [
+                            { text: "Không", value: false },
+                            { text: "Có", value: true },
+                        ],
                         dangerMode: true,
                     });
 
                     if (isRealWithdraw !== null) {
                         window.location.href = this.dataset.url + '?transaction_type=' + isRealWithdraw;
                     } else {
-                        swal("Chưa xác định loại giao dịch, thao tác lại đi!");
+                        AppDialog.alert("Chưa xác định loại giao dịch, thao tác lại đi!");
                     }
                 }
             });

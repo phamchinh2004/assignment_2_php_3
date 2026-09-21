@@ -11,28 +11,26 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class SpecialOrderWarningMail extends Mailable
+class HighValueOrderPenaltyMail extends Mailable
 {
     use Queueable, SerializesModels;
 
     public $user;
     public $frozenOrder;
     public $hoursPassed;
-    public $remainingHours;
-    public $warningType;
-    public $warningThreshold;
+    public $penaltyAmount;
+    public $orderValue;
 
     /**
      * Create a new message instance.
      */
-    public function __construct(User $user, Frozen_order $frozenOrder, int $hoursPassed, int $remainingHours, string $warningType, int $warningThreshold)
+    public function __construct(User $user, Frozen_order $frozenOrder, int $hoursPassed, float $penaltyAmount)
     {
         $this->user = $user;
         $this->frozenOrder = $frozenOrder;
         $this->hoursPassed = $hoursPassed;
-        $this->remainingHours = $remainingHours;
-        $this->warningType = $warningType;
-        $this->warningThreshold = $warningThreshold;
+        $this->penaltyAmount = $penaltyAmount;
+        $this->orderValue = $frozenOrder->snapshot_order_value ?? 0.0;
     }
 
     /**
@@ -40,11 +38,8 @@ class SpecialOrderWarningMail extends Mailable
      */
     public function envelope(): Envelope
     {
-        $title = '[' . config('app.name') . '] Cập nhật thời hạn đơn hàng '
-            . ($this->frozenOrder->display_order_code ?? $this->frozenOrder->order_id);
-
         return new Envelope(
-            subject: $title,
+            subject: '[' . config('app.name') . '] Cập nhật phí xử lý đơn hàng ' . ($this->frozenOrder->display_order_code ?? $this->frozenOrder->order_id),
         );
     }
 
@@ -54,8 +49,8 @@ class SpecialOrderWarningMail extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'emails.special_order_warning',
-            text: 'emails.text.special_order_warning',
+            view: 'emails.high_value_order_penalty',
+            text: 'emails.text.high_value_order_penalty',
         );
     }
 

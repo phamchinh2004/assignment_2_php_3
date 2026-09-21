@@ -11,7 +11,7 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class SpecialOrderReminderMail extends Mailable
+class HighValueOrderReminderMail extends Mailable
 {
     use Queueable, SerializesModels;
 
@@ -45,8 +45,8 @@ class SpecialOrderReminderMail extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'emails.special_order_reminder',
-            text: 'emails.text.special_order_reminder',
+            view: 'emails.high_value_order_reminder',
+            text: 'emails.text.high_value_order_reminder',
         );
     }
 

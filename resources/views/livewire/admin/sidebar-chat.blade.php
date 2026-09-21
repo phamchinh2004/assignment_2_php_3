@@ -76,8 +76,17 @@
                         <span class="conversation-username">{{ $conversation->user->username }}</span>
                         <span class="conversation-preview">
                             @if($lastMessage)
-                                @if(!trim($lastMessage->message))<i class="far fa-image" aria-hidden="true"></i>@endif
-                                {{ trim($lastMessage->message) ?: 'Hình ảnh' }}
+                                @php
+                                    $lastKind = $lastMessage->kind ?: $lastMessage->type;
+                                    $lastPreview = match($lastKind) {
+                                        'order_reference' => 'Đơn hàng liên quan',
+                                        'transaction_reference' => 'Giao dịch liên quan',
+                                        'image' => 'Hình ảnh',
+                                        default => trim($lastMessage->message ?? ''),
+                                    };
+                                @endphp
+                                @if($lastKind !== 'text')<i class="far {{ $lastKind === 'image' ? 'fa-image' : 'fa-rectangle-list' }}" aria-hidden="true"></i>@endif
+                                {{ $lastPreview }}
                             @else
                                 <span class="conversation-no-messages">Chưa có tin nhắn</span>
                             @endif
@@ -161,8 +170,17 @@
                                             <span class="conversation-username">{{ $user['username'] }}</span>
                                             <span class="conversation-preview">
                                                 @if($lastMsg)
-                                                    @if(!trim($lastMsg['message']))<i class="far fa-image" aria-hidden="true"></i>@endif
-                                                    {{ trim($lastMsg['message']) ?: 'Hình ảnh' }}
+                                                    @php
+                                                        $lastKind = $lastMsg['kind'] ?? $lastMsg['type'] ?? 'text';
+                                                        $lastPreview = match($lastKind) {
+                                                            'order_reference' => 'Đơn hàng liên quan',
+                                                            'transaction_reference' => 'Giao dịch liên quan',
+                                                            'image' => 'Hình ảnh',
+                                                            default => trim($lastMsg['message'] ?? ''),
+                                                        };
+                                                    @endphp
+                                                    @if($lastKind !== 'text')<i class="far {{ $lastKind === 'image' ? 'fa-image' : 'fa-rectangle-list' }}" aria-hidden="true"></i>@endif
+                                                    {{ $lastPreview }}
                                                 @else
                                                     <span class="conversation-no-messages">Chưa có tin nhắn</span>
                                                 @endif

@@ -15,7 +15,11 @@ class Message extends Model
         'sender_id',
         'message',
         'type',
+        'kind',
         'image_path',
+        'reference_type',
+        'reference_id',
+        'reference_payload',
         'is_read'
     ];
 
@@ -25,6 +29,8 @@ class Message extends Model
         'updated_at' => 'datetime',
         'sender_id' => 'integer',
         'conversation_id' => 'integer',
+        'reference_id' => 'integer',
+        'reference_payload' => 'array',
     ];
 
     /**

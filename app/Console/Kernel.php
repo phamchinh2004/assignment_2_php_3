@@ -14,8 +14,8 @@ class Kernel extends ConsoleKernel
     {
         $schedule->command('app:reset-daily-user-data')->dailyAt('00:00');
         
-        // Kiểm tra đơn hàng đặc biệt chưa phân phối mỗi phút
-        $schedule->command('orders:check-special-reminder')->everyMinute();
+        // Kiểm tra đơn hàng giá trị cao chưa phân phối mỗi phút
+        $schedule->command('orders:check-hvo-reminder')->everyMinute();
         
         // Tự động chuyển trạng thái đơn hàng mỗi 5 phút
         $schedule->command('orders:auto-process-status')->everyMinute();

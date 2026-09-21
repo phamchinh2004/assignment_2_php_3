@@ -14,8 +14,6 @@
     <script src="{{ asset('theme/admin/js/demo/datatables-demo.js') }}"></script>
     @vite('resources/js/admin/transaction/withdraw.js')
     <script>
-        window.currentPermissionCode = "quan_ly_tat_ca_giao_dich_nguoi_dung";
-
         // Filter tabs logic cho DataTable
         document.addEventListener('DOMContentLoaded', function () {
             const table = $('#dataTable').DataTable();

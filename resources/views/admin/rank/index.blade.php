@@ -12,9 +12,6 @@
     <script src="{{ asset('theme/admin/vendor/datatables/jquery.dataTables.min.js') }}"></script>
     <script src="{{ asset('theme/admin/vendor/datatables/dataTables.bootstrap4.min.js') }}"></script>
     <script src="{{ asset('theme/admin/js/demo/datatables-demo.js') }}"></script>
-    <script>
-        window.currentPermissionCode = "quan_ly_cap_do";
-    </script>
 @endsection
 
 @section('content')

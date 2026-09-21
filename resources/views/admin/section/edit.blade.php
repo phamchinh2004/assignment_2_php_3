@@ -10,9 +10,6 @@
 
 @section('script-libs')
     @vite('resources/js/admin/section/edit.js')
-    <script>
-        window.currentPermissionCode = "quan_ly_thong_tin_trang_web";
-    </script>
 @endsection
 
 @section('content')

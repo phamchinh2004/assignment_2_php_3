@@ -180,7 +180,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Xử lý nút Liên hệ CSKH (cho đơn đặc biệt)
+    // Xử lý nút Liên hệ CSKH (cho đơn hàng giá trị cao)
     const btnContactCSKH = document.getElementById('btn_contact_cskh');
     if (btnContactCSKH) {
         console.log('Attaching click event to contact CSKH button');

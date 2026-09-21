@@ -1,934 +1,173 @@
-/* ========== Variables ========== */
 :root {
-    --primary-color: #FF9500;
-    --primary-dark: #FF8C00;
-    --secondary-color: #4CAF50;
-    --danger-color: #f44336;
-    --text-primary: #2c3e50;
-    --text-secondary: #7f8c8d;
-    --bg-gradient: linear-gradient(135deg, #000000 0%, #000000 100%);
-    --card-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-    --hover-shadow: 0 15px 50px rgba(0, 0, 0, 0.15);
-}
-
-/* ========== Body & Container ========== */
-body {
-    background: linear-gradient(135deg, #000000 0%, #000000 100%);
-    min-height: 100vh;
-}
-
-.container-1 {
-    box-shadow: none;
-    background-color: transparent !important;
-}
-
-/* ========== Header ========== */
-.bg-white {
-    background: white !important;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    padding: 15px 20px !important;
-    border-radius: 15px 15px 0 0;
-}
-
-.title {
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: white;
-    font-weight: 700;
-    font-size: 20px;
-    margin: 0;
-}
-
-.btn-back {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    transition: all 0.3s ease;
-    color: var(--text-primary) !important;
-    font-weight: 600;
-}
-
-.btn-back:hover {
-    transform: translateX(-5px);
-    color: var(--primary-color) !important;
-}
-
-/* ========== Main Content ========== */
-.box_content_withdraw_money {
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-    padding: 30px 20px;
-    min-height: calc(100vh - 100px);
-}
-
-/* ========== Rank Info Card ========== */
-.rank-info-card {
-    background: linear-gradient(135deg, #000000 0%, #000000 100%);
-    padding: 25px;
-    border-radius: 20px;
-    margin: 0 auto 25px;
-    max-width: 700px;
-    box-shadow: 
-        0 15px 50px rgba(102, 126, 234, 0.3),
-        0 5px 15px rgba(0, 0, 0, 0.1);
-    position: relative;
-    overflow: hidden;
-    isolation: isolate; /* Tạo stacking context mới */
-}
-
-.rank-info-card::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-    animation: rotate 10s linear infinite;
-    pointer-events: none; /* Không chặn click events */
-    z-index: 0; /* Đảm bảo ở dưới các element khác */
-}
-
-@keyframes rotate {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-}
-
-/* Rank Header */
-.rank-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    position: relative;
-    z-index: 1;
-}
-
-.rank-badge {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    background: rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(10px);
-    padding: 10px 20px;
-    border-radius: 50px;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-}
-
-.rank-badge i {
-    color: #FFD700;
-    font-size: 20px;
-    animation: pulse 2s ease-in-out infinite;
-}
-
-.rank-badge span {
-    color: white;
-    font-weight: 700;
-    font-size: 16px;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
-}
-
-.rank-level {
-    color: rgba(255, 255, 255, 0.9);
-    font-size: 13px;
-    font-weight: 600;
-    background: rgba(255, 255, 255, 0.15);
-    padding: 6px 15px;
-    border-radius: 20px;
-}
-
-/* Rank Stats */
-.rank-stats {
-    display: grid;
-    gap: 15px;
-    position: relative;
-    z-index: 1;
-}
-
-.stat-item {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-    padding: 15px;
-    border-radius: 15px;
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    transition: all 0.3s ease;
-    border: 1px solid rgba(255, 255, 255, 0.5);
-}
-
-.stat-item:hover {
-    background: white;
-    transform: translateX(5px);
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
-}
-
-.stat-icon {
-    width: 50px;
-    height: 50px;
-    background: linear-gradient(135deg, #000000 0%, #000000 100%);
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 22px;
-    color: white;
-    flex-shrink: 0;
-}
-
-.stat-content {
-    flex: 1;
-}
-
-.stat-label {
-    font-size: 13px;
-    color: var(--text-secondary);
-    font-weight: 600;
-    margin-bottom: 5px;
-}
-
-.stat-value {
-    font-size: 20px;
-    font-weight: 700;
-    color: var(--text-primary);
-}
-
-/* Progress Stat Highlight */
-.stat-highlight {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.95) 100%);
-    border: 2px solid rgba(255, 215, 0, 0.3);
-}
-
-.stat-highlight .stat-icon {
-    background: linear-gradient(135deg, #FF9500 0%, #FF8C00 100%);
-    box-shadow: 0 5px 15px rgba(255, 149, 0, 0.3);
-}
-
-.progress-value {
-    display: flex;
-    align-items: baseline;
-    gap: 5px;
-    margin-bottom: 10px;
-}
-
-.progress-value .current {
-    color: red;
-    font-size: 28px;
-}
-
-.progress-value .separator {
-    color: var(--text-secondary);
-    font-size: 20px;
-}
-
-.progress-value .total {
-    color: var(--text-primary);
-    font-size: 22px;
-}
-
-.progress-value .unit {
-    color: var(--text-secondary);
-    font-size: 14px;
-    font-weight: 600;
-}
-
-/* Progress Bar */
-.progress-bar-container {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.progress-bar-bg {
-    flex: 1;
-    height: 12px;
-    background: #e0e0e0;
-    border-radius: 10px;
-    overflow: hidden;
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.progress-bar-fill {
-    height: 100%;
-    background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, #FF9500 100%);
-    border-radius: 10px;
-    transition: width 1s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-.progress-bar-fill::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(
-        90deg,
-        transparent,
-        rgba(255, 255, 255, 0.4),
-        transparent
-    );
-    animation: shimmer 2s infinite;
-}
-
-@keyframes shimmer {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
-}
-
-.progress-percentage {
-    font-size: 14px;
-    font-weight: 700;
-    color: white;
-    min-width: 45px;
-    text-align: right;
-}
-
-/* ========== Alert Boxes ========== */
-.remaining-orders-alert,
-.success-alert {
-    max-width: 700px;
-    margin: 20px auto;
-    padding: 20px;
-    border-radius: 15px;
-    display: flex;
-    align-items: flex-start;
-    gap: 15px;
-    animation: slideIn 0.5s ease;
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
-    position: relative;
-    z-index: 10; /* Đảm bảo hiển thị trên cùng */
-}
-
-@keyframes slideIn {
-    from {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* Warning Alert */
-.remaining-orders-alert {
-    background: linear-gradient(135deg, #fff5e6 0%, #ffe8cc 100%);
-    border: 2px solid #FF9500;
-    border-left: 6px solid #FF9500;
-}
-
-.remaining-orders-alert .alert-icon {
-    width: 50px;
-    height: 50px;
-    background: linear-gradient(135deg, #FF9500 0%, #FF8C00 100%);
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 24px;
-    color: white;
-    flex-shrink: 0;
-    animation: bounce 2s ease-in-out infinite;
-}
-
-@keyframes bounce {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-10px); }
-}
-
-/* Success Alert */
-.success-alert {
-    background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
-    border: 2px solid #4CAF50;
-    border-left: 6px solid #4CAF50;
-}
-
-.success-alert .alert-icon {
-    width: 50px;
-    height: 50px;
-    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 24px;
-    color: white;
-    flex-shrink: 0;
-    animation: pulse 2s ease-in-out infinite;
-}
-
-/* Alert Content */
-.alert-content {
-    flex: 1;
-}
-
-.alert-title {
-    font-size: 16px;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin-bottom: 8px;
-}
-
-.remaining-orders-alert .alert-title {
-    color: #FF8C00;
-}
-
-.success-alert .alert-title {
-    color: #4CAF50;
-}
-
-.alert-message {
-    font-size: 14px;
-    color: var(--text-secondary);
-    line-height: 1.6;
-    margin-bottom: 12px;
-}
-
-.alert-message strong {
-    color: var(--primary-color);
-    font-weight: 700;
-    font-size: 16px;
-}
-
-.remaining-orders-alert .alert-message strong {
-    color: #FF8C00;
-}
-
-.success-alert .alert-message strong {
-    color: #4CAF50;
-}
-
-/* Alert Action Button */
-.alert-action {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 20px;
-    background: linear-gradient(135deg, #FF9500 0%, #FF8C00 100%);
-    color: white;
-    font-weight: 600;
-    font-size: 14px;
-    border-radius: 25px;
-    text-decoration: none;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(255, 149, 0, 0.3);
-}
-
-.alert-action:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(255, 149, 0, 0.4);
-    color: white;
-}
-
-.alert-action i {
-    font-size: 16px;
-    animation: shake 1s ease-in-out infinite;
-}
-
-@keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-3px); }
-    75% { transform: translateX(3px); }
-}
-
-/* ========== Card Content ========== */
-.box_content {
-    background: white;
-    width: 100%;
-    max-width: 700px;
-    margin: 20px auto;
-    padding: 30px;
-    border-radius: 20px;
-    box-shadow: var(--card-shadow);
-    transition: all 0.3s ease;
-    border: 1px solid rgba(102, 126, 234, 0.1);
-}
-
-.box_content:hover {
-    box-shadow: var(--hover-shadow);
-    transform: translateY(-2px);
-}
-
-/* ========== Amount Input Section ========== */
-.tittle_so_tien_rut {
-    font-weight: 700;
-    font-size: 14px;
-    color: var(--text-primary);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.tittle_so_tien_rut::before {
-    content: "💰";
-    font-size: 18px;
-}
-
-.input_nhap_tien {
-    border: 2px solid #e0e0e0;
-    outline: none;
-    width: 100%;
-    margin: 15px 0;
-    font-size: 32px;
-    font-weight: 700;
-    padding: 15px 20px;
-    border-radius: 12px;
-    background: #f8f9fa;
-    color: red;
-    transition: all 0.3s ease;
-    text-align: center;
-}
-
-.input_nhap_tien:focus {
-    border-color: var(--primary-color);
-    background: white;
-    box-shadow: 0 0 0 4px rgba(255, 149, 0, 0.1);
-}
-
-.input_nhap_tien::placeholder {
-    color: #bdc3c7;
-    font-size: 16px;
-}
-
-.currency {
-    position: absolute;
-    font-size: 24px;
-    font-weight: 700;
-    top: 50%;
-    right: 20px;
-    transform: translateY(-50%);
-    color: var(--primary-color);
-}
-
-/* ========== Balance & Withdraw All ========== */
-.so_du_tai_khoan,
-.btn_rut_toan_bo {
-    font-size: 14px;
-    font-weight: 600;
-}
-
-.so_du_tai_khoan {
-    color: var(--text-secondary);
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.so_du_tai_khoan::before {
-    content: "💳";
-    font-size: 16px;
-}
-
-.btn_rut_toan_bo {
-    color: black;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    padding: 8px 16px;
-    border-radius: 8px;
-    background: rgba(0, 0, 0, 0.1);
-}
-
-.btn_rut_toan_bo:hover {
-    background: black;
-    color: white;
-    transform: scale(1.05);
-}
-
-/* ========== Bank Information Table ========== */
-table {
-    border-collapse: separate;
-    border-spacing: 0 15px;
-    width: 100%;
-}
-
-th {
-    font-size: 14px;
-    color: var(--text-secondary);
-    font-weight: 600;
-    white-space: nowrap;
-    padding-right: 20px !important;
-    text-align: left;
-    vertical-align: middle;
-}
-
-td {
-    text-align: end;
-    font-weight: 600;
-    vertical-align: middle;
-}
-
-tr {
-    transition: all 0.3s ease;
-}
-
-.bank_infor_input,
-select {
-    width: 100%;
-    text-align: end;
-    border: none;
-    border-bottom: 2px solid #e0e0e0;
-    outline: none;
-    padding: 10px 0;
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--text-primary);
-    background: transparent;
-    transition: all 0.3s ease;
-}
-
-.bank_infor_input:focus,
-select:focus {
-    border-bottom-color: var(--primary-color);
-    background: rgba(255, 149, 0, 0.05);
-}
-
-/* SlimSelect Styling */
-.ss-main {
-    width: 100% !important;
-}
-
-.ss-single-selected {
-    border: none !important;
-    border-bottom: 2px solid #e0e0e0 !important;
-    border-radius: 0 !important;
-    padding: 10px 0 !important;
-    background: transparent !important;
-}
-
-.ss-single-selected:hover,
-.ss-single-selected.ss-open-above,
-.ss-single-selected.ss-open-below {
-    border-bottom-color: var(--primary-color) !important;
-}
-
-/* ========== Note Section ========== */
-.luu_y_tittle {
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--danger-color);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 8px;
-}
-
-.luu_y_tittle::before {
-    content: "⚠️";
-    font-size: 16px;
-}
-
-.luu_y_content {
-    font-size: 12px;
-    color: var(--text-secondary);
-    line-height: 1.6;
-}
-
-/* ========== Submit Button ========== */
-.box_btn_rut_tien_ngay {
-    width: 100%;
-    max-width: 700px;
-    padding: 0 20px;
-}
-
-#btn_withdraw_now {
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
-    border: none;
-    padding: 18px 40px;
-    font-size: 16px;
-    font-weight: 700;
-    border-radius: 50px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    box-shadow: 0 10px 30px rgba(255, 149, 0, 0.3);
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-#btn_withdraw_now::before {
-    content: "💸";
-    margin-right: 10px;
-    font-size: 20px;
-}
-
-#btn_withdraw_now:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 15px 40px rgba(255, 149, 0, 0.4);
-}
-
-#btn_withdraw_now:active {
-    transform: translateY(-1px);
-}
-
-/* Loading Animation */
-#btn_withdraw_now.loading {
-    pointer-events: none;
-    opacity: 0.7;
-}
-
-/* ========== Animations ========== */
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.box_content {
-    animation: fadeInUp 0.6s ease;
-}
-
-.box_content:nth-child(1) {
-    animation-delay: 0.1s;
-}
-
-.box_content:nth-child(2) {
-    animation-delay: 0.2s;
-}
-
-.box_content:nth-child(3) {
-    animation-delay: 0.3s;
-}
-
-/* ========== Responsive Design ========== */
-@media screen and (max-width: 768px) {
-    .title {
-        font-size: 16px;
-    }
-
-    .btn-back {
-        font-size: 13px;
-    }
-
-    .box_content_withdraw_money {
-        padding: 15px 10px;
-    }
-
-    .box_content {
-        width: 95%;
-        padding: 20px 15px;
-        margin: 15px auto;
-    }
-
-    /* Rank Info Card Mobile */
-    .rank-info-card {
-        width: 95%;
-        padding: 20px 15px;
-    }
-
-    /* Tắt animation xoay trên mobile để tránh lỗi */
-    .rank-info-card::before {
-        display: none;
-    }
-
-    .rank-badge {
-        padding: 8px 15px;
-    }
-
-    .rank-badge span {
-        font-size: 14px;
-    }
-
-    .rank-badge i {
-        font-size: 18px;
-    }
-
-    .rank-level {
-        font-size: 11px;
-        padding: 5px 12px;
-    }
-
-    .stat-item {
-        padding: 12px;
-        gap: 12px;
-    }
-
-    .stat-icon {
-        width: 45px;
-        height: 45px;
-        font-size: 20px;
-    }
-
-    .stat-label {
-        font-size: 12px;
-    }
-
-    .stat-value {
-        font-size: 18px;
-    }
-
-    .progress-value .current {
-        font-size: 24px;
-    }
-
-    .progress-value .separator {
-        font-size: 18px;
-    }
-
-    .progress-value .total {
-        font-size: 20px;
-    }
-
-    .progress-value .unit {
-        font-size: 12px;
-    }
-
-    .progress-bar-bg {
-        height: 10px;
-    }
-
-    .progress-percentage {
-        font-size: 12px;
-        min-width: 40px;
-    }
-
-    /* Alert Boxes Mobile */
-    .remaining-orders-alert,
-    .success-alert {
-        width: 95%;
-        padding: 15px;
-        gap: 12px;
-        margin: 15px auto;
-    }
-
-    .remaining-orders-alert .alert-icon,
-    .success-alert .alert-icon {
-        width: 45px;
-        height: 45px;
-        font-size: 20px;
-    }
-
-    .alert-title {
-        font-size: 14px;
-    }
-
-    .alert-message {
-        font-size: 13px;
-    }
-
-    .alert-message strong {
-        font-size: 14px;
-    }
-
-    .alert-action {
-        padding: 8px 16px;
-        font-size: 13px;
-    }
-
-    .alert-action i {
-        font-size: 14px;
-    }
-
-    .input_nhap_tien {
-        font-size: 24px;
-        padding: 12px 15px;
-    }
-
-    .tittle_so_tien_rut {
-        font-size: 12px;
-    }
-
-    .so_du_tai_khoan,
-    .btn_rut_toan_bo {
-        font-size: 12px;
-    }
-
-    th {
-        font-size: 12px;
-        padding-right: 10px !important;
-    }
-
-    .bank_infor_input,
-    select {
-        font-size: 12px;
-    }
-
-    table {
-        border-spacing: 0 10px;
-    }
-
-    .box_btn_rut_tien_ngay {
-        width: 95%;
-        padding: 0 10px;
-    }
-
-    #btn_withdraw_now {
-        padding: 15px 30px;
-        font-size: 14px;
-    }
-}
-
-@media screen and (max-width: 480px) {
-    .input_nhap_tien {
-        font-size: 20px;
-    }
-
-    #btn_withdraw_now {
-        padding: 12px 25px;
-        font-size: 13px;
-    }
-
-    /* Alert Boxes Small Mobile */
-    .remaining-orders-alert .alert-icon,
-    .success-alert .alert-icon {
-        width: 40px;
-        height: 40px;
-        font-size: 18px;
-    }
-
-    .alert-title {
-        font-size: 13px;
-    }
-
-    .alert-message {
-        font-size: 12px;
-    }
-
-    .alert-message strong {
-        font-size: 13px;
-    }
-
-    .alert-action {
-        padding: 7px 14px;
-        font-size: 12px;
-        width: 100%;
-        justify-content: center;
-    }
-}
-
-/* ========== Dark Mode Support (Optional) ========== */
-@media (prefers-color-scheme: dark) {
-    .box_content,
-    .bg-white,
-    .box_content_withdraw_money > .pt-2 {
-        background: #2c3e50;
-        color: #ecf0f1;
-    }
-
-    .title,
-    th,
-    .bank_infor_input,
-    select {
-        color: #ecf0f1;
-    }
-
-    .bank_infor_input,
-    select {
-        border-bottom-color: #34495e;
-    }
-
-    .input_nhap_tien {
-        background: #34495e;
-        color: var(--primary-color);
-        border-color: #34495e;
-    }
+    --withdraw-ink:#171923;
+    --withdraw-muted:#717784;
+    --withdraw-line:#e7e9ee;
+    --withdraw-soft:#f4f5f7;
+    --withdraw-brand:#fe2c55;
+    --withdraw-green:#087a55;
+}
+
+.container-1 { background:var(--withdraw-soft)!important; box-shadow:none!important; }
+.around-content { overflow-x:clip; }
+.withdraw-page,.withdraw-page * { box-sizing:border-box; }
+.withdraw-page { min-height:100dvh; padding:12px 12px 96px; color:var(--withdraw-ink); background:var(--withdraw-soft); }
+.withdraw-header,.box_content_withdraw_money { width:min(1180px,100%); margin-inline:auto; }
+.withdraw-header { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; }
+.withdraw-header__title-wrap { display:flex; align-items:center; gap:11px; min-width:0; }
+.withdraw-back { display:grid; place-items:center; width:42px; height:42px; flex:0 0 auto; border:1px solid var(--withdraw-line); border-radius:14px; background:#fff; color:var(--withdraw-ink); text-decoration:none; box-shadow:0 6px 16px rgba(22,24,35,.05); }
+.withdraw-header h1,.withdraw-card h2,.review-card h2 { margin:0; color:var(--withdraw-ink); font-weight:760; letter-spacing:-.025em; }
+.withdraw-header h1 { font-size:21px; }
+.withdraw-eyebrow { margin:0 0 2px; color:#8a909c; font-size:10px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
+.withdraw-history-link { display:inline-flex; align-items:center; gap:7px; min-height:40px; padding:9px 12px; border:1px solid var(--withdraw-line); border-radius:12px; background:#fff; color:#424754; font-size:12px; font-weight:700; text-decoration:none; }
+.box_content_withdraw_money { min-height:0; padding:0; background:transparent; }
+
+.withdraw-summary-card { position:relative; isolation:isolate; overflow:hidden; margin:0 0 14px; padding:20px; border:1px solid #242936; border-radius:24px; color:#fff; background:linear-gradient(135deg,#10131a 0%,#1d2230 58%,#121722 100%); box-shadow:0 18px 42px rgba(17,24,39,.18); }
+.withdraw-summary-card::before { content:''; position:absolute; z-index:-1; top:-110px; right:-35px; width:240px; height:240px; border-radius:50%; background:rgba(39,231,219,.15); filter:blur(42px); pointer-events:none; }
+.withdraw-summary-card::after { content:''; position:absolute; z-index:-1; right:52px; bottom:-85px; width:190px; height:190px; border:1px solid rgba(255,255,255,.11); border-radius:50%; pointer-events:none; }
+.withdraw-summary-header { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:18px; }
+.withdraw-summary-badge,.withdraw-rank-pill,.wallet-source-label { display:inline-flex; align-items:center; gap:6px; }
+.withdraw-summary-badge { min-height:25px; padding:4px 8px; border:1px solid rgba(255,255,255,.17); border-radius:999px; background:rgba(255,255,255,.1); color:#eef2f7; font-size:10px; font-weight:750; }
+.wallet-live-dot { width:6px; height:6px; border-radius:50%; background:#56e7aa; box-shadow:0 0 0 4px rgba(86,231,170,.1); }
+.wallet-live-dot.is-locked { background:#ffc45f; box-shadow:0 0 0 4px rgba(255,196,95,.12); }
+.wallet-balance-value { display:flex; align-items:baseline; gap:8px; margin-top:10px; }
+.wallet-balance-value strong { max-width:100%; overflow-wrap:anywhere; color:#fff; font-size:clamp(34px,9vw,52px); font-weight:780; line-height:1; letter-spacing:-.055em; }
+.wallet-balance-value span { color:#d3d9e2; font-size:12px; font-weight:800; }
+.wallet-source-label { margin-top:9px; color:#d7dde6; font-size:11px; font-weight:650; }
+.frozen-balance-pill { display:inline-flex; align-items:center; gap:6px; margin-top:10px; padding:6px 9px; border:1px solid rgba(255,196,92,.34); border-radius:10px; background:rgba(255,183,77,.14); color:#ffe2ad; font-size:10px; font-weight:650; }
+.frozen-balance-pill strong { color:#fff4df; font-weight:800; }
+.withdraw-rank-pill { max-width:42%; padding:7px 10px; border:1px solid rgba(255,221,148,.26); border-radius:999px; background:rgba(255,190,74,.13); color:#ffe1a8; font-size:10px; font-weight:800; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.withdraw-summary-stats { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+.withdraw-stat { min-width:0; padding:12px; border:1px solid rgba(255,255,255,.14); border-radius:15px; background:rgba(255,255,255,.09); }
+.withdraw-stat--progress { grid-column:1/-1; }
+.withdraw-stat__label { margin-bottom:5px; color:#d0d6df; font-size:10px; font-weight:700; }
+.withdraw-stat__value { color:#fff; font-size:14px; font-weight:800; }
+.withdraw-progress { display:flex; align-items:center; gap:9px; margin-top:10px; }
+.withdraw-progress__track { flex:1; height:6px; overflow:hidden; border-radius:999px; background:rgba(255,255,255,.24); }
+.withdraw-progress__fill { height:100%; border-radius:inherit; background:#78f0bf; }
+.withdraw-progress__value { color:#f3f6fa; font-size:9px; font-weight:800; white-space:nowrap; }
+
+.remaining-orders-alert { display:flex; align-items:flex-start; gap:10px; margin-top:12px; padding:12px; border:1px solid rgba(255,198,95,.34); border-radius:14px; background:rgba(255,183,77,.14); }
+.remaining-orders-alert.is-pending { border-color:rgba(108,184,255,.34); background:rgba(108,184,255,.13); }
+.remaining-orders-alert.is-locked { border-color:rgba(255,190,74,.42); background:rgba(255,180,62,.17); }
+.remaining-orders-alert .alert-icon { display:grid; place-items:center; width:30px; height:30px; flex:0 0 auto; border-radius:9px; background:#ffc96a; color:#3b2600; font-size:11px; }
+.remaining-orders-alert.is-pending .alert-icon { background:#b8dcff; color:#163753; }
+.remaining-orders-alert .alert-title { color:#fff7e7; font-size:11px; font-weight:850; }
+.remaining-orders-alert .alert-message { margin-top:3px; color:#f1d7ad; font-size:10px; font-weight:550; line-height:1.5; }
+.remaining-orders-alert.is-pending .alert-message { color:#d7ebff; }
+.remaining-orders-alert .alert-action { display:inline-flex; align-items:center; gap:6px; margin-top:8px; color:#fff; font-size:10px; font-weight:850; text-decoration:underline; text-underline-offset:2px; }
+
+.withdraw-layout { display:grid; gap:14px; }
+.withdraw-flow { display:grid; gap:12px; min-width:0; }
+.withdraw-card,.review-card { border:1px solid var(--withdraw-line); border-radius:20px; background:#fff; box-shadow:0 8px 22px rgba(22,24,35,.035); }
+.withdraw-card { padding:16px; }
+.withdraw-card__heading,.withdraw-card__heading-group { display:flex; align-items:center; gap:10px; }
+.withdraw-card__heading--split { justify-content:space-between; }
+.withdraw-card h2,.review-card h2 { font-size:16px; }
+.step-badge { display:grid; place-items:center; width:30px; height:30px; flex:0 0 auto; border-radius:10px; background:#171923; color:#fff; font-size:11px; font-weight:800; }
+
+.amount-field-wrap { position:relative; margin-top:16px; }
+.amount-field { width:100%; min-width:0; height:68px; padding:8px 86px 8px 14px; border:1px solid #dfe2e8; border-radius:17px; outline:none; background:#fafbfc; color:var(--withdraw-ink); font-size:27px; font-weight:780; letter-spacing:-.035em; transition:border-color .18s ease,box-shadow .18s ease,background .18s ease; }
+.amount-field:focus { border-color:#aeb4bf; background:#fff; box-shadow:0 0 0 4px rgba(23,25,35,.05); }
+.amount-field.has-error { border-color:#e65866; box-shadow:0 0 0 4px rgba(230,88,102,.08); }
+.amount-max-button { position:absolute; top:50%; right:10px; transform:translateY(-50%); min-height:38px; padding:8px 11px; border:0; border-radius:11px; background:#eceef2; color:#3c414c; font-size:11px; font-weight:800; }
+.amount-hint { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-top:9px; color:#616875; font-size:10px; }
+.amount-hint strong { flex:0 0 auto; color:#353b46; }
+.field-error { margin:8px 0 0; color:#c83c4a; font-size:10px; font-weight:650; }
+
+.text-action { color:#464c58; font-size:11px; font-weight:750; text-decoration:none; }
+.bank-account-card,.bank-empty-state { display:flex; align-items:center; gap:11px; margin-top:15px; padding:13px; border:1px solid #e5e8ed; border-radius:16px; background:#f8f9fb; }
+.bank-account-card__icon,.bank-empty-state>span { display:grid; place-items:center; width:40px; height:40px; flex:0 0 auto; border-radius:13px; background:#171923; color:#fff; font-size:14px; }
+.bank-account-card__copy,.bank-empty-state>div { min-width:0; flex:1; }
+.bank-account-card__topline { display:flex; align-items:center; flex-wrap:wrap; gap:6px; }
+.bank-account-card__topline strong,.bank-empty-state strong { color:#252832; font-size:12px; font-weight:780; }
+.linked-badge { display:inline-flex; align-items:center; gap:4px; padding:3px 6px; border-radius:999px; background:#e7f6ef; color:#087a55; font-size:8px; font-weight:800; }
+.bank-account-card__copy p,.bank-empty-state p { margin:3px 0 0; overflow:hidden; color:#6f7581; font-size:10px; text-overflow:ellipsis; white-space:nowrap; }
+.bank-account-card__copy>span { display:block; margin-top:3px; color:#424854; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11px; font-weight:750; letter-spacing:.04em; }
+.bank-account-note { display:flex; align-items:flex-start; gap:6px; margin:9px 0 0; color:#6f7682; font-size:9px; line-height:1.45; }
+.bank-empty-state a { flex:0 0 auto; padding:8px 10px; border-radius:10px; background:#171923; color:#fff; font-size:10px; font-weight:800; text-decoration:none; }
+
+.security-copy { display:flex; align-items:flex-start; gap:9px; margin:13px 0 14px; padding:10px; border-radius:13px; background:#f6f7f9; color:#6a707c; }
+.security-copy i { margin-top:2px; color:#39404b; }
+.security-copy p { margin:0; font-size:10px; line-height:1.48; }
+.form-field + .form-field { margin-top:12px; }
+.form-field label { display:block; margin-bottom:6px; color:#4d535e; font-size:10px; font-weight:750; }
+.password-field { position:relative; }
+.password-field input { width:100%; height:46px; padding:0 44px 0 12px; border:1px solid #dfe2e8; border-radius:13px; outline:none; background:#fafbfc; color:var(--withdraw-ink); font-size:12px; }
+.password-field input:focus { border-color:#adb3bd; background:#fff; box-shadow:0 0 0 4px rgba(23,25,35,.04); }
+.password-toggle { position:absolute; top:50%; right:7px; display:grid; place-items:center; width:32px; height:32px; transform:translateY(-50%); border:0; border-radius:9px; background:transparent; color:#8a909b; }
+
+.withdraw-notice { display:flex; align-items:flex-start; gap:9px; padding:11px 12px; border:1px solid #dfe3e9; border-radius:14px; background:#fbfbfc; color:#606773; }
+.withdraw-notice i { margin-top:2px; color:#4f5661; }
+.withdraw-notice p { margin:0; font-size:10px; line-height:1.5; }
+
+.withdraw-review { min-width:0; }
+.review-card { padding:16px; }
+.review-card__header { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.review-card__shield { display:grid; place-items:center; width:34px; height:34px; border-radius:11px; background:#edf8f3; color:var(--withdraw-green); }
+.review-amount { display:flex; align-items:flex-end; justify-content:space-between; gap:12px; margin-top:14px; padding:14px 0; border-top:1px solid #eceef2; border-bottom:1px solid #eceef2; }
+.review-amount span,.review-row span,.eligibility-block__title { color:#656c78; font-size:10px; font-weight:680; }
+.review-amount strong { min-width:0; overflow-wrap:anywhere; color:#1d2029; font-size:19px; font-weight:800; letter-spacing:-.025em; text-align:right; }
+.review-rows { padding:7px 0; }
+.review-row { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:7px 0; }
+.review-row strong { max-width:62%; color:#3a404b; font-size:10px; font-weight:760; text-align:right; overflow-wrap:anywhere; }
+.review-row strong small { color:#8a909a; font-size:8px; font-weight:650; }
+.review-row--net strong { color:var(--withdraw-green); font-size:12px; }
+.eligibility-block { margin-top:8px; padding:12px; border-radius:15px; background:#f7f8fa; }
+.eligibility-block__title { display:flex; align-items:center; justify-content:space-between; gap:10px; color:#505660; font-weight:800; }
+.order-progress { height:5px; margin:9px 0 7px; overflow:hidden; border-radius:999px; background:#e3e6eb; }
+.order-progress span { display:block; height:100%; border-radius:inherit; background:#171923; }
+.eligibility-list { display:grid; gap:1px; }
+.eligibility-item { display:grid; grid-template-columns:15px minmax(0,1fr) auto; align-items:center; gap:6px; padding:6px 0; font-size:9px; }
+.eligibility-item i { color:#a2a8b2; }
+.eligibility-item span { color:#606772; }
+.eligibility-item strong { color:#4b515b; font-size:9px; font-weight:800; text-align:right; }
+.eligibility-item.is-ok i { color:var(--withdraw-green); }
+.eligibility-item.is-blocked i,.eligibility-item.is-blocked strong { color:#bd6b11; }
+.review-blocked-message { display:flex; align-items:flex-start; gap:7px; margin:10px 0 0; padding:9px 10px; border-radius:12px; background:#fff7eb; color:#8b5b19; font-size:9px; line-height:1.45; }
+.withdraw-submit { display:flex; align-items:center; justify-content:center; gap:9px; width:100%; min-height:48px; margin-top:12px; border:0; border-radius:14px; background:#171923; color:#fff; font-size:12px; font-weight:800; box-shadow:0 9px 20px rgba(23,25,35,.14); transition:transform .16s ease,opacity .16s ease,box-shadow .16s ease; }
+.withdraw-submit:disabled { cursor:not-allowed; border:1px solid #cbd0d8; background:#e3e6eb; color:#5f6672; box-shadow:none; }
+.withdraw-submit.is-loading i { animation:withdraw-spin .8s linear infinite; }
+@keyframes withdraw-spin { to { transform:rotate(360deg); } }
+.review-footnote { margin:8px 3px 0; color:#747b86; font-size:8.5px; line-height:1.45; text-align:center; }
+
+.withdraw-card.is-locked { border-color:#e0e3e8; background:#f7f8fa; }
+.withdraw-card.is-locked .step-badge { background:#676e79; }
+.withdraw-card.is-locked .amount-field,
+.withdraw-card.is-locked .password-field input { border-color:#d9dde4; background:#eceff3; color:#656c78; cursor:not-allowed; }
+.withdraw-card.is-locked .amount-max-button,
+.withdraw-card.is-locked .password-toggle { background:#e0e4e9; color:#666d78; cursor:not-allowed; }
+
+@media (hover:hover) {
+    .withdraw-back:hover,.withdraw-history-link:hover,.text-action:hover { color:#11131a; border-color:#cfd3da; }
+    .withdraw-submit:not(:disabled):hover { transform:translateY(-1px); box-shadow:0 12px 24px rgba(23,25,35,.18); }
+}
+
+@media (min-width:720px) {
+    .withdraw-page { padding:20px 20px 74px; }
+    .withdraw-summary-card { padding:24px; }
+    .withdraw-summary-stats { grid-template-columns:repeat(3,minmax(0,1fr)); }
+    .withdraw-stat--progress { grid-column:auto; }
+    .withdraw-card,.review-card { padding:20px; }
+}
+
+@media (min-width:980px) {
+    .withdraw-header { margin-bottom:16px; }
+    .withdraw-header h1 { font-size:24px; }
+    .withdraw-summary-card { margin-bottom:18px; padding:26px 28px; }
+    .withdraw-layout { grid-template-columns:minmax(0,1fr) 370px; align-items:start; gap:18px; }
+    .withdraw-flow { grid-template-columns:repeat(2,minmax(0,1fr)); align-items:start; }
+    .amount-card,.withdraw-notice { grid-column:1/-1; }
+    .security-card,.destination-card { min-height:100%; }
+    .withdraw-review { position:sticky; top:18px; }
+    .amount-field { height:76px; font-size:31px; }
+}
+
+@media (max-width:480px) {
+    .withdraw-page { padding-inline:10px; }
+    .withdraw-history-link span { display:none; }
+    .withdraw-history-link { width:40px; justify-content:center; padding:0; }
+    .withdraw-summary-card { padding:17px; border-radius:21px; }
+    .withdraw-card,.review-card { border-radius:17px; }
+    .bank-empty-state { align-items:flex-start; flex-wrap:wrap; }
+    .bank-empty-state a { margin-left:51px; }
 }

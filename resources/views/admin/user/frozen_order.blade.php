@@ -9,9 +9,6 @@
 
 @section('script-libs')
 @vite('resources/js/admin/user/frozen_order.js')
-<script>
-    window.currentPermissionCode = "quan_ly_tat_ca_nguoi_dung";
-</script>
 @endsection
 
 @section('content')

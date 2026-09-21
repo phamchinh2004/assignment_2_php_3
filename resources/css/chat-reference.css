@@ -1,0 +1,439 @@
+.chat-reference-card {
+    --reference-accent: #d95537;
+    --reference-accent-strong: #a83b24;
+    --reference-accent-soft: #fff3ee;
+    --reference-ink: #211f1c;
+    --reference-muted: #77716a;
+    --reference-line: rgba(43, 38, 32, 0.09);
+    overflow: hidden;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    color: var(--reference-ink);
+    background: #fff;
+    border: 1px solid var(--reference-line);
+    border-radius: 18px;
+    box-shadow: 0 10px 30px rgba(42, 35, 28, 0.075);
+    font: inherit;
+    line-height: 1.35;
+    white-space: normal;
+}
+
+.chat-reference-card.is-transaction {
+    --reference-accent: #3568d4;
+    --reference-accent-strong: #234da6;
+    --reference-accent-soft: #eef4ff;
+}
+
+.chat-reference-header {
+    display: flex;
+    min-width: 0;
+    padding: 12px 13px 9px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.chat-reference-heading {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 8px;
+    color: #5f5952;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: .08em;
+    line-height: 1.2;
+    text-transform: uppercase;
+}
+
+.chat-reference-heading > span:last-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.chat-reference-icon {
+    display: grid;
+    width: 28px;
+    height: 28px;
+    flex: 0 0 28px;
+    place-items: center;
+    color: var(--reference-accent-strong);
+    background: var(--reference-accent-soft);
+    border-radius: 9px;
+    font-size: 11px;
+}
+
+.chat-reference-status {
+    max-width: 42%;
+    padding: 5px 8px;
+    overflow: hidden;
+    flex: 0 1 auto;
+    color: #7a5c1b;
+    background: #fff5d8;
+    border-radius: 999px;
+    font-size: 8px;
+    font-weight: 800;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.chat-reference-status.status-confirmed,
+.chat-reference-status.status-delivered,
+.chat-reference-status.status-completed,
+.chat-reference-status.status-recorded {
+    color: #287053;
+    background: #e9f7ef;
+}
+
+.chat-reference-status.status-transit,
+.chat-reference-status.status-shipping,
+.chat-reference-status.status-processing,
+.chat-reference-status.status-preparing {
+    color: #245ca8;
+    background: #edf5ff;
+}
+
+.chat-reference-status.status-cancelled {
+    color: #a33f36;
+    background: #fcebea;
+}
+
+.chat-reference-identity {
+    display: flex;
+    min-width: 0;
+    padding: 2px 13px 13px;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.chat-reference-eyebrow {
+    color: #9a938b;
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: .055em;
+    text-transform: uppercase;
+}
+
+.chat-reference-code-row {
+    display: flex;
+    min-width: 0;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.chat-reference-code {
+    min-width: 0;
+    overflow: hidden;
+    color: #211f1c;
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: -.025em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.chat-reference-transaction-amount {
+    min-width: 0;
+    max-width: 48%;
+    overflow-wrap: anywhere;
+    flex: 0 0 auto;
+    color: var(--reference-accent-strong);
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: -.02em;
+    text-align: right;
+    white-space: normal;
+}
+
+.chat-reference-identity time {
+    color: #aaa39b;
+    font-size: 9px;
+    font-weight: 500;
+}
+
+.chat-reference-product {
+    display: grid;
+    min-width: 0;
+    margin: 0 10px 10px;
+    padding: 10px;
+    grid-template-columns: 58px minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+    background: #f8f7f4;
+    border-radius: 14px;
+}
+
+.chat-reference-media,
+.chat-reference-image,
+.chat-reference-image-placeholder {
+    width: 58px;
+    height: 58px;
+}
+
+.chat-reference-media {
+    overflow: hidden;
+    background: #efede9;
+    border-radius: 12px;
+}
+
+.chat-reference-image {
+    display: block;
+    object-fit: cover;
+}
+
+.chat-reference-image-placeholder {
+    display: grid;
+    place-items: center;
+    color: #a39c93;
+    font-size: 18px;
+}
+
+.chat-reference-product-copy {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.chat-reference-product-name {
+    display: -webkit-box;
+    overflow: hidden;
+    color: #2a2825;
+    font-size: 11px;
+    font-weight: 750;
+    line-height: 1.35;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+.chat-reference-product-meta {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    gap: 4px 7px;
+    color: #858078;
+    font-size: 9px;
+    line-height: 1.25;
+}
+
+.chat-reference-product-meta span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.chat-reference-finance {
+    display: flex;
+    margin: 0 10px 10px;
+    padding: 10px 11px;
+    flex-direction: column;
+    gap: 7px;
+    background: #fbfaf8;
+    border-radius: 14px;
+}
+
+.chat-reference-finance-row {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: baseline;
+    gap: 10px;
+    color: #756f68;
+    font-size: 9px;
+}
+
+.chat-reference-finance-row span {
+    min-width: 0;
+}
+
+.chat-reference-finance-row strong {
+    min-width: 0;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    color: #46413c;
+    font-size: 10px;
+    font-weight: 750;
+    text-align: right;
+    white-space: normal;
+}
+
+.chat-reference-finance-row.is-primary {
+    margin-bottom: 2px;
+    color: #34312d;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.chat-reference-finance-row.is-primary strong {
+    color: #1f1d1a;
+    font-size: 13px;
+    font-weight: 850;
+    letter-spacing: -.02em;
+}
+
+.chat-reference-finance-row.is-positive strong {
+    color: #287053;
+}
+
+.chat-reference-finance-row.is-danger strong {
+    color: #ac4035;
+}
+
+.chat-reference-transaction-detail {
+    margin: 0 10px 10px;
+    padding: 10px 11px;
+    color: #3f4a5a;
+    background: #f5f8ff;
+    border-radius: 14px;
+}
+
+.chat-reference-detail-label {
+    display: block;
+    margin-bottom: 2px;
+    color: #8a96aa;
+    font-size: 8px;
+    font-weight: 800;
+    letter-spacing: .055em;
+    text-transform: uppercase;
+}
+
+.chat-reference-transaction-detail strong {
+    display: block;
+    color: #24354d;
+    font-size: 11px;
+}
+
+.chat-reference-transaction-detail p {
+    margin: 6px 0 0;
+    overflow-wrap: anywhere;
+    color: #667287;
+    font-size: 9px;
+    line-height: 1.45;
+}
+
+.chat-reference-link {
+    display: flex;
+    min-height: 42px;
+    padding: 10px 13px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    color: var(--reference-accent-strong);
+    background: var(--reference-accent-soft);
+    border-top: 1px solid rgba(217, 85, 55, 0.08);
+    font-size: 10px;
+    font-weight: 800;
+    text-decoration: none;
+    transition: filter .16s ease, transform .16s ease;
+}
+
+.chat-reference-link > span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.chat-reference-card.is-transaction .chat-reference-link {
+    border-top-color: rgba(53, 104, 212, 0.08);
+}
+
+.chat-reference-link:hover,
+.chat-reference-link:focus-visible {
+    color: var(--reference-accent-strong);
+    filter: brightness(.985);
+    text-decoration: none;
+}
+
+.chat-reference-link i {
+    flex: 0 0 auto;
+    font-size: 9px;
+    transition: transform .16s ease;
+}
+
+.chat-reference-link:hover i,
+.chat-reference-link:focus-visible i {
+    transform: translateX(2px);
+}
+
+@media (max-width: 380px) {
+    .chat-reference-header {
+        padding: 10px 11px 8px;
+        gap: 7px;
+    }
+
+    .chat-reference-heading {
+        gap: 6px;
+        font-size: 8px;
+        letter-spacing: .065em;
+    }
+
+    .chat-reference-icon {
+        width: 26px;
+        height: 26px;
+        flex-basis: 26px;
+    }
+
+    .chat-reference-status {
+        max-width: 40%;
+        padding: 4px 6px;
+        font-size: 7.5px;
+    }
+
+    .chat-reference-identity {
+        padding: 2px 11px 11px;
+    }
+
+    .chat-reference-code {
+        font-size: 14px;
+    }
+
+    .chat-reference-transaction-amount {
+        font-size: 12px;
+    }
+
+    .chat-reference-product {
+        margin: 0 8px 8px;
+        padding: 9px;
+        grid-template-columns: 52px minmax(0, 1fr);
+        gap: 9px;
+    }
+
+    .chat-reference-media,
+    .chat-reference-image,
+    .chat-reference-image-placeholder {
+        width: 52px;
+        height: 52px;
+    }
+
+    .chat-reference-finance,
+    .chat-reference-transaction-detail {
+        margin: 0 8px 8px;
+        padding: 9px 10px;
+    }
+
+    .chat-reference-finance-row {
+        gap: 7px;
+    }
+
+    .chat-reference-finance-row.is-primary strong {
+        font-size: 12px;
+    }
+
+    .chat-reference-link {
+        min-height: 40px;
+        padding: 9px 11px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .chat-reference-link,
+    .chat-reference-link i {
+        transition: none;
+    }
+}

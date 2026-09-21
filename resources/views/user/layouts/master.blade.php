@@ -35,6 +35,7 @@
     @vite('resources/css/floating-chat.css')
     @yield('css-libs')
     @vite('resources/css/user/tiktok-theme.css')
+    @stack('page-styles')
     @livewireStyles
     <style>
         /* Smooth scroll for better UX */
@@ -86,109 +87,176 @@
         <!-- End Floating Chat Bubble -->
 
         <!-- Change Password Modal-->
-        <div class="modal fade" id="changePasswordModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
-            aria-hidden="true">
-            <div class="modal-dialog" role="document">
+        <div class="modal fade account-security-modal" id="changePasswordModal" tabindex="-1" role="dialog"
+            aria-labelledby="changePasswordModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
                 <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="exampleModalLabel">Đổi mật khẩu</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-
+                    <div class="account-security-modal__header">
+                        <span class="account-security-modal__icon is-slate" aria-hidden="true">
+                            <i class="fa-solid fa-lock"></i>
+                        </span>
+                        <div class="account-security-modal__heading">
+                            <span class="account-security-modal__eyebrow">Bảo mật tài khoản</span>
+                            <h5 class="modal-title" id="changePasswordModalLabel">Đổi mật khẩu đăng nhập</h5>
+                            <p>Cập nhật mật khẩu dùng để đăng nhập vào tài khoản.</p>
+                        </div>
+                        <button type="button" class="account-security-modal__close" data-bs-dismiss="modal" aria-label="Đóng">
+                            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                        </button>
                     </div>
                     <div class="modal-body">
                         <form action="{{ route('change_password') }}" method="POST" id="form_change_password">
                             @csrf
                             @method("POST")
-                            <div class="form-group">
-                                <label for="">Mật khẩu hiện tại</label>
-                                <input type="password" name="present_password" id="present_password"
-                                    class="form-control" placeholder="Nhập mật khẩu hiện tại!" required>
+                            <div class="account-security-field">
+                                <label for="present_password">Mật khẩu hiện tại</label>
+                                <div class="account-security-field__control">
+                                    <i class="fa-solid fa-key" aria-hidden="true"></i>
+                                    <input type="password" name="present_password" id="present_password"
+                                        class="form-control" placeholder="Nhập mật khẩu hiện tại" autocomplete="current-password" required>
+                                </div>
                             </div>
-                            <div class="form-group">
-                                <label for="">Mật khẩu mới</label>
-                                <input type="password" name="new_password" id="new_password" class="form-control"
-                                    placeholder="Nhập mật khẩu mới!" required>
+                            <div class="account-security-field">
+                                <label for="new_password">Mật khẩu mới</label>
+                                <div class="account-security-field__control">
+                                    <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+                                    <input type="password" name="new_password" id="new_password" class="form-control"
+                                        placeholder="Nhập mật khẩu mới" autocomplete="new-password" minlength="6" required>
+                                </div>
+                                <small>Tối thiểu 6 ký tự.</small>
                             </div>
-                            <div class="form-group">
-                                <label for="">Xác nhận mật khẩu mới</label>
-                                <input type="password" name="confirm_new_password" id="confirm_new_password"
-                                    class="form-control" placeholder="Xác nhận mật khẩu mới!" required>
+                            <div class="account-security-field">
+                                <label for="confirm_new_password">Xác nhận mật khẩu mới</label>
+                                <div class="account-security-field__control">
+                                    <i class="fa-solid fa-check" aria-hidden="true"></i>
+                                    <input type="password" name="confirm_new_password" id="confirm_new_password"
+                                        class="form-control" placeholder="Nhập lại mật khẩu mới" autocomplete="new-password" required>
+                                </div>
                             </div>
                         </form>
                     </div>
                     <div class="modal-footer">
-                        <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Hủy</button>
-                        <a class="btn btn-primary" onclick="change_password()">Xác nhận đổi</a>
+                        <button class="account-security-modal__button is-secondary" type="button" data-bs-dismiss="modal">Hủy</button>
+                        <button class="account-security-modal__button is-primary" type="button" onclick="change_password()">
+                            <span>Cập nhật mật khẩu</span><i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
         <!-- Change Transaction Password Modal-->
-        <div class="modal fade" id="changeTransactionPasswordModal" tabindex="-1" role="dialog"
-            aria-labelledby="exampleModalLabel" aria-hidden="true">
-            <div class="modal-dialog" role="document">
+        <div class="modal fade account-security-modal" id="changeTransactionPasswordModal" tabindex="-1" role="dialog"
+            aria-labelledby="changeTransactionPasswordModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
                 <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="exampleModalLabel">Đổi mật khẩu giao dịch hoặc <a
-                                id="resetTransactionPasswordLink" data-bs-toggle="modal"
-                                data-bs-target="#resetTransactionPasswordModal" href="#">cấp lại mật khẩu!</a></h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <div class="account-security-modal__header">
+                        <span class="account-security-modal__icon is-coral" aria-hidden="true">
+                            <i class="fa-solid fa-shield-halved"></i>
+                        </span>
+                        <div class="account-security-modal__heading">
+                            <span class="account-security-modal__eyebrow">Xác thực giao dịch</span>
+                            <h5 class="modal-title" id="changeTransactionPasswordModalLabel">Đổi mật khẩu giao dịch</h5>
+                            <p>Mật khẩu này được dùng khi xác nhận các thao tác tài chính.</p>
+                        </div>
+                        <button type="button" class="account-security-modal__close" data-bs-dismiss="modal" aria-label="Đóng">
+                            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                        </button>
                     </div>
                     <div class="modal-body">
                         <form action="{{ route('change_transaction_password') }}" method="POST"
                             id="form_change_transaction_password">
                             @csrf
                             @method("POST")
-                            <div class="form-group">
-                                <label for="">Mật khẩu hiện tại</label>
-                                <input type="password" name="present_transaction_password"
-                                    id="present_transaction_password" class="form-control"
-                                    placeholder="Nhập mật khẩu giao dịch hiện tại!" required>
+                            <div class="account-security-field">
+                                <label for="present_transaction_password">Mật khẩu giao dịch hiện tại</label>
+                                <div class="account-security-field__control">
+                                    <i class="fa-solid fa-key" aria-hidden="true"></i>
+                                    <input type="password" name="present_transaction_password"
+                                        id="present_transaction_password" class="form-control"
+                                        placeholder="Nhập mật khẩu giao dịch hiện tại" autocomplete="current-password" required>
+                                </div>
                             </div>
-                            <div class="form-group">
-                                <label for="">Mật khẩu mới</label>
-                                <input type="password" name="new_transaction_password" id="present_transaction_password"
-                                    class="form-control" placeholder="Nhập mật khẩu giao dịch mới!" required>
+                            <div class="account-security-field">
+                                <label for="new_transaction_password">Mật khẩu giao dịch mới</label>
+                                <div class="account-security-field__control">
+                                    <i class="fa-solid fa-shield" aria-hidden="true"></i>
+                                    <input type="password" name="new_transaction_password" id="new_transaction_password"
+                                        class="form-control" placeholder="Nhập mật khẩu giao dịch mới" autocomplete="new-password" minlength="6" required>
+                                </div>
+                                <small>Tối thiểu 6 ký tự.</small>
                             </div>
-                            <div class="form-group">
-                                <label for="">Xác nhận mật khẩu mới</label>
-                                <input type="password" name="confirm_new_transaction_password"
-                                    id="confirm_new_transaction_password" class="form-control"
-                                    placeholder="Xác nhận mật khẩu giao dịch mới!" required>
+                            <div class="account-security-field">
+                                <label for="confirm_new_transaction_password">Xác nhận mật khẩu mới</label>
+                                <div class="account-security-field__control">
+                                    <i class="fa-solid fa-check" aria-hidden="true"></i>
+                                    <input type="password" name="confirm_new_transaction_password"
+                                        id="confirm_new_transaction_password" class="form-control"
+                                        placeholder="Nhập lại mật khẩu giao dịch mới" autocomplete="new-password" required>
+                                </div>
                             </div>
                         </form>
+
+                        <button type="button" class="account-security-reset-link" id="resetTransactionPasswordLink"
+                            data-reset-transaction-password>
+                            <span class="account-security-reset-link__icon"><i class="fa-solid fa-rotate" aria-hidden="true"></i></span>
+                            <span>
+                                <strong>Quên mật khẩu giao dịch?</strong>
+                                <small>Xác minh bằng mật khẩu đăng nhập để cấp lại.</small>
+                            </span>
+                            <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+                        </button>
                     </div>
                     <div class="modal-footer">
-                        <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Hủy</button>
-                        <a class="btn btn-primary" onclick="change_transaction_password()">Xác nhận đổi</a>
+                        <button class="account-security-modal__button is-secondary" type="button" data-bs-dismiss="modal">Hủy</button>
+                        <button class="account-security-modal__button is-primary" type="button" onclick="change_transaction_password()">
+                            <span>Cập nhật mật khẩu</span><i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
         <!-- Cấp lại mật khẩu giao dịch Modal-->
-        <div class="modal fade" id="resetTransactionPasswordModal" tabindex="-1" role="dialog"
-            aria-labelledby="exampleModalLabel" aria-hidden="true">
-            <div class="modal-dialog" role="document">
+        <div class="modal fade account-security-modal account-security-modal--reset" id="resetTransactionPasswordModal"
+            tabindex="-1" role="dialog" aria-labelledby="resetTransactionPasswordModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
                 <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="exampleModalLabel">Cấp lại mật khẩu giao dịch!</a></h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <div class="account-security-modal__header">
+                        <span class="account-security-modal__icon is-gold" aria-hidden="true">
+                            <i class="fa-solid fa-rotate"></i>
+                        </span>
+                        <div class="account-security-modal__heading">
+                            <span class="account-security-modal__eyebrow">Khôi phục truy cập</span>
+                            <h5 class="modal-title" id="resetTransactionPasswordModalLabel">Cấp lại mật khẩu giao dịch</h5>
+                            <p>Xác minh mật khẩu đăng nhập trước khi hệ thống tạo mật khẩu giao dịch mới.</p>
+                        </div>
+                        <button type="button" class="account-security-modal__close" data-bs-dismiss="modal" aria-label="Đóng">
+                            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                        </button>
                     </div>
                     <div class="modal-body">
+                        <div class="account-security-modal__notice">
+                            <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+                            <span>Mật khẩu giao dịch mới sẽ được hiển thị sau khi xác minh thành công.</span>
+                        </div>
                         <form action="{{ route('reset_transaction_password') }}" method="POST"
                             id="form_reset_transaction_password">
                             @csrf
                             @method("POST")
-                            <div class="form-group">
-                                <label for="">Mật khẩu đăng nhập hiện tại</label>
-                                <input type="password" name="present_login_password" id="present_login_password"
-                                    class="form-control" placeholder="Nhập mật khẩu đăng nhập hiện tại!" required>
+                            <div class="account-security-field">
+                                <label for="present_login_password">Mật khẩu đăng nhập hiện tại</label>
+                                <div class="account-security-field__control">
+                                    <i class="fa-solid fa-lock" aria-hidden="true"></i>
+                                    <input type="password" name="present_login_password" id="present_login_password"
+                                        class="form-control" placeholder="Nhập mật khẩu đăng nhập hiện tại" autocomplete="current-password" required>
+                                </div>
                             </div>
                         </form>
                     </div>
                     <div class="modal-footer">
-                        <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Hủy</button>
-                        <a class="btn btn-primary" onclick="reset_transaction_password()">Xác nhận cấp lại</a>
+                        <button class="account-security-modal__button is-secondary" type="button" data-bs-dismiss="modal">Hủy</button>
+                        <button class="account-security-modal__button is-primary" type="button" onclick="reset_transaction_password()">
+                            <span>Xác nhận cấp lại</span><i class="fa-solid fa-rotate" aria-hidden="true"></i>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -221,7 +289,6 @@
         const route_accept_order = "{{ route('accept_order') }}";
         const route_order = "{{ route('order') }}";
         const route_handle_withdraw = "{{ route('handle_withdraw') }}";
-        const route_handle_withdraw_frozen = "{{ route('handle_withdraw_frozen') }}";
         const route_bank_link = "{{ route('bank_link') }}";
 
         const route_change_password = "{{ route('change_password') }}";

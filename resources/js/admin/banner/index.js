@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const form = this.closest('.form-delete');
             const bannerName = form.getAttribute('data-banner-name');
 
-            swal({
+            AppDialog.confirm({
                 title: 'Xác nhận xóa banner?',
                 text: `Bạn có chắc chắn muốn xóa banner "${bannerName}"? Tất cả hình ảnh liên quan cũng sẽ bị xóa. Hành động này không thể hoàn tác!`,
                 icon: 'warning',

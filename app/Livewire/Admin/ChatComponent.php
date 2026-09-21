@@ -80,7 +80,7 @@ class ChatComponent extends Component
                 'user',
                 'staff:id,full_name,username',
                 'messages' => function ($query) {
-                    $query->select('id', 'conversation_id', 'message', 'type', 'created_at')->latest()->limit(1);
+                    $query->select('id', 'conversation_id', 'message', 'type', 'kind', 'created_at')->latest()->limit(1);
                 }
             ])
             ->withCount([
@@ -136,7 +136,7 @@ class ChatComponent extends Component
                     $q->orderBy('updated_at', 'desc')
                         ->with([
                             'messages' => function ($qm) {
-                                $qm->select('id', 'conversation_id', 'message', 'type', 'created_at', 'is_read')
+                                $qm->select('id', 'conversation_id', 'message', 'type', 'kind', 'created_at', 'is_read')
                                     ->orderBy('created_at', 'desc')
                                     ->limit(1);
                             }
@@ -317,13 +317,13 @@ class ChatComponent extends Component
             return;
         }
 
-        // $this->dispatch('swal', [
+        // $this->dispatch('app-dialog', [
         //     'type' => 'error',
         //     'title' => 'Lỗi',
         //     'text' => 'Không thể xóa tin nhắn. Vui lòng thử lại.'
         // ]);
         if (!$this->selectedConversation) {
-            $this->dispatch('swal', [
+            $this->dispatch('app-dialog', [
                 'type' => 'error',
                 'title' => 'Không tìm thấy đoạn chat',
                 'text' => 'Vui lòng chọn một cuộc trò chuyện trước.'
@@ -343,14 +343,14 @@ class ChatComponent extends Component
             }
             $this->dispatch('scroll-to-bottom');
 
-            $this->dispatch('swal', [
+            $this->dispatch('app-dialog', [
                 'type' => 'success',
                 'title' => 'Xóa thành công',
                 'text' => 'Tất cả tin nhắn đã được xóa.'
             ]);
         } catch (\Throwable $e) {
             logger('Xóa tin nhắn lỗi:', ['err' => $e->getMessage()]);
-            $this->dispatch('swal', [
+            $this->dispatch('app-dialog', [
                 'type' => 'error',
                 'title' => 'Lỗi',
                 'text' => 'Không thể xóa tin nhắn. Vui lòng thử lại.'
@@ -402,7 +402,7 @@ class ChatComponent extends Component
     public function changeStatusUser($id)
     {
         if (!$this->selectedConversation) {
-            $this->dispatch('swal', [
+            $this->dispatch('app-dialog', [
                 'type' => 'error',
                 'title' => 'Không tìm thấy đoạn chat',
                 'text' => 'Vui lòng chọn một cuộc trò chuyện trước.'
@@ -411,7 +411,7 @@ class ChatComponent extends Component
         }
         $getUser = User::find($id);
         if (!$getUser) {
-            $this->dispatch('swal', [
+            $this->dispatch('app-dialog', [
                 'type' => 'error',
                 'title' => 'Lỗi',
                 'text' => 'Không tìm thấy người dùng.'
@@ -422,7 +422,7 @@ class ChatComponent extends Component
             $message = "Khóa tài khoản người dùng thành công!";
             $getUser->status = "banned";
             event(new UserLocked($getUser->id));
-            $this->dispatch('swal', [
+            $this->dispatch('app-dialog', [
                 'type' => 'success',
                 'title' => 'Đã khóa!',
                 'text' => $message
@@ -430,7 +430,7 @@ class ChatComponent extends Component
         } else {
             $getUser->status = "activated";
             $message = "Mở khóa tài khoản người dùng thành công!";
-            $this->dispatch('swal', [
+            $this->dispatch('app-dialog', [
                 'type' => 'success',
                 'title' => 'Đã mở khóa',
                 'text' => $message
@@ -457,7 +457,7 @@ class ChatComponent extends Component
         // Load messages với phân trang, sắp xếp từ mới nhất
         $messages = $conversation->messages()
             ->with('sender:id,full_name,role')
-            ->select('id', 'message', 'type', 'image_path', 'sender_id', 'conversation_id', 'is_read', 'created_at')
+            ->select('id', 'message', 'type', 'kind', 'image_path', 'reference_type', 'reference_id', 'reference_payload', 'sender_id', 'conversation_id', 'is_read', 'created_at')
             ->orderBy('created_at', 'desc')
             ->skip(($page - 1) * $this->messagesPerPage)
             ->take($this->messagesPerPage)
@@ -479,6 +479,10 @@ class ChatComponent extends Component
                     'message' => $message->message,
                     'image_path' => $message->image_path,
                     'type' => $message->type,
+                    'kind' => $message->kind ?: $message->type,
+                    'reference_type' => $message->reference_type,
+                    'reference_id' => $message->reference_id,
+                    'reference_payload' => $message->reference_payload,
                     'sender_id' => $message->sender_id,
                     'conversation_id' => $message->conversation_id,
                     'is_read' => $message->is_read,
@@ -592,7 +596,7 @@ class ChatComponent extends Component
                 $staffId = $member->referrer_id;
             } else {
                 // Nếu user không có referrer, không cho phép chat
-                $this->dispatch('swal', [
+                $this->dispatch('app-dialog', [
                     'type' => 'warning',
                     'title' => 'Không thể mở chat',
                     'text' => 'Người dùng này chưa được staff nào mời.'
@@ -627,7 +631,7 @@ class ChatComponent extends Component
                 ->first();
 
             if (!$conversation) {
-                $this->dispatch('swal', [
+                $this->dispatch('app-dialog', [
                     'type' => 'info',
                     'title' => 'Chưa có cuộc trò chuyện',
                     'text' => 'Người dùng này chưa nhắn tin với staff.'
@@ -736,7 +740,8 @@ class ChatComponent extends Component
                 'sender_id' => $userId,
                 'message' => trim($this->messageText),
                 'image_path' => $imagePath,
-                'type' => $imagePath ? 'image' : 'text'
+                'type' => $imagePath ? 'image' : 'text',
+                'kind' => $imagePath ? 'image' : 'text',
             ]);
 
             // Format message cho UI (không cần load sender - dùng data có sẵn)
@@ -745,6 +750,10 @@ class ChatComponent extends Component
                 'message' => $message->message,
                 'image_path' => $message->image_path,
                 'type' => $message->type,
+                'kind' => $message->kind ?: $message->type,
+                'reference_type' => $message->reference_type,
+                'reference_id' => $message->reference_id,
+                'reference_payload' => $message->reference_payload,
                 'sender_id' => $userId,
                 'conversation_id' => $message->conversation_id,
                 'is_read' => false,
@@ -864,7 +873,12 @@ class ChatComponent extends Component
             // Tin nhắn KHÔNG thuộc conversation đang mở - hiển thị notification có thể click
             // Kiểm tra tồn tại sender info trước khi truy cập
             $senderName = $message['sender']['full_name'] ?? 'Người dùng';
-            $messagePreview = $message['type'] === "text" ? Str::limit($message['message'], 30, '...') : "Đã gửi hình ảnh";
+            $messagePreview = match ($message['kind'] ?? $message['type'] ?? 'text') {
+                'order_reference' => 'Đã gửi đơn hàng liên quan',
+                'transaction_reference' => 'Đã gửi giao dịch liên quan',
+                'image' => 'Đã gửi hình ảnh',
+                default => Str::limit($message['message'] ?? '', 30, '...'),
+            };
 
             // Tìm thông tin về user và staff để quyết định cách mở conversation
             $conversation = Conversation::with(['user', 'staff'])->find($message['conversation_id']);

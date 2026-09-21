@@ -820,3 +820,364 @@
 .nowrap {
     white-space: nowrap;
 }
+
+/* Shared account/security modals */
+.account-security-modal .modal-dialog {
+    display: flex;
+    align-items: center;
+    width: min(560px, calc(100% - 20px));
+    max-width: none;
+    min-height: calc(100% - 20px);
+    margin: 10px auto;
+}
+
+.account-security-modal .modal-content {
+    width: 100%;
+    overflow: hidden;
+    border: 0;
+    border-radius: 24px;
+    background: #f5f6f4;
+    box-shadow: 0 28px 90px rgba(14, 20, 29, .27);
+}
+
+.account-security-modal__header {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr) 36px;
+    align-items: start;
+    gap: 11px;
+    padding: 18px;
+    border-bottom: 1px solid #e7e8e5;
+    background: #fff;
+}
+
+.account-security-modal__icon {
+    display: grid;
+    width: 44px;
+    height: 44px;
+    place-items: center;
+    border-radius: 14px;
+    font-size: 14px;
+}
+
+.account-security-modal__icon.is-slate {
+    color: #536070;
+    background: #eef1f4;
+}
+
+.account-security-modal__icon.is-coral {
+    color: #df2449;
+    background: #fff0f3;
+}
+
+.account-security-modal__icon.is-gold {
+    color: #a96b0d;
+    background: #fff5df;
+}
+
+.account-security-modal__icon.is-green {
+    color: #07865c;
+    background: #ecfaf5;
+}
+
+.account-security-modal__heading {
+    min-width: 0;
+}
+
+.account-security-modal__eyebrow {
+    display: block;
+    margin-bottom: 3px;
+    color: #92979d;
+    font-size: 8px;
+    font-weight: 820;
+    letter-spacing: .11em;
+    text-transform: uppercase;
+}
+
+.account-security-modal .modal-title {
+    margin: 0;
+    color: #17191f;
+    font-size: 18px;
+    font-weight: 840;
+    letter-spacing: -.035em;
+    line-height: 1.2;
+}
+
+.account-security-modal__heading p {
+    margin: 5px 0 0;
+    color: #777d85;
+    font-size: 10px;
+    line-height: 1.5;
+}
+
+.account-security-modal__close {
+    display: grid;
+    width: 36px;
+    height: 36px;
+    place-items: center;
+    padding: 0;
+    border: 1px solid #e1e3df;
+    border-radius: 50%;
+    background: #f7f8f6;
+    color: #626870;
+    cursor: pointer;
+}
+
+.account-security-modal .modal-body {
+    max-height: calc(100dvh - 190px);
+    padding: 14px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background: #f5f6f4;
+}
+
+.account-security-modal form {
+    padding: 14px;
+    border: 1px solid #e4e6e2;
+    border-radius: 18px;
+    background: #fff;
+}
+
+.account-security-field + .account-security-field {
+    margin-top: 12px;
+}
+
+.account-security-field label {
+    display: block;
+    margin-bottom: 6px;
+    color: #484d55;
+    font-size: 10px;
+    font-weight: 760;
+}
+
+.account-security-field > small {
+    display: block;
+    margin: 5px 1px 0;
+    color: #8b9097;
+    font-size: 8px;
+    line-height: 1.45;
+}
+
+.account-security-field__control {
+    position: relative;
+}
+
+.account-security-field__control > i {
+    position: absolute;
+    top: 50%;
+    left: 13px;
+    z-index: 1;
+    width: 14px;
+    color: #9a9fa5;
+    font-size: 10px;
+    text-align: center;
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
+.account-security-field__control--textarea > i {
+    top: 16px;
+    transform: none;
+}
+
+.account-security-modal .form-control {
+    min-height: 47px;
+    padding: 10px 12px 10px 39px;
+    border: 1px solid #dfe2dc;
+    border-radius: 12px;
+    outline: 0;
+    background: #fafbfa;
+    color: #17191f;
+    font-size: 11px;
+    box-shadow: none;
+    transition: border-color .18s ease, background .18s ease, box-shadow .18s ease;
+}
+
+.account-security-modal textarea.form-control {
+    min-height: 96px;
+    padding-top: 12px;
+    resize: vertical;
+}
+
+.account-security-modal .form-control::placeholder {
+    color: #a4a8ae;
+}
+
+.account-security-modal .form-control:focus {
+    border-color: #a7b396;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(201, 243, 109, .17);
+}
+
+.account-security-reset-link {
+    display: grid;
+    grid-template-columns: 38px minmax(0, 1fr) 10px;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 64px;
+    margin-top: 10px;
+    padding: 10px;
+    border: 1px solid #eadfc8;
+    border-radius: 16px;
+    background: #fffaf0;
+    color: #4d4538;
+    text-align: left;
+    font: inherit;
+    cursor: pointer;
+}
+
+.account-security-reset-link__icon {
+    display: grid;
+    width: 38px;
+    height: 38px;
+    place-items: center;
+    border-radius: 12px;
+    background: #fff0cf;
+    color: #a66a0f;
+    font-size: 12px;
+}
+
+.account-security-reset-link > span:nth-child(2) {
+    min-width: 0;
+}
+
+.account-security-reset-link strong,
+.account-security-reset-link small {
+    display: block;
+}
+
+.account-security-reset-link strong {
+    color: #3f3a31;
+    font-size: 10px;
+    font-weight: 780;
+}
+
+.account-security-reset-link small {
+    margin-top: 2px;
+    color: #8a806e;
+    font-size: 8px;
+    line-height: 1.4;
+}
+
+.account-security-reset-link > i {
+    color: #b6a995;
+    font-size: 8px;
+}
+
+.account-security-modal__notice {
+    display: grid;
+    grid-template-columns: 18px minmax(0, 1fr);
+    gap: 8px;
+    margin-bottom: 10px;
+    padding: 10px 11px;
+    border: 1px solid #e2e6d9;
+    border-radius: 13px;
+    background: #f8fbea;
+    color: #657046;
+    font-size: 9px;
+    line-height: 1.5;
+}
+
+.account-security-modal__notice i {
+    margin-top: 2px;
+    color: #7b8d45;
+}
+
+.me-warehouse-modal__notice {
+    border-color: #dce8e1;
+    background: #f3faf7;
+    color: #5d7468;
+}
+
+.me-warehouse-modal__notice i {
+    color: #17835f;
+}
+
+.account-security-modal .modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 12px 14px max(14px, env(safe-area-inset-bottom));
+    border-top: 1px solid #e7e8e5;
+    background: #fff;
+}
+
+.account-security-modal__button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-width: 104px;
+    min-height: 42px;
+    padding: 0 13px;
+    border-radius: 12px;
+    font: inherit;
+    font-size: 10px;
+    font-weight: 780;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.account-security-modal__button.is-secondary {
+    border: 1px solid #dfe2dc;
+    background: #fff;
+    color: #656a72;
+}
+
+.account-security-modal__button.is-primary {
+    border: 1px solid #17191f;
+    background: #17191f;
+    color: #fff;
+    box-shadow: 0 8px 18px rgba(23, 25, 31, .15);
+}
+
+@media (hover: hover) {
+    .account-security-modal__close:hover {
+        color: #17191f;
+        background: #eef0ed;
+    }
+
+    .account-security-reset-link:hover {
+        border-color: #decba5;
+        background: #fff6e5;
+    }
+
+    .account-security-modal__button.is-secondary:hover {
+        color: #17191f;
+        border-color: #d4d8d0;
+        background: #f8f9f7;
+    }
+
+    .account-security-modal__button.is-primary:hover {
+        color: #fff;
+        background: #252830;
+        border-color: #252830;
+    }
+}
+
+@media (min-width: 768px) {
+    .account-security-modal .modal-dialog {
+        width: min(540px, calc(100% - 20px));
+    }
+
+    .account-security-modal__header {
+        grid-template-columns: 40px minmax(0, 1fr) 34px;
+        gap: 9px;
+        padding: 15px 14px;
+    }
+
+    .account-security-modal__icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 13px;
+    }
+
+    .account-security-modal .modal-title {
+        font-size: 16px;
+    }
+
+    .account-security-modal .modal-footer {
+        position: sticky;
+        bottom: 0;
+    }
+}

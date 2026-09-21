@@ -155,14 +155,16 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
         let fake_price = null;
-        let is_order_special = false;
+        let is_high_value_order = false;
         let order_id = null;
         let frozen_id = null;
         let frozen_updated_at = null;
         const check_frozen = await check_frozen_order();
+        // Backward compatibility: accept the legacy API field from older deployments.
+        const responseIsHighValueOrder = check_frozen.is_high_value_order ?? check_frozen.is_order_special ?? false;
         let can_spin = false;
-        if (check_frozen.status == 200 && check_frozen.is_frozen == true && check_frozen.is_order_special == false && check_frozen.is_new_order == false) {
-            swal({
+        if (check_frozen.status == 200 && check_frozen.is_frozen == true && responseIsHighValueOrder == false && check_frozen.is_new_order == false) {
+            AppDialog.alert({
                 title: trans.donHangChuaXuLy,
                 text: check_frozen.message,
                 icon: "warning",
@@ -170,8 +172,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 dangerMode: true,
             })
             spinner.hidden = true;
-        } else if (check_frozen.status == 200 && check_frozen.is_frozen == true && check_frozen.is_order_special == true && check_frozen.is_new_order == false) {
-            swal({
+        } else if (check_frozen.status == 200 && check_frozen.is_frozen == true && responseIsHighValueOrder == true && check_frozen.is_new_order == false) {
+            AppDialog.alert({
                 title: trans.DonHangDangBiDongBang,
                 text: check_frozen.message,
                 icon: "warning",
@@ -179,15 +181,15 @@ document.addEventListener('DOMContentLoaded', function () {
                 dangerMode: true,
             })
             spinner.hidden = true;
-        } else if (check_frozen.status == 200 && check_frozen.is_frozen == true && check_frozen.is_order_special == true && check_frozen.is_new_order == true) {
-            is_order_special = true;
+        } else if (check_frozen.status == 200 && check_frozen.is_frozen == true && responseIsHighValueOrder == true && check_frozen.is_new_order == true) {
+            is_high_value_order = true;
             fake_price = check_frozen.custom_price;
             can_spin = true;
             order_id = check_frozen.order_id;
             frozen_id = check_frozen.frozen_id;
             frozen_updated_at = check_frozen.frozen_updated_at;
         } else if (check_frozen.status == 400) {
-            swal({
+            AppDialog.alert({
                 title: trans.HetLuotQuay,
                 text: check_frozen.message,
                 icon: "warning",
@@ -195,13 +197,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 dangerMode: true,
             })
             spinner.hidden = true;
-        } else if (check_frozen.status == 200 && check_frozen.is_frozen == false && check_frozen.is_order_special == false && check_frozen.is_new_order == true) {
+        } else if (check_frozen.status == 200 && check_frozen.is_frozen == false && responseIsHighValueOrder == false && check_frozen.is_new_order == true) {
             can_spin = true;
             order_id = check_frozen.order_id;
             frozen_id = check_frozen.frozen_id;
             frozen_updated_at = check_frozen.frozen_updated_at;
         } else if (check_frozen.status == 500) {
-            swal({
+            AppDialog.alert({
                 title: check_frozen.message,
                 text: check_frozen.message,
                 icon: "warning",
@@ -213,7 +215,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (can_spin) {
             const btn_phan_phoi_ngay = document.getElementById('btn_phan_phoi_ngay');
             btn_phan_phoi_ngay.dataset.frozenId = frozen_id;
-            btn_phan_phoi_ngay.dataset.isSpecial = is_order_special ? '1' : '0';
+            btn_phan_phoi_ngay.dataset.isHvo = is_high_value_order ? '1' : '0';
 
             let order_details_time = document.getElementById('order_details_time');
             let order_details_img = document.getElementById('order_details_img');
@@ -246,20 +248,20 @@ document.addEventListener('DOMContentLoaded', function () {
                 // Xử lý giao diện cho đơn thường hoặc đặc biệt
                 const orderModal = document.getElementById('order');
                 const headerNormal = document.querySelector('.order-header-normal');
-                const headerSpecial = document.querySelector('.order-header-special');
-                const specialTag = document.querySelector('.special-tag');
+                const headerHvo = document.querySelector('.order-header-hvo');
+                const hvoTag = document.querySelector('.hvo-tag');
                 const imageShine = document.querySelector('.image-shine');
                 
-                const bonusSpecialRow = document.getElementById('bonus_special_row');
+                const bonusHvoRow = document.getElementById('bonus_hvo_row');
                 
-                if (!is_order_special) {
-                    // Đơn thường - hiển thị header thường, ẩn header đặc biệt
-                    orderModal.classList.remove('special-order');
+                if (!is_high_value_order) {
+                    // Đơn thường - hiển thị header thường, ẩn header HVO
+                    orderModal.classList.remove('high-value-order');
                     headerNormal.style.display = 'block';
-                    headerSpecial.style.display = 'none';
-                    if (specialTag) specialTag.style.display = 'none';
+                    headerHvo.style.display = 'none';
+                    if (hvoTag) hvoTag.style.display = 'none';
                     if (imageShine) imageShine.style.display = 'none';
-                    if (bonusSpecialRow) bonusSpecialRow.style.display = 'none';
+                    if (bonusHvoRow) bonusHvoRow.style.display = 'none';
                     const order_details_price_formatted = format_currency(selectedOrder.price);
                     const order_details_end_value_total_price_formatted = format_currency(selectedOrder.quantity * selectedOrder.price);
                     const commissionAmount = (selectedOrder.quantity * selectedOrder.price) * ((selectedOrder.commission_percentage || selectedOrder.commission_rate) / 100);
@@ -275,13 +277,13 @@ document.addEventListener('DOMContentLoaded', function () {
                     order_details_end_value_price_rose.innerText = order_details_end_value_price_rose_formatted;
                     order_details_end_value_total.innerText = order_details_end_value_total_formatted;
                 } else {
-                    // Đơn đặc biệt - hiển thị header đặc biệt, ẩn header thường
-                    orderModal.classList.add('special-order');
+                    // Đơn hàng giá trị cao - hiển thị header HVO, ẩn header thường
+                    orderModal.classList.add('high-value-order');
                     headerNormal.style.display = 'none';
-                    headerSpecial.style.display = 'block';
-                    if (specialTag) specialTag.style.display = 'flex';
+                    headerHvo.style.display = 'block';
+                    if (hvoTag) hvoTag.style.display = 'flex';
                     if (imageShine) imageShine.style.display = 'block';
-                    if (bonusSpecialRow) bonusSpecialRow.style.display = 'flex';
+                    if (bonusHvoRow) bonusHvoRow.style.display = 'flex';
                     const order_details_price_formatted = format_currency(fake_price / selectedOrder.quantity);
                     const order_details_end_value_total_price_formatted = format_currency(fake_price);
                     const commissionAmount = fake_price * ((selectedOrder.commission_percentage || selectedOrder.commission_rate) / 100);
@@ -377,7 +379,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     
     // Hàm hiển thị modal thành công với thiết kế đẹp
-    function showSuccessModal(profit, totalAmount, commission, penaltyAmount = 0, isSpecialOrder = false) {
+    function showSuccessModal(profit, totalAmount, commission, penaltyAmount = 0, isHighValueOrder = false) {
         // Tính tổng tiền hoàn nhập = Giá trị đơn hàng + Hoa hồng (chưa trừ phạt)
         const totalRefund = totalAmount + commission;
         
@@ -389,9 +391,9 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('success_total_refund').textContent = '+' + format_currency(totalRefund, 4, 4);
         document.getElementById('success_time').textContent = new Date().toLocaleString('vi-VN');
         
-        // Hiển thị/ẩn dòng thưởng đơn đặc biệt
+        // Hiển thị/ẩn dòng thưởng đơn hàng giá trị cao
         const bonusRow = document.getElementById('success_bonus_row');
-        if (isSpecialOrder) {
+        if (isHighValueOrder) {
             bonusRow.style.display = 'flex';
         } else {
             bonusRow.style.display = 'none';
@@ -612,133 +614,4 @@ document.addEventListener('DOMContentLoaded', function () {
         })
     }
 
-    // ============================================ Rút tiền từ số dư đóng băng ============================================
-    
-    // Mở modal rút tiền từ số dư đóng băng
-    window.openWithdrawFrozenModal = function() {
-        const modal = document.getElementById('withdrawFrozenModal');
-        if (modal) {
-            modal.style.display = 'flex';
-            document.body.style.overflow = 'hidden';
-        }
-    }
-    
-    // Đóng modal rút tiền từ số dư đóng băng
-    window.closeWithdrawFrozenModal = function() {
-        const modal = document.getElementById('withdrawFrozenModal');
-        if (modal) {
-            modal.style.display = 'none';
-            document.body.style.overflow = 'auto';
-            // Reset form
-            document.getElementById('withdrawFrozenForm').reset();
-        }
-    }
-    
-    // Xử lý nút "Rút tất cả" - điền toàn bộ số dư đóng băng vào input
-    const btnWithdrawAll = document.getElementById('btn_withdraw_all_frozen');
-    if (btnWithdrawAll) {
-        btnWithdrawAll.addEventListener('click', function() {
-            const amountInput = document.getElementById('frozen_withdraw_amount');
-            const frozenBalanceInfo = document.querySelector('.frozen-balance-info');
-            
-            if (amountInput && frozenBalanceInfo) {
-                // Lấy giá trị từ data attribute và xử lý format
-                let frozenBalance = frozenBalanceInfo.getAttribute('data-frozen-balance');
-                // Loại bỏ dấu phẩy (thousand separator) nếu có
-                frozenBalance = frozenBalance.toString().replace(/,/g, '');
-                frozenBalance = parseFloat(frozenBalance) || 0;
-                
-                if (frozenBalance > 0) {
-                    // Set giá trị với 2 chữ số thập phân, dùng dấu chấm làm decimal separator
-                    amountInput.value = frozenBalance.toFixed(2);
-                    // Trigger input event để validate
-                    amountInput.dispatchEvent(new Event('input', { bubbles: true }));
-                    
-                    // Focus vào input để user có thể thấy giá trị đã được điền
-                    amountInput.focus();
-                    
-                    // Highlight input để user biết đã điền
-                    amountInput.style.borderColor = '#667eea';
-                    setTimeout(() => {
-                        amountInput.style.borderColor = '';
-                    }, 1000);
-                }
-            }
-        });
-    }
-
-    // Xử lý submit form rút tiền từ số dư đóng băng
-    const withdrawFrozenForm = document.getElementById('withdrawFrozenForm');
-    if (withdrawFrozenForm) {
-        withdrawFrozenForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            // Lấy giá trị và xử lý format số (loại bỏ dấu phẩy thousand separator)
-            let amountValue = document.getElementById('frozen_withdraw_amount').value;
-            // Loại bỏ tất cả dấu phẩy (thousand separator)
-            amountValue = amountValue.replace(/,/g, '');
-            
-            const amount = parseFloat(amountValue);
-            const transactionPassword = document.getElementById('frozen_transaction_password').value;
-            
-            if (!amount || amount <= 0 || isNaN(amount)) {
-                notification('error', 'Vui lòng nhập số tiền hợp lệ!', 'Lỗi!');
-                return;
-            }
-            
-            if (!transactionPassword) {
-                notification('error', 'Vui lòng nhập mật khẩu giao dịch!', 'Lỗi!');
-                return;
-            }
-            
-            // Disable button
-            const submitBtn = withdrawFrozenForm.querySelector('button[type="submit"]');
-            const originalText = submitBtn.innerHTML;
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Đang xử lý...';
-            
-            fetch(route_handle_withdraw_frozen, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': csrf
-                },
-                body: JSON.stringify({
-                    amount: amount,
-                    transaction_password: transactionPassword
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 200) {
-                    notification('success', data.message, 'Thành công!');
-                    closeWithdrawFrozenModal();
-                    // Reload trang để cập nhật số dư
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 1500);
-                } else {
-                    notification('error', data.message, 'Lỗi!');
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = originalText;
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                notification('error', 'Có lỗi xảy ra khi rút tiền. Vui lòng thử lại!', 'Lỗi!');
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = originalText;
-            });
-        });
-    }
-    
-    // Đóng modal khi click bên ngoài
-    const withdrawFrozenModal = document.getElementById('withdrawFrozenModal');
-    if (withdrawFrozenModal) {
-        withdrawFrozenModal.addEventListener('click', function(e) {
-            if (e.target === withdrawFrozenModal) {
-                closeWithdrawFrozenModal();
-            }
-        });
-    }
 })

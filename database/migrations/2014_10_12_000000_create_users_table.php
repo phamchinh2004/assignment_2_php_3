@@ -27,7 +27,7 @@ return new class extends Migration
             $table->string('bank_name')->nullable()->comment('Tên ngân hàng');
             $table->string('account_number')->nullable()->comment('Số tài khoản');
             $table->double('balance')->default(0)->comment('Số dư tài khoản');
-            $table->double('frozen_balance')->default(0)->comment('Số dư đóng băng khi nhận đơn hàng đặc biệt');
+            $table->double('frozen_balance')->default(0)->comment('Số dư đóng băng khi nhận đơn hàng giá trị cao');
             $table->string('transaction_password')->nullable()->comment('Mật khẩu giao dịch');
             $table->integer('distribution_today')->nullable()->default(0)->comment('Phân phối hôm nay');
             $table->double('todays_discount')->nullable()->default(0)->comment('Chiếu khấu hôm nay');

@@ -1,394 +1,355 @@
 @extends('user.layouts.master')
-@section('css-libs')
+
+@push('page-styles')
+    @vite('resources/css/user/bank-account.css')
     @vite('resources/css/user/personal_information.css')
-@endsection
+@endpush
+
 @section('script-libs')
     @vite('resources/js/user/personal_information.js')
+    @vite('resources/js/user/bank-account.js')
 @endsection
+
 @section('content')
-    <!-- Modern Professional Personal Information Page -->
-    <div class="profile-container">
-        <!-- Header Section -->
-        <div class="profile-header">
-            <div class="header-content">
-                <div class="profile-avatar">
-                    <div class="avatar-container">
-                        <img src="{{ $user->avatar ? asset('storage/' . $user->avatar) : asset('images/default-avatar-gray.svg') }}" alt="Profile Avatar"
-                            class="avatar-image">
-                        <div class="avatar-badge" role="button" tabindex="0" aria-label="Cập nhật ảnh đại diện"
-                            onclick="openAvatarUpload()"
-                            onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openAvatarUpload(); }">
-                            <i class="fas fa-camera"></i>
-                        </div>
-                    </div>
-                </div>
-                <div class="profile-info">
-                    <h1 class="profile-name">{{$user->full_name}}</h1>
-                    <p class="profile-subtitle">{{__('personal_information.ThongTinCaNhan')}}</p>
-                    <div class="profile-stats">
-                        <div class="stat-item">
-                            <span class="stat-number">6</span>
-                            <span class="stat-label">Mục cài đặt</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-number">100%</span>
-                            <span class="stat-label">Bảo mật</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="profile-header-panel">
-                    <div class="profile-header-panel-title">
-                        <span class="profile-online-dot"></span>
-                        Tài khoản đang hoạt động
-                    </div>
-                    <div class="profile-header-panel-row">
-                        <span><i class="fas fa-shield-halved"></i> Bảo mật</span>
-                        <strong>100%</strong>
-                    </div>
-                    <div class="profile-header-panel-row">
-                        <span><i class="fas fa-camera"></i> Ảnh đại diện</span>
-                        <strong>{{ $user->avatar ? 'Đã cập nhật' : 'Chưa cập nhật' }}</strong>
-                    </div>
-                </div>
+    @php
+        $accountStatusClass = match ($user->status) {
+            'activated' => 'is-active',
+            'banned' => 'is-banned',
+            default => 'is-inactive',
+        };
+        $accountStatusLabel = match ($user->status) {
+            'activated' => 'Đang hoạt động',
+            'banned' => 'Đã bị khóa',
+            'inactivated' => 'Chưa kích hoạt',
+            default => 'Không hoạt động',
+        };
+        $bankLinked = filled($user->username_bank) && filled($user->bank_name) && filled($user->account_number);
+        $hasTransactionPassword = filled($user->transaction_password);
+        $hasWarehouse = filled($user->warehouse_area) && filled($user->warehouse_address);
+        $warehouseHasErrors = $errors->has('warehouse_area') || $errors->has('warehouse_address');
+    @endphp
+
+    <main class="personal-profile-page"
+        data-personal-profile-page
+        data-avatar-upload-route="{{ route('upload_avatar') }}"
+        data-open-warehouse-on-load="{{ $warehouseHasErrors ? 'true' : 'false' }}"
+        data-flash-success="{{ session('success') }}">
+
+        <header class="profile-appbar" aria-labelledby="personal-profile-title">
+            <a href="{{ route('me') }}" class="profile-appbar__back" aria-label="Quay lại trang Tôi">
+                <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+            </a>
+            <div class="profile-appbar__copy">
+                <span>Quản lý tài khoản</span>
+                <h1 id="personal-profile-title">{{ __('personal_information.ThongTinCaNhan') }}</h1>
             </div>
-        </div>
-
-        <!-- Settings Grid -->
-        <div class="settings-grid">
-            <!-- Account Settings -->
-            <div class="settings-section">
-                <div class="section-header">
-                    <h2 class="section-title">
-                        <i class="fas fa-user-circle"></i>
-                        Tài khoản
-                    </h2>
-                    <p class="section-subtitle">Quản lý thông tin tài khoản cá nhân</p>
-                </div>
-
-                <div class="settings-cards">
-                    <!-- Avatar Setting -->
-                    <div class="setting-card" data-category="account" onclick="openAvatarUpload()">
-                        <div class="card-icon">
-                            <i class="fas fa-user-edit"></i>
-                        </div>
-                        <div class="card-content">
-                            <h3 class="card-title">{{__('personal_information.AnhDaiDien')}}</h3>
-                            <p class="card-description">Cập nhật ảnh đại diện của bạn</p>
-                            <div class="card-status">
-                                @if($user->avatar)
-                                    <span class="status-badge status-active">Đã cập nhật</span>
-                                @else
-                                    <span class="status-badge status-pending">Chưa cập nhật</span>
-                                @endif
-                            </div>
-                        </div>
-                        <div class="card-action">
-                            <button class="action-btn">
-                                <i class="fas fa-chevron-right"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Username Setting -->
-                    <div class="setting-card" data-category="account">
-                        <div class="card-icon">
-                            <i class="fas fa-id-card"></i>
-                        </div>
-                        <div class="card-content">
-                            <h3 class="card-title">{{__('personal_information.TenTaiKhoan')}}</h3>
-                            <p class="card-description">Tên hiển thị trong hệ thống</p>
-                            <div class="card-status">
-                                <span class="status-value">{{$user->full_name}}</span>
-                            </div>
-                        </div>
-                        <div class="card-action">
-                            <button class="action-btn">
-                                <i class="fas fa-chevron-right"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Security Settings -->
-            <div class="settings-section">
-                <div class="section-header">
-                    <h2 class="section-title">
-                        <i class="fas fa-shield-alt"></i>
-                        Bảo mật
-                    </h2>
-                    <p class="section-subtitle">Quản lý mật khẩu và bảo mật tài khoản</p>
-                </div>
-
-                <div class="settings-cards">
-                    <!-- Login Password -->
-                    <div class="setting-card" data-category="security" data-bs-toggle="modal"
-                        data-bs-target="#changePasswordModal">
-                        <div class="card-icon">
-                            <i class="fas fa-lock"></i>
-                        </div>
-                        <div class="card-content">
-                            <h3 class="card-title">{{__('personal_information.MatKhauDangNhap')}}</h3>
-                            <p class="card-description">Thay đổi mật khẩu đăng nhập</p>
-                            <div class="card-status">
-                                <span class="status-badge status-secure">Đã bảo mật</span>
-                            </div>
-                        </div>
-                        <div class="card-action">
-                            <button class="action-btn">
-                                <i class="fas fa-chevron-right"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Transaction Password -->
-                    <div class="setting-card" data-category="security" data-bs-toggle="modal"
-                        data-bs-target="#changeTransactionPasswordModal">
-                        <div class="card-icon">
-                            <i class="fas fa-key"></i>
-                        </div>
-                        <div class="card-content">
-                            <h3 class="card-title">{{__('personal_information.MatKhauGiaoDich')}}</h3>
-                            <p class="card-description">Mật khẩu cho các giao dịch</p>
-                            <div class="card-status">
-                                @if($user->transaction_password)
-                                    <span class="status-badge status-secure">Đã bảo mật</span>
-                                @else
-                                    <span class="status-badge status-pending">Chưa thiết lập</span>
-                                @endif
-                            </div>
-                        </div>
-                        <div class="card-action">
-                            <button class="action-btn">
-                                <i class="fas fa-chevron-right"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Payment Settings -->
-            <div class="settings-section">
-                <div class="section-header">
-                    <h2 class="section-title">
-                        <i class="fas fa-credit-card"></i>
-                        Thanh toán
-                    </h2>
-                    <p class="section-subtitle">Quản lý phương thức thanh toán và ví</p>
-                </div>
-
-                <div class="settings-cards">
-                    <!-- Payment Method -->
-                    <div class="setting-card" data-category="payment" onclick="handlePaymentMethodClick()">
-                        <div class="card-icon">
-                            <i class="fas fa-wallet"></i>
-                        </div>
-                        <div class="card-content">
-                            <h3 class="card-title">{{__('personal_information.PhuongThucThanhToan')}}</h3>
-                            <p class="card-description">Thiết lập phương thức thanh toán</p>
-                            <div class="card-status">
-                                @if($user->username_bank && $user->bank_name && $user->account_number)
-                                    <span class="status-badge status-active">{{ $user->bank_name }}</span>
-                                @else
-                                    <span class="status-badge status-pending">Chưa cấu hình</span>
-                                @endif
-                            </div>
-                        </div>
-                        <div class="card-action">
-                            <button class="action-btn">
-                                <i class="fas fa-chevron-right"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Wallet Address -->
-                    <div class="setting-card" data-category="payment">
-                        <div class="card-icon">
-                            <i class="fas fa-coins"></i>
-                        </div>
-                        <div class="card-content">
-                            <h3 class="card-title">{{__('personal_information.DiaChiKho')}}</h3>
-                            <p class="card-description">Quản lý địa chỉ kho</p>
-                        </div>
-                        <div class="card-action">
-                            <button class="action-btn">
-                                <i class="fas fa-chevron-right"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Action Buttons -->
-        <div class="action-buttons">
-            <button class="btn btn-secondary" onclick="history.back(); return false;">
-                <i class="fas fa-arrow-left"></i>
-                {{__('personal_information.QuayLai')}}
+            <button type="button" class="profile-appbar__action" data-avatar-open>
+                <i class="fa-solid fa-camera" aria-hidden="true"></i>
+                <span>Đổi ảnh</span>
             </button>
+        </header>
+
+        <section class="profile-identity-hero" aria-labelledby="profile-display-name">
+            <div class="profile-identity-hero__glow" aria-hidden="true"></div>
+            <div class="profile-identity-hero__main">
+                <button type="button" class="profile-avatar-button" data-avatar-open aria-label="Cập nhật ảnh đại diện">
+                    <img src="{{ get_user_avatar($user) }}"
+                        alt="Ảnh đại diện của {{ $user->full_name }}"
+                        data-profile-avatar
+                        onerror="this.src='{{ asset('images/default-avatar-gray.svg') }}'">
+                    <span class="profile-avatar-button__camera">
+                        <i class="fa-solid fa-camera" aria-hidden="true"></i>
+                    </span>
+                </button>
+
+                <div class="profile-identity-hero__copy">
+                    <div class="profile-identity-hero__badges">
+                        <span class="profile-status-pill {{ $accountStatusClass }}">
+                            <i aria-hidden="true"></i>{{ $accountStatusLabel }}
+                        </span>
+                        <span class="profile-type-pill">
+                            <i class="fa-regular fa-user" aria-hidden="true"></i> Thành viên
+                        </span>
+                    </div>
+                    <h2 id="profile-display-name">{{ $user->full_name }}</h2>
+                    <p class="profile-identity-hero__username">{{ '@' . $user->username }}</p>
+
+                    <div class="profile-identity-hero__signals" aria-label="Trạng thái thiết lập tài khoản">
+                        <span class="{{ $user->avatar ? 'is-complete' : '' }}" data-avatar-hero-status>
+                            <i class="fa-solid {{ $user->avatar ? 'fa-circle-check' : 'fa-circle' }}" aria-hidden="true"></i>
+                            Ảnh đại diện
+                        </span>
+                        <span class="{{ $bankLinked ? 'is-complete' : '' }}" data-bank-hero-status>
+                            <i class="fa-solid {{ $bankLinked ? 'fa-circle-check' : 'fa-circle' }}" aria-hidden="true"></i>
+                            Ngân hàng
+                        </span>
+                        <span class="{{ $hasTransactionPassword ? 'is-complete' : '' }}" data-transaction-hero-status>
+                            <i class="fa-solid {{ $hasTransactionPassword ? 'fa-circle-check' : 'fa-circle' }}" aria-hidden="true"></i>
+                            Mật khẩu giao dịch
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <button type="button" class="profile-identity-hero__edit" data-avatar-open>
+                <i class="fa-regular fa-pen-to-square" aria-hidden="true"></i>
+                <span>Cập nhật ảnh</span>
+            </button>
+        </section>
+
+        <div class="profile-content-grid">
+            <div class="profile-main-column">
+                <section class="profile-panel profile-details-panel" aria-labelledby="identity-details-title">
+                    <div class="profile-section-heading">
+                        <div>
+                            <span class="profile-section-kicker">Thông tin định danh</span>
+                            <h2 id="identity-details-title">Hồ sơ của bạn</h2>
+                            <p>Các thông tin dưới đây được quản lý bởi hệ thống và hiện chỉ có thể xem.</p>
+                        </div>
+                        <span class="profile-readonly-badge">
+                            <i class="fa-solid fa-lock" aria-hidden="true"></i> Chỉ xem
+                        </span>
+                    </div>
+
+                    <dl class="profile-detail-list">
+                        <div class="profile-detail-item">
+                            <dt>
+                                <span class="profile-detail-item__icon is-coral"><i class="fa-regular fa-id-card" aria-hidden="true"></i></span>
+                                <span>Họ và tên</span>
+                            </dt>
+                            <dd>{{ $user->full_name ?: 'Chưa cập nhật' }}</dd>
+                        </div>
+                        <div class="profile-detail-item">
+                            <dt>
+                                <span class="profile-detail-item__icon is-blue"><i class="fa-regular fa-user" aria-hidden="true"></i></span>
+                                <span>{{ __('personal_information.TenTaiKhoan') }}</span>
+                            </dt>
+                            <dd>{{ $user->username ?: 'Chưa cập nhật' }}</dd>
+                        </div>
+                        <div class="profile-detail-item">
+                            <dt>
+                                <span class="profile-detail-item__icon is-violet"><i class="fa-regular fa-envelope" aria-hidden="true"></i></span>
+                                <span>Email</span>
+                            </dt>
+                            <dd class="{{ filled($user->email) ? '' : 'is-empty' }}">{{ $user->email ?: 'Chưa cập nhật' }}</dd>
+                        </div>
+                        <div class="profile-detail-item">
+                            <dt>
+                                <span class="profile-detail-item__icon is-green"><i class="fa-solid fa-phone" aria-hidden="true"></i></span>
+                                <span>Số điện thoại</span>
+                            </dt>
+                            <dd class="{{ filled($user->phone) ? '' : 'is-empty' }}">{{ $user->phone ?: 'Chưa cập nhật' }}</dd>
+                        </div>
+                        <div class="profile-detail-item">
+                            <dt>
+                                <span class="profile-detail-item__icon is-gold"><i class="fa-solid fa-link" aria-hidden="true"></i></span>
+                                <span>Mã giới thiệu</span>
+                            </dt>
+                            <dd>{{ $user->referral_code ?: '—' }}</dd>
+                        </div>
+                    </dl>
+                </section>
+
+                <section class="profile-panel profile-payment-panel" id="payment-method" aria-labelledby="payment-title">
+                    <div class="profile-section-heading">
+                        <div>
+                            <span class="profile-section-kicker">Thanh toán & nhận tiền</span>
+                            <h2 id="payment-title">Tài khoản ngân hàng</h2>
+                            <p>Quản lý tài khoản nhận tiền bằng flow liên kết hiện có của hệ thống.</p>
+                        </div>
+                    </div>
+                    <x-user.bank-account-link class="bank-account--profile" :user="$user" :banks="$banks" />
+                </section>
+            </div>
+
+            <aside class="profile-side-column">
+                <section class="profile-panel profile-security-panel" aria-labelledby="security-title">
+                    <div class="profile-section-heading profile-section-heading--compact">
+                        <div>
+                            <span class="profile-section-kicker">Bảo mật</span>
+                            <h2 id="security-title">Quyền truy cập</h2>
+                        </div>
+                    </div>
+
+                    <div class="profile-action-list">
+                        <button type="button" class="profile-action-row" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
+                            <span class="profile-action-row__icon is-slate"><i class="fa-solid fa-lock" aria-hidden="true"></i></span>
+                            <span class="profile-action-row__copy">
+                                <strong>{{ __('personal_information.MatKhauDangNhap') }}</strong>
+                                <small>Tối thiểu 6 ký tự khi thay đổi</small>
+                            </span>
+                            <span class="profile-action-row__meta">Thay đổi</span>
+                            <i class="fa-solid fa-chevron-right profile-action-row__arrow" aria-hidden="true"></i>
+                        </button>
+
+                        @if($hasTransactionPassword)
+                            <button type="button" class="profile-action-row" data-bs-toggle="modal" data-bs-target="#changeTransactionPasswordModal">
+                                <span class="profile-action-row__icon is-coral"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i></span>
+                                <span class="profile-action-row__copy">
+                                    <strong>{{ __('personal_information.MatKhauGiaoDich') }}</strong>
+                                    <small>Đã thiết lập cho giao dịch</small>
+                                </span>
+                                <span class="profile-action-row__meta is-complete">Đã có</span>
+                                <i class="fa-solid fa-chevron-right profile-action-row__arrow" aria-hidden="true"></i>
+                            </button>
+                        @else
+                            <button type="button" class="profile-action-row" data-open-bank-account>
+                                <span class="profile-action-row__icon is-coral"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i></span>
+                                <span class="profile-action-row__copy">
+                                    <strong>{{ __('personal_information.MatKhauGiaoDich') }}</strong>
+                                    <small>Thiết lập cùng tài khoản ngân hàng</small>
+                                </span>
+                                <span class="profile-action-row__meta is-pending">Chưa có</span>
+                                <i class="fa-solid fa-chevron-right profile-action-row__arrow" aria-hidden="true"></i>
+                            </button>
+                        @endif
+                    </div>
+                </section>
+
+                <section class="profile-panel profile-warehouse-panel" aria-labelledby="warehouse-title">
+                    <div class="profile-section-heading profile-section-heading--compact">
+                        <div>
+                            <span class="profile-section-kicker">Thông tin vận hành</span>
+                            <h2 id="warehouse-title">{{ __('personal_information.DiaChiKho') }}</h2>
+                        </div>
+                        <span class="profile-state-badge {{ $hasWarehouse ? 'is-complete' : '' }}">
+                            {{ $hasWarehouse ? 'Đã cập nhật' : 'Chưa có' }}
+                        </span>
+                    </div>
+                    <div class="profile-warehouse-summary">
+                        <div>
+                            <span>Khu vực</span>
+                            <strong>{{ $user->warehouse_area ?: 'Chưa cập nhật' }}</strong>
+                        </div>
+                        <div>
+                            <span>Địa chỉ</span>
+                            <strong>{{ $user->warehouse_address ?: 'Chưa cập nhật' }}</strong>
+                        </div>
+                    </div>
+                    <button type="button" class="profile-secondary-action" data-bs-toggle="modal" data-bs-target="#profileWarehouseModal">
+                        <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
+                        <span>{{ $hasWarehouse ? 'Cập nhật địa chỉ kho' : 'Thiết lập địa chỉ kho' }}</span>
+                    </button>
+                </section>
+            </aside>
         </div>
-    </div>
 
-    <!-- Bank Link Modal -->
-    <input type="text" hidden value="{{ Auth::user()->username_bank ?: "" }}" id="username_bank_input">
-    <div id="user-data"
-        data-bank-status="{{ $user->username_bank && $user->bank_name && $user->account_number ? 'true' : 'false' }}"
-        data-bank-name="{{ $user->bank_name ?: '' }}" data-bank-link-route="{{ route('bank_link') }}"
-        data-avatar-upload-route="{{ route('upload_avatar') }}" style="display: none;"></div>
-    <div class="modal fade" id="bankLinkModal" tabindex="-1" aria-labelledby="bankLinkModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="bankLinkModalLabel">
-                        <i class="fas fa-university me-2"></i>{{__('home.LienKetTaiKhoanNganHang')}}
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="bankLinkForm">
-                        <div class="form-group">
-                            <label for="accountName"
-                                class="form-label required">{{__('withdraw_money.TenChuTaiKhoan')}}</label>
-                            <input type="text" class="form-control" id="accountName" name="accountName"
-                                placeholder="Nhập tên chủ tài khoản" required>
+        <div class="modal fade profile-modal" id="profileAvatarModal" tabindex="-1" aria-labelledby="profileAvatarModalTitle" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <header class="profile-modal__header">
+                        <div>
+                            <span class="profile-section-kicker">Hồ sơ</span>
+                            <h2 id="profileAvatarModalTitle">{{ __('personal_information.AnhDaiDien') }}</h2>
+                            <p>Ảnh vuông sẽ hiển thị tốt nhất trên hồ sơ.</p>
                         </div>
+                        <button type="button" class="profile-modal__close" data-bs-dismiss="modal" aria-label="Đóng">
+                            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                        </button>
+                    </header>
 
-                        <div class="form-group">
-                            <label for="bankName" class="form-label required">{{ __('withdraw_money.TenNganHang') }}</label>
-                            <select id="bankName" name="bankName" required>
-                                <option value="">{{__('home.ChonNganHang')}}</option>
-                                @foreach ($banks as $group => $options)
-                                    <optgroup label="{{$group}}">
-                                        @foreach ($options as $bank)
-                                            <option value="{{$bank}}" {{ $user->bank_name == $bank ? "selected" : "" }}>{{$bank}}
-                                            </option>
-                                        @endforeach
-                                    </optgroup>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="accountNumber"
-                                class="form-label required">{{__('withdraw_money.SoTaiKhoan')}}</label>
-                            <input type="text" class="form-control" id="accountNumber" name="accountNumber"
-                                placeholder="Nhập số tài khoản" required>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="transactionPassword"
-                                class="form-label required">{{__('withdraw_money.MatKhauGiaoDich')}}</label>
-                            <div class="input-group-password">
-                                <input type="password" class="form-control" id="transactionPassword"
-                                    name="transactionPassword" placeholder="Nhập mật khẩu giao dịch" required>
-                                <button type="button" class="password-toggle"
-                                    onclick="togglePassword('transactionPassword')">
-                                    <i class="fas fa-eye" id="transactionPasswordIcon"></i>
-                                </button>
+                    <div class="profile-modal__body">
+                        <form id="avatarUploadForm" novalidate>
+                            <div class="avatar-editor">
+                                <div class="avatar-editor__preview">
+                                    <img src="{{ get_user_avatar($user) }}" alt="Ảnh đại diện hiện tại" id="avatarEditorPreview"
+                                        onerror="this.src='{{ asset('images/default-avatar-gray.svg') }}'">
+                                    <span data-avatar-preview-state>Ảnh hiện tại</span>
+                                </div>
+                                <label class="avatar-file-picker" for="avatarFile">
+                                    <span class="avatar-file-picker__icon"><i class="fa-regular fa-image" aria-hidden="true"></i></span>
+                                    <span class="avatar-file-picker__copy">
+                                        <strong>Chọn ảnh mới</strong>
+                                        <small>JPG, PNG hoặc GIF · tối đa 2MB</small>
+                                    </span>
+                                    <span class="avatar-file-picker__button">Chọn ảnh</span>
+                                </label>
+                                <input type="file" id="avatarFile" name="avatar" accept="image/jpeg,image/png,image/gif" hidden>
                             </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="confirmPassword"
-                                class="form-label required">{{__('home.XacNhanMatKhauGiaoDich')}}</label>
-                            <div class="input-group-password">
-                                <input type="password" class="form-control" id="confirmPassword" name="confirmPassword"
-                                    placeholder="Nhập lại mật khẩu giao dịch" required>
-                                <button type="button" class="password-toggle" onclick="togglePassword('confirmPassword')">
-                                    <i class="fas fa-eye" id="confirmPasswordIcon"></i>
-                                </button>
+                            <div class="avatar-upload-status" data-avatar-message hidden role="status"></div>
+                            <div class="avatar-upload-progress" data-avatar-progress hidden>
+                                <div class="avatar-upload-progress__track"><span data-avatar-progress-bar></span></div>
+                                <span data-avatar-progress-text>Đang tải lên...</span>
                             </div>
-                        </div>
+                        </form>
+                    </div>
 
-                        <div class="alert alert-info">
-                            <i class="fas fa-info-circle me-2"></i>
-                            <strong>{{__('home.LuuY')}}</strong> {{__('home.ThongTinTaiKhoanNganHangCuaBan')}}
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-2"></i>{{__('home.Huy')}}
-                    </button>
-                    <button type="button" class="btn btn-primary" onclick="submitBankLinkForm()">
-                        <i class="fas fa-check me-2"></i>{{__('home.XacNhanLienKet')}}
-                    </button>
+                    <footer class="profile-modal__footer">
+                        <button type="button" class="profile-modal-button profile-modal-button--secondary" data-bs-dismiss="modal">Hủy</button>
+                        <button type="button" class="profile-modal-button profile-modal-button--primary" data-avatar-submit disabled>
+                            <span>Cập nhật ảnh</span>
+                            <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+                        </button>
+                    </footer>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Avatar Upload Modal -->
-    <div class="modal fade" id="avatarUploadModal" tabindex="-1" aria-labelledby="avatarUploadModalLabel"
-        aria-hidden="true">
-        <div class="modal-dialog modal-md modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="avatarUploadModalLabel">
-                        <i class="fas fa-user-edit me-2"></i>Cập nhật ảnh đại diện
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="avatarUploadForm" enctype="multipart/form-data">
-                        <div class="avatar-upload-section">
-                            <!-- Current Avatar Preview -->
-                            <div class="current-avatar-preview">
-                                <div class="avatar-preview-container">
-                                    <img id="currentAvatarPreview"
-                                        src="{{ $user->avatar ? asset('storage/' . $user->avatar) : asset('images/default-avatar-gray.svg') }}"
-                                        alt="Current Avatar" class="avatar-preview-image">
-                                    <div class="avatar-overlay">
-                                        <i class="fas fa-camera"></i>
+        <div class="modal fade profile-modal profile-warehouse-modal" id="profileWarehouseModal" tabindex="-1" aria-labelledby="profileWarehouseModalTitle" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <header class="profile-modal__header profile-warehouse-modal__header">
+                        <span class="profile-warehouse-modal__icon" aria-hidden="true">
+                            <i class="fa-solid fa-location-dot"></i>
+                        </span>
+                        <div class="profile-warehouse-modal__heading">
+                            <span class="profile-section-kicker">Thông tin vận hành</span>
+                            <h2 id="profileWarehouseModalTitle">{{ __('personal_information.DiaChiKho') }}</h2>
+                            <p>Cập nhật khu vực và địa chỉ đang sử dụng cho tài khoản.</p>
+                        </div>
+                        <button type="button" class="profile-modal__close" data-bs-dismiss="modal" aria-label="Đóng">
+                            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                        </button>
+                    </header>
+
+                    <form method="POST" action="{{ route('warehouse_address.update') }}">
+                        @csrf
+                        <div class="profile-modal__body">
+                            <div class="profile-warehouse-modal__notice">
+                                <i class="fa-regular fa-map" aria-hidden="true"></i>
+                                <span>Kiểm tra kỹ thông tin trước khi lưu để địa chỉ trên hồ sơ luôn chính xác.</span>
+                            </div>
+
+                            <div class="profile-warehouse-form-card">
+                                <div class="profile-form-field">
+                                    <label for="profileWarehouseArea">Khu vực <span>*</span></label>
+                                    <div class="profile-form-control-wrap">
+                                        <i class="fa-solid fa-map-location-dot" aria-hidden="true"></i>
+                                        <input type="text" id="profileWarehouseArea" name="warehouse_area"
+                                            value="{{ old('warehouse_area', $user->warehouse_area) }}"
+                                            maxlength="191" required autocomplete="address-level1"
+                                            class="@error('warehouse_area') is-invalid @enderror"
+                                            placeholder="Ví dụ: Hà Nội">
                                     </div>
+                                    @error('warehouse_area')
+                                        <div class="profile-form-field__error">{{ $message }}</div>
+                                    @enderror
                                 </div>
-                                <p class="avatar-preview-text">Ảnh hiện tại</p>
-                            </div>
-
-                            <!-- New Avatar Preview -->
-                            <div class="new-avatar-preview" style="display: none;">
-                                <div class="avatar-preview-container">
-                                    <img id="newAvatarPreview" src="" alt="New Avatar" class="avatar-preview-image">
-                                    <div class="avatar-overlay">
-                                        <i class="fas fa-check"></i>
+                                <div class="profile-form-field">
+                                    <label for="profileWarehouseAddress">Địa chỉ hiện tại <span>*</span></label>
+                                    <div class="profile-form-control-wrap profile-form-control-wrap--textarea">
+                                        <i class="fa-solid fa-location-crosshairs" aria-hidden="true"></i>
+                                        <textarea id="profileWarehouseAddress" name="warehouse_address" rows="4"
+                                            maxlength="1000" required autocomplete="street-address"
+                                            class="@error('warehouse_address') is-invalid @enderror"
+                                            placeholder="Nhập địa chỉ chi tiết">{{ old('warehouse_address', $user->warehouse_address) }}</textarea>
                                     </div>
+                                    @error('warehouse_address')
+                                        <div class="profile-form-field__error">{{ $message }}</div>
+                                    @enderror
                                 </div>
-                                <p class="avatar-preview-text">Ảnh mới</p>
                             </div>
                         </div>
-
-                        <!-- File Input -->
-                        <div class="form-group">
-                            <label for="avatarFile" class="form-label required">Chọn ảnh đại diện</label>
-                            <input type="file" class="form-control" id="avatarFile" name="avatar" accept="image/*" required>
-                            <div class="form-text">
-                                <i class="fas fa-info-circle me-1"></i>
-                                Định dạng: JPG, PNG, GIF. Kích thước tối đa: 2MB. Kích thước khuyến nghị: 200x200px
-                            </div>
-                        </div>
-
-                        <!-- Progress Bar -->
-                        <div class="upload-progress" style="display: none;">
-                            <div class="progress">
-                                <div class="progress-bar" role="progressbar" style="width: 0%"></div>
-                            </div>
-                            <div class="progress-text">Đang tải lên...</div>
-                        </div>
-
-                        <!-- Error/Success Messages -->
-                        <div id="avatarUploadMessages"></div>
+                        <footer class="profile-modal__footer">
+                            <button type="button" class="profile-modal-button profile-modal-button--secondary" data-bs-dismiss="modal">Hủy</button>
+                            <button type="submit" class="profile-modal-button profile-modal-button--primary">
+                                <span>Lưu địa chỉ</span>
+                                <i class="fa-solid fa-check" aria-hidden="true"></i>
+                            </button>
+                        </footer>
                     </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-2"></i>Hủy
-                    </button>
-                    <button type="button" class="btn btn-primary" id="uploadAvatarBtn" onclick="uploadAvatar()">
-                        <i class="fas fa-upload me-2"></i>Cập nhật ảnh
-                    </button>
                 </div>
             </div>
         </div>
-    </div>
-
+    </main>
 @endsection

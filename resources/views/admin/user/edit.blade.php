@@ -10,9 +10,6 @@ Chỉnh sửa người dùng
 
 @section('script-libs')
 @vite('resources/js/admin/user/edit.js')
-<script>
-    window.currentPermissionCode = "quan_ly_tat_ca_nguoi_dung";
-</script>
 @endsection
 
 @section('content')

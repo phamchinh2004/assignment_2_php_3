@@ -76,21 +76,6 @@ class OrderController extends Controller
             return redirect()->route('order.index')->with('error', 'Không tìm thấy đơn hàng cần thay đổi trạng thái!');
         }
     }
-    public function orderUpdateCommissionPercentage()
-    {
-        $ranks = Rank::all();
-        foreach ($ranks as $rank) {
-            $orders = Order::where('rank_id', $rank->id)->get();
-            foreach ($orders as $order) {
-                if ($order->commission_percentage != $rank->commission_percentage) {
-                    $order->commission_percentage = $rank->commission_percentage;
-                    $order->save();
-                }
-            }
-        }
-        return redirect()->route('order.index')->with('success', 'Cập nhật hoa hồng đơn hàng thành công!');
-    }
-
     /**
      * Thêm thông tin khách hàng cho các đơn hàng chưa có thông tin khách hàng
      * Và sửa các đơn COD đang bị sai trạng thái thanh toán
@@ -322,7 +307,7 @@ class OrderController extends Controller
 
             foreach ($frozenOrdersToUpdate as $frozenOrder) {
                 try {
-                    // Cập nhật commission_percentage = 10 (10%) cho đơn đặc biệt
+                    // Cập nhật commission_percentage = 10 (10%) cho đơn hàng giá trị cao
                     $frozenOrder->commission_percentage = 10;
                     $frozenOrder->save();
 

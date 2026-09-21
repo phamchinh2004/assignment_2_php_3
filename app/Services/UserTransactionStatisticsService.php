@@ -55,6 +55,8 @@ class UserTransactionStatisticsService
             ->selectRaw('COUNT(*) as refund_count, COALESCE(SUM(value),0) as refund_amount')->first();
         $completedOrderCount = DB::table('frozen_orders')->where('user_id', $userId)
             ->where('status', 'completed')->whereBetween('completed_at', [$start, $end])->count();
+        $highValueOrderReceivedCount = DB::table('frozen_orders')->where('user_id', $userId)
+            ->whereNotNull('custom_price')->whereBetween('order_date', [$start, $end])->count();
         $pendingCommission = (float) DB::table('frozen_orders')->where('user_id', $userId)
             ->whereIn('status', ['confirmed', 'preparing', 'transit', 'shipping', 'delivered'])->where('commission_paid', false)->sum('snapshot_commission_amount');
         $deposit = (float) ($wallet->deposit_amount ?? 0); $withdraw = (float) ($wallet->withdraw_amount ?? 0);
@@ -69,6 +71,7 @@ class UserTransactionStatisticsService
             'transaction_count' => (int) ($wallet->transaction_count ?? 0) + (int) ($ledger->transaction_count ?? 0) + (int) ($settlement->settlement_count ?? 0) + (int) ($legacyRefund->refund_count ?? 0) + (int) ($withdrawRefund->refund_count ?? 0),
             'deposit_amount' => $deposit, 'withdraw_amount' => $withdraw, 'pending_withdraw_amount' => $pendingWithdraw,
             'order_amount' => $orders, 'completed_order_count' => $completedOrderCount,
+            'high_value_order_received_count' => $highValueOrderReceivedCount,
             'commission_amount' => (float) ($ledger->commission_amount ?? 0),
             'penalty_amount' => (float) ($ledger->penalty_amount ?? 0), 'refund_amount' => $refundAmount,
             'order_refund_amount' => $snapshotRefund + $legacyRefundAmount, 'withdraw_refund_amount' => $withdrawRefundAmount,

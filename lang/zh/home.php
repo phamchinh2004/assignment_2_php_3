@@ -61,7 +61,7 @@ return [
     "PhanPhoiThanhCong2" => "分发成功！",
     "KhongTimThayDonHang" => "未找到订单！",
     "KhongTimThayTienTrinhQuay" => "未找到抽奖流程！",
-    "ChucMungBanNhanDuocDonHangDacBiet" => "恭喜你！你获得了一个特别订单！",
+    "ChucMungBanNhanDuocDonHangGiaTriCao" => "恭喜你！你获得了一个高价值订单！",
     "CoDonHangDangBiDongBang" => "有订单被冻结，请前往订单历史页面处理！",
     "CoDonHangChuaXuLy" => "有订单未处理，请前往订单历史页面处理！",
     "LuotQuayDaDatDenGioiHanToiDa" => "抽奖次数已达到最大限制！",

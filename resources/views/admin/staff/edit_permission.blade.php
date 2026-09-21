@@ -61,6 +61,30 @@
         .toggle-icon.fa-toggle-off {
             color: #cbd5e1;
         }
+        .permission-bulk-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+            padding: 0.875rem 1rem;
+            margin-bottom: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            background: #f8fafc;
+        }
+        .permission-bulk-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .permission-select {
+            width: 1rem;
+            height: 1rem;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
     </style>
 @endsection
 
@@ -106,7 +130,29 @@
         </div>
 
         <div class="card-body p-4">
-            <div class="row" id="list_permissions">
+            <form method="POST" action="{{ route('staff.change.status.permissions') }}">
+                @csrf
+                <input type="hidden" name="staff_id" value="{{ $get_user->id }}">
+            <div class="permission-bulk-toolbar">
+                <label class="d-flex align-items-center gap-2 mb-0" for="select_all_permissions">
+                    <input type="checkbox" id="select_all_permissions" class="permission-select">
+                    <span class="font-weight-bold">Chọn tất cả</span>
+                </label>
+                <div class="permission-bulk-actions">
+                    <span id="selected_permission_count" class="text-muted mr-1">0 quyền đã chọn</span>
+                    <button type="submit" name="is_active" value="1" class="btn btn-success btn-sm">
+                        <i class="fas fa-check mr-1"></i> Cấp quyền đã chọn
+                    </button>
+                    <button type="submit" name="is_active" value="0" class="btn btn-outline-danger btn-sm">
+                        <i class="fas fa-ban mr-1"></i> Bỏ quyền đã chọn
+                    </button>
+                </div>
+            </div>
+
+            <div class="row"
+                 id="list_permissions"
+                 data-staff-id="{{ $get_user->id }}"
+                 data-bulk-url="{{ route('staff.change.status.permissions') }}">
                 @foreach($list_manager_settings as $item)
                     @php
                         $sub = $get_user_manager_setting->where('manager_setting_id', $item->id)->first();
@@ -115,6 +161,13 @@
                     <div class="col-12 col-md-6">
                         <div class="permission-card">
                             <div class="permission-info">
+                                @if($sub)
+                                    <input type="checkbox"
+                                           class="permission-select permission-item-select"
+                                           name="assignment_ids[]"
+                                           value="{{ $sub->id }}"
+                                           aria-label="Chọn quyền {{ $item->manager_name }}">
+                                @endif
                                 <div class="permission-icon">
                                     <i class="fas fa-shield-alt"></i>
                                 </div>
@@ -136,6 +189,7 @@
                     </div>
                 @endforeach
             </div>
+            </form>
         </div>
     </div>
 

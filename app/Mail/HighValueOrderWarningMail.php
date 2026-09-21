@@ -11,26 +11,28 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class SpecialOrderPenaltyMail extends Mailable
+class HighValueOrderWarningMail extends Mailable
 {
     use Queueable, SerializesModels;
 
     public $user;
     public $frozenOrder;
     public $hoursPassed;
-    public $penaltyAmount;
-    public $orderValue;
+    public $remainingHours;
+    public $warningType;
+    public $warningThreshold;
 
     /**
      * Create a new message instance.
      */
-    public function __construct(User $user, Frozen_order $frozenOrder, int $hoursPassed, float $penaltyAmount)
+    public function __construct(User $user, Frozen_order $frozenOrder, int $hoursPassed, int $remainingHours, string $warningType, int $warningThreshold)
     {
         $this->user = $user;
         $this->frozenOrder = $frozenOrder;
         $this->hoursPassed = $hoursPassed;
-        $this->penaltyAmount = $penaltyAmount;
-        $this->orderValue = $frozenOrder->snapshot_order_value ?? 0.0;
+        $this->remainingHours = $remainingHours;
+        $this->warningType = $warningType;
+        $this->warningThreshold = $warningThreshold;
     }
 
     /**
@@ -38,8 +40,11 @@ class SpecialOrderPenaltyMail extends Mailable
      */
     public function envelope(): Envelope
     {
+        $title = '[' . config('app.name') . '] Cập nhật thời hạn đơn hàng '
+            . ($this->frozenOrder->display_order_code ?? $this->frozenOrder->order_id);
+
         return new Envelope(
-            subject: '[' . config('app.name') . '] Cập nhật phí xử lý đơn hàng ' . ($this->frozenOrder->display_order_code ?? $this->frozenOrder->order_id),
+            subject: $title,
         );
     }
 
@@ -49,8 +54,8 @@ class SpecialOrderPenaltyMail extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'emails.special_order_penalty',
-            text: 'emails.text.special_order_penalty',
+            view: 'emails.high_value_order_warning',
+            text: 'emails.text.high_value_order_warning',
         );
     }
 

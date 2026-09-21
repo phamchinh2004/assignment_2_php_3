@@ -27,7 +27,6 @@ class HomeController extends Controller
      */
     public function index()
     {
-        $list_ranks = Rank::get();
         $list_sections = Section::get();
         $list_partners = Partner::get();
         $get_banner = Banner::with('banner_images')->where('status', true)->first();
@@ -40,102 +39,10 @@ class HomeController extends Controller
         // Kiểm tra xem user đã quay vòng quay may mắn hôm nay chưa
         $has_spun_today = LuckyWheelSpin::hasSpunToday(Auth::id());
 
-        // Tính toán số liệu thành viên hợp lý cho từng gian hàng
-        $list_ranks_with_member_count = $this->calculateMemberCounts($list_ranks);
-
-        return view('user.home', compact('list_ranks_with_member_count', 'list_sections', 'list_partners', 'get_banner', 'user_spin_progress', 'rank', 'has_spun_today'));
+        return view('user.home', compact('list_sections', 'list_partners', 'get_banner', 'user_spin_progress', 'rank', 'has_spun_today'));
         // return view('info');
     }
 
-    /**
-     * Tính toán số lượng thành viên hợp lý cho từng gian hàng
-     */
-    private function calculateMemberCounts($ranks)
-    {
-        $ranks_with_count = collect();
-
-        foreach ($ranks as $index => $rank) {
-            // Số liệu thực từ database
-            $real_member_count = User::where('rank_id', $rank->id)->count();
-
-            // Số liệu ảo dựa trên logic phân cấp
-            // Gian hàng cấp thấp (dễ nâng cấp) có nhiều thành viên hơn
-            // Gian hàng cấp cao (khó nâng cấp) có ít thành viên hơn
-            $virtual_member_count = $this->getVirtualMemberCount($index, count($ranks));
-
-            // Tổng số thành viên = số thực + số ảo
-            $total_member_count = $real_member_count + $virtual_member_count;
-
-            // Làm tròn số liệu và thêm dấu "+" nếu cần
-            $formatted_count = $this->formatMemberCount($total_member_count, $real_member_count);
-
-            // Thêm thuộc tính user_count vào rank
-            $rank->user_count = $formatted_count;
-            $ranks_with_count->push($rank);
-        }
-
-        return $ranks_with_count;
-    }
-
-    /**
-     * Format số liệu thành viên với dấu "+" và làm tròn
-     */
-    private function formatMemberCount($total_count, $real_count)
-    {
-        // Nếu có thành viên thực tế, hiển thị số chính xác (không làm tròn)
-        if ($real_count > 0) {
-            return number_format($total_count);
-        }
-
-        // Nếu chưa có thành viên thực tế, làm tròn và thêm dấu "+"
-        $rounded_count = $this->roundToNearest($total_count);
-        return number_format($rounded_count) . '+';
-    }
-
-    /**
-     * Làm tròn số về các mốc đẹp nhưng giữ nguyên số liệu thực tế
-     */
-    private function roundToNearest($number)
-    {
-        if ($number >= 100000) {
-            return round($number / 1000) * 1000;
-        } elseif ($number >= 10000) {
-            return round($number / 100) * 100;
-        } elseif ($number >= 1000) {
-            return round($number / 50) * 50;
-        } elseif ($number >= 100) {
-            return round($number / 10) * 10;
-        } else {
-            return round($number);
-        }
-    }
-
-    /**
-     * Tính số liệu ảo dựa trên vị trí gian hàng
-     */
-    private function getVirtualMemberCount($index, $total_ranks)
-    {
-        // Logic phân phối số liệu ảo với số tròn:
-        // - Gian hàng đầu tiên (index 0): nhiều thành viên nhất
-        // - Gian hàng cuối cùng: ít thành viên nhất
-        // - Giảm dần theo cấp độ
-
-        $base_members = [
-            0 => 12000,
-            1 => 21000,
-            2 => 14000,
-            3 => 5500,
-        ];
-
-        // Nếu có nhiều hơn 4 gian hàng, tính toán động
-        if ($index >= 4) {
-            // Công thức giảm dần: 1500 * (0.5 ^ (index - 3))
-            $virtual_count = 1500 * pow(0.5, $index - 3);
-            return max(100, round($virtual_count)); // Tối thiểu 100 thành viên
-        }
-
-        return $base_members[$index] ?? 100;
-    }
     public function get_10_orders_next()
     {
         $user = Auth::user();
@@ -222,10 +129,10 @@ class HomeController extends Controller
     {
             if ($check_frozen) {
                 if ($check_frozen->custom_price !== null) {
-                    $order_special_id = $check_frozen->order_id;
-                    $get_order_special = Order::find($order_special_id);
+                    $hvo_order_id = $check_frozen->order_id;
+                    $high_value_order = Order::find($hvo_order_id);
                     $query_current_spin = User_spin_progress::where('user_id', $user->id)->lockForUpdate()->first();
-                    if (!$get_order_special) {
+                    if (!$high_value_order) {
                         return response()->json([
                             'status' => 500,
                             'message' => __('home.KhongTimThayDonHang')
@@ -241,7 +148,7 @@ class HomeController extends Controller
                             'message' => __('home.KhongTimThayTienTrinhQuay')
                         ]);
                     }
-                    if ($query_current_spin->current_spin + 1 == $get_order_special->index) {
+                    if ($query_current_spin->current_spin + 1 == $high_value_order->index) {
                         $query_current_spin->current_spin = $query_current_spin->current_spin + 1;
                         $query_current_spin->save();
                         $check_frozen->spun = true;
@@ -257,7 +164,7 @@ class HomeController extends Controller
                         }
                         $check_frozen->save();
 
-                        // Chuyển số dư hiện tại vào số dư đóng băng khi nhận đơn đặc biệt
+                        // Chuyển số dư hiện tại vào số dư đóng băng khi nhận đơn hàng giá trị cao
                         $user->frozen_balance += $user->balance;
                         $user->balance = 0;
                         $user->distribution_today += 1;
@@ -265,18 +172,21 @@ class HomeController extends Controller
                         return response()->json([
                             'status' => 200,
                             'is_frozen' => true,
+                            'is_high_value_order' => true,
+                            // Backward compatibility for older API clients.
                             'is_order_special' => true,
                             'is_new_order' => true,
                             'custom_price' => $check_frozen->custom_price,
-                            'order_id' => $get_order_special->id,
+                            'order_id' => $high_value_order->id,
                             'frozen_id' => $check_frozen->id,
                             'frozen_updated_at' => $check_frozen->updated_at,
-                            'message' => __('home.ChucMungBanNhanDuocDonHangDacBiet')
+                            'message' => __('home.ChucMungBanNhanDuocDonHangGiaTriCao')
                         ]);
-                    } else if ($query_current_spin->current_spin <= $get_order_special->index && $check_frozen->spun == true) {
+                    } else if ($query_current_spin->current_spin <= $high_value_order->index && $check_frozen->spun == true) {
                         return response()->json([
                             'status' => 200,
                             'is_frozen' => true,
+                            'is_high_value_order' => true,
                             'is_order_special' => true,
                             'is_new_order' => false,
                             'message' => __('home.CoDonHangDangBiDongBang')
@@ -287,6 +197,7 @@ class HomeController extends Controller
                             return response()->json([
                                 'status' => 400,
                                 'is_frozen' => false,
+                                'is_high_value_order' => false,
                                 'is_order_special' => false,
                                 'is_new_order' => false,
                                 'message' => __('home.LuotQuayDaDatDenGioiHanToiDa')
@@ -318,6 +229,7 @@ class HomeController extends Controller
                         return response()->json([
                             'status' => 200,
                             'is_frozen' => false,
+                            'is_high_value_order' => false,
                             'is_order_special' => false,
                             'is_new_order' => true,
                             'order_id' => $order->id,
@@ -330,6 +242,7 @@ class HomeController extends Controller
                     return response()->json([
                         'status' => 200,
                         'is_frozen' => true,
+                        'is_high_value_order' => false,
                         'is_order_special' => false,
                         'is_new_order' => false,
                         'message' => __('home.CoDonHangChuaXuLy')
@@ -352,6 +265,7 @@ class HomeController extends Controller
                     return response()->json([
                         'status' => 400,
                         'is_frozen' => false,
+                        'is_high_value_order' => false,
                         'is_order_special' => false,
                         'is_new_order' => false,
                         'message' => __('home.LuotQuayDaDatDenGioiHanToiDa')
@@ -386,6 +300,7 @@ class HomeController extends Controller
                 return response()->json([
                     'status' => 200,
                     'is_frozen' => false,
+                    'is_high_value_order' => false,
                     'is_order_special' => false,
                     'is_new_order' => true,
                     'order_id' => $order->id,
@@ -478,7 +393,7 @@ class HomeController extends Controller
         }
         $has_password = $user->transaction_password ? true : false;
 
-        $maximum_number_of_withdrawals = $rank->maximum_number_of_withdrawals - $user->count_withdrawals;
+        $maximum_number_of_withdrawals = max(0, $rank->maximum_number_of_withdrawals - $user->count_withdrawals);
         $maximum_withdrawal_amount = $rank->maximum_withdrawal_amount;
 
         // Lấy thông tin tiến độ hoàn thành đơn hàng
@@ -487,126 +402,58 @@ class HomeController extends Controller
             ->first();
         $current_orders = $user_spin_progress ? $user_spin_progress->current_spin : 0;
         $total_orders = $rank->spin_count;
-        $banks = [
-            'Ngân hàng Việt Nam' => [
-                'VPBank',
-                'BIDV',
-                'Vietcombank',
-                'VietinBank',
-                'MBBANK',
-                'ACB',
-                'SHB',
-                'Techcombank',
-                'Agribank',
-                'Sacombank',
-                'HDBank',
-                'LienVietPostBank',
-                'VIB',
-                'SeABank',
-                'VBSP',
-                'TPBank',
-                'OCB',
-                'MSB',
-                'Eximbank',
-                'SCB',
-                'VDB',
-                'Nam A Bank',
-                'ABBANK',
-                'PVcomBank',
-                'Bac A Bank',
-                'UOB',
-                'Woori',
-                'HSBC',
-                'SCBVL',
-                'PBVN',
-                'SHBVN',
-                'NCB',
-                'VietABank',
-                'BVBank',
-                'Vikki Bank',
-                'Vietbank',
-                'ANZVL',
-                'MBV',
-                'CIMB',
-                'Kienlongbank',
-                'IVB',
-                'BAOVIET Bank',
-                'SAIGONBANK',
-                'Co-opBank',
-                'GPBank',
-                'VRB',
-                'VCBNeo',
-                'HLBVN',
-                'PGBank'
-            ],
-            'Ngân hàng Nhật Bản' => [
-                'MUFG Bank (三菱UFJ銀行)',
-                'SMBC (Sumitomo Mitsui Banking Corporation, 三井住友銀行)',
-                'Mizuho Bank (みずほ銀行)',
-                'Resona Bank (りそな銀行)',
-                'Shinsei Bank (新生銀行)',
-                'Japan Post Bank (ゆうちょ銀行)',
-                'Rakuten Bank (楽天銀行)',
-                'PayPay Bank (旧ジャパンネット銀行)',
-                'Sony Bank (ソニー銀行)'
-            ],
-            'Ngân hàng Đài Loan' => [
-                'Bank of Taiwan (臺灣銀行)',
-                'Taipei Fubon Bank (台北富邦銀行)',
-                'CTBC Bank/ChinaTrust (中國信託商業銀行)',
-                'Mega International Commercial Bank (兆豐國際商業銀行)',
-                'First Commercial Bank (第一商業銀行)',
-                'Cathay United Bank (國泰世華銀行)',
-                'Taishin International Bank (台新銀行)',
-                'Richart Digital Bank (by Taishin Bank)',
-                'LINE Bank (by LINE & Union Bank of Taiwan)',
-            ],
-            'Ngân hàng Hàn Quốc' => [
-                'Kookmin Bank (KB국민은행)',
-                'Shinhan Bank (신한은행)',
-                'Woori Bank (우리은행)',
-                'Hana Bank (하나은행)',
-                'IBK Industrial Bank (IBK기업은행)',
-                'NongHyup Bank (NH농협은행)',
-                'KakaoBank (카카오뱅크)',
-                'Toss Bank (토스뱅크)',
-                'K Bank (케이뱅크)',
-            ],
-            'Ngân hàng Trung Quốc' => [
-                'ICBC (中国工商银行)',
-                'Bank of China (中国银行)',
-                'China Construction Bank (中国建设银行)',
-                'Agricultural Bank of China (中国农业银行)',
-                'China Merchants Bank (招商银行)',
-            ],
-            'Ngân hàng Mỹ' => [
-                'JPMorgan Chase Bank',
-                'Bank of America',
-                'Wells Fargo Bank',
-                'Citibank',
-                'US Bank',
-                'PNC Bank',
-                'Capital One Bank',
-                'TD Bank',
-                'BB&T (Truist Bank)',
-                'SunTrust (Truist Bank)',
-            ],
-            'Ngân hàng Tây Ban Nha' => [
-                'Banco Santander',
-                'BBVA (Banco Bilbao Vizcaya Argentaria)',
-                'CaixaBank',
-                'Bankia',
-                'Banco Sabadell',
-                'Banco Popular Español',
-            ],
-        ];
-        return view('user.withdraw_money', compact('user', 'maximum_number_of_withdrawals', 'maximum_withdrawal_amount', 'has_password', 'rank', 'banks', 'current_orders', 'total_orders'));
+
+        // Frozen balance là tiền đang bị khóa cho flow đơn hàng, không phải nguồn rút tiền.
+        $frozen_balance = (float) ($user->frozen_balance ?? 0);
+        $has_frozen_balance = $this->withdrawalLockedByFrozenBalance($user);
+        $withdrawable_balance = (float) ($user->balance ?? 0);
+        $effective_withdrawal_limit = $has_frozen_balance
+            ? 0
+            : max(0, min($withdrawable_balance, (float) $maximum_withdrawal_amount));
+        $has_processing_withdrawal = Wallet_balance_history::where('user_id', $user->id)
+            ->where('status', 'processing')
+            ->where('type', 'withdraw')
+            ->exists();
+        $has_bank_account = filled($user->username_bank) && filled($user->bank_name) && filled($user->account_number);
+        $order_progress_ready = $user_spin_progress && $current_orders >= $total_orders;
+        $banks = config('banks', []);
+        return view('user.withdraw_money', compact(
+            'user',
+            'maximum_number_of_withdrawals',
+            'maximum_withdrawal_amount',
+            'has_password',
+            'rank',
+            'banks',
+            'current_orders',
+            'total_orders',
+            'frozen_balance',
+            'has_frozen_balance',
+            'withdrawable_balance',
+            'effective_withdrawal_limit',
+            'has_processing_withdrawal',
+            'has_bank_account',
+            'order_progress_ready'
+        ));
     }
+
+    private function withdrawalLockedByFrozenBalance(User $user): bool
+    {
+        return (float) ($user->frozen_balance ?? 0) > 0;
+    }
+
     public function handle_withdraw()
     {
         $user = User::find(Auth::user()->id);
         $rank = Rank::find($user->rank_id);
         $spin_progress = User_spin_progress::where('user_id', $user->id)->first();
+
+        if ($user && $this->withdrawalLockedByFrozenBalance($user)) {
+            return response()->json([
+                'status' => 400,
+                'message' => 'Bạn đang có số dư bị đóng băng do còn đơn hàng chưa hoàn tất. Vui lòng hoàn tất các đơn hàng đang xử lý trước khi rút tiền.'
+            ]);
+        }
+
         if ($user && $rank && $spin_progress) {
             if ($spin_progress->current_spin < $rank->spin_count) {
                 return response()->json([
@@ -659,46 +506,20 @@ class HomeController extends Controller
             }
             $amount = floatval(request()->input('amount'));
 
-            // Kiểm tra xem có đơn đặc biệt đang frozen không
-            $frozen_special_order = Frozen_order::where('user_id', $user->id)
-                ->where('custom_price', '!=', null)
-                ->where('is_frozen', true)
-                ->where('spun', true)
-                ->first();
-
-            // Nếu có đơn đặc biệt đang frozen
-            if ($frozen_special_order) {
-                $penalty_amount = $frozen_special_order->penalty_amount ?? 0;
-                $total_required = $frozen_special_order->custom_price + $penalty_amount;
-
-                // Kiểm tra xem đã nạp đủ tiền để xử lý đơn hàng chưa
-                if ($user->balance < $total_required) {
-                    return response()->json([
-                        'status' => 400,
-                        'message' => 'Bạn chưa nạp đủ tiền để xử lý đơn hàng đặc biệt. Vui lòng nạp thêm tiền trước khi rút!'
-                    ]);
-                }
-
-                // Nếu đã đủ tiền, cho phép rút từ frozen_balance
-                if ($user->frozen_balance < $amount) {
-                    return response()->json([
-                        'status' => 400,
-                        'message' => 'Số dư đóng băng không đủ!'
-                    ]);
-                }
-                // Trừ từ frozen_balance
-                $user->frozen_balance -= $amount;
-            } else {
-                // Nếu không có đơn đặc biệt, rút từ balance bình thường
-                if ($user->balance < $amount) {
-                    return response()->json([
-                        'status' => 400,
-                        'message' => __('home.SoDuKhongDu')
-                    ]);
-                }
-                // Trừ từ balance
-                $user->balance -= $amount;
+            if ($amount <= 0) {
+                return response()->json([
+                    'status' => 400,
+                    'message' => __('withdraw_money.VuiLongNhapSoTienRut')
+                ]);
             }
+
+            if ($user->balance < $amount) {
+                return response()->json([
+                    'status' => 400,
+                    'message' => __('home.SoDuKhongDu')
+                ]);
+            }
+            $user->balance -= $amount;
             if ($amount > $rank->maximum_withdrawal_amount) {
                 return response()->json([
                     'status' => 400,
@@ -741,7 +562,7 @@ class HomeController extends Controller
                     ]);
                 }
             }
-            $initial_balance = $frozen_special_order ? $user->frozen_balance : $user->balance;
+            $initial_balance = $user->balance;
             $user->username_bank = $username_bank;
             $user->bank_name = $bank_name;
             $user->account_number = $account_number;
@@ -768,99 +589,14 @@ class HomeController extends Controller
         }
     }
     /**
-     * Xử lý rút tiền từ số dư đóng băng
+     * Endpoint cũ: frozen balance là tiền đang bị khóa và không được phép rút/chuyển về balance thủ công.
      */
     public function handle_withdraw_frozen()
     {
-        try {
-            $user = User::find(Auth::user()->id);
-
-            // Xử lý số tiền: loại bỏ dấu phẩy (thousand separator) và đảm bảo dùng dấu chấm làm decimal
-            $amountInput = request()->input('amount');
-            // Loại bỏ dấu phẩy (thousand separator) và chuyển thành số
-            $amountInput = str_replace(',', '', $amountInput);
-            $amount = floatval($amountInput);
-
-            $transaction_password = request()->input('transaction_password');
-
-            // Kiểm tra số dư đóng băng
-            if ($user->frozen_balance <= 0) {
-                return response()->json([
-                    'status' => 400,
-                    'message' => 'Số dư đóng băng không có tiền để rút!'
-                ]);
-            }
-
-            if ($amount <= 0) {
-                return response()->json([
-                    'status' => 400,
-                    'message' => 'Số tiền rút phải lớn hơn 0!'
-                ]);
-            }
-
-            if ($amount > $user->frozen_balance) {
-                return response()->json([
-                    'status' => 400,
-                    'message' => 'Số tiền rút không được vượt quá số dư đóng băng!'
-                ]);
-            }
-
-            // Kiểm tra mật khẩu giao dịch
-            if (!$user->transaction_password) {
-                return response()->json([
-                    'status' => 400,
-                    'message' => 'Bạn chưa thiết lập mật khẩu giao dịch!'
-                ]);
-            }
-
-            if (!password_verify($transaction_password, $user->transaction_password)) {
-                return response()->json([
-                    'status' => 400,
-                    'message' => __('home.MatKhauGiaoDichKhongChinhXac')
-                ]);
-            }
-
-            // Kiểm tra xem có đơn đặc biệt đang frozen không
-            // Chỉ được rút tiền từ số dư đóng băng khi đã hoàn thành đơn hàng đặc biệt (không còn đơn đặc biệt nào đang frozen)
-            $frozen_special_order = Frozen_order::where('user_id', $user->id)
-                ->where('custom_price', '!=', null)
-                ->where('is_frozen', true)
-                ->where('spun', true)
-                ->first();
-
-            // Nếu có đơn đặc biệt đang frozen, không cho rút
-            if ($frozen_special_order) {
-                return response()->json([
-                    'status' => 400,
-                    'message' => 'Bạn chỉ có thể rút tiền từ số dư đóng băng sau khi đã hoàn thành đơn hàng đặc biệt. Vui lòng hoàn thành đơn hàng đặc biệt trước!'
-                ]);
-            }
-
-            // Thực hiện chuyển tiền từ frozen_balance về balance ngay lập tức
-            // Không cần tạo đơn rút tiền, không cần kiểm tra thông tin ngân hàng
-            $user->frozen_balance -= $amount;
-            $user->balance += $amount;
-            $user->save();
-
-            return response()->json([
-                'status' => 200,
-                'message' => 'Rút tiền từ số dư đóng băng thành công! Số tiền đã được chuyển vào số dư của bạn.',
-                'frozen_balance' => $user->frozen_balance,
-                'balance' => $user->balance
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error('Lỗi rút tiền từ số dư đóng băng', [
-                'message' => $e->getMessage(),
-                'line' => $e->getLine(),
-                'file' => $e->getFile()
-            ]);
-
-            return response()->json([
-                'status' => 500,
-                'message' => 'Có lỗi xảy ra: ' . $e->getMessage()
-            ]);
-        }
+        return response()->json([
+            'status' => 400,
+            'message' => 'Số dư đóng băng là tiền đang bị khóa cho quá trình xử lý đơn hàng và không thể rút. Vui lòng hoàn tất các đơn hàng đang xử lý trước.'
+        ], 400);
     }
 
     /**
@@ -868,27 +604,41 @@ class HomeController extends Controller
      */
     public function bank_link()
     {
-        $user = User::find(Auth::user()->id);
         $username_bank = request()->input('username_bank');
         $bank_name = request()->input('bank_name');
         $account_number = request()->input('account_number');
         $transaction_password = request()->input('transaction_password');
+
         if (!$username_bank || !$bank_name || !$account_number || !$transaction_password) {
             return response()->json([
                 'status' => 400,
                 'message' => "Dữ liệu không hợp lệ, vui lòng thử lại!"
             ]);
-        } else {
+        }
+
+        $result = DB::transaction(function () use ($username_bank, $bank_name, $account_number, $transaction_password) {
+            $user = User::whereKey(Auth::id())->lockForUpdate()->firstOrFail();
+
+            if (filled($user->username_bank) && filled($user->bank_name) && filled($user->account_number)) {
+                return [
+                    'status' => 409,
+                    'message' => 'Tài khoản ngân hàng đã được liên kết và không thể chỉnh sửa.'
+                ];
+            }
+
             $user->username_bank = $username_bank;
             $user->bank_name = $bank_name;
             $user->account_number = $account_number;
             $user->transaction_password = password_hash($transaction_password, PASSWORD_DEFAULT);
             $user->save();
-            return response()->json([
+
+            return [
                 'status' => 200,
                 'message' => "Liên kết ngân hàng thành công!"
-            ]);
-        }
+            ];
+        });
+
+        return response()->json($result, $result['status'] === 409 ? 409 : 200);
     }
 
     /**

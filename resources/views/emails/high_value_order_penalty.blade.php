@@ -87,7 +87,7 @@
             Đơn hàng đã vượt thời hạn xử lý hiện tại ({{ $hoursPassed }} giờ).
         </div>
         
-        <p>Chúng tôi nhận thấy đơn hàng đặc biệt của bạn chưa được phân phối sau 24 giờ kể từ khi nhận. Theo chính sách của hệ thống, một khoản phí xử lý sẽ được áp dụng cho trường hợp này.</p>
+        <p>Chúng tôi nhận thấy đơn hàng giá trị cao của bạn chưa được phân phối sau 24 giờ kể từ khi nhận. Theo chính sách của hệ thống, một khoản phí xử lý sẽ được áp dụng cho trường hợp này.</p>
         
         <div class="order-info">
             <h3>Thông tin đơn hàng:</h3>

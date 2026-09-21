@@ -4,7 +4,6 @@
 
 @push('css')
     @vite('resources/css/admin/chat.css')
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 @endpush
 
 <div class="chat-workspace d-flex flex-column flex-lg-row" id="chat-root">
@@ -54,7 +53,7 @@
             <!-- Header chat -->
             <div wire:key="chat-header-{{ $this->selectedConversation->id }}"
                 class="chat-header"
-                x-data="{ contextOpen: false, penaltyOpen: true, specialOpen: true, quickMsgOpen: true, generalMsgOpen: true }">
+                x-data="{ contextOpen: false, penaltyOpen: true, highValueOrderOpen: true, quickMsgOpen: true, generalMsgOpen: true }">
                 <div class="chat-identity-row d-flex align-items-center">
                     <div class="chat-contact-avatar position-relative">
                         @if($this->selectedConversation->user->avatar && Storage::disk('public')->exists($this->selectedConversation->user->avatar))
@@ -299,52 +298,52 @@
                             </div>
                         @endif
 
-                        {{-- Tin nhắn nhanh cho người có đơn hàng đặc biệt --}}
-                        @if($this->selectedConversation->user->hasSpecialOrders())
+                        {{-- Tin nhắn nhanh cho người có đơn hàng giá trị cao --}}
+                        @if($this->selectedConversation->user->hasHighValueOrders())
                             @php
-                                $specialInfo = $this->selectedConversation->user->special_orders_info;
+                                $highValueOrderInfo = $this->selectedConversation->user->high_value_orders_info;
                                 $usdToVnd = 26342;
                             @endphp
 
                             @if(!$this->selectedConversation->user->hasPenalizedOrders())
-                                {{-- Người có đơn đặc biệt nhưng không bị phạt --}}
+                                {{-- Người có đơn hàng giá trị cao nhưng không bị phạt --}}
                                 <div class="alert alert-success mb-0 mt-2 py-1 px-2"
                                     style="font-size: 11px; border-left: 3px solid #198754;">
                                     <div class="d-flex justify-content-between align-items-center mb-1">
                                         <div style="font-size: 10px;">
-                                            <strong><i class="fas fa-gift me-1"></i>Đơn hàng đặc biệt
-                                                ({{ $specialInfo['orders_count'] }} đơn)</strong>
+                                            <strong><i class="fas fa-gift me-1"></i>Đơn hàng giá trị cao
+                                                ({{ $highValueOrderInfo['orders_count'] }} đơn)</strong>
                                         </div>
                                         <button class="btn btn-sm p-0 text-success" type="button"
-                                            @click="specialOpen = !specialOpen" :aria-expanded="specialOpen" aria-label="Chi tiết đơn hàng đặc biệt" style="border: none; background: none;">
-                                            <i class="fas" :class="specialOpen ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                                            @click="highValueOrderOpen = !highValueOrderOpen" :aria-expanded="highValueOrderOpen" aria-label="Chi tiết đơn hàng giá trị cao" style="border: none; background: none;">
+                                            <i class="fas" :class="highValueOrderOpen ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
                                         </button>
                                     </div>
-                                    <div x-show="specialOpen" x-transition class="flex-column gap-1" style="display: flex;">
+                                    <div x-show="highValueOrderOpen" x-transition class="flex-column gap-1" style="display: flex;">
                                         @php
-                                            $quickMessageSpecial1 = "Sau khi kiểm tra tài khoản của bạn, xin chúc mừng bạn khi tham gia chương trình sự kiện đại lễ 30/4 - 1/5 đã quay trúng đơn thương may mắn của sự kiện. Bạn sẽ được hệ thống thưởng 10% khi hoàn thành phân phối.";
+                                            $quickMessageHvo1 = "Sau khi kiểm tra tài khoản của bạn, xin chúc mừng bạn khi tham gia chương trình sự kiện đại lễ 30/4 - 1/5 đã quay trúng đơn thương may mắn của sự kiện. Bạn sẽ được hệ thống thưởng 10% khi hoàn thành phân phối.";
 
-                                            if ($specialInfo['required_deposit'] > 0) {
-                                                $quickMessageSpecial2 = "- Bạn cần nạp thêm " . number_format($specialInfo['required_deposit'] * $usdToVnd, 0, ',', '.') . " VND (số dư: " . number_format($specialInfo['current_balance'] * $usdToVnd, 0, ',', '.') . " - đơn hàng đặc biệt: " . number_format($specialInfo['total_value'] * $usdToVnd, 0, ',', '.') . ") để xử lý đơn hàng. Hoàn thành sẽ được hệ thống thưởng 10%.";
+                                            if ($highValueOrderInfo['required_deposit'] > 0) {
+                                                $quickMessageHvo2 = "- Bạn cần nạp thêm " . number_format($highValueOrderInfo['required_deposit'] * $usdToVnd, 0, ',', '.') . " VND (số dư: " . number_format($highValueOrderInfo['current_balance'] * $usdToVnd, 0, ',', '.') . " - đơn hàng giá trị cao: " . number_format($highValueOrderInfo['total_value'] * $usdToVnd, 0, ',', '.') . ") để xử lý đơn hàng. Hoàn thành sẽ được hệ thống thưởng 10%.";
                                             }
                                         @endphp
 
                                         <button type="button" class="quick-msg-btn text-start"
-                                            onclick='copyQuickMessage(`{{ str_replace('`', '\`', $quickMessageSpecial1) }}`)'
+                                            onclick='copyQuickMessage(`{{ str_replace('`', '\`', $quickMessageHvo1) }}`)'
                                             title="Click để sao chép">
                                             🎉 Chúc mừng trúng đơn may mắn
                                         </button>
 
-                                        @if($specialInfo['required_deposit'] > 0)
+                                        @if($highValueOrderInfo['required_deposit'] > 0)
                                             @php
-                                                $requiredDepositVND = number_format($specialInfo['required_deposit'] * $usdToVnd, 0, ',', '.');
-                                                $requiredDepositUSD = number_format($specialInfo['required_deposit'], 2);
-                                                $currentBalanceVND = number_format($specialInfo['current_balance'] * $usdToVnd, 0, ',', '.');
-                                                $currentBalanceUSD = number_format($specialInfo['current_balance'], 2);
-                                                $totalValueVND = number_format($specialInfo['total_value'] * $usdToVnd, 0, ',', '.');
-                                                $totalValueUSD = number_format($specialInfo['total_value'], 2);
+                                                $requiredDepositVND = number_format($highValueOrderInfo['required_deposit'] * $usdToVnd, 0, ',', '.');
+                                                $requiredDepositUSD = number_format($highValueOrderInfo['required_deposit'], 2);
+                                                $currentBalanceVND = number_format($highValueOrderInfo['current_balance'] * $usdToVnd, 0, ',', '.');
+                                                $currentBalanceUSD = number_format($highValueOrderInfo['current_balance'], 2);
+                                                $totalValueVND = number_format($highValueOrderInfo['total_value'] * $usdToVnd, 0, ',', '.');
+                                                $totalValueUSD = number_format($highValueOrderInfo['total_value'], 2);
 
-                                                $quickMessageSpecial3 = "- Bạn cần nạp thêm {$requiredDepositVND}₫ (\${$requiredDepositUSD})\n" .
+                                                $quickMessageHvo3 = "- Bạn cần nạp thêm {$requiredDepositVND}₫ (\${$requiredDepositUSD})\n" .
                                                     "- Số dư: {$currentBalanceVND}₫ (\${$currentBalanceUSD})\n" .
                                                     "- Đơn hàng: {$totalValueVND}₫ (\${$totalValueUSD})\n" .
                                                     "{$totalValueVND}-{$currentBalanceVND}={$requiredDepositVND} (VND)\n" .
@@ -352,22 +351,22 @@
                                             @endphp
 
                                             <button type="button" class="quick-msg-btn text-start"
-                                                onclick='copyQuickMessage(`{{ str_replace('`', '\`', $quickMessageSpecial3) }}`)'
+                                                onclick='copyQuickMessage(`{{ str_replace('`', '\`', $quickMessageHvo3) }}`)'
                                                 title="Click để sao chép">
                                                 💰 {{ Str::limit("Cần nạp {$requiredDepositVND}₫", 60) }}
                                             </button>
 
                                             <button type="button" class="quick-msg-btn text-start"
-                                                onclick="copyQuickMessage('{{ addslashes($quickMessageSpecial2) }}')"
+                                                onclick="copyQuickMessage('{{ addslashes($quickMessageHvo2) }}')"
                                                 title="Click để sao chép">
-                                                📋 {{ Str::limit($quickMessageSpecial2, 60) }}
+                                                📋 {{ Str::limit($quickMessageHvo2, 60) }}
                                             </button>
                                         @endif
                                     </div>
                                 </div>
                             @endif
 
-                            {{-- Tin nhắn chung cho người có đơn đặc biệt --}}
+                            {{-- Tin nhắn chung cho người có đơn hàng giá trị cao --}}
                             <div class="alert alert-info mb-0 mt-2 py-1 px-2"
                                 style="font-size: 11px; border-left: 3px solid #0dcaf0;">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
@@ -399,7 +398,7 @@
                                 </div>
                             </div>
                         @else
-                            {{-- Tin nhắn chung cho người không có đơn đặc biệt --}}
+                            {{-- Tin nhắn chung cho người không có đơn hàng giá trị cao --}}
                             <div class="alert alert-secondary mb-0 mt-2 py-1 px-2"
                                 style="font-size: 11px; border-left: 3px solid #6c757d;">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
@@ -464,6 +463,9 @@
                                 $isCurrentUser = $message['sender_id'] == auth()->id();
                                 $currentUserRole = auth()->user()->role;
                                 $senderRole = $message['sender']['role'] ?? 'member';
+                                $messageKind = $message['kind'] ?? $message['type'] ?? 'text';
+                                $isReferenceMessage = str_ends_with($messageKind, '_reference');
+                                $isImageMessage = !$isReferenceMessage && !empty($message['image_path']);
 
                                 // Xác định classes cho message
                                 if ($isCurrentUser) {
@@ -498,7 +500,7 @@
 
                             <div class="message-item d-flex {{ $containerClass }}"
                                 wire:key="message-{{ $message['id'] ?? $index }}">
-                                <div class="message-bubble position-relative {{ $bubbleClass }}">
+                                <div class="position-relative {{ $isReferenceMessage ? 'chat-structured-message admin-chat-structured-message' : ($isImageMessage ? 'admin-chat-image-message ' . ($isCurrentUser ? 'is-sent' : 'is-received') : 'message-bubble ' . $bubbleClass) }}">
 
                                     <!-- Hiển thị tên người gửi và role (chỉ với tin nhắn của người khác) -->
                                     @if(!$isCurrentUser)
@@ -516,11 +518,18 @@
                                     @endif
 
                                     <!-- Nội dung tin nhắn -->
-                                    @if(isset($message['image_path']) && $message['image_path'])
-                                        <div class="mb-2 panzoom-parent">
+                                    @if($isReferenceMessage)
+                                        <x-chat.reference-card :message="$message" audience="admin" />
+                                    @elseif(isset($message['image_path']) && $message['image_path'])
+                                        <div class="panzoom-parent admin-chat-image-frame">
+                                            <span class="admin-chat-image-loading" aria-hidden="true"><i class="fas fa-circle-notch fa-spin"></i></span>
                                             <img src="{{ Storage::disk('public')->url($message['image_path']) }}" alt="Ảnh"
-                                                class="img-fluid rounded zoomable-image" style="max-height: 200px; cursor: pointer;">
+                                                class="zoomable-image" loading="lazy" decoding="async">
+                                            <span class="admin-chat-image-error"><i class="fas fa-image"></i> Không thể tải ảnh</span>
                                         </div>
+                                        @if(!empty($message['message']) && trim($message['message']) !== '')
+                                            <div class="chat-message-content admin-chat-image-caption">{{ trim($message['message']) }}</div>
+                                        @endif
                                     @elseif($message['message'])
                                         <div class="chat-message-content">{{ trim($message['message']) }}</div>
                                     @endif
@@ -669,14 +678,53 @@
             </div>
         @endif
     </div>
-    <!-- Modal Zoom -->
-    <div class="zoom-modal" id="zoomModal">
-        <button type="button" class="zoom-close" id="closeModal" aria-label="Đóng ảnh phóng to">&times;</button>
-        <div class="zoom-container" id="zoomContainer">
-            <img src="" alt="Zoomed image" class="zoom-modal-image" id="zoomModalImage">
-        </div>
-        <div class="zoom-hint">
-            🖱️ Cuộn chuột để zoom | 🖐️ Kéo để di chuyển | 🖱️ Double-click để reset
+    <!-- Image viewer -->
+    <div class="zoom-modal chat-image-viewer-overlay" id="zoomModal" role="dialog" aria-modal="true" aria-labelledby="adminImageViewerTitle" aria-hidden="true" wire:ignore>
+        <div class="chat-image-viewer-shell">
+            <header class="chat-image-viewer-header">
+                <div class="chat-image-viewer-title">
+                    <strong id="adminImageViewerTitle">Xem ảnh</strong>
+                    <small>Ảnh trong cuộc trò chuyện</small>
+                </div>
+                <div class="chat-image-viewer-header-actions">
+                    <span class="chat-image-viewer-counter" id="adminImageViewerCounter" hidden></span>
+                    <a class="chat-image-viewer-action is-secondary is-open-original" id="adminImageViewerOpenOriginal" href="#" target="_blank" rel="noopener" aria-label="Mở ảnh gốc" title="Mở ảnh gốc">
+                        <i class="fas fa-arrow-up-right-from-square" aria-hidden="true"></i>
+                    </a>
+                    <a class="chat-image-viewer-action is-secondary" id="adminImageViewerDownload" href="#" download aria-label="Tải ảnh" title="Tải ảnh">
+                        <i class="fas fa-download" aria-hidden="true"></i>
+                    </a>
+                    <button type="button" class="chat-image-viewer-action is-close" id="closeModal" aria-label="Đóng viewer" title="Đóng">
+                        <i class="fas fa-xmark" aria-hidden="true"></i>
+                    </button>
+                </div>
+            </header>
+
+            <div class="zoom-container chat-image-viewer-stage is-loading" id="zoomContainer">
+                <span class="chat-image-viewer-loading" aria-hidden="true"><i class="fas fa-circle-notch fa-spin"></i></span>
+                <div class="chat-image-viewer-error" role="status">
+                    <i class="fas fa-image" aria-hidden="true"></i>
+                    <strong>Không thể tải ảnh</strong>
+                    <small>Ảnh có thể đã được di chuyển hoặc không còn khả dụng.</small>
+                </div>
+                <button type="button" class="chat-image-viewer-nav is-prev" id="adminImageViewerPrev" aria-label="Ảnh trước" hidden>
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+                <img src="" alt="Ảnh trong cuộc trò chuyện" class="zoom-modal-image chat-image-viewer-image" id="zoomModalImage" draggable="false">
+                <button type="button" class="chat-image-viewer-nav is-next" id="adminImageViewerNext" aria-label="Ảnh tiếp theo" hidden>
+                    <i class="fas fa-chevron-right" aria-hidden="true"></i>
+                </button>
+            </div>
+
+            <footer class="chat-image-viewer-footer">
+                <div class="chat-image-viewer-meta">Cuộn chuột để zoom · Kéo ảnh khi đã phóng to · Double-click để đặt lại</div>
+                <div class="chat-image-viewer-controls">
+                    <button type="button" class="chat-image-viewer-control" id="adminImageViewerZoomOut" aria-label="Thu nhỏ" title="Thu nhỏ"><i class="fas fa-minus"></i></button>
+                    <span class="chat-image-viewer-scale" id="adminImageViewerScale">100%</span>
+                    <button type="button" class="chat-image-viewer-control" id="adminImageViewerZoomIn" aria-label="Phóng to" title="Phóng to"><i class="fas fa-plus"></i></button>
+                    <button type="button" class="chat-image-viewer-control" id="adminImageViewerReset" aria-label="Đặt lại zoom" title="Đặt lại zoom"><i class="fas fa-expand"></i></button>
+                </div>
+            </footer>
         </div>
     </div>
 
@@ -1000,6 +1048,8 @@
     });
 
     document.addEventListener('DOMContentLoaded', function () {
+        const boundTextareas = new WeakSet();
+
         // ===== Xử lý textarea tự động điều chỉnh chiều cao =====
         function autoResizeTextarea() {
             const textarea = document.getElementById('message-input-textarea');
@@ -1031,15 +1081,11 @@
         // Attach event listeners
         function attachTextareaEvents() {
             const textarea = document.getElementById('message-input-textarea');
-            if (textarea) {
-                // Remove old listeners by cloning
-                const newTextarea = textarea.cloneNode(true);
-                textarea.parentNode.replaceChild(newTextarea, textarea);
+            if (!textarea || boundTextareas.has(textarea)) return;
 
-                // Add new listeners
-                newTextarea.addEventListener('keydown', handleTextareaKeydown);
-                newTextarea.addEventListener('input', autoResizeTextarea);
-            }
+            boundTextareas.add(textarea);
+            textarea.addEventListener('keydown', handleTextareaKeydown);
+            textarea.addEventListener('input', autoResizeTextarea);
         }
 
         // Initialize textarea events
@@ -1050,123 +1096,262 @@
         const modalImage = document.getElementById('zoomModalImage');
         const closeBtn = document.getElementById('closeModal');
         const zoomContainer = document.getElementById('zoomContainer');
+        const viewerCounter = document.getElementById('adminImageViewerCounter');
+        const viewerPrev = document.getElementById('adminImageViewerPrev');
+        const viewerNext = document.getElementById('adminImageViewerNext');
+        const viewerZoomOut = document.getElementById('adminImageViewerZoomOut');
+        const viewerZoomIn = document.getElementById('adminImageViewerZoomIn');
+        const viewerReset = document.getElementById('adminImageViewerReset');
+        const viewerScale = document.getElementById('adminImageViewerScale');
+        const viewerOpenOriginal = document.getElementById('adminImageViewerOpenOriginal');
+        const viewerDownload = document.getElementById('adminImageViewerDownload');
         let currentScale = 1;
         let currentX = 0;
         let currentY = 0;
         let isDragging = false;
-        let startX, startY;
+        let startX = 0;
+        let startY = 0;
+        let viewerImages = [];
+        let viewerIndex = 0;
+        let previousBodyOverflow = '';
+        let lifecycleSyncFrame = null;
+        const boundThumbnailImages = new WeakSet();
+        const boundViewerImages = new WeakSet();
 
-        function openZoomModal(imageSrc) {
-            modalImage.src = imageSrc;
-            modal.classList.add('active');
-            document.body.classList.add('modal-open');
-            document.body.style.overflow = 'hidden';
+        function collectViewerImages() {
+            const seen = new Set();
+            return Array.from(document.querySelectorAll('#messages-container .zoomable-image'))
+                .map(img => img.currentSrc || img.src)
+                .filter(src => src && !seen.has(src) && seen.add(src));
+        }
 
-            // Reset về giữa
+        function setThumbnailState(image, state) {
+            const frame = image.closest('.admin-chat-image-frame');
+            if (!frame) return;
+
+            frame.classList.remove('is-loaded', 'is-error');
+            if (state === 'loaded') frame.classList.add('is-loaded');
+            if (state === 'error') frame.classList.add('is-error');
+        }
+
+        function syncThumbnailImage(image) {
+            if (!boundThumbnailImages.has(image)) {
+                boundThumbnailImages.add(image);
+
+                image.addEventListener('load', () => {
+                    setThumbnailState(image, 'loaded');
+                });
+
+                image.addEventListener('error', () => {
+                    setThumbnailState(image, 'error');
+                });
+            }
+
+            if (!image.complete) {
+                setThumbnailState(image, 'loading');
+                return;
+            }
+
+            setThumbnailState(image, image.naturalWidth > 0 ? 'loaded' : 'error');
+        }
+
+        function bindViewerImage(image) {
+            if (boundViewerImages.has(image)) return;
+
+            boundViewerImages.add(image);
+            image.addEventListener('click', function () {
+                openZoomModal(this.currentSrc || this.src);
+            });
+        }
+
+        function syncConversationImages() {
+            const messagesContainer = document.getElementById('messages-container');
+            if (!messagesContainer) return;
+
+            messagesContainer.querySelectorAll('.admin-chat-image-frame .zoomable-image').forEach(image => {
+                syncThumbnailImage(image);
+                bindViewerImage(image);
+            });
+        }
+
+        function scheduleConversationLifecycleSync() {
+            if (lifecycleSyncFrame !== null) return;
+
+            lifecycleSyncFrame = window.requestAnimationFrame(() => {
+                lifecycleSyncFrame = null;
+                syncConversationImages();
+                attachTextareaEvents();
+            });
+        }
+
+        function fitToScreen() {
+            if (!zoomContainer || !modalImage?.naturalWidth || !modalImage?.naturalHeight) return;
+
+            const stageStyle = window.getComputedStyle(zoomContainer);
+            const horizontalPadding = parseFloat(stageStyle.paddingLeft || 0) + parseFloat(stageStyle.paddingRight || 0);
+            const verticalPadding = parseFloat(stageStyle.paddingTop || 0) + parseFloat(stageStyle.paddingBottom || 0);
+            const availableWidth = Math.max(1, zoomContainer.clientWidth - horizontalPadding);
+            const availableHeight = Math.max(1, zoomContainer.clientHeight - verticalPadding);
+            const fitRatio = Math.min(
+                1,
+                availableWidth / modalImage.naturalWidth,
+                availableHeight / modalImage.naturalHeight
+            );
+
+            modalImage.style.width = `${modalImage.naturalWidth * fitRatio}px`;
+            modalImage.style.height = `${modalImage.naturalHeight * fitRatio}px`;
             currentScale = 1;
             currentX = 0;
             currentY = 0;
+            isDragging = false;
             updateTransform();
+        }
 
+        function resetZoom() {
+            fitToScreen();
+        }
+
+        function updateViewerChrome() {
+            const hasGallery = viewerImages.length > 1;
+            viewerCounter.hidden = !hasGallery;
+            viewerCounter.textContent = `${viewerIndex + 1} / ${viewerImages.length}`;
+            viewerPrev.hidden = !hasGallery;
+            viewerNext.hidden = !hasGallery;
+            viewerScale.textContent = `${Math.round(currentScale * 100)}%`;
+            viewerZoomOut.disabled = currentScale <= 1;
+            viewerZoomIn.disabled = currentScale >= 4;
+        }
+
+        function renderViewerImage(index) {
+            if (!viewerImages.length) return;
+            viewerIndex = (index + viewerImages.length) % viewerImages.length;
+            const src = viewerImages[viewerIndex];
+            currentScale = 1;
+            currentX = 0;
+            currentY = 0;
+            isDragging = false;
+            updateTransform();
+            zoomContainer.classList.remove('is-ready', 'is-error');
+            zoomContainer.classList.add('is-loading');
+            modalImage.src = src;
+            viewerOpenOriginal.href = src;
+            viewerDownload.href = src;
+            updateViewerChrome();
+        }
+
+        function openZoomModal(imageSrc) {
+            viewerImages = collectViewerImages();
+            if (!viewerImages.includes(imageSrc)) viewerImages.push(imageSrc);
+            viewerIndex = Math.max(0, viewerImages.indexOf(imageSrc));
+            previousBodyOverflow = document.body.style.overflow;
+            modal.classList.remove('is-closing');
+            modal.classList.add('active');
+            modal.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('chat-image-viewer-open');
+            document.body.style.overflow = 'hidden';
+            renderViewerImage(viewerIndex);
+            closeBtn.focus({ preventScroll: true });
         }
 
         function closeZoomModal() {
+            if (!modal.classList.contains('active')) return;
             modal.classList.remove('active');
-            document.body.classList.remove('modal-open');
-            document.body.style.overflow = '';
-
-            // Reset
-            currentScale = 1;
-            currentX = 0;
-            currentY = 0;
-            updateTransform();
+            modal.classList.add('is-closing');
+            window.setTimeout(() => {
+                modal.classList.remove('is-closing');
+                modal.setAttribute('aria-hidden', 'true');
+                document.body.classList.remove('chat-image-viewer-open');
+                document.body.style.overflow = previousBodyOverflow;
+                currentScale = 1;
+                currentX = 0;
+                currentY = 0;
+                isDragging = false;
+                updateTransform();
+                modalImage.removeAttribute('src');
+                modalImage.style.removeProperty('width');
+                modalImage.style.removeProperty('height');
+                viewerImages = [];
+            }, 160);
         }
 
         function updateTransform() {
             modalImage.style.transform = `translate(${currentX}px, ${currentY}px) scale(${currentScale})`;
+            if (viewerScale) viewerScale.textContent = `${Math.round(currentScale * 100)}%`;
+            if (viewerZoomOut) viewerZoomOut.disabled = currentScale <= 1;
+            if (viewerZoomIn) viewerZoomIn.disabled = currentScale >= 4;
+            modalImage.style.cursor = currentScale > 1 ? (isDragging ? 'grabbing' : 'grab') : 'zoom-in';
         }
 
-        // Zoom bằng scroll
+        function setScale(nextScale) {
+            currentScale = Math.min(4, Math.max(1, nextScale));
+            if (currentScale === 1) {
+                currentX = 0;
+                currentY = 0;
+            }
+            updateTransform();
+        }
+
         zoomContainer.addEventListener('wheel', function (e) {
+            if (!modal.classList.contains('active')) return;
             e.preventDefault();
             e.stopPropagation();
-
-            const rect = modalImage.getBoundingClientRect();
-            const containerRect = zoomContainer.getBoundingClientRect();
-
-            // Vị trí chuột trong container
-            const mouseX = e.clientX - containerRect.left;
-            const mouseY = e.clientY - containerRect.top;
-
-            // Vị trí chuột trong ảnh
-            const imgX = (mouseX - rect.left) / currentScale;
-            const imgY = (mouseY - rect.top) / currentScale;
-
-            // Tính scale mới
-            const delta = e.deltaY > 0 ? 0.9 : 1.1;
-            const newScale = Math.min(Math.max(0.5, currentScale * delta), 10);
-
-            // Tính offset mới để zoom vào điểm chuột
-            const scaleDiff = newScale - currentScale;
-            currentX -= imgX * scaleDiff;
-            currentY -= imgY * scaleDiff;
-            currentScale = newScale;
-
-            updateTransform();
+            setScale(currentScale + (e.deltaY < 0 ? 0.2 : -0.2));
         }, {
             passive: false
         });
 
-        // Kéo thả ảnh
-        modalImage.addEventListener('mousedown', function (e) {
-            if (currentScale > 1) {
-                isDragging = true;
-                startX = e.clientX - currentX;
-                startY = e.clientY - currentY;
-                modalImage.style.cursor = 'grabbing';
-            }
-        });
-
-        document.addEventListener('mousemove', function (e) {
-            if (isDragging) {
-                currentX = e.clientX - startX;
-                currentY = e.clientY - startY;
-                updateTransform();
-            }
-        });
-
-        document.addEventListener('mouseup', function () {
-            isDragging = false;
-            modalImage.style.cursor = 'grab';
-        });
-
-        // Double click để reset
-        modalImage.addEventListener('dblclick', function () {
-            currentScale = 1;
-            currentX = 0;
-            currentY = 0;
-            modalImage.style.transition = 'transform 0.3s ease';
+        modalImage.addEventListener('pointerdown', function (e) {
+            if (currentScale <= 1) return;
+            isDragging = true;
+            startX = e.clientX - currentX;
+            startY = e.clientY - currentY;
+            modalImage.setPointerCapture?.(e.pointerId);
             updateTransform();
-
-            setTimeout(() => {
-                modalImage.style.transition = '';
-            }, 300);
         });
 
-        function attachImageClickEvents() {
-            document.querySelectorAll('.zoomable-image').forEach(img => {
-                const newImg = img.cloneNode(true);
-                img.parentNode.replaceChild(newImg, img);
+        modalImage.addEventListener('pointermove', function (e) {
+            if (!isDragging) return;
+            currentX = e.clientX - startX;
+            currentY = e.clientY - startY;
+            updateTransform();
+        });
 
-                newImg.onclick = function () {
-                    openZoomModal(this.src);
-                };
+        const stopDragging = () => {
+            isDragging = false;
+            updateTransform();
+        };
+        modalImage.addEventListener('pointerup', stopDragging);
+        modalImage.addEventListener('pointercancel', stopDragging);
+
+        modalImage.addEventListener('dblclick', function () {
+            resetZoom();
+        });
+
+        modalImage.addEventListener('load', () => {
+            window.requestAnimationFrame(() => {
+                fitToScreen();
+                zoomContainer.classList.remove('is-loading', 'is-error');
+                zoomContainer.classList.add('is-ready');
             });
-        }
+        });
 
-        attachImageClickEvents();
+        modalImage.addEventListener('error', () => {
+            zoomContainer.classList.remove('is-loading', 'is-ready');
+            zoomContainer.classList.add('is-error');
+        });
+
+        syncConversationImages();
 
         closeBtn.addEventListener('click', closeZoomModal);
+        viewerPrev.addEventListener('click', () => renderViewerImage(viewerIndex - 1));
+        viewerNext.addEventListener('click', () => renderViewerImage(viewerIndex + 1));
+        viewerZoomOut.addEventListener('click', () => setScale(currentScale - 0.25));
+        viewerZoomIn.addEventListener('click', () => setScale(currentScale + 0.25));
+        viewerReset.addEventListener('click', resetZoom);
+
+        window.addEventListener('resize', () => {
+            if (modal.classList.contains('active')) fitToScreen();
+        });
 
         modal.addEventListener('click', (e) => {
             if (e.target === modal) closeZoomModal();
@@ -1176,14 +1361,20 @@
             if (e.key === 'Escape' && modal.classList.contains('active')) {
                 closeZoomModal();
             }
+            if (e.key === 'ArrowLeft' && modal.classList.contains('active') && viewerImages.length > 1) {
+                renderViewerImage(viewerIndex - 1);
+            }
+            if (e.key === 'ArrowRight' && modal.classList.contains('active') && viewerImages.length > 1) {
+                renderViewerImage(viewerIndex + 1);
+            }
         });
 
         if (typeof Livewire !== 'undefined') {
-            Livewire.hook('morph.updated', () => {
-                setTimeout(() => {
-                    attachImageClickEvents();
-                    attachTextareaEvents();
-                }, 100);
+            Livewire.hook('morph.updated', ({ el }) => {
+                const chatRoot = document.getElementById('chat-root');
+                if (!chatRoot || (el && el !== chatRoot && !chatRoot.contains(el))) return;
+
+                scheduleConversationLifecycleSync();
             });
         }
 
@@ -1197,13 +1388,12 @@
             }
         });
 
-        Livewire.on('swal', (data) => {
-            swal({
+        Livewire.on('app-dialog', (data) => {
+            AppDialog.notice({
                 icon: data[0].type || 'info',
                 title: data[0].title || '',
                 text: data[0].text || '',
                 timer: 2500,
-                buttons: false
             });
         });
     });
@@ -1218,7 +1408,7 @@
             title = "Xác nhận khóa tài khoản?"
             message = "Bạn có chắc muốn khóa tài khoản người dùng này?"
         }
-        swal({
+        AppDialog.confirm({
             title: title,
             text: message,
             icon: "warning",
@@ -1337,21 +1527,15 @@
 
 
     window.confirmDeleteSingleMessage = function(messageId) {
-        if (typeof Swal === 'undefined') {
-            console.error('SweetAlert2 is not loaded!');
-            return;
-        }
-        Swal.fire({
+        AppDialog.confirm({
             title: 'Xóa tin nhắn?',
             text: "Bạn có chắc chắn muốn xóa tin nhắn này không?",
             icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Đồng ý xóa',
-            cancelButtonText: 'Hủy'
+            dangerMode: true,
+            confirmText: 'Đồng ý xóa',
+            cancelText: 'Hủy'
         }).then((result) => {
-            if (result.isConfirmed) {
+            if (result) {
                 Livewire.dispatch('delete-single-message', { messageId: messageId });
             }
         })
@@ -1359,7 +1543,6 @@
 </script>
 
 @push('scripts')
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     @vite('resources/js/admin/chat.js')
     @vite('resources/js/admin/chat/chat-panel.js')
 @endpush

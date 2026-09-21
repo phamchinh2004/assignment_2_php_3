@@ -1,235 +1,241 @@
-<ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
+@php
+    $isDashboardActive = request()->routeIs('admin.dashboard', 'tong.doanh.thu');
+    $isStatisticsActive = request()->routeIs(
+        'doanh.thu.theo.nhan.vien',
+        'doanh.thu.tu.khach.hang',
+        'doanh.thu.ban.than',
+        'admin.statistical.*',
+        'admin.revenue.*'
+    );
+    $isWithdrawActive = request()->routeIs(
+        'withdraw_transaction',
+        'confirm.withdraw',
+        'cancel.withdraw',
+        'change.withdraw.transaction.type'
+    );
+    $isDepositActive = request()->routeIs(
+        'deposit_transaction',
+        'destroy.deposit',
+        'change.deposit.transaction.type'
+    );
+    $isTransactionActive = $isWithdrawActive || $isDepositActive;
+@endphp
 
-    <!-- Sidebar - Brand -->
-    <a class="sidebar-brand d-flex align-items-center justify-content-center" href="">
-        <div class="sidebar-brand-icon rotate-n-15">
-            <i class="fas fa-laugh-wink"></i>
-        </div>
-        <div class="sidebar-brand-text mx-3">Hệ thống</div>
-    </a>
+<aside class="admin-sidebar" id="accordionSidebar" aria-label="Điều hướng quản trị">
+    <div class="admin-sidebar__header">
+        <a class="admin-sidebar__brand"
+            href="{{ Auth::user()->role === 'admin' ? route('tong.doanh.thu') : route('chat-panel') }}">
+            <span class="admin-sidebar__brand-mark" aria-hidden="true">
+                <i class="fas fa-layer-group"></i>
+            </span>
+            <span class="admin-sidebar__brand-copy">
+                <strong>Hệ thống</strong>
+                <small>Quản trị vận hành</small>
+            </span>
+        </a>
 
-    <!-- Divider -->
-    <hr class="sidebar-divider my-0">
-    @if (Auth::user()->role === 'admin')
-        <!-- Nav Item - Dashboard -->
-        <li class="nav-item active">
-            <a class="nav-link" href="{{ route('tong.doanh.thu') }}">
-                <img src="{{ asset('images/admin/icons/dashboard.svg') }}" alt="img">
-                <span>Dashboard</span></a>
-        </li>
-    @endif
-    <!-- Divider -->
-    <hr class="sidebar-divider">
+        <button type="button" class="admin-sidebar__collapse" id="adminSidebarCollapse"
+            aria-label="Thu gọn thanh điều hướng" aria-controls="accordionSidebar" aria-expanded="true">
+            <i class="fas fa-angles-left" aria-hidden="true"></i>
+        </button>
 
-    <!-- Heading -->
-    <div class="sidebar-heading">
-        Interface
+        <button type="button" class="admin-sidebar__close" id="adminSidebarClose"
+            aria-label="Đóng thanh điều hướng">
+            <i class="fas fa-xmark" aria-hidden="true"></i>
+        </button>
     </div>
-    @if (Auth::user()->role === 'admin')
-        <!-- Thống kê -->
-        <li class="nav-item">
-            <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseStatistics"
-                aria-expanded="true" aria-controls="collapseStatistics">
-                <img src="{{ asset('images/admin/icons/statistical.svg') }}" alt="img">
-                <span>Thống kê</span>
-            </a>
-            <div id="collapseStatistics" class="collapse" aria-labelledby="headingStatistics"
-                data-parent="#accordionSidebar">
-                <div class="bg-white py-2 collapse-inner rounded">
-                    <h6 class="collapse-header">Danh sách chức năng:</h6>
-                    <a class="collapse-item" href="{{ route('doanh.thu.theo.nhan.vien') }}">Doanh thu nhân viên</a>
-                    <a class="collapse-item" href="{{ route('doanh.thu.tu.khach.hang') }}">Doanh thu từ khách hàng</a>
-                    <a class="collapse-item" href="{{ route('doanh.thu.ban.than') }}">Doanh thu bản thân</a>
-                </div>
-            </div>
-        </li>
-    @elseif (Auth::user()->role === 'staff')
-        <!-- Thống kê -->
-        <li class="nav-item">
-            <a class="nav-link collapsed" href="{{ route('doanh.thu.ban.than') }}" aria-expanded="true"
-                aria-controls="collapseStatistics">
-                <img src="{{ asset('images/admin/icons/statistical.svg') }}" alt="img">
-                <span>Thống kê</span>
-            </a>
-        </li>
-    @endif
-    {{-- Quản lý tin nhắn --}}
-    <li class="nav-item">
-        <a class="nav-link collapsed" href="{{ route('chat-panel') }}" data-target="#collapseChatbox"
-            aria-expanded="true" aria-controls="collapseChatbox">
-            <!-- <i class="fa-regular fa-comment-dots text-light fa-5xl"></i> -->
-            <!-- <img src="{{ asset('images/admin/icons/users1.svg') }}" alt="img"> -->
-            <i class="fa-solid fa-message text-white"></i>
-            <span>Quản lý tin nhắn</span>
-        </a>
-    </li>
-    {{-- Quản lý vouchers --}}
-    <li class="nav-item">
-        <a class="nav-link collapsed" href="{{ route('user.index') }}" data-target="#collapseVouchers"
-            aria-expanded="true" aria-controls="collapseVouchers">
-            <img src="{{ asset('images/admin/icons/users1.svg') }}" alt="img">
-            <span>Quản lý khách hàng</span>
-        </a>
-    </li>
 
-    {{-- Quản lý đơn hàng --}}
-    <li class="nav-item">
-        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseOrder" aria-expanded="true"
-            aria-controls="collapseOrder">
-            <!-- <img src="{{ asset('images/admin/icons/sales1.svg') }}" alt="img"> -->
-            <i class="fa-solid fa-arrow-right-arrow-left text-white"></i>
-            <span>Quản lý GDKH</span>
-        </a>
-        <div id="collapseOrder" class="collapse" aria-labelledby="headingPages" data-parent="#accordionSidebar">
-            <div class="bg-white py-2 collapse-inner rounded">
-                <h6 class="collapse-header">Danh sách chức năng</h6>
-                <a class="collapse-item" href="{{ route('withdraw_transaction') }}">Rút tiền</a>
-                <a class="collapse-item" href="{{ route('deposit_transaction') }}">Nạp tiền</a>
-            </div>
-        </div>
-    </li>
+    <div class="admin-sidebar__scroll">
+        <nav class="admin-sidebar__nav" aria-label="Menu chính">
+            <section class="admin-sidebar__section" aria-labelledby="sidebar-overview-title">
+                <h2 class="admin-sidebar__section-title" id="sidebar-overview-title">Tổng quan</h2>
 
-    {{-- Quản lý nhân viên --}}
-    @if (Auth::user()->role === "admin")
-        <li class="nav-item">
-            <a class="nav-link collapsed" href="{{ route('staff.index') }}" data-target="#collapseRatings"
-                aria-expanded="true" aria-controls="collapseRatings">
-                <!-- <i class="fa-regular fa-comment-dots text-light fa-5xl"></i> -->
-                <!-- <img src="{{ asset('images/admin/icons/users1.svg') }}" alt="img"> -->
-                <i class="fa-solid fa-user-nurse" style="color: #ffffff;"></i>
-                <span>Quản lý nhân viên</span>
-            </a>
-        </li>
-    @endif
-    <!-- Quản lý đơn hàng -->
-    <li class="nav-item">
-        <a class="nav-link collapsed" href="{{ route('order.index') }}" data-target="#collapseUtilities"
-            aria-expanded="true" aria-controls="collapseUtilities">
-            <img src="{{ asset('images/admin/icons/product.svg') }}" alt="img">
-            <span>Quản lý đơn hàng</span>
-        </a>
-    </li>
+                @if (Auth::user()->role === 'admin')
+                    <a class="admin-sidebar__link {{ $isDashboardActive ? 'is-active' : '' }}"
+                        href="{{ route('tong.doanh.thu') }}" data-sidebar-tooltip="Dashboard"
+                        @if($isDashboardActive) aria-current="page" @endif>
+                        <span class="admin-sidebar__icon"><i class="fas fa-chart-pie" aria-hidden="true"></i></span>
+                        <span class="admin-sidebar__label">Dashboard</span>
+                    </a>
 
-    <!-- Đơn hàng bị báo cáo -->
-    @if (Auth::user()->role === 'admin')
-        <li class="nav-item">
-            <a class="nav-link collapsed" href="{{ route('order_distributions.index') }}">
-                <i class="fa-solid fa-route text-white"></i>
-                <span>Phân phối đơn hàng</span>
-            </a>
-        </li>
-    @endif
-
-    <!-- Đơn hàng bị báo cáo -->
-    <li class="nav-item">
-        <a class="nav-link collapsed" href="{{ route('order_reports.index') }}">
-            <i class="fa-solid fa-flag text-white"></i>
-            <span>Đơn hàng bị báo cáo</span>
-        </a>
-    </li>
-
-    @if (Auth::user()->role === 'admin')
-        {{-- Cấu hình thời gian chuyển trạng thái đơn hàng --}}
-        <li class="nav-item">
-            <a class="nav-link collapsed" href="{{ route('admin.order_status_timing.index') }}"
-                data-target="#collapseOrderTiming" aria-expanded="true" aria-controls="collapseOrderTiming">
-                <i class="fa-solid fa-clock text-white"></i>
-                <span>Cấu hình thời gian đơn hàng</span>
-            </a>
-        </li>
-
-    @endif
-    {{-- Cấu hình mặc định Frozen Order --}}
-    <li class="nav-item">
-        <a class="nav-link collapsed" href="{{ route('frozen_order_settings.index') }}">
-            <i class="fa-solid fa-snowflake text-white"></i>
-            <span>Cấu hình Frozen Order default</span>
-        </a>
-    </li>
-    <!-- Quản lý cấp độ -->
-    <li class="nav-item">
-        <a class="nav-link collapsed" href="{{ route('rank.index') }}" data-target="#collapseTwo" aria-expanded="true"
-            aria-controls="collapseTwo">
-            <!-- <img src="{{ asset('images/admin/icons/category.svg') }}" alt="img"> -->
-            <i class="fa-solid fa-ranking-star text-white"></i>
-            <span>Quản lý cấp độ</span>
-        </a>
-    </li>
-
-    {{-- Quản lý banner --}}
-    <li class="nav-item">
-        <a class="nav-link collapsed" href="{{ route("banner.index") }}" data-target="#collapseBanners"
-            aria-expanded="true" aria-controls="collapseBanners">
-            <img src="{{ asset('images/admin/icons/banner.svg') }}" alt="img">
-
-            <span>Quản lý banner</span>
-        </a>
-    </li>
-
-
-    {{-- Quản lý section --}}
-    <li class="nav-item">
-        <a class="nav-link collapsed" href="{{ route('section.index') }}" data-target="#collapseThree"
-            aria-expanded="true" aria-controls="collapseThree">
-            <img src="{{ asset('images/admin/icons/attribute.svg') }}" alt="img">
-            <span>Quản lý nội dung trên trang web</span>
-        </a>
-    </li>
-
-
-
-    {{-- quản lý thương hiệu(brand) --}}
-    <li class="nav-item">
-        <a class="nav-link collapsed" href="{{ route('partner.index') }}" data-target="#collapseBrands"
-            aria-expanded="true" aria-controls="collapseBrands">
-            <!-- <img src="{{ asset('images/admin/icons/brand.svg') }}" alt="img"> -->
-            <i class="fa-solid fa-handshake text-white"></i>
-            <span>Quản lý đối tác</span>
-        </a>
-    </li>
-
-    {{-- Quản lý khách hàng --}}
-    <li class="nav-item">
-        <a class="nav-link collapsed" href="{{ route('language.index') }}" data-target="#collapseCustomers"
-            aria-expanded="true" aria-controls="collapseCustomers">
-            <!-- <img src="{{ asset('images/admin/icons/language.png') }}" alt="img"> -->
-            <i class="fa-solid fa-language" style="color: #ffffff;"></i>
-            <span>Quản lý ngôn ngữ</span>
-        </a>
-    </li>
-
-    @if (Auth::user()->role === 'admin')
-        {{-- Quản lý manager setting --}}
-        <li class="nav-item">
-            <a class="nav-link collapsed" href="{{ route('manager_setting.index') }}" data-target="#collapseManagers"
-                aria-expanded="true" aria-controls="collapseManagers">
-                <img src="{{ asset('images/admin/icons/function.svg') }}" alt="img">
-                <span>Quản lý chức năng</span>
-            </a>
-            <!-- <div id="collapseManagers" class="collapse" aria-labelledby="headingPages" data-parent="#accordionSidebar">
-                        <div class="bg-white py-2 collapse-inner rounded">
-                            <h6 class="collapse-header">Danh sách chức năng</h6>
-                            <a class="collapse-item" href="{{ route('manager_setting.index') }}">Danh sách</a>
-                            <a class="collapse-item" href="{{ route('manager_setting.create') }}">Thêm</a>
+                    <div class="admin-sidebar__item {{ $isStatisticsActive ? 'is-active' : '' }}">
+                        <button type="button"
+                            class="admin-sidebar__link admin-sidebar__submenu-trigger {{ $isStatisticsActive ? '' : 'collapsed' }}"
+                            data-toggle="collapse" data-target="#collapseStatistics"
+                            aria-expanded="{{ $isStatisticsActive ? 'true' : 'false' }}"
+                            aria-controls="collapseStatistics" data-sidebar-tooltip="Thống kê">
+                            <span class="admin-sidebar__icon"><i class="fas fa-chart-line" aria-hidden="true"></i></span>
+                            <span class="admin-sidebar__label">Thống kê</span>
+                            <span class="admin-sidebar__chevron"><i class="fas fa-chevron-down" aria-hidden="true"></i></span>
+                        </button>
+                        <div id="collapseStatistics" class="collapse admin-sidebar__submenu {{ $isStatisticsActive ? 'show' : '' }}"
+                            data-parent="#accordionSidebar">
+                            <div class="admin-sidebar__submenu-panel">
+                                <span class="admin-sidebar__submenu-heading">Thống kê</span>
+                                <a class="admin-sidebar__submenu-link {{ request()->routeIs('doanh.thu.theo.nhan.vien') ? 'is-active' : '' }}"
+                                    href="{{ route('doanh.thu.theo.nhan.vien') }}">Doanh thu nhân viên</a>
+                                <a class="admin-sidebar__submenu-link {{ request()->routeIs('doanh.thu.tu.khach.hang') ? 'is-active' : '' }}"
+                                    href="{{ route('doanh.thu.tu.khach.hang') }}">Doanh thu từ khách hàng</a>
+                                <a class="admin-sidebar__submenu-link {{ request()->routeIs('doanh.thu.ban.than') ? 'is-active' : '' }}"
+                                    href="{{ route('doanh.thu.ban.than') }}">Doanh thu bản thân</a>
+                            </div>
                         </div>
-                    </div> -->
-        </li>
-    @endif
+                    </div>
+                @elseif (Auth::user()->role === 'staff')
+                    <a class="admin-sidebar__link {{ request()->routeIs('doanh.thu.ban.than') ? 'is-active' : '' }}"
+                        href="{{ route('doanh.thu.ban.than') }}" data-sidebar-tooltip="Thống kê"
+                        @if(request()->routeIs('doanh.thu.ban.than')) aria-current="page" @endif>
+                        <span class="admin-sidebar__icon"><i class="fas fa-chart-line" aria-hidden="true"></i></span>
+                        <span class="admin-sidebar__label">Thống kê</span>
+                    </a>
+                @endif
+            </section>
 
-    <!-- Divider -->
-    <hr class="sidebar-divider d-none d-md-block">
+            <section class="admin-sidebar__section" aria-labelledby="sidebar-operations-title">
+                <h2 class="admin-sidebar__section-title" id="sidebar-operations-title">Vận hành</h2>
 
-    <!-- Sidebar Toggler (Sidebar) -->
-    <div class="text-center d-none d-md-inline">
-        <button class="rounded-circle border-0" id="sidebarToggle"></button>
+                <a class="admin-sidebar__link {{ request()->routeIs('chat-panel') ? 'is-active' : '' }}"
+                    href="{{ route('chat-panel') }}" data-sidebar-tooltip="Quản lý tin nhắn"
+                    @if(request()->routeIs('chat-panel')) aria-current="page" @endif>
+                    <span class="admin-sidebar__icon"><i class="fas fa-message" aria-hidden="true"></i></span>
+                    <span class="admin-sidebar__label">Quản lý tin nhắn</span>
+                </a>
+
+                <a class="admin-sidebar__link {{ request()->routeIs('user.*') ? 'is-active' : '' }}"
+                    href="{{ route('user.index') }}" data-sidebar-tooltip="Quản lý khách hàng"
+                    @if(request()->routeIs('user.*')) aria-current="page" @endif>
+                    <span class="admin-sidebar__icon"><i class="fas fa-users" aria-hidden="true"></i></span>
+                    <span class="admin-sidebar__label">Quản lý khách hàng</span>
+                </a>
+
+                <div class="admin-sidebar__item {{ $isTransactionActive ? 'is-active' : '' }}">
+                    <button type="button"
+                        class="admin-sidebar__link admin-sidebar__submenu-trigger {{ $isTransactionActive ? '' : 'collapsed' }}"
+                        data-toggle="collapse" data-target="#collapseOrder"
+                        aria-expanded="{{ $isTransactionActive ? 'true' : 'false' }}"
+                        aria-controls="collapseOrder" data-sidebar-tooltip="Quản lý GDKH">
+                        <span class="admin-sidebar__icon"><i class="fas fa-arrow-right-arrow-left" aria-hidden="true"></i></span>
+                        <span class="admin-sidebar__label">Quản lý GDKH</span>
+                        <span class="admin-sidebar__chevron"><i class="fas fa-chevron-down" aria-hidden="true"></i></span>
+                    </button>
+                    <div id="collapseOrder" class="collapse admin-sidebar__submenu {{ $isTransactionActive ? 'show' : '' }}"
+                        data-parent="#accordionSidebar">
+                        <div class="admin-sidebar__submenu-panel">
+                            <span class="admin-sidebar__submenu-heading">Giao dịch khách hàng</span>
+                            <a class="admin-sidebar__submenu-link {{ $isWithdrawActive ? 'is-active' : '' }}"
+                                href="{{ route('withdraw_transaction') }}">Rút tiền</a>
+                            <a class="admin-sidebar__submenu-link {{ $isDepositActive ? 'is-active' : '' }}"
+                                href="{{ route('deposit_transaction') }}">Nạp tiền</a>
+                        </div>
+                    </div>
+                </div>
+
+                @if (Auth::user()->role === 'admin')
+                    <a class="admin-sidebar__link {{ request()->routeIs('staff.*') ? 'is-active' : '' }}"
+                        href="{{ route('staff.index') }}" data-sidebar-tooltip="Quản lý nhân viên"
+                        @if(request()->routeIs('staff.*')) aria-current="page" @endif>
+                        <span class="admin-sidebar__icon"><i class="fas fa-user-tie" aria-hidden="true"></i></span>
+                        <span class="admin-sidebar__label">Quản lý nhân viên</span>
+                    </a>
+                @endif
+
+                <a class="admin-sidebar__link {{ request()->routeIs('order.*') ? 'is-active' : '' }}"
+                    href="{{ route('order.index') }}" data-sidebar-tooltip="Quản lý đơn hàng"
+                    data-permission="{{ config('authorization.capabilities.orders') }}" hidden
+                    @if(request()->routeIs('order.*')) aria-current="page" @endif>
+                    <span class="admin-sidebar__icon"><i class="fas fa-box-open" aria-hidden="true"></i></span>
+                    <span class="admin-sidebar__label">Quản lý đơn hàng</span>
+                </a>
+
+                @if (Auth::user()->role === 'admin')
+                    <a class="admin-sidebar__link {{ request()->routeIs('order_distributions.*') ? 'is-active' : '' }}"
+                        href="{{ route('order_distributions.index') }}" data-sidebar-tooltip="Phân phối đơn hàng"
+                        @if(request()->routeIs('order_distributions.*')) aria-current="page" @endif>
+                        <span class="admin-sidebar__icon"><i class="fas fa-route" aria-hidden="true"></i></span>
+                        <span class="admin-sidebar__label">Phân phối đơn hàng</span>
+                    </a>
+                @endif
+
+                <a class="admin-sidebar__link {{ request()->routeIs('order_reports.*') ? 'is-active' : '' }}"
+                    href="{{ route('order_reports.index') }}" data-sidebar-tooltip="Đơn hàng bị báo cáo"
+                    data-permission="{{ config('authorization.capabilities.orders') }}" hidden
+                    @if(request()->routeIs('order_reports.*')) aria-current="page" @endif>
+                    <span class="admin-sidebar__icon"><i class="fas fa-flag" aria-hidden="true"></i></span>
+                    <span class="admin-sidebar__label">Đơn hàng bị báo cáo</span>
+                </a>
+            </section>
+
+            <section class="admin-sidebar__section" aria-labelledby="sidebar-settings-title">
+                <h2 class="admin-sidebar__section-title" id="sidebar-settings-title">Cấu hình</h2>
+
+                @if (Auth::user()->role === 'admin')
+                    <a class="admin-sidebar__link {{ request()->routeIs('admin.order_status_timing.*') ? 'is-active' : '' }}"
+                        href="{{ route('admin.order_status_timing.index') }}" data-sidebar-tooltip="Thời gian đơn hàng"
+                        @if(request()->routeIs('admin.order_status_timing.*')) aria-current="page" @endif>
+                        <span class="admin-sidebar__icon"><i class="fas fa-clock" aria-hidden="true"></i></span>
+                        <span class="admin-sidebar__label">Thời gian đơn hàng</span>
+                    </a>
+                @endif
+
+                <a class="admin-sidebar__link {{ request()->routeIs('frozen_order_settings.*') ? 'is-active' : '' }}"
+                    href="{{ route('frozen_order_settings.index') }}" data-sidebar-tooltip="Frozen Order mặc định"
+                    @if(request()->routeIs('frozen_order_settings.*')) aria-current="page" @endif>
+                    <span class="admin-sidebar__icon"><i class="fas fa-snowflake" aria-hidden="true"></i></span>
+                    <span class="admin-sidebar__label">Frozen Order mặc định</span>
+                </a>
+
+                <a class="admin-sidebar__link {{ request()->routeIs('rank.*') ? 'is-active' : '' }}"
+                    href="{{ route('rank.index') }}" data-sidebar-tooltip="Quản lý cấp độ"
+                    data-permission="{{ config('authorization.capabilities.ranks') }}" hidden
+                    @if(request()->routeIs('rank.*')) aria-current="page" @endif>
+                    <span class="admin-sidebar__icon"><i class="fas fa-ranking-star" aria-hidden="true"></i></span>
+                    <span class="admin-sidebar__label">Quản lý cấp độ</span>
+                </a>
+
+                <a class="admin-sidebar__link {{ request()->routeIs('banner.*') ? 'is-active' : '' }}"
+                    href="{{ route("banner.index") }}" data-sidebar-tooltip="Quản lý banner"
+                    data-permission="{{ config('authorization.capabilities.banners') }}" hidden
+                    @if(request()->routeIs('banner.*')) aria-current="page" @endif>
+                    <span class="admin-sidebar__icon"><i class="fas fa-images" aria-hidden="true"></i></span>
+                    <span class="admin-sidebar__label">Quản lý banner</span>
+                </a>
+
+                <a class="admin-sidebar__link {{ request()->routeIs('section.*') ? 'is-active' : '' }}"
+                    href="{{ route('section.index') }}" data-sidebar-tooltip="Nội dung website"
+                    data-permission="{{ config('authorization.capabilities.site_content') }}" hidden
+                    @if(request()->routeIs('section.*')) aria-current="page" @endif>
+                    <span class="admin-sidebar__icon"><i class="fas fa-table-columns" aria-hidden="true"></i></span>
+                    <span class="admin-sidebar__label">Nội dung website</span>
+                </a>
+
+                <a class="admin-sidebar__link {{ request()->routeIs('partner.*') ? 'is-active' : '' }}"
+                    href="{{ route('partner.index') }}" data-sidebar-tooltip="Quản lý đối tác"
+                    data-permission="{{ config('authorization.capabilities.partners') }}" hidden
+                    @if(request()->routeIs('partner.*')) aria-current="page" @endif>
+                    <span class="admin-sidebar__icon"><i class="fas fa-handshake" aria-hidden="true"></i></span>
+                    <span class="admin-sidebar__label">Quản lý đối tác</span>
+                </a>
+
+                <a class="admin-sidebar__link {{ request()->routeIs('language.*') ? 'is-active' : '' }}"
+                    href="{{ route('language.index') }}" data-sidebar-tooltip="Quản lý ngôn ngữ"
+                    data-permission="{{ config('authorization.capabilities.languages') }}" hidden
+                    @if(request()->routeIs('language.*')) aria-current="page" @endif>
+                    <span class="admin-sidebar__icon"><i class="fas fa-language" aria-hidden="true"></i></span>
+                    <span class="admin-sidebar__label">Quản lý ngôn ngữ</span>
+                </a>
+
+                @if (Auth::user()->role === 'admin')
+                    <a class="admin-sidebar__link {{ request()->routeIs('manager_setting.*') ? 'is-active' : '' }}"
+                        href="{{ route('manager_setting.index') }}" data-sidebar-tooltip="Quản lý chức năng"
+                        @if(request()->routeIs('manager_setting.*')) aria-current="page" @endif>
+                        <span class="admin-sidebar__icon"><i class="fas fa-sliders" aria-hidden="true"></i></span>
+                        <span class="admin-sidebar__label">Quản lý chức năng</span>
+                    </a>
+                @endif
+            </section>
+        </nav>
     </div>
+</aside>
 
-    <!-- Sidebar Message -->
-    {{-- <div class="sidebar-card d-none d-lg-flex">
-        <img class="sidebar-card-illustration mb-2" src="{{asset('theme/admin/img/undraw_rocket.svg')}}" alt="...">
-        <p class="text-center mb-2"><strong>SB Admin Pro</strong> is packed with premium features, components, and more!
-        </p>
-        <a class="btn btn-success btn-sm" href="https://startbootstrap.com/theme/sb-admin-pro">Upgrade to Pro!</a>
-    </div> --}}
-
-</ul>
+<button type="button" class="admin-sidebar-overlay" id="adminSidebarOverlay"
+    aria-label="Đóng thanh điều hướng" tabindex="-1"></button>

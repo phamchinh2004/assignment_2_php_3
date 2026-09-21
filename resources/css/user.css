@@ -20,12 +20,6 @@ body {
     z-index: -2;
 }
 
-/* ========== Footer Styles - Modern Design ========== */
-footer {
-    z-index: 999;
-    width: 70%;
-}
-
 .footer {
     /* Glassmorphism effect */
     background: rgba(255, 255, 255, 0.95);

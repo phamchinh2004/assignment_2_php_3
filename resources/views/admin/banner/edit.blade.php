@@ -49,9 +49,6 @@
 
 @section('script-libs')
     @vite('resources/js/admin/banner/edit.js')
-    <script>
-        window.currentPermissionCode = "quan_ly_banner";
-    </script>
 @endsection
 
 @section('content')

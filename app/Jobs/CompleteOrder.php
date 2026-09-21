@@ -125,7 +125,7 @@ class CompleteOrder implements ShouldQueue
             $actualProfit = $commission - $penaltyAmount;
             $creditAmount = $totalPrice + $actualProfit;
 
-            $hasUnconfirmedSpecialOrder = Frozen_order::where('user_id', $user->id)
+            $hasUnconfirmedHvo = Frozen_order::where('user_id', $user->id)
                 ->where('id', '!=', $frozenOrder->id)
                 ->whereNotNull('custom_price')
                 ->where('is_frozen', true)
@@ -135,7 +135,7 @@ class CompleteOrder implements ShouldQueue
                 })
                 ->exists();
 
-            if ($hasUnconfirmedSpecialOrder) {
+            if ($hasUnconfirmedHvo) {
                 $user->frozen_balance += $creditAmount;
             } else {
                 $user->balance += $creditAmount;
@@ -163,7 +163,7 @@ class CompleteOrder implements ShouldQueue
             $frozenOrder->settled_commission_amount = $commission;
             $frozenOrder->settled_penalty_amount = $penaltyAmount;
             $frozenOrder->settled_refund_amount = $creditAmount;
-            $frozenOrder->settled_balance_destination = $hasUnconfirmedSpecialOrder
+            $frozenOrder->settled_balance_destination = $hasUnconfirmedHvo
                 ? 'frozen_balance'
                 : 'balance';
             $frozenOrder->settled_at = now();
@@ -184,7 +184,7 @@ class CompleteOrder implements ShouldQueue
                 'penalty_amount' => $penaltyAmount,
                 'actual_profit' => $actualProfit,
                 'credit_amount' => $creditAmount,
-                'credited_to_frozen_balance' => $hasUnconfirmedSpecialOrder,
+                'credited_to_frozen_balance' => $hasUnconfirmedHvo,
                 'new_balance' => $user->balance,
                 'new_frozen_balance' => $user->frozen_balance,
             ];

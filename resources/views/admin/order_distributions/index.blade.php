@@ -137,7 +137,7 @@
                 </table>
             </div>
         </form>
-        <div class="p-3">{{ $frozenOrders->links() }}</div>
+        <div class="p-3">{{ $frozenOrders->links('pagination::bootstrap-4') }}</div>
     </div>
 </div>
 <script>

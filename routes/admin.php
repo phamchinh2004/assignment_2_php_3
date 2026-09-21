@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\BannerController;
+use App\Http\Controllers\Admin\AuthorizationController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\LanguageController;
 use App\Http\Controllers\Admin\ManagerSettingController;
@@ -19,9 +20,12 @@ use App\Models\Language;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['role:staff|admin', 'checkBanned', 'auth'])->group(function () {
+    $capabilities = config('authorization.capabilities');
+
     Route::get('/', [DashboardController::class, 'index'])->name('admin.dashboard');
-    Route::middleware(['checkPermission:quan_ly_don_hang'])->group(function () {
-        Route::get('/order/update-commission-percentage', [OrderController::class, 'orderUpdateCommissionPercentage'])->name('order.update.commission.percentage');
+    Route::get('/authorization-state', [AuthorizationController::class, 'state'])->name('authorization.state');
+
+    Route::middleware(['permission:' . $capabilities['orders']])->group(function () {
         Route::get('/order/add-customer-info', [OrderController::class, 'addCustomerInfoToOrders'])->name('order.add.customer.info');
         Route::get('/order/update-status-history', [OrderController::class, 'updateOrderStatusHistory'])->name('order.update.status.history');
         Route::get('/order/update-commission-paid', [OrderController::class, 'updateCommissionPaid'])->name('order.update.commission.paid');
@@ -35,46 +39,47 @@ Route::middleware(['role:staff|admin', 'checkBanned', 'auth'])->group(function (
         Route::post('/order-reports/{orderReport}/confirm', [OrderReportController::class, 'confirm'])->name('order_reports.confirm');
         Route::post('/order-reports/{orderReport}/cancel', [OrderReportController::class, 'cancel'])->name('order_reports.cancel');
     });
-    Route::middleware(['checkPermission:quan_ly_cap_do'])->group(function () {
+    Route::middleware(['permission:' . $capabilities['ranks']])->group(function () {
         Route::resource('rank', RankController::class);
     });
-    Route::middleware(['checkPermission:quan_ly_banner'])->group(function () {
+    Route::middleware(['permission:' . $capabilities['banners']])->group(function () {
         Route::resource('banner', BannerController::class);
         Route::get('/banner/change-status/{banner}', [BannerController::class, 'change_status_banner'])->name('banner.change.status');
     });
-    Route::middleware(['checkPermission:quan_ly_thong_tin_trang_web'])->group(function () {
+    Route::middleware(['permission:' . $capabilities['site_content']])->group(function () {
         Route::resource('section', SectionController::class);
         Route::get('/section/change-status/{section}', [SectionController::class, 'change_status_section'])->name('section.change.status');
     });
-    Route::middleware(['checkPermission:quan_ly_doi_tac'])->group(function () {
+    Route::middleware(['permission:' . $capabilities['partners']])->group(function () {
         Route::resource('partner', PartnerController::class);
     });
-    Route::middleware(['checkPermission:quan_ly_ngon_ngu'])->group(function () {
+    Route::middleware(['permission:' . $capabilities['languages']])->group(function () {
         Route::resource('language', LanguageController::class);
     });
 
-    // Đã kiểm tra
-    Route::resource('user', UserController::class);
+    Route::middleware(['authorization.context:' . $capabilities['manage_all_users']])->group(function () {
+        Route::resource('user', UserController::class);
+        Route::get('/user/change-status-user/{user}', [UserController::class, 'changeStatusUser'])->name('user.change.status');
+        Route::get('/user/frozen-order/{user}', [UserController::class, 'frozenOrderInterface'])->name('user.frozen.order.interface');
+        Route::post('/user/frozen-order/{user}', [UserController::class, 'frozenOrder'])->name('user.frozen.order');
+        Route::delete('user/{user}/frozen-orders/{frozenOrder}', [UserController::class, 'unfrozenOrder'])->name('user.unfrozen.order');
+        Route::put('user/{user}/frozen-orders/{frozenOrder}', [UserController::class, 'updateFrozenOrder'])->name('user.update.frozen.order');
+        Route::put('user/{user}/frozen-orders/{frozenOrder}/image', [UserController::class, 'updateOrderImage'])->name('user.update.frozen.order.image');
+        Route::post('/user/plus-money', [UserController::class, 'plus_money'])->name('plus_money');
+    });
+
     Route::get('/frozen-order-settings', [\App\Http\Controllers\Admin\FrozenOrderSettingController::class, 'index'])->name('frozen_order_settings.index');
     Route::post('/frozen-order-settings', [\App\Http\Controllers\Admin\FrozenOrderSettingController::class, 'store'])->name('frozen_order_settings.store');
-    Route::get('/user/change-status-user/{user}', [UserController::class, 'changeStatusUser'])->name('user.change.status');
-    Route::get('/user/frozen-order/{user}', [UserController::class, 'frozenOrderInterface'])->name('user.frozen.order.interface');
-    Route::post('/user/frozen-order/{user}', [UserController::class, 'frozenOrder'])->name('user.frozen.order');
-    Route::delete('user/{user}/frozen-orders/{frozenOrder}', [UserController::class, 'unfrozenOrder'])->name('user.unfrozen.order');
-    Route::put('user/{user}/frozen-orders/{frozenOrder}', [UserController::class, 'updateFrozenOrder'])->name('user.update.frozen.order');
-    Route::put('user/{user}/frozen-orders/{frozenOrder}/image', [UserController::class, 'updateOrderImage'])->name('user.update.frozen.order.image');
-    // Route::get('/user/edit-frozen-order/{user}/{id}', [UserController::class, 'editFrozenOrderInterface'])->name('user.edit.frozen.order.interface');
-    // Route::put('/user/edit-frozen-order/{user}/{id}', [UserController::class, 'updateFrozenOrder'])->name('user.update.frozen.order');
-    Route::post('/user/plus-money', [UserController::class, 'plus_money'])->name('plus_money');
 
-    // Đã kiểm tra
-    Route::get('/withdraw-transaction', [TransactionHistoryController::class, 'index_withdraw'])->name(name: 'withdraw_transaction');
-    Route::get('/confirm-withdraw/{transaction}', [TransactionHistoryController::class, 'confirm_withdraw'])->name('confirm.withdraw');
-    Route::get('/cancel-withdraw/{transaction}', [TransactionHistoryController::class, 'cancel_withdraw'])->name('cancel.withdraw');
-    Route::get('/change-withdraw-transaction-type/{transaction}', [TransactionHistoryController::class, 'change_withdraw_transaction_type'])->name(name: 'change.withdraw.transaction.type');
-    Route::get('/deposit-transaction', [TransactionHistoryController::class, 'index_deposit'])->name('deposit_transaction');
-    Route::delete('/destroy-deposit/{transaction}', [TransactionHistoryController::class, 'destroy_deposit'])->name('destroy.deposit');
-    Route::get('/change-deposit-transaction-type/{transaction}', [TransactionHistoryController::class, 'change_deposit_transaction_type'])->name(name: 'change.deposit.transaction.type');
+    Route::middleware(['authorization.context:' . $capabilities['manage_all_user_transactions']])->group(function () {
+        Route::get('/withdraw-transaction', [TransactionHistoryController::class, 'index_withdraw'])->name(name: 'withdraw_transaction');
+        Route::get('/confirm-withdraw/{transaction}', [TransactionHistoryController::class, 'confirm_withdraw'])->name('confirm.withdraw');
+        Route::get('/cancel-withdraw/{transaction}', [TransactionHistoryController::class, 'cancel_withdraw'])->name('cancel.withdraw');
+        Route::get('/change-withdraw-transaction-type/{transaction}', [TransactionHistoryController::class, 'change_withdraw_transaction_type'])->name(name: 'change.withdraw.transaction.type');
+        Route::get('/deposit-transaction', [TransactionHistoryController::class, 'index_deposit'])->name('deposit_transaction');
+        Route::delete('/destroy-deposit/{transaction}', [TransactionHistoryController::class, 'destroy_deposit'])->name('destroy.deposit');
+        Route::get('/change-deposit-transaction-type/{transaction}', [TransactionHistoryController::class, 'change_deposit_transaction_type'])->name(name: 'change.deposit.transaction.type');
+    });
     // Đã kiểm tra
     Route::get('/chat-panel', [ConversationController::class, 'index'])->name('chat-panel');
 });
@@ -98,6 +103,7 @@ Route::middleware(['role:admin'])->group(function () {
     Route::get('/staff/change-status/{id}', [StaffController::class, 'change_status_staff'])->name('staff.change.status');
     Route::get('/staff/edit-permissions/{id}', [StaffController::class, 'edit_permissions'])->name('staff.edit.permissions');
     Route::post('/staff/change-status-permission', [StaffController::class, 'change_status_permission'])->name('staff.change.status.permission');
+    Route::post('/staff/change-status-permissions', [StaffController::class, 'change_status_permissions'])->name('staff.change.status.permissions');
 
     // Tổng doanh thu
     Route::get('tong-doanh-thu', [StatisticalController::class, 'tongDoanhThu'])->name('tong.doanh.thu');

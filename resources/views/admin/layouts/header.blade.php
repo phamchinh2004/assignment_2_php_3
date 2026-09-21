@@ -1,8 +1,9 @@
 <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow" style="display: flex !important; ">
 
     <!-- Sidebar Toggle (Topbar) -->
-    <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
-        <i class="fa fa-bars"></i>
+    <button id="adminSidebarOpen" class="btn btn-link d-lg-none rounded-circle mr-3" type="button"
+        aria-label="Mở thanh điều hướng" aria-controls="accordionSidebar" aria-expanded="false">
+        <i class="fa fa-bars" aria-hidden="true"></i>
     </button>
 
     <!-- Topbar Search -->

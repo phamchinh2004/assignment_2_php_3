@@ -5,7 +5,6 @@ namespace App\Providers;
 use App\Events\MessageRead;
 use App\Events\MessageSent;
 use App\Events\MoneyDeposited;
-use App\Events\PermissionRevoked;
 use App\Events\StaffLocked;
 use App\Events\UserJoinChat;
 use App\Events\UserLocked;
@@ -13,7 +12,6 @@ use App\Events\UserSentMessage;
 use App\Listeners\HandleMessageRead;
 use App\Listeners\HandleMessageSent;
 use App\Listeners\HandleMoneyDeposited;
-use App\Listeners\HandlePermissionRevoked;
 use App\Listeners\HandleStaffLocked;
 use App\Listeners\HandleUserJoinChat;
 use App\Listeners\HandleUserLocked;
@@ -54,9 +52,6 @@ class EventServiceProvider extends ServiceProvider
         ],
         StaffLocked::class => [
             HandleStaffLocked::class,
-        ],
-        PermissionRevoked::class => [
-            HandlePermissionRevoked::class,
         ],
     ];
 
