@@ -3,10 +3,9 @@
 namespace App\Console\Commands;
 
 use App\Models\Frozen_order;
-use App\Models\User;
-use App\Mail\HighValueOrderReminderMail;
 use App\Mail\HighValueOrderWarningMail;
 use App\Mail\HighValueOrderPenaltyMail;
+use App\Services\OverdueOrderPenaltyService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
@@ -32,17 +31,9 @@ class CheckHighValueOrdersReminder extends Command
     protected $description = 'Kiểm tra và gửi mail nhắc nhở cho đơn hàng giá trị cao chưa phân phối';
 
     /**
-     * Tính tổng giá trị đơn hàng để tính phạt theo quy tắc 30%.
-     */
-    protected function getOrderValue(Frozen_order $frozenOrder): float
-    {
-        return $frozenOrder->snapshot_order_value ?? 0.0;
-    }
-
-    /**
      * Execute the console command.
      */
-    public function handle()
+    public function handle(OverdueOrderPenaltyService $penaltyService)
     {
         $this->info('Bắt đầu kiểm tra frozen order chưa phân phối...');
 
@@ -64,13 +55,13 @@ class CheckHighValueOrdersReminder extends Command
                 continue;
             }
 
-            // updated_at is the timestamp shown by the user countdown when the order is received.
-            $createdAt = $frozenOrder->updated_at ?? $frozenOrder->created_at ?? Carbon::now();
+            $createdAt = $penaltyService->processingStartedAt($frozenOrder) ?? Carbon::now();
             $processingLimitHours = (int) ($frozenOrder->processing_time_limit ?? 24);
             $notification1Hours = (int) ($frozenOrder->notification_1_remaining_time ?? 12);
             $notification2Hours = (int) ($frozenOrder->notification_2_remaining_time ?? 1);
 
-            $deadlineAt = $createdAt->copy()->addHours($processingLimitHours);
+            $deadlineAt = $penaltyService->deadlineAt($frozenOrder)
+                ?? $createdAt->copy()->addHours($processingLimitHours);
             $now = Carbon::now();
             $remainingHours = (int) max(0, ceil($now->diffInHours($deadlineAt, false)));
             $hoursPassed = (int) max(0, floor($createdAt->diffInHours($now)));
@@ -122,15 +113,17 @@ class CheckHighValueOrdersReminder extends Command
                 }
             }
 
-            if ($remainingHours <= 0 && empty($frozenOrder->penalty_notification_sent_at)) {
+            if ($remainingHours <= 0) {
+                if ($penaltyService->applyIfOverdue($frozenOrder, $now)) {
+                    $penaltyCount++;
+                }
+
+                $penaltyAmount = (float) ($frozenOrder->penalty_amount ?? 0);
+                if ($penaltyAmount <= 0 || !empty($frozenOrder->penalty_notification_sent_at)) {
+                    continue;
+                }
+
                 try {
-                    $orderValue = $this->getOrderValue($frozenOrder);
-                    if ($orderValue <= 0) {
-                        continue;
-                    }
-
-                    $penaltyAmount = $orderValue * 0.3;
-
                     Mail::to($frozenOrder->user->email)->send(
                         new HighValueOrderPenaltyMail($frozenOrder->user, $frozenOrder, $hoursPassed, $penaltyAmount)
                     );
@@ -138,12 +131,10 @@ class CheckHighValueOrdersReminder extends Command
                     $frozenOrder->timestamps = false;
                     $frozenOrder->update([
                         'penalty_notification_sent_at' => Carbon::now(),
-                        'penalty_amount' => $penaltyAmount,
                     ]);
                     $frozenOrder->timestamps = true;
 
                     $this->warn("⚠ Đã gửi mail phạt cho user {$frozenOrder->user->name} - Đơn hàng " . ($frozenOrder->snapshot_order_code ?? $frozenOrder->order_id) . " - Số tiền phạt: $" . number_format($penaltyAmount, 2));
-                    $penaltyCount++;
                 } catch (\Exception $e) {
                     Log::error('Lỗi gửi mail phạt', [
                         'user_id' => $frozenOrder->user->id,
@@ -156,7 +147,7 @@ class CheckHighValueOrdersReminder extends Command
 
         $this->info('Hoàn thành kiểm tra!');
         $this->info("Tổng số cảnh báo đã gửi: {$reminderCount}");
-        $this->info("Tổng số mail phạt đã gửi: {$penaltyCount}");
+        $this->info("Tổng số đơn mới áp dụng phạt: {$penaltyCount}");
         $this->info('Tổng số frozen order được kiểm tra: ' . $unprocessedOrders->count());
 
         return Command::SUCCESS;

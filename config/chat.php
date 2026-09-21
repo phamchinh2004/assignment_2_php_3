@@ -22,6 +22,9 @@ return [
         // Tần suất tối thiểu giữa các tin nhắn tự động trong cùng conversation.
         'repeat_after_hours' => env('CHAT_AUTO_REPLY_REPEAT_AFTER_HOURS', 1),
 
+        // Nếu quản lý đang online, chờ khoảng thời gian này để họ có cơ hội trả lời trước khi gửi auto-reply.
+        'online_manager_delay_minutes' => env('CHAT_AUTO_REPLY_ONLINE_MANAGER_DELAY_MINUTES', 1),
+
         // Sau bao nhiêu phút kể từ khi auto-reply gửi, nếu chưa có admin/staff reply thì gửi email cảnh báo.
         'escalation_after_minutes' => env('CHAT_AUTO_REPLY_ESCALATION_AFTER_MINUTES', 5),
 
@@ -127,4 +130,3 @@ return [
     'max_image_size' => 5120, // KB
 
 ];
-

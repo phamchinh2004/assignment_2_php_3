@@ -741,15 +741,31 @@ class ChatComponent extends Component
             }
 
             $staffId = $this->conversation->staff_id;
+            $manager = User::find($staffId);
+            $managerIsOnline = $manager?->isOnline() ?? false;
+            $onlineManagerDelayMinutes = max(0, (int) config('chat.auto_reply.online_manager_delay_minutes', 1));
+            $triggerCustomerMessageId = Message::where('conversation_id', $this->conversation->id)
+                ->where('sender_id', Auth::id())
+                ->orderByDesc('id')
+                ->value('id');
 
-            \App\Jobs\SendAutoReplyMessage::dispatch(
+            if (!$triggerCustomerMessageId) {
+                return;
+            }
+
+            $pendingAutoReply = \App\Jobs\SendAutoReplyMessage::dispatch(
                 $this->conversation->id,
                 $staffId,
                 $autoReplyMessage,
                 Auth::id(),
                 $currentLocale,
-                $lastStaffMessage ? $lastStaffMessage->created_at->diffInHours(now()) : null
-            )->delay(now()->addSeconds(3));
+                $lastStaffMessage ? $lastStaffMessage->created_at->diffInHours(now()) : null,
+                $triggerCustomerMessageId
+            );
+
+            if ($managerIsOnline && $onlineManagerDelayMinutes > 0) {
+                $pendingAutoReply->delay(now()->addMinutes($onlineManagerDelayMinutes));
+            }
 
             $recipientEmails = \App\Services\ChatAutoReplyService::getEscalationRecipients(Auth::user());
             \App\Jobs\NotifyAutoReplyEscalation::dispatch(
@@ -767,6 +783,9 @@ class ChatComponent extends Component
                 'locale' => $currentLocale,
                 'hours_since_last_message' => $lastStaffMessage ? $lastStaffMessage->created_at->diffInHours(now()) : null,
                 'is_first_customer_message' => $isFirstCustomerMessage,
+                'manager_is_online' => $managerIsOnline,
+                'auto_reply_delay_minutes' => $managerIsOnline ? $onlineManagerDelayMinutes : 0,
+                'trigger_customer_message_id' => $triggerCustomerMessageId,
             ]);
 
         } catch (\Exception $e) {

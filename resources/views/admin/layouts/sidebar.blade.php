@@ -182,7 +182,7 @@
                     data-permission="{{ config('authorization.capabilities.order_processing_time_alert_settings') }}" hidden
                     @if(request()->routeIs('frozen_order_settings.*')) aria-current="page" @endif>
                     <span class="admin-sidebar__icon"><i class="fas fa-snowflake" aria-hidden="true"></i></span>
-                    <span class="admin-sidebar__label">Frozen Order mặc định</span>
+                    <span class="admin-sidebar__label">Thời gian xử lý đơn hàng</span>
                 </a>
 
                 <a class="admin-sidebar__link {{ request()->routeIs('rank.*') ? 'is-active' : '' }}"

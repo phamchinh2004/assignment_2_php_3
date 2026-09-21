@@ -152,6 +152,7 @@ class HomeController extends Controller
                         $query_current_spin->current_spin = $query_current_spin->current_spin + 1;
                         $query_current_spin->save();
                         $check_frozen->spun = true;
+                        $check_frozen->processing_started_at ??= now();
                         if (!$check_frozen->status) {
                             $check_frozen->status = 'pending'; // Đảm bảo có status
                             // Tạo record status đầu tiên trong status_orders
@@ -177,6 +178,9 @@ class HomeController extends Controller
                             'is_order_special' => true,
                             'is_new_order' => true,
                             'custom_price' => $check_frozen->custom_price,
+                            'order_amount' => $check_frozen->snapshot_order_value,
+                            'commission_percentage' => $check_frozen->commission_percentage,
+                            'commission_amount' => $check_frozen->snapshot_commission_value,
                             'order_id' => $high_value_order->id,
                             'frozen_id' => $check_frozen->id,
                             'frozen_updated_at' => $check_frozen->updated_at,
@@ -232,6 +236,9 @@ class HomeController extends Controller
                             'is_high_value_order' => false,
                             'is_order_special' => false,
                             'is_new_order' => true,
+                            'order_amount' => $new_frozen->snapshot_order_value,
+                            'commission_percentage' => $new_frozen->commission_percentage,
+                            'commission_amount' => $new_frozen->snapshot_commission_value,
                             'order_id' => $order->id,
                             'frozen_id' => $new_frozen->id,
                             'frozen_updated_at' => $new_frozen->updated_at,
@@ -303,6 +310,9 @@ class HomeController extends Controller
                     'is_high_value_order' => false,
                     'is_order_special' => false,
                     'is_new_order' => true,
+                    'order_amount' => $new_frozen->snapshot_order_value,
+                    'commission_percentage' => $new_frozen->commission_percentage,
+                    'commission_amount' => $new_frozen->snapshot_commission_value,
                     'order_id' => $order->id,
                     'frozen_id' => $new_frozen->id,
                     'frozen_updated_at' => $new_frozen->updated_at,

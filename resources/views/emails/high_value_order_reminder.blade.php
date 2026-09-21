@@ -82,7 +82,7 @@
             <p><strong>Mã đơn hàng:</strong> {{ $frozenOrder->display_order_code ?? $frozenOrder->order_id }}</p>
             <p><strong>Tên đơn hàng:</strong> {{ $frozenOrder->display_name ?? 'N/A' }}</p>
             <p><strong>Đơn hàng trị giá:</strong> ${{ number_format($frozenOrder->custom_price, 2) }}</p>
-            <p><strong>Thời gian nhận:</strong> {{ $frozenOrder->updated_at->format('d/m/Y H:i:s') }}</p>
+            <p><strong>Thời gian nhận:</strong> {{ ($frozenOrder->processing_started_at ?? $frozenOrder->updated_at)->format('d/m/Y H:i:s') }}</p>
             <p><strong>Thời gian đã trôi qua:</strong> {{ $hoursPassed }} giờ</p>
         </div>
         

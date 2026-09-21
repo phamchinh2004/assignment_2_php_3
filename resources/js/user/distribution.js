@@ -14,6 +14,13 @@ function formatDateTime(dateString) {
     return `${day}/${month}/${year} ${hours}:${minutes}`;
 }
 
+function finiteNumberOrNull(value) {
+    if (value === null || value === undefined || value === '') return null;
+
+    const number = Number(value);
+    return Number.isFinite(number) ? number : null;
+}
+
 document.addEventListener('DOMContentLoaded', function () {
     // ==================================================Pháo hoa===================================================
     const container = document.getElementById('fireworks-container');
@@ -160,6 +167,9 @@ document.addEventListener('DOMContentLoaded', function () {
         let frozen_id = null;
         let frozen_updated_at = null;
         const check_frozen = await check_frozen_order();
+        const snapshotOrderAmount = finiteNumberOrNull(check_frozen.order_amount);
+        const snapshotCommissionPercentage = finiteNumberOrNull(check_frozen.commission_percentage);
+        const snapshotCommissionAmount = finiteNumberOrNull(check_frozen.commission_amount);
         // Backward compatibility: accept the legacy API field from older deployments.
         const responseIsHighValueOrder = check_frozen.is_high_value_order ?? check_frozen.is_order_special ?? false;
         let can_spin = false;
@@ -262,11 +272,17 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (hvoTag) hvoTag.style.display = 'none';
                     if (imageShine) imageShine.style.display = 'none';
                     if (bonusHvoRow) bonusHvoRow.style.display = 'none';
+                    const fallbackOrderAmount = selectedOrder.quantity * selectedOrder.price;
+                    const orderAmount = snapshotOrderAmount ?? fallbackOrderAmount;
+                    const commissionPercentage = snapshotCommissionPercentage
+                        ?? finiteNumberOrNull(selectedOrder.commission_percentage ?? selectedOrder.commission_rate)
+                        ?? 0;
+                    const commissionAmount = snapshotCommissionAmount
+                        ?? (orderAmount * (commissionPercentage / 100));
                     const order_details_price_formatted = format_currency(selectedOrder.price);
-                    const order_details_end_value_total_price_formatted = format_currency(selectedOrder.quantity * selectedOrder.price);
-                    const commissionAmount = (selectedOrder.quantity * selectedOrder.price) * ((selectedOrder.commission_percentage || selectedOrder.commission_rate) / 100);
+                    const order_details_end_value_total_price_formatted = format_currency(orderAmount);
                     const order_details_end_value_price_rose_formatted = format_currency(commissionAmount, 5, 5);
-                    const order_details_end_value_total_formatted = format_currency((selectedOrder.quantity * selectedOrder.price) + commissionAmount);
+                    const order_details_end_value_total_formatted = format_currency(orderAmount + commissionAmount);
 
                     order_details_time.innerText = trans.ThoiGianDatPhanPhoi + formatDateTime(frozen_updated_at);
                     order_details_img.src = `/storage/${selectedOrder.image}`;
@@ -284,11 +300,16 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (hvoTag) hvoTag.style.display = 'flex';
                     if (imageShine) imageShine.style.display = 'block';
                     if (bonusHvoRow) bonusHvoRow.style.display = 'flex';
-                    const order_details_price_formatted = format_currency(fake_price / selectedOrder.quantity);
-                    const order_details_end_value_total_price_formatted = format_currency(fake_price);
-                    const commissionAmount = fake_price * ((selectedOrder.commission_percentage || selectedOrder.commission_rate) / 100);
+                    const orderAmount = snapshotOrderAmount ?? finiteNumberOrNull(fake_price) ?? 0;
+                    const commissionPercentage = snapshotCommissionPercentage
+                        ?? finiteNumberOrNull(selectedOrder.commission_percentage ?? selectedOrder.commission_rate)
+                        ?? 0;
+                    const commissionAmount = snapshotCommissionAmount
+                        ?? (orderAmount * (commissionPercentage / 100));
+                    const order_details_price_formatted = format_currency(orderAmount / selectedOrder.quantity);
+                    const order_details_end_value_total_price_formatted = format_currency(orderAmount);
                     const order_details_end_value_price_rose_formatted = format_currency(commissionAmount, 5, 5);
-                    const order_details_end_value_total_formatted = format_currency(fake_price + commissionAmount);
+                    const order_details_end_value_total_formatted = format_currency(orderAmount + commissionAmount);
 
                     order_details_time.innerText = trans.ThoiGianDatPhanPhoi + formatDateTime(frozen_updated_at);
                     order_details_img.src = `/storage/${selectedOrder.image}`;

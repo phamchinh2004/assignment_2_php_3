@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\AuthorizationController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\HeaderStateController;
 use App\Http\Controllers\Admin\LanguageController;
 use App\Http\Controllers\Admin\ManagerSettingController;
 use App\Http\Controllers\Admin\OrderController;
@@ -24,6 +25,11 @@ Route::middleware(['role:staff|admin', 'checkBanned', 'auth'])->group(function (
 
     Route::get('/', [DashboardController::class, 'index'])->name('admin.dashboard');
     Route::get('/authorization-state', [AuthorizationController::class, 'state'])->name('authorization.state');
+    Route::get('/header-state', [HeaderStateController::class, 'show'])->name('header.state');
+    Route::post('/header/notifications/read-all', [HeaderStateController::class, 'markAllNotificationsRead'])
+        ->name('header.notifications.read-all');
+    Route::post('/header/notifications/{notification}/read', [HeaderStateController::class, 'markNotificationRead'])
+        ->name('header.notifications.read');
 
     Route::middleware(['permission:' . $capabilities['orders']])->group(function () {
         Route::get('/order/add-customer-info', [OrderController::class, 'addCustomerInfoToOrders'])->name('order.add.customer.info');

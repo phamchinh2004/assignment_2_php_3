@@ -12,31 +12,85 @@
 @endsection
 
 @section('content')
-<div class="mb-2 ml-3">
-    <a href="{{route('user.index')}}" class="btn btn-outline-dark btn-sm text-decoration-none">
-        <i class="fas fa-arrow-left"></i> Quay lại
-    </a>
-</div>
+@php
+    $frozenSpunMap = [];
+    foreach ($frozen_orders_detail ?? [] as $frozenItem) {
+        if ($frozenItem->spun) {
+            $frozenSpunMap[$frozenItem->order_id] = true;
+        }
+    }
 
-<div class="container-fluid">
-    <!-- Header Card -->
-    <div class="card shadow mb-4">
-        <div class="card-header py-3">
-            <div class="d-flex flex-column">
-                <h6 class="m-0 font-weight-bold text-primary fs-5">
-                    <i class="fas fa-snowflake"></i> Quản lý đóng băng đơn hàng của
-                    <span class="text-danger">{{ $user->full_name }}</span>
-                </h6>
-                <h6 class="mt-2 font-weight-bold text-danger fs-6">
-                    <i class="fas fa-wallet"></i> Số dư hiện tại: {{ format_money($user->balance ?? 0) }}$
-                </h6>
+    $frozenOrderIds = array_map('intval', $frozen_orders ?? []);
+    $totalOrders = !empty($list_orders) ? $list_orders->count() : 0;
+    $frozenCount = $frozen_orders_detail->count();
+    $currentSpin = $progress->current_spin ?? 0;
+    $availableOrders = !empty($list_orders)
+        ? $list_orders->filter(function ($order) use ($frozenOrderIds, $frozenSpunMap, $currentSpin) {
+            return !in_array((int) $order->id, $frozenOrderIds, true)
+                && (int) $order->index !== (int) $currentSpin
+                && !isset($frozenSpunMap[$order->id]);
+        })->count()
+        : 0;
+    $totalFrozenValue = $frozen_orders_detail->sum(fn ($item) => (float) ($item->custom_price ?? 0));
+@endphp
+
+<div class="container-fluid frozen-order-page">
+    <div class="page-header-wrapper">
+        <div class="page-title-row">
+            <span class="page-title-icon"><i class="fas fa-snowflake"></i></span>
+            <div>
+                <h1 class="page-title-main">Đóng băng đơn hàng</h1>
+                <p class="page-subtitle">
+                    Quản lý đơn hàng giá trị cao của <strong>{{ $user->full_name ?: $user->username }}</strong>
+                    <span class="user-handle">{{ '@' . $user->username }}</span>
+                </p>
             </div>
+        </div>
+
+        <a href="{{ route('user.index') }}" class="btn-back-modern text-decoration-none">
+            <i class="fas fa-arrow-left"></i>
+            Quay lại quản lý người dùng
+        </a>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card-modern primary">
+            <div class="stat-content">
+                <span class="stat-label">Số dư hiện tại</span>
+                <span class="stat-number">{{ format_money($user->balance ?? 0) }}$</span>
+                <span class="stat-subtext"><i class="fas fa-wallet"></i> Số dư khả dụng</span>
+            </div>
+            <div class="stat-icon-wrapper primary"><i class="fas fa-wallet"></i></div>
+        </div>
+        <div class="stat-card-modern info">
+            <div class="stat-content">
+                <span class="stat-label">Tổng đơn hàng</span>
+                <span class="stat-number">{{ number_format($totalOrders) }}</span>
+                <span class="stat-subtext"><i class="fas fa-layer-group"></i> Tiến độ hiện tại: #{{ $currentSpin ?: '—' }}</span>
+            </div>
+            <div class="stat-icon-wrapper info"><i class="fas fa-boxes"></i></div>
+        </div>
+        <div class="stat-card-modern success">
+            <div class="stat-content">
+                <span class="stat-label">Có thể đóng băng</span>
+                <span class="stat-number">{{ number_format($availableOrders) }}</span>
+                <span class="stat-subtext"><i class="fas fa-check-circle"></i> Đơn còn khả dụng</span>
+            </div>
+            <div class="stat-icon-wrapper success"><i class="fas fa-box-open"></i></div>
+        </div>
+        <div class="stat-card-modern warning">
+            <div class="stat-content">
+                <span class="stat-label">Đã đóng băng</span>
+                <span class="stat-number">{{ number_format($frozenCount) }}</span>
+                <span class="stat-subtext"><i class="fas fa-dollar-sign"></i> {{ format_money($totalFrozenValue) }}$ tổng giá trị</span>
+            </div>
+            <div class="stat-icon-wrapper warning"><i class="fas fa-snowflake"></i></div>
         </div>
     </div>
 
     <!-- Alert Messages -->
     @if(session('success'))
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
+    <div class="alert freeze-alert success alert-dismissible fade show" role="alert">
         <i class="fas fa-check-circle"></i> {{ session('success') }}
         <button type="button" class="close" data-dismiss="alert">
             <span>&times;</span>
@@ -45,7 +99,7 @@
     @endif
 
     @if(session('error'))
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+    <div class="alert freeze-alert danger alert-dismissible fade show" role="alert">
         <i class="fas fa-exclamation-circle"></i> {{ session('error') }}
         <button type="button" class="close" data-dismiss="alert">
             <span>&times;</span>
@@ -54,7 +108,7 @@
     @endif
 
     @if(session('warning'))
-    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+    <div class="alert freeze-alert warning alert-dismissible fade show" role="alert">
         <i class="fas fa-exclamation-triangle"></i> {{ session('warning') }}
         <button type="button" class="close" data-dismiss="alert">
             <span>&times;</span>
@@ -63,7 +117,7 @@
     @endif
 
     <!-- Tabs -->
-    <ul class="nav nav-tabs" id="myTab" role="tablist">
+    <ul class="nav nav-tabs freeze-tabs" id="myTab" role="tablist">
         <li class="nav-item" role="presentation">
             <a class="nav-link active" id="freeze-tab" data-toggle="tab" href="#freeze" role="tab">
                 <i class="fas fa-plus-circle"></i> Đóng băng mới
@@ -72,12 +126,12 @@
         <li class="nav-item" role="presentation">
             <a class="nav-link" id="frozen-list-tab" data-toggle="tab" href="#frozen-list" role="tab">
                 <i class="fas fa-list-alt"></i> Danh sách đã đóng băng
-                <span class="badge badge-primary badge-large">{{ $frozen_orders_detail->count() }}</span>
+                <span class="tab-count">{{ $frozen_orders_detail->count() }}</span>
             </a>
         </li>
     </ul>
 
-    <div class="tab-content" id="myTabContent">
+    <div class="tab-content freeze-tab-content" id="myTabContent">
         <!-- Tab Đóng băng mới -->
         <div class="tab-pane fade show active" id="freeze" role="tabpanel">
             <form action="{{ route('user.frozen.order', ['user' => $user->id]) }}" method="post" id="form">
@@ -85,36 +139,27 @@
                 @method('POST')
 
                 <!-- Danh sách đơn hàng -->
-                <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
+                <div class="card freeze-panel">
+                    <div class="card-header freeze-panel-header d-flex justify-content-between align-items-center">
                         <h6 class="font-weight-bold mb-0">
                             <i class="fas fa-list"></i> Chọn đơn hàng và nhập giá
                         </h6>
                         <div>
-                            <button type="button" class="btn btn-sm btn-primary" id="select_all">
+                            <button type="button" class="btn freeze-btn secondary" id="select_all">
                                 <i class="fas fa-check-square"></i> Chọn tất cả
                             </button>
-                            <button type="button" class="btn btn-sm btn-secondary" id="deselect_all">
+                            <button type="button" class="btn freeze-btn ghost" id="deselect_all">
                                 <i class="fas fa-square"></i> Bỏ chọn tất cả
                             </button>
                         </div>
                     </div>
-                    <div class="card-body" style="max-height: 500px; overflow-y: auto;">
-                        @php
-                        // Tạo mảng map order_id với spun status từ frozen_orders_detail
-                        $frozen_spun_map = [];
-                        foreach ($frozen_orders_detail ?? [] as $frozen) {
-                            if ($frozen->spun) {
-                                $frozen_spun_map[$frozen->order_id] = true;
-                            }
-                        }
-                        @endphp
+                    <div class="card-body freeze-orders-scroll">
                         @if (!empty($list_orders) && $list_orders->count() > 0)
                         @foreach ($list_orders as $order)
                         @php
-                        $is_frozen = in_array($order->id, $frozen_orders ?? []);
-                        $is_current = $order->index == $progress->current_spin;
-                        $is_frozen_and_spun = isset($frozen_spun_map[$order->id]);
+                        $is_frozen = in_array((int) $order->id, $frozenOrderIds, true);
+                        $is_current = (int) $order->index === (int) $currentSpin;
+                        $is_frozen_and_spun = isset($frozenSpunMap[$order->id]);
                         // Thêm current-spin nếu là đơn hàng hiện tại HOẶC đã đóng băng và người dùng đã quay tới
                         $is_current_spin = $is_current || $is_frozen_and_spun;
                         $item_class = $is_frozen ? 'already-frozen' : ($is_current_spin ? 'current-spin' : '');
@@ -262,7 +307,7 @@
                 </div>
 
                 <div class="d-flex mt-4 justify-content-center gap-2">
-                    <button class="btn btn-success btn-lg" type="button" id="btn_submit">
+                    <button class="btn freeze-btn primary large" type="button" id="btn_submit">
                         <i class="fas fa-snowflake"></i> Đóng băng các đơn hàng đã chọn
                     </button>
                 </div>
@@ -271,8 +316,8 @@
 
         <!-- Tab Danh sách đã đóng băng -->
         <div class="tab-pane fade" id="frozen-list" role="tabpanel">
-            <div class="card">
-                <div class="card-header">
+            <div class="card freeze-panel">
+                <div class="card-header freeze-panel-header">
                     <h6 class="font-weight-bold mb-0">
                         <i class="fas fa-snowflake"></i> Các đơn hàng đã đóng băng
                     </h6>

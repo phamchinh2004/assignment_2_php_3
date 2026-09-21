@@ -63,7 +63,7 @@
     @endauth
     <!-- RateYo -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/rateYo/2.3.2/jquery.rateyo.min.css">
-    @vite(['resources/js/app.js', 'resources/js/admin/authorization.js', 'resources/css/app.css'])
+    @vite(['resources/js/app.js', 'resources/js/admin/authorization.js', 'resources/js/admin/header-state.js', 'resources/css/app.css', 'resources/css/admin/header.css'])
     @vite('resources/css/general.css')
     @vite('resources/css/admin/general.css')
     @vite('resources/css/admin/sidebar.css')

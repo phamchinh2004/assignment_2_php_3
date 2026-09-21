@@ -1,0 +1,125 @@
+.admin-header-dropdown {
+    width: 22rem !important;
+    max-width: calc(100vw - 1.5rem);
+    overflow: hidden;
+}
+
+.admin-header-dropdown__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+}
+
+.admin-header-action {
+    border: 0;
+    padding: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-transform: none;
+    cursor: pointer;
+}
+
+.admin-header-list {
+    max-height: min(26rem, 62vh);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.admin-header-item {
+    width: 100%;
+    min-height: 4.25rem;
+    gap: .75rem;
+    white-space: normal;
+    border: 0;
+    border-bottom: 1px solid #edf0f5;
+    background: #fff;
+    text-align: left;
+}
+
+.admin-header-item.is-unread {
+    background: #f2f6ff;
+}
+
+.admin-header-item:focus-visible,
+.admin-header-action:focus-visible,
+.admin-header-load-more:focus-visible {
+    outline: 2px solid #4e73df;
+    outline-offset: -2px;
+}
+
+.admin-header-icon,
+.admin-header-avatar {
+    display: inline-flex;
+    flex: 0 0 2.35rem;
+    width: 2.35rem;
+    height: 2.35rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: #4e73df;
+    color: #fff;
+    font-weight: 700;
+}
+
+.admin-header-item__content {
+    display: flex;
+    min-width: 0;
+    flex: 1;
+    flex-direction: column;
+    gap: .12rem;
+}
+
+.admin-header-item__title,
+.admin-header-item__preview,
+.admin-header-item__meta {
+    display: block;
+}
+
+.admin-header-item__title {
+    color: #3a3b45;
+    font-size: .84rem;
+}
+
+.admin-header-item__preview {
+    display: -webkit-box;
+    overflow: hidden;
+    color: #5a5c69;
+    font-size: .8rem;
+    line-height: 1.35;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+.admin-header-item__meta {
+    color: #858796;
+    font-size: .72rem;
+}
+
+.admin-header-state {
+    padding: 1.25rem 1rem;
+    color: #858796;
+    text-align: center;
+    font-size: .82rem;
+}
+
+@media (max-width: 575.98px) {
+    .admin-header-referral {
+        display: none !important;
+    }
+
+    .topbar .admin-header-dropdown {
+        position: fixed !important;
+        top: 4.45rem !important;
+        right: .75rem !important;
+        left: .75rem !important;
+        width: auto !important;
+        max-width: none;
+        transform: none !important;
+    }
+
+    .admin-header-list {
+        max-height: 60vh;
+    }
+}

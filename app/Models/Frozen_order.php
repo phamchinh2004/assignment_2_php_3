@@ -91,6 +91,7 @@ class Frozen_order extends Model
         'is_frozen',
         'commission_paid',
         'spun',
+        'processing_started_at',
         'processing_time_limit',
         'notification_1_remaining_time',
         'notification_2_remaining_time',
@@ -123,6 +124,7 @@ class Frozen_order extends Model
         'settled_penalty_amount' => 'decimal:6',
         'settled_refund_amount' => 'decimal:6',
         'settled_at' => 'datetime',
+        'processing_started_at' => 'datetime',
         'penalty_notification_sent_at' => 'datetime',
         'order_date' => 'datetime',
         'confirmed_at' => 'datetime',
@@ -192,6 +194,7 @@ class Frozen_order extends Model
                 'snapshot_source' => 'captured',
                 'snapshot_captured_at' => now(),
                 'order_date' => now(),
+                'processing_started_at' => !empty($attributes['spun']) ? now() : null,
             ], $attributes, [
                 'snapshot_image' => $snapshotImage,
                 'snapshot_order_amount' => $amount,

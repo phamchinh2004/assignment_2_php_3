@@ -114,7 +114,7 @@
     const deadlineMarkup = (order) => {
         if (Number(order.is_frozen) !== 1 || Number(order.spun) !== 1) return '';
 
-        const receivedAt = new Date(order.updated_at || order.order_date || order.created_at);
+        const receivedAt = new Date(order.processing_started_at || order.updated_at || order.order_date || order.created_at);
         if (Number.isNaN(receivedAt.getTime())) return '';
 
         const limitHours = numberOrNull(order.processing_time_limit) || 24;
@@ -275,7 +275,7 @@
                 <div class="order_item_inner">
                     <div class="order_top">
                         <div class="order_meta">
-                            <span class="order_time"><i class="far fa-clock"></i>${escapeHtml(labels.time || 'Thời gian đặt phân phối:')} ${escapeHtml(formatDateTime(order.updated_at || order.order_date || order.created_at))}</span>
+                            <span class="order_time"><i class="far fa-clock"></i>${escapeHtml(labels.time || 'Thời gian đặt phân phối:')} ${escapeHtml(formatDateTime(order.processing_started_at || order.updated_at || order.order_date || order.created_at))}</span>
                             <span class="order_code"><i class="fas fa-hashtag"></i>${escapeHtml(labels.orderCode || 'Mã đơn hàng:')} <strong>${escapeHtml(code)}</strong></span>
                         </div>
                         <div class="order_badges">

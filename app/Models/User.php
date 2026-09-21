@@ -79,6 +79,12 @@ class User extends Authenticatable
         'location_accuracy' => 'float',
         'password' => 'hashed',
     ];
+
+    public function receivesBroadcastNotificationsOn(): string
+    {
+        return 'user.' . $this->getKey();
+    }
+
     public function user_manager_settings()
     {
         return $this->hasMany(User_manager_setting::class);

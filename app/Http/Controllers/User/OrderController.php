@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Jobs\PrepareOrder;
 use App\Services\OrderStatusService;
 use App\Services\FrozenOrderSettlementService;
+use App\Services\OverdueOrderPenaltyService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -19,8 +20,10 @@ use Illuminate\Support\Facades\Log;
 
 class OrderController extends Controller
 {
-    public function __construct(private readonly FrozenOrderSettlementService $settlementService)
-    {
+    public function __construct(
+        private readonly FrozenOrderSettlementService $settlementService,
+        private readonly OverdueOrderPenaltyService $overduePenaltyService,
+    ) {
     }
 
     /**
@@ -34,6 +37,9 @@ class OrderController extends Controller
     public function get_list_orders_by_tab()
     {
         $tab = request()->input('tabId');
+
+        // Safety net: keep overdue state correct even when the scheduler is temporarily down.
+        $this->overduePenaltyService->applyPendingForUser((int) Auth::id());
 
         // Bắt đầu từ bảng frozen_orders
         $query = Frozen_order::query()
@@ -190,6 +196,8 @@ class OrderController extends Controller
             abort(403, 'Bạn không có quyền truy cập đơn hàng này');
         }
 
+        $this->overduePenaltyService->applyIfOverdue($frozen_order);
+
         // Load đầy đủ thông tin
         $frozen_order->load([
             'order.partner',
@@ -284,6 +292,7 @@ class OrderController extends Controller
 
         // Refresh model để lấy status mới nhất từ database
         $frozen_order->refresh();
+        $this->overduePenaltyService->applyIfOverdue($frozen_order);
 
         // Kiểm tra trạng thái - chỉ cho phép xác nhận khi status là 'pending' hoặc null
         $currentStatus = $frozen_order->status;
@@ -354,6 +363,7 @@ class OrderController extends Controller
                 if ($orderTotal === null) {
                     throw new \RuntimeException('Đơn hàng cũ chưa có dữ liệu snapshot chính xác.');
                 }
+                $this->overduePenaltyService->applyIfOverdue($lockedOrder);
                 $penaltyAmount = $lockedOrder->penalty_amount ?? 0;
 
                 if ($lockedOrder->custom_price !== null) {
