@@ -86,4 +86,28 @@ class RankController extends Controller
 
         return redirect()->route('rank.index')->with('success', 'Cập nhật cấp độ thành công!');
     }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(Rank $rank)
+    {
+        $isInUse = DB::table('users')->where('rank_id', $rank->id)->exists()
+            || DB::table('orders')->where('rank_id', $rank->id)->exists()
+            || DB::table('user_spin_progresses')->where('rank_id', $rank->id)->exists();
+
+        if ($isInUse) {
+            return redirect()->route('rank.index')
+                ->with('error', 'Không thể xóa cấp độ đang được người dùng, đơn hàng hoặc tiến trình quay sử dụng.');
+        }
+
+        $image = $rank->image;
+        $rank->delete();
+
+        if ($image && Storage::disk('public')->exists($image)) {
+            Storage::disk('public')->delete($image);
+        }
+
+        return redirect()->route('rank.index')->with('success', 'Xóa cấp độ thành công!');
+    }
 }

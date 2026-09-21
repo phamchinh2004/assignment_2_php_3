@@ -40,6 +40,24 @@
         </div>
     </div>
 
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle mr-1"></i> {{ session('success') }}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle mr-1"></i> {{ session('error') }}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    @endif
+
     {{-- KPI Cards --}}
     <div class="stats-grid">
         <div class="stat-card-modern warning">
@@ -171,6 +189,14 @@
                                                class="btn-action-icon edit" title="Chỉnh sửa cấp độ">
                                                 <i class="fas fa-pen"></i>
                                             </a>
+                                            <form action="{{ route('rank.destroy', ['rank' => $item->id]) }}" method="POST"
+                                                  onsubmit="return confirm('Bạn có chắc chắn muốn xóa cấp độ này?');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn-action-icon delete" title="Xóa cấp độ">
+                                                    <i class="fas fa-trash-alt"></i>
+                                                </button>
+                                            </form>
                                         </div>
                                     </td>
                                 </tr>

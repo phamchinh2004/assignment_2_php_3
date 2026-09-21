@@ -385,6 +385,7 @@
     flex-direction: column;
     gap: 0.2rem;
     min-width: 0;
+    white-space: nowrap;
 }
 
 .entity-title {
