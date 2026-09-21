@@ -21,7 +21,7 @@ return [
         'languages' => 'quan_ly_ngon_ngu',
         'manage_all_users' => 'quan_ly_tat_ca_nguoi_dung',
         'manage_all_user_transactions' => 'quan_ly_tat_ca_giao_dich_nguoi_dung',
-        'frozen_order_alert_settings' => 'cau_hinh_moc_canh_bao_frozen_order',
+        'order_processing_time_alert_settings' => 'cau_hinh_thoi_gian_hoan_thanh_don_hang',
         'order_timing_settings' => 'cau_hinh_thoi_gian_don_hang',
         'order_distributions' => 'quan_ly_phan_phoi_don_hang',
     ],

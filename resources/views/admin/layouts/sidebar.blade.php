@@ -179,6 +179,7 @@
 
                 <a class="admin-sidebar__link {{ request()->routeIs('frozen_order_settings.*') ? 'is-active' : '' }}"
                     href="{{ route('frozen_order_settings.index') }}" data-sidebar-tooltip="Frozen Order mặc định"
+                    data-permission="{{ config('authorization.capabilities.order_processing_time_alert_settings') }}" hidden
                     @if(request()->routeIs('frozen_order_settings.*')) aria-current="page" @endif>
                     <span class="admin-sidebar__icon"><i class="fas fa-snowflake" aria-hidden="true"></i></span>
                     <span class="admin-sidebar__label">Frozen Order mặc định</span>
