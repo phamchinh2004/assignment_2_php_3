@@ -12,41 +12,19 @@ document.addEventListener('DOMContentLoaded', function() {
     
     let isSpinning = false;
     let currentRotation = 0;
+    let lastFocusedElement = null;
     
-    // Danh sách giải thưởng (8 phần) khớp với HTML
+    // Metadata hiển thị; kết quả thật được quyết định ở backend.
     const prizes = [
-        { name: 'SH Mode', icon: 'fas fa-motorcycle', image: '/images/spin/18prm.webp', index: 0, tier: 'high' },
-        { name: '$2', icon: 'fas fa-dollar-sign', image: '/images/spin/dollars.webp', index: 1, tier: 'low' },
-        { name: 'Chúc bạn may mắn lần sau', icon: 'fas fa-gem', index: 2, tier: 'lose' },
-        { name: '$10', icon: 'fas fa-dollar-sign', image: '/images/spin/dollars.webp', index: 3, tier: 'mid' },
-        { name: '$2', icon: 'fas fa-dollar-sign', image: '/images/spin/dollars.webp', index: 4, tier: 'low' },
-        { name: '$5', icon: 'fas fa-dollar-sign', image: '/images/spin/dollars.webp', index: 5, tier: 'low' },
-        { name: 'Chúc bạn may mắn lần sau', icon: 'fas fa-gem', index: 6, tier: 'lose' },
-        { name: '$2', icon: 'fas fa-dollar-sign', image: '/images/spin/dollars.webp', index: 7, tier: 'low' }
+        { name: '18 Pro Max', image: '/images/spin/18prm.webp', index: 0 },
+        { name: '$2', image: '/images/spin/dollars.webp', index: 1 },
+        { name: 'Chúc bạn may mắn lần sau', icon: 'fa-clover', index: 2 },
+        { name: '$10', image: '/images/spin/dollars.webp', index: 3 },
+        { name: '$2', image: '/images/spin/dollars.webp', index: 4 },
+        { name: '$5', image: '/images/spin/dollars.webp', index: 5 },
+        { name: 'Chúc bạn may mắn lần sau', icon: 'fa-clover', index: 6 },
+        { name: '$2', image: '/images/spin/dollars.webp', index: 7 }
     ];
-    
-    // Tăng xác suất cho ô "Chúc bạn may mắn lần sau" và các ô tiền thấp
-    // Bỏ hoàn toàn các giải trị giá cao
-    const weightedPool = [
-        { ...prizes[1], weight: 4 }, // $2 (slice-2)
-        { ...prizes[4], weight: 4 }, // $2 (slice-5)
-        { ...prizes[7], weight: 4 }, // $2 (slice-8)
-        { ...prizes[5], weight: 3 }, // $5 (slice-6)
-        { ...prizes[3], weight: 1 }, // $10 (slice-4) - tỷ lệ thấp
-        { ...prizes[2], weight: 6 }, // Chúc bạn may mắn (slice-3)
-        { ...prizes[6], weight: 6 }  // Chúc bạn may mắn (slice-7)
-    ];
-    
-    function pickWeightedPrize() {
-        const totalWeight = weightedPool.reduce((sum, p) => sum + p.weight, 0);
-        const r = Math.random() * totalWeight;
-        let acc = 0;
-        for (const p of weightedPool) {
-            acc += p.weight;
-            if (r <= acc) return p;
-        }
-        return weightedPool[weightedPool.length - 1];
-    }
     
     // Hàm quay vòng
     window.spinWheel = async function() {
@@ -56,9 +34,9 @@ document.addEventListener('DOMContentLoaded', function() {
         spinButton.classList.add('spinning');
         spinButton.disabled = true;
         
-        // Chọn giải thưởng theo trọng số (ưu tiên lose và tiền thấp)
-        const prize = pickWeightedPrize();
-        const randomPrizeIndex = prize.index; // Lấy index thực tế trên vòng quay
+        // Backend quyết định kết quả; client chỉ chạy animation theo prize_index trả về.
+        let prize = null;
+        let randomPrizeIndex = null;
         
         try {
             // Gọi API để kiểm tra và lưu lịch sử quay
@@ -66,11 +44,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Accept': 'application/json'
                 },
-                body: JSON.stringify({
-                    prize: prize.name
-                })
+                body: JSON.stringify({})
             });
             
             const data = await response.json();
@@ -89,6 +66,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 spinButton.disabled = false;
                 return;
             }
+
+            randomPrizeIndex = Number(data.prize_index);
+            prize = {
+                ...(prizes[randomPrizeIndex] || { index: randomPrizeIndex }),
+                name: data.prize
+            };
             
             // Nếu được phép quay, tiến hành quay
             // Phát âm thanh quay
@@ -117,16 +100,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 spinButton.classList.remove('spinning');
                 
                 // Phát âm thanh vỗ tay
-                if (applauseSound) {
+                if (data.reward_type !== 'none' && applauseSound) {
                     applauseSound.currentTime = 0;
-                    applauseSound.play();
+                    applauseSound.play().catch(() => {});
                 }
                 
                 // Hiển thị modal giải thưởng
-                showPrizeModal(prize);
+                showPrizeModal(prize, data);
                 
-                // Không enable lại nút - đã quay rồi
-                // spinButton.disabled vẫn = true
+                // Nếu còn lượt admin cấp thì có thể quay tiếp.
+                spinButton.disabled = Number(data.bonus_spins_remaining || 0) <= 0;
             }, 4000);
             
         } catch (error) {
@@ -148,28 +131,63 @@ document.addEventListener('DOMContentLoaded', function() {
     spinButton.addEventListener('click', spinWheel);
     
     // Hàm hiển thị modal giải thưởng
-    function showPrizeModal(prize) {
+    function showPrizeModal(prize, data) {
         const modal = root.querySelector('#prizeModalOverlay');
         const prizeIconDisplay = root.querySelector('#prizeIconDisplay');
+        const prizeFallbackIcon = root.querySelector('#prizeFallbackIcon');
         const prizeTextDisplay = root.querySelector('#prizeTextDisplay');
+        const prizeTitle = root.querySelector('#prizeModalTitle');
+        const prizeSubtitle = root.querySelector('#prizeModalSubtitle');
+        const prizeEyebrow = root.querySelector('#prizeModalEyebrow');
+        const prizeStatusPill = root.querySelector('#prizeStatusPill');
+        const prizeMessage = root.querySelector('#prizeModalMessage');
+        const prizeRewardId = root.querySelector('#prizeRewardId');
+        const prizePayoutType = root.querySelector('#prizePayoutType');
         const confettiContainer = root.querySelector('#prizeConfetti');
-        if (!modal || !prizeIconDisplay || !prizeTextDisplay || !confettiContainer) return;
+        if (!modal || !prizeIconDisplay || !prizeFallbackIcon || !prizeTextDisplay || !confettiContainer) return;
+
+        const isApproved = data.reward_status === 'approved';
+        const isPending = data.reward_status === 'pending';
+        const isNoReward = data.reward_status === 'no_reward';
+        const stateClass = isApproved ? 'is-approved' : (isPending ? 'is-pending' : 'is-no-reward');
+
+        modal.classList.remove('is-approved', 'is-pending', 'is-no-reward');
+        modal.classList.add(stateClass);
+        prizeTitle.textContent = isNoReward ? 'Hẹn bạn ở lượt tiếp theo' : 'Chúc mừng bạn!';
+        prizeEyebrow.textContent = isNoReward ? 'Kết quả vòng quay' : 'Phần thưởng đã ghi nhận';
+        prizeSubtitle.textContent = isApproved
+            ? 'Tiền thưởng đã được cộng vào tài khoản của bạn.'
+            : (isPending ? 'Phần thưởng đang chờ quản trị viên duyệt.' : 'Lượt quay này chưa có phần thưởng.');
+        prizeMessage.textContent = data.reward_message || data.message;
+        prizeRewardId.textContent = data.reward_id ? `#${data.reward_id}` : '—';
+        prizePayoutType.textContent = isApproved
+            ? (data.approval_method === 'automatic' ? 'Tự động cộng tiền' : 'Tiền thưởng')
+            : (isPending ? 'Chờ duyệt' : 'Không phát sinh');
+
+        const statusIcon = isApproved ? 'fa-circle-check' : (isPending ? 'fa-clock' : 'fa-clover');
+        prizeStatusPill.innerHTML = `<i class="fas ${statusIcon}" aria-hidden="true"></i><span>${data.reward_status_label}</span>`;
         
-        // Set icon và text
-        prizeIconDisplay.className = 'prize-icon-display';
-        if (prize.image) {
+        if (prize.image && !isNoReward) {
             prizeIconDisplay.src = prize.image;
+            prizeIconDisplay.hidden = false;
+            prizeFallbackIcon.hidden = true;
         } else {
             prizeIconDisplay.removeAttribute('src');
-            prizeIconDisplay.className = `prize-icon-display ${prize.icon}`;
+            prizeIconDisplay.hidden = true;
+            prizeFallbackIcon.className = `fas ${prize.icon || 'fa-clover'}`;
+            prizeFallbackIcon.hidden = false;
         }
         prizeTextDisplay.textContent = prize.name;
         
-        // Tạo confetti
-        createConfetti(confettiContainer);
+        if (!isNoReward) {
+            createConfetti(confettiContainer);
+        }
         
-        // Hiển thị modal
+        lastFocusedElement = document.activeElement;
         modal.classList.add('show');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('prize-modal-open');
+        modal.querySelector('.prize-modal-x')?.focus();
     }
     
     // Hàm đóng modal
@@ -177,17 +195,25 @@ document.addEventListener('DOMContentLoaded', function() {
         const modal = root.querySelector('#prizeModalOverlay');
         if (!modal) return;
         modal.classList.remove('show');
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('prize-modal-open');
         
         // Xóa confetti
         const confettiContainer = root.querySelector('#prizeConfetti');
         if (confettiContainer) {
             confettiContainer.innerHTML = '';
         }
+        lastFocusedElement?.focus?.();
         
         // Reload trang để cập nhật trạng thái
         setTimeout(() => {
             window.location.reload();
         }, 300);
+    };
+
+    window.viewPrizeStatus = function() {
+        window.location.hash = 'reward-history';
+        window.location.reload();
     };
     
     // Hàm tạo confetti
@@ -216,4 +242,16 @@ document.addEventListener('DOMContentLoaded', function() {
             container.innerHTML = '';
         }, 6000);
     }
+
+    root.querySelector('#prizeModalOverlay')?.addEventListener('click', function(event) {
+        if (event.target === this) {
+            window.closePrizeModal();
+        }
+    });
+
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape' && root.querySelector('#prizeModalOverlay.show')) {
+            window.closePrizeModal();
+        }
+    });
 });

@@ -2,6 +2,8 @@
 @push('page-styles')
     @vite('resources/css/user/home.css')
     @vite('resources/css/user/lucky-wheel.css')
+    @vite('resources/css/user/lucky-wheel-rewards.css')
+    @vite('resources/css/user/lucky-wheel-reward-history.css')
 @endpush
 @section('script-libs')
     <script>
@@ -238,6 +240,47 @@
                 @endif
             </div>
 
+            <section class="wheel-reward-history" id="reward-history" aria-labelledby="reward-history-title">
+                <div class="wheel-reward-history__head">
+                    <div>
+                        <span class="wheel-reward-history__kicker">Phần thưởng của bạn</span>
+                        <h3 id="reward-history-title">Trạng thái lượt quay gần đây</h3>
+                    </div>
+                    <span class="wheel-reward-history__hint"><i class="fas fa-shield-check"></i> Ghi nhận tự động</span>
+                </div>
+
+                <div class="wheel-reward-history__list">
+                    @forelse(($reward_history ?? collect()) as $reward)
+                        @php
+                            $isApprovedReward = $reward->reward_status === \App\Models\LuckyWheelSpin::STATUS_APPROVED;
+                            $isPendingReward = $reward->reward_status === \App\Models\LuckyWheelSpin::STATUS_PENDING;
+                            $isRejectedReward = $reward->reward_status === \App\Models\LuckyWheelSpin::STATUS_REJECTED;
+                            $statusIcon = $isApprovedReward ? 'fa-circle-check' : ($isPendingReward ? 'fa-clock' : ($isRejectedReward ? 'fa-circle-xmark' : 'fa-clover'));
+                        @endphp
+                        <article class="wheel-reward-row is-{{ $reward->reward_status }}">
+                            <span class="wheel-reward-row__icon"><i class="fas {{ $statusIcon }}"></i></span>
+                            <div class="wheel-reward-row__main">
+                                <div>
+                                    <strong>{{ $reward->prize }}</strong>
+                                    <small>{{ $reward->created_at?->format('d/m/Y · H:i') }}</small>
+                                </div>
+                                <span class="wheel-reward-status is-{{ $reward->reward_status }}">
+                                    <i class="fas {{ $statusIcon }}"></i>{{ $reward->rewardStatusLabel() }}
+                                </span>
+                            </div>
+                            @if($reward->reward_amount !== null)
+                                <strong class="wheel-reward-row__amount">${{ number_format((float)$reward->reward_amount, 2) }}</strong>
+                            @endif
+                        </article>
+                    @empty
+                        <div class="wheel-reward-history__empty">
+                            <span><i class="fas fa-gift"></i></span>
+                            <div><strong>Chưa có lượt quay được ghi nhận</strong><p>Kết quả và trạng thái duyệt phần thưởng sẽ xuất hiện tại đây.</p></div>
+                        </div>
+                    @endforelse
+                </div>
+            </section>
+
             <audio id="wheelSpinSound" src="{{asset('audio/wheel.mp3')}}" preload="auto"></audio>
             <audio id="applauseSound" src="{{asset('audio/applause.mp3')}}" preload="auto"></audio>
         </section>
@@ -257,32 +300,53 @@
             </aside>
         </section>
 
-        <!-- Modal giải thưởng -->
-        <div class="prize-modal-overlay" id="prizeModalOverlay">
-            <div class="prize-modal-container">
+        <div class="prize-modal-overlay" id="prizeModalOverlay" role="dialog" aria-modal="true"
+            aria-labelledby="prizeModalTitle" aria-describedby="prizeModalMessage" aria-hidden="true">
+            <div class="prize-modal-container" role="document">
                 <div class="prize-modal-content">
-                    <div class="prize-confetti" id="prizeConfetti"></div>
+                    <div class="prize-confetti" id="prizeConfetti" aria-hidden="true"></div>
+                    <button class="prize-modal-x" type="button" onclick="closePrizeModal()" aria-label="Đóng thông báo phần thưởng">
+                        <i class="fas fa-xmark"></i>
+                    </button>
 
-                    <div class="prize-icon">
-                        <i class="fas fa-trophy"></i>
+                    <div class="prize-modal-heading">
+                        <span class="prize-icon" id="prizeModalIcon"><i class="fas fa-trophy"></i></span>
+                        <div>
+                            <span class="prize-eyebrow" id="prizeModalEyebrow">Kết quả vòng quay</span>
+                            <h2 class="prize-title" id="prizeModalTitle">Chúc mừng!</h2>
+                            <p class="prize-subtitle" id="prizeModalSubtitle">Phần thưởng của bạn đã được ghi nhận.</p>
+                        </div>
                     </div>
-
-                    <h2 class="prize-title">Chúc Mừng!</h2>
-                    <p class="prize-subtitle">Bạn đã trúng giải:</p>
 
                     <div class="prize-name-display" id="prizeNameDisplay">
-                        <img class="prize-icon-display" id="prizeIconDisplay" src="" alt="Giải thưởng">
-                        <span class="prize-text-display" id="prizeTextDisplay">Đang tải...</span>
+                        <div class="prize-media">
+                            <img class="prize-icon-display" id="prizeIconDisplay" src="" alt="">
+                            <i class="fas fa-gift" id="prizeFallbackIcon" aria-hidden="true" hidden></i>
+                        </div>
+                        <div class="prize-result-copy">
+                            <small>Phần thưởng</small>
+                            <strong class="prize-text-display" id="prizeTextDisplay">Đang tải...</strong>
+                        </div>
+                        <span class="prize-status-pill" id="prizeStatusPill"><i class="fas fa-clock"></i><span>Đang xử lý</span></span>
                     </div>
 
-                    <div class="prize-message">
-                        Vui lòng liên hệ CSKH để nhận thưởng!
+                    <div class="prize-message" id="prizeModalMessage">
+                        Kết quả đang được hệ thống xử lý.
                     </div>
 
-                    <button class="prize-close-button" onclick="closePrizeModal()">
-                        <span>Đóng</span>
-                        <i class="fas fa-times"></i>
-                    </button>
+                    <div class="prize-meta">
+                        <div><span>Mã lượt quay</span><strong id="prizeRewardId">—</strong></div>
+                        <div><span>Loại ghi nhận</span><strong id="prizePayoutType">Phần thưởng</strong></div>
+                    </div>
+
+                    <div class="prize-actions">
+                        <button class="prize-secondary-button" type="button" onclick="viewPrizeStatus()">
+                            <i class="fas fa-list-check"></i><span>Xem trạng thái</span>
+                        </button>
+                        <button class="prize-close-button" type="button" onclick="closePrizeModal()">
+                            <span>Đã hiểu</span><i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

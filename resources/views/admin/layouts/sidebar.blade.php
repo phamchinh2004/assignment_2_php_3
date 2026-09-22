@@ -7,6 +7,8 @@
         && $authorization->can($currentUser, $capabilities['manage_staff']);
     $canOrderDistributions = $authorization->can($currentUser, $capabilities['order_distributions']);
     $canOrderTimingSettings = $authorization->can($currentUser, $capabilities['order_timing_settings']);
+    $canManageRewards = in_array($currentUser->role, [\App\Models\User::ROLE_ADMIN, \App\Models\User::ROLE_OWNER], true)
+        && $authorization->can($currentUser, $capabilities['manage_all_user_transactions']);
     $isOwner = $authorization->isSuperuser($currentUser);
     $isDashboardActive = request()->routeIs('admin.dashboard', 'tong.doanh.thu');
     $isStatisticsActive = request()->routeIs(
@@ -27,7 +29,8 @@
         'destroy.deposit',
         'change.deposit.transaction.type'
     );
-    $isTransactionActive = $isWithdrawActive || $isDepositActive;
+    $isRewardActive = request()->routeIs('lucky_wheel_rewards.*');
+    $isTransactionActive = $isWithdrawActive || $isDepositActive || $isRewardActive;
 @endphp
 
 <aside class="admin-sidebar" id="accordionSidebar" aria-label="Điều hướng quản trị">
@@ -135,6 +138,10 @@
                                 href="{{ route('withdraw_transaction') }}">Rút tiền</a>
                             <a class="admin-sidebar__submenu-link {{ $isDepositActive ? 'is-active' : '' }}"
                                 href="{{ route('deposit_transaction') }}">Nạp tiền</a>
+                            @if ($canManageRewards)
+                                <a class="admin-sidebar__submenu-link {{ $isRewardActive ? 'is-active' : '' }}"
+                                    href="{{ route('lucky_wheel_rewards.index') }}">Phần thưởng vòng quay</a>
+                            @endif
                         </div>
                     </div>
                 </div>

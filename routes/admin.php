@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\AuthorizationController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\HeaderStateController;
 use App\Http\Controllers\Admin\LanguageController;
+use App\Http\Controllers\Admin\LuckyWheelRewardController;
 use App\Http\Controllers\Admin\ManagerSettingController;
 use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\PartnerController;
@@ -91,6 +92,16 @@ Route::middleware(['role:staff|admin|own', 'checkBanned', 'auth'])->group(functi
         Route::get('/deposit-transaction', [TransactionHistoryController::class, 'index_deposit'])->name('deposit_transaction');
         Route::delete('/destroy-deposit/{transaction}', [TransactionHistoryController::class, 'destroy_deposit'])->name('destroy.deposit');
         Route::get('/change-deposit-transaction-type/{transaction}', [TransactionHistoryController::class, 'change_deposit_transaction_type'])->name(name: 'change.deposit.transaction.type');
+    });
+
+    Route::middleware([
+        'role:admin|own',
+        'permission:' . $capabilities['manage_all_user_transactions'],
+    ])->prefix('lucky-wheel-rewards')->name('lucky_wheel_rewards.')->group(function () {
+        Route::get('/', [LuckyWheelRewardController::class, 'index'])->name('index');
+        Route::post('/{spin}/approve', [LuckyWheelRewardController::class, 'approve'])->name('approve');
+        Route::post('/{spin}/reject', [LuckyWheelRewardController::class, 'reject'])->name('reject');
+        Route::post('/settings/auto-approval', [LuckyWheelRewardController::class, 'updateAutoApproval'])->name('auto_approval');
     });
     // Đã kiểm tra
     Route::get('/chat-panel', [ConversationController::class, 'index'])->name('chat-panel');

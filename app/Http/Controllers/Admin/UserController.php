@@ -11,14 +11,13 @@ use App\Models\User;
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateFrozenOrderRequest;
 use App\Http\Requests\UpdateUserRequest;
-use App\Jobs\SendDepositNotificationEmail;
 use App\Models\Conversation;
 use App\Models\Frozen_order;
 use App\Models\Order;
 use App\Models\Rank;
 use App\Models\User_spin_progress;
-use App\Models\Wallet_balance_history;
 use App\Services\AuthorizationService;
+use App\Services\UserDepositService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
@@ -612,7 +611,7 @@ class UserController extends Controller
         return back()->with('success', "Đã thay ảnh cho đơn hàng '{$order_name}' thành công!");
     }
 
-    public function plus_money(AuthorizationService $authorization)
+    public function plus_money(AuthorizationService $authorization, UserDepositService $depositService)
     {
         $value = request()->input('value');
         $user_id = request()->input('user_id');
@@ -637,81 +636,22 @@ class UserController extends Controller
             ]);
         }
         $this->authorizeMemberAccess($get_user, $authorization);
-        // Các tài khoản cũ có thể có balance NULL; lịch sử giao dịch yêu cầu giá trị số.
-        $initial_balance = (float) ($get_user->balance ?? 0);
-        $initial_frozen_balance = $get_user->frozen_balance ?? 0;
-        
-        // Kiểm tra: nếu số dư đóng băng có tiền VÀ có đơn hàng giá trị cao chưa xác nhận
-        $has_frozen_balance = ($get_user->frozen_balance ?? 0) > 0;
-        $has_unconfirmed_hvo = \App\Models\Frozen_order::where('user_id', $user_id)
-            ->where('custom_price', '!=', null)
-            ->where('is_frozen', true)
-            ->whereIn('status', ['pending', null])
-            ->exists();
-        
-        if ($has_frozen_balance && $has_unconfirmed_hvo) {
-            // Chuyển toàn bộ số dư hiện tại + số tiền vừa nạp vào số dư đóng băng
-            $current_balance = $initial_balance;
-            $get_user->frozen_balance = ($get_user->frozen_balance ?? 0) + $current_balance + $value;
-            $get_user->balance = 0;
-            $new_balance = $get_user->frozen_balance;
-            $balance_type = 'frozen_balance';
-        } else {
-            // Nạp vào balance bình thường
-            $get_user->balance = $initial_balance + $value;
-            $new_balance = $get_user->balance;
-            $balance_type = 'balance';
-        }
-        
-        $get_user->save();
-        
-        Wallet_balance_history::create([
-            'user_id' => $user_id,
-            'value' => $value,
-            'initial_balance' => $initial_balance,
-            'type' => 'deposit',
-            'status' => 'completed',
-            'by_user_id' => Auth::user()->id,
-            'transaction_type' => $isRealDeposit ? "normal" : "bonus"
-        ]);
-        
         $transactionType = $isRealDeposit ? 'normal' : 'bonus';
         $adminName = Auth::user()->full_name ?? Auth::user()->username;
-        
-        // Broadcast event thông báo nạp tiền realtime
-        // Truyền balance chính (balance) cho event, nhưng thực tế có thể đã nạp vào frozen_balance
-        event(new \App\Events\MoneyDeposited(
-            $user_id,
-            $value,
-            $balance_type === 'frozen_balance' ? $get_user->balance : $new_balance, // Vẫn truyền balance cho event
+
+        $deposit = $depositService->deposit(
+            $get_user,
+            (float) $value,
             $transactionType,
+            Auth::user(),
             $adminName
-        ));
-        
-        // Chỉ đưa email vào hàng đợi; phản hồi nạp tiền không phải chờ SMTP.
-        if ($get_user->email) {
-            try {
-                SendDepositNotificationEmail::dispatch(
-                    (int) $get_user->id,
-                    $get_user->email,
-                    (float) $value,
-                    (float) $get_user->balance,
-                    $transactionType,
-                    $adminName,
-                );
-            } catch (\Throwable $exception) {
-                // Tiền đã được cộng; không trả lỗi để tránh quản trị viên nạp lại lần hai.
-                Log::error('Không thể đưa email nạp tiền vào hàng đợi.', [
-                    'user_id' => $get_user->id,
-                    'amount' => $value,
-                    'error' => $exception->getMessage(),
-                ]);
-            }
-        }
+        );
         
         $message = 'Đã nạp thêm ' . $value . '$ vào tài khoản của người dùng ' . $get_user->full_name . '!';
-        if ($balance_type === 'frozen_balance') {
-            $moved_balance = $initial_balance > 0 ? ' và số dư hiện tại ($' . number_format($initial_balance, 2) . ')' : '';
+        if ($deposit['balance_type'] === 'frozen_balance') {
+            $moved_balance = $deposit['initial_balance'] > 0
+                ? ' và số dư hiện tại ($' . number_format($deposit['initial_balance'], 2) . ')'
+                : '';
             $message .= ' (Toàn bộ số tiền nạp' . $moved_balance . ' đã được chuyển vào số dư đóng băng vì có đơn hàng giá trị cao chưa xác nhận)';
         }
         

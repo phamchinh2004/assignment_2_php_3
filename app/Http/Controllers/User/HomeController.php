@@ -5,6 +5,7 @@ namespace App\Http\Controllers\User;
 use App\Http\Controllers\Controller;
 use App\Models\Banner;
 use App\Models\Frozen_order;
+use App\Models\LuckyWheelSetting;
 use App\Models\LuckyWheelSpin;
 use App\Models\Order;
 use App\Models\Partner;
@@ -14,6 +15,7 @@ use App\Models\Transaction_history;
 use App\Models\User;
 use App\Models\User_spin_progress;
 use App\Models\Wallet_balance_history;
+use App\Services\LuckyWheelRewardService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -39,8 +41,28 @@ class HomeController extends Controller
         // Kiểm tra xem user đã quay vòng quay may mắn hôm nay chưa
         $has_spun_today = LuckyWheelSpin::hasSpunToday(Auth::id());
         $bonus_spins_remaining = (int) (Auth::user()->lucky_wheel_bonus_spins ?? 0);
+        $reward_history = LuckyWheelSpin::query()
+            ->where('user_id', Auth::id())
+            ->whereIn('reward_status', [
+                LuckyWheelSpin::STATUS_PENDING,
+                LuckyWheelSpin::STATUS_APPROVED,
+                LuckyWheelSpin::STATUS_REJECTED,
+                LuckyWheelSpin::STATUS_NO_REWARD,
+            ])
+            ->latest('id')
+            ->limit(6)
+            ->get();
 
-        return view('user.home', compact('list_sections', 'list_partners', 'get_banner', 'user_spin_progress', 'rank', 'has_spun_today', 'bonus_spins_remaining'));
+        return view('user.home', compact(
+            'list_sections',
+            'list_partners',
+            'get_banner',
+            'user_spin_progress',
+            'rank',
+            'has_spun_today',
+            'bonus_spins_remaining',
+            'reward_history'
+        ));
         // return view('info');
     }
 
@@ -657,75 +679,95 @@ class HomeController extends Controller
     /**
      * Xử lý quay vòng quay may mắn
      */
-    public function spinLuckyWheel(Request $request)
+    public function spinLuckyWheel(LuckyWheelRewardService $rewardService)
     {
-        $validated = $request->validate([
-            'prize' => ['required', 'string', 'max:255'],
-        ]);
-
         try {
-            $result = DB::transaction(function () use ($validated) {
+            $result = DB::transaction(function () use ($rewardService) {
                 $user = User::whereKey(Auth::id())->lockForUpdate()->firstOrFail();
                 $userId = $user->id;
-                $prize = $validated['prize'];
+                $spinType = LuckyWheelSpin::TYPE_DAILY_COMPLETION;
+                $bonusSpinsRemaining = (int) $user->lucky_wheel_bonus_spins;
 
                 // Lượt admin cấp luôn được ưu tiên và không phụ thuộc tiến trình đơn hàng / giới hạn 1 lần mỗi ngày.
-                if ((int) $user->lucky_wheel_bonus_spins > 0) {
+                if ($bonusSpinsRemaining > 0) {
                     $user->lucky_wheel_bonus_spins = (int) $user->lucky_wheel_bonus_spins - 1;
                     $user->save();
+                    $spinType = LuckyWheelSpin::TYPE_ADMIN_BONUS;
+                    $bonusSpinsRemaining = (int) $user->lucky_wheel_bonus_spins;
+                } else {
+                    // Hết lượt admin cấp thì quay lại đúng logic hằng ngày hiện có.
+                    if (LuckyWheelSpin::hasSpunToday($userId)) {
+                        return [
+                            'success' => false,
+                            'message' => 'Bạn đã quay vòng quay hôm nay rồi. Hãy quay lại vào ngày mai!',
+                        ];
+                    }
 
-                    LuckyWheelSpin::recordSpin($userId, $prize, LuckyWheelSpin::TYPE_ADMIN_BONUS);
+                    if (!$user->rank_id) {
+                        return [
+                            'success' => false,
+                            'message' => 'Bạn cần có cấp độ để tham gia quay thưởng!',
+                        ];
+                    }
 
-                    return [
-                        'success' => true,
-                        'message' => 'Chúc mừng bạn đã trúng ' . $prize . '!',
-                        'prize' => $prize,
-                        'bonus_spins_remaining' => (int) $user->lucky_wheel_bonus_spins,
-                    ];
+                    $rank = Rank::find($user->rank_id);
+                    $userSpinProgress = User_spin_progress::where('user_id', $userId)->first();
+
+                    if (!$rank || !$userSpinProgress) {
+                        return [
+                            'success' => false,
+                            'message' => 'Bạn chưa có tiến trình phân phối!',
+                        ];
+                    }
+
+                    $current = $userSpinProgress->current_spin ?? 0;
+                    $total = $rank->spin_count ?? 0;
+
+                    if ($current < $total) {
+                        return [
+                            'success' => false,
+                            'message' => 'Bạn cần hoàn thành ' . ($total - $current) . ' đơn hàng nữa để quay!',
+                        ];
+                    }
                 }
 
-                // Hết lượt admin cấp thì quay lại đúng logic hằng ngày hiện có.
-                if (LuckyWheelSpin::hasSpunToday($userId)) {
-                    return [
-                        'success' => false,
-                        'message' => 'Bạn đã quay vòng quay hôm nay rồi. Hãy quay lại vào ngày mai!',
-                    ];
+                // Kết quả quay phải được quyết định ở server. Frontend chỉ dùng prize_index để chạy animation.
+                $prize = LuckyWheelSpin::drawPrize();
+                $spin = LuckyWheelSpin::recordSpin($userId, $prize, $spinType);
+
+                if (
+                    $spin->reward_type === LuckyWheelSpin::REWARD_CASH
+                    && LuckyWheelSetting::current()->auto_approve_rewards
+                ) {
+                    $spin = $rewardService->approve(
+                        $spin,
+                        null,
+                        LuckyWheelSpin::APPROVAL_AUTOMATIC
+                    );
                 }
 
-                if (!$user->rank_id) {
-                    return [
-                        'success' => false,
-                        'message' => 'Bạn cần có cấp độ để tham gia quay thưởng!',
-                    ];
-                }
-
-                $rank = Rank::find($user->rank_id);
-                $user_spin_progress = User_spin_progress::where('user_id', $userId)->first();
-
-                if (!$rank || !$user_spin_progress) {
-                    return [
-                        'success' => false,
-                        'message' => 'Bạn chưa có tiến trình phân phối!',
-                    ];
-                }
-
-                $current = $user_spin_progress->current_spin ?? 0;
-                $total = $rank->spin_count ?? 0;
-
-                if ($current < $total) {
-                    return [
-                        'success' => false,
-                        'message' => 'Bạn cần hoàn thành ' . ($total - $current) . ' đơn hàng nữa để quay!',
-                    ];
-                }
-
-                LuckyWheelSpin::recordSpin($userId, $prize);
+                $isReward = $spin->reward_type !== LuckyWheelSpin::REWARD_NONE;
+                $rewardMessage = match ($spin->reward_status) {
+                    LuckyWheelSpin::STATUS_APPROVED => 'Tiền thưởng đã được cộng vào số dư của bạn.',
+                    LuckyWheelSpin::STATUS_PENDING => 'Phần thưởng đã được ghi nhận và đang chờ quản trị viên duyệt.',
+                    default => 'Chưa trúng thưởng ở lượt này. Chúc bạn may mắn ở lượt tiếp theo!',
+                };
 
                 return [
                     'success' => true,
-                    'message' => 'Chúc mừng bạn đã trúng ' . $prize . '!',
-                    'prize' => $prize,
-                    'bonus_spins_remaining' => 0,
+                    'message' => $isReward
+                        ? 'Chúc mừng bạn đã trúng ' . $spin->prize . '!'
+                        : $rewardMessage,
+                    'prize' => $spin->prize,
+                    'prize_index' => (int) $spin->prize_index,
+                    'reward_id' => (int) $spin->id,
+                    'reward_type' => $spin->reward_type,
+                    'reward_amount' => $spin->reward_amount !== null ? (float) $spin->reward_amount : null,
+                    'reward_status' => $spin->reward_status,
+                    'reward_status_label' => $spin->rewardStatusLabel(),
+                    'reward_message' => $rewardMessage,
+                    'approval_method' => $spin->approval_method,
+                    'bonus_spins_remaining' => $bonusSpinsRemaining,
                 ];
             });
 

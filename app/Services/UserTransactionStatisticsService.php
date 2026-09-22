@@ -34,7 +34,8 @@ class UserTransactionStatisticsService
     {
         $wallet = DB::table('wallet_balance_histories')->where('user_id', $userId)->whereBetween('created_at', [$start, $end])
             ->selectRaw('COUNT(*) as transaction_count')
-            ->selectRaw("SUM(CASE WHEN type='deposit' AND status='completed' THEN value ELSE 0 END) as deposit_amount")
+            ->selectRaw("SUM(CASE WHEN type='deposit' AND status='completed' AND transaction_type='normal' THEN value ELSE 0 END) as deposit_amount")
+            ->selectRaw("SUM(CASE WHEN type='deposit' AND status='completed' THEN value ELSE 0 END) as wallet_inflow_amount")
             ->selectRaw("SUM(CASE WHEN type='withdraw' AND status='completed' THEN value ELSE 0 END) as withdraw_amount")
             ->selectRaw("SUM(CASE WHEN type='withdraw' AND status='processing' THEN value ELSE 0 END) as pending_withdraw_amount")
             ->selectRaw("SUM(CASE WHEN type='withdraw' AND status='cancelled' THEN value ELSE 0 END) as cancelled_withdraw_amount")
@@ -59,7 +60,8 @@ class UserTransactionStatisticsService
             ->whereNotNull('custom_price')->whereBetween('order_date', [$start, $end])->count();
         $pendingCommission = (float) DB::table('frozen_orders')->where('user_id', $userId)
             ->whereIn('status', ['confirmed', 'preparing', 'transit', 'shipping', 'delivered'])->where('commission_paid', false)->sum('snapshot_commission_amount');
-        $deposit = (float) ($wallet->deposit_amount ?? 0); $withdraw = (float) ($wallet->withdraw_amount ?? 0);
+        $deposit = (float) ($wallet->deposit_amount ?? 0); $walletInflow = (float) ($wallet->wallet_inflow_amount ?? 0);
+        $withdraw = (float) ($wallet->withdraw_amount ?? 0);
         $pendingWithdraw = (float) ($wallet->pending_withdraw_amount ?? 0); $orders = (float) ($ledger->order_amount ?? 0);
         $cancelledWithdraw = (float) ($wallet->cancelled_withdraw_amount ?? 0);
         $snapshotRefund = (float) ($settlement->settlement_amount ?? 0);
@@ -77,7 +79,7 @@ class UserTransactionStatisticsService
             'order_refund_amount' => $snapshotRefund + $legacyRefundAmount, 'withdraw_refund_amount' => $withdrawRefundAmount,
             'refund_count' => (int) ($settlement->settlement_count ?? 0) + (int) ($legacyRefund->refund_count ?? 0) + (int) ($withdrawRefund->refund_count ?? 0),
             'pending_commission' => $pendingCommission,
-            'net_movement' => round($deposit + $snapshotRefund + $legacyRefundAmount + $withdrawRefundAmount - $withdraw - $pendingWithdraw - $cancelledWithdraw - $orders, 6),
+            'net_movement' => round($walletInflow + $snapshotRefund + $legacyRefundAmount + $withdrawRefundAmount - $withdraw - $pendingWithdraw - $cancelledWithdraw - $orders, 6),
             'completed_count' => (int) ($wallet->completed_count ?? 0), 'pending_count' => (int) ($wallet->pending_count ?? 0),
             'cancelled_count' => (int) ($wallet->cancelled_count ?? 0),
         ];
