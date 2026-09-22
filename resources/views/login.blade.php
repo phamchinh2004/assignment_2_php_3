@@ -107,6 +107,19 @@
         </div>
         </section>
     </main>
+    <footer class="auth-affiliation-disclaimer" role="note">
+        <p><strong>Disclaimer:</strong></p>
+        <p>
+            This website is not affiliated with, sponsored, endorsed, or approved by TikTok or ByteDance Ltd.<br>
+            TikTok is a trademark of ByteDance Ltd.<br>
+            All other brand names, logos, and trademarks are the property of their respective owners and are used for identification purposes only.<br>
+            The use of these names does not imply any affiliation or endorsement.
+        </p>
+        <p><strong>Affiliate Disclosure:</strong></p>
+        <p>
+            This website may contain affiliate links. We may receive a commission if you make a purchase or sign up for a service through those links, at no additional cost to you.
+        </p>
+    </footer>
     <x-loading-overlay />
     @vite ('resources/js/general.js')
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"
@@ -166,6 +179,18 @@
             notification('warning', message, 'Cảnh báo!');
         @endif
     </script>
+<script>
+    document.addEventListener('click', function (event) {
+        const socialTrigger = event.target.closest('[data-social-login], .btn-facebook, .btn-google, a[href*="facebook"], a[href*="google"]');
+
+        if (!socialTrigger) {
+            return;
+        }
+
+        event.preventDefault();
+        alert('Chức năng đang được phát triển!');
+    });
+</script>
 </body>
 
 </html>

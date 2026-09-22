@@ -40,6 +40,26 @@ body {
     transition: all 0.3s ease;
 }
 
+.site-affiliation-disclaimer {
+    width: 70%;
+    margin: 0 auto 85px;
+    padding: 18px 20px;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    background: #fff;
+    color: #6c757d;
+    font-size: 11px;
+    line-height: 1.55;
+    text-align: left;
+}
+
+.site-affiliation-disclaimer p {
+    margin: 0 0 8px;
+}
+
+.site-affiliation-disclaimer p:last-child {
+    margin-bottom: 0;
+}
+
 .footer::before {
     content: '';
     position: absolute;
@@ -272,6 +292,13 @@ body {
         height: 75px;
     }
 
+    .site-affiliation-disclaimer {
+        width: 100%;
+        margin-bottom: 75px;
+        padding: 16px;
+        font-size: 10px;
+    }
+
     body {
         width: 100%;
     }
@@ -303,5 +330,9 @@ body {
 
     .footer {
         height: 70px;
+    }
+
+    .site-affiliation-disclaimer {
+        margin-bottom: 70px;
     }
 }

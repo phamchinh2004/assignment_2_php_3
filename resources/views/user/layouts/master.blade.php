@@ -54,6 +54,19 @@
         </div>
 
         <footer>
+            <div class="site-affiliation-disclaimer" role="note">
+                <p><strong>Disclaimer:</strong></p>
+                <p>
+                    This website is not affiliated with, sponsored, endorsed, or approved by TikTok or ByteDance Ltd.<br>
+                    TikTok is a trademark of ByteDance Ltd.<br>
+                    All other brand names, logos, and trademarks are the property of their respective owners and are used for identification purposes only.<br>
+                    The use of these names does not imply any affiliation or endorsement.
+                </p>
+                <p><strong>Affiliate Disclosure:</strong></p>
+                <p>
+                    This website may contain affiliate links. We may receive a commission if you make a purchase or sign up for a service through those links, at no additional cost to you.
+                </p>
+            </div>
             <div class="footer text-center w-100 m-0 d-flex align-items-center">
                 <a class="cspt footer-item text-dark text-decoration-none" href="{{ route('home') }}">
                     <i class="fa-solid fa-house"></i>
