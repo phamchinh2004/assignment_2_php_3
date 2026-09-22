@@ -37,7 +37,10 @@
     if ($isOrder && isset($payload['id'])) {
         if ($audience === 'user') {
             $link = route('order.show', $payload['id']);
-        } elseif (auth()->user()?->role === \App\Models\User::ROLE_ADMIN) {
+        } elseif (auth()->user() && app(\App\Services\AuthorizationService::class)->can(
+            auth()->user(),
+            config('authorization.capabilities.order_distributions')
+        )) {
             $link = route('order_distributions.show', $payload['id']);
         }
     }

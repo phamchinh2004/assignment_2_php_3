@@ -12,7 +12,7 @@
 <div class="admin-sidebar-section">
     <div class="admin-sidebar-section-label">Tổng quan</div>
 
-    @if (Auth::user()->role === 'admin')
+    @if (app(\App\Services\AuthorizationService::class)->can(Auth::user(), config('authorization.capabilities.system_statistics')))
         <div class="admin-nav-item {{ $isDashboardActive ? 'active' : '' }}">
             <a class="admin-menu-link" href="{{ route('tong.doanh.thu') }}" data-sidebar-tooltip="Dashboard"
                 @if($isDashboardActive) aria-current="page" @endif>

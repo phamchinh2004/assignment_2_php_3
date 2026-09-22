@@ -10,6 +10,10 @@ use Illuminate\Support\Str;
 
 class AdminHeaderService
 {
+    public function __construct(private AuthorizationService $authorization)
+    {
+    }
+
     public function state(User $user, int $notificationLimit = 6, int $messageLimit = 6): array
     {
         return [
@@ -79,10 +83,11 @@ class AdminHeaderService
         $unreadQuery = Message::query()
             ->where('sender_id', '!=', $user->id)
             ->where('is_read', false)
-            ->whereHas('conversation', fn ($query) => $query
-                ->when($user->role === User::ROLE_STAFF, fn ($conversation) => $conversation->where('staff_id', $user->id)));
+            ->whereHas('conversation', function ($query) use ($user) {
+                $this->scopeVisibleConversations($query, $user);
+            });
 
-        $conversations = Conversation::query()
+        $conversationsQuery = Conversation::query()
             ->with([
                 'user:id,full_name,username',
                 'latestMessage.sender:id,full_name,username,role',
@@ -92,8 +97,11 @@ class AdminHeaderService
                     ->where('sender_id', '!=', $user->id)
                     ->where('is_read', false),
             ])
-            ->whereHas('messages')
-            ->when($user->role === User::ROLE_STAFF, fn ($query) => $query->where('staff_id', $user->id))
+            ->whereHas('messages');
+
+        $this->scopeVisibleConversations($conversationsQuery, $user);
+
+        $conversations = $conversationsQuery
             ->orderByDesc('updated_at')
             ->limit($limit)
             ->get();
@@ -127,5 +135,27 @@ class AdminHeaderService
                 ->all(),
             'all_messages_url' => route('chat-panel'),
         ];
+    }
+
+    private function scopeVisibleConversations($query, User $user): void
+    {
+        if ($this->authorization->isSuperuser($user)) {
+            $query->whereHas('staff', fn ($staff) => $staff
+                ->whereIn('role', [User::ROLE_STAFF, User::ROLE_ADMIN]));
+            return;
+        }
+
+        if (
+            $user->role === User::ROLE_ADMIN
+            && $this->authorization->can($user, config('authorization.capabilities.manage_all_chats'))
+        ) {
+            $query->where(function ($conversation) use ($user) {
+                $conversation->where('staff_id', $user->id)
+                    ->orWhereHas('staff', fn ($staff) => $staff->where('role', User::ROLE_STAFF));
+            });
+            return;
+        }
+
+        $query->where('staff_id', $user->id);
     }
 }

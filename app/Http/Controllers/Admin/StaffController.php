@@ -13,13 +13,14 @@ use App\Services\AuthorizationService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 
 class StaffController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(AuthorizationService $authorization)
     {
         $list_staffs = User::with('referrer')
             ->withSum(['deposits_made as total_deposit' => function ($q) {
@@ -27,7 +28,7 @@ class StaffController extends Controller
                     ->where('status', 'completed');
                 // ->where('by_user_id', Auth::user()->id);
             }], 'value')
-            ->where('role', 'staff')
+            ->whereIn('role', $authorization->manageableOperatorRoles(Auth::user()))
             ->get();
 
         $onlineStaffCount = $list_staffs->filter(fn($u) => $u->isOnline())->count();
@@ -39,10 +40,10 @@ class StaffController extends Controller
     /**
      * API trả về trạng thái trực tuyến của toàn bộ nhân viên (phục vụ polling nhẹ)
      */
-    public function getOnlineStatuses()
+    public function getOnlineStatuses(AuthorizationService $authorization)
     {
-        $staffs = User::where('role', 'staff')
-            ->select('id', 'full_name', 'username', 'last_seen')
+        $staffs = User::whereIn('role', $authorization->manageableOperatorRoles(Auth::user()))
+            ->select('id', 'full_name', 'username', 'role', 'last_seen')
             ->get()
             ->map(function ($staff) {
                 return [
@@ -65,11 +66,13 @@ class StaffController extends Controller
             'staffs' => $staffs
         ]);
     }
-    public function change_status_staff($staff_id)
+    public function change_status_staff($staff_id, AuthorizationService $authorization)
     {
         $message = "";
         $user = User::find($staff_id);
         if ($user) {
+            abort_unless($authorization->canManageOperator(Auth::user(), $user), 403);
+
             if ($user->status === "inactivated") {
                 $message = "Kích hoạt tài khoản nhân viên thành công!";
                 $user->status = "activated";
@@ -87,12 +90,13 @@ class StaffController extends Controller
             return redirect()->route('staff.index')->with('error', 'Không tìm thấy nhân viên cần thay đổi trạng thái!');
         }
     }
-    public function edit_permissions($staff_id)
+    public function edit_permissions($staff_id, AuthorizationService $authorization)
     {
         $get_user = User::find($staff_id);
         if (!$get_user) {
             return back()->with('error', 'Người dùng không xác định!');
         }
+        abort_unless($authorization->canManageOperatorPermissions(Auth::user(), $get_user), 403);
         $list_manager_settings = Manager_setting::get();
         $get_user_manager_setting = User_manager_setting::where('user_id', $staff_id)->get();
         $existing_permission_ids = $get_user_manager_setting->pluck('manager_setting_id')->toArray();
@@ -121,10 +125,13 @@ class StaffController extends Controller
                 'message' => 'Không tìm thấy quyền hạn này!'
             ]);
         }
+        $target = User::find($get_user_manager_setting->user_id);
+        abort_unless($target && $authorization->canManageOperatorPermissions(Auth::user(), $target), 403);
+
         $get_user_manager_setting->is_active = !$get_user_manager_setting->is_active;
         $get_user_manager_setting->save();
 
-        $staff = User::find($get_user_manager_setting->user_id);
+        $staff = $target;
         if ($staff) {
             $staff->unsetRelation('user_manager_settings');
             $state = $authorization->state($staff);
@@ -155,12 +162,10 @@ class StaffController extends Controller
             'is_active' => ['required', 'boolean'],
         ]);
 
-        $staff = User::whereKey($data['staff_id'])
-            ->where('role', User::ROLE_STAFF)
-            ->first();
+        $staff = User::find($data['staff_id']);
 
-        if (!$staff) {
-            return back()->with('error', 'Không tìm thấy nhân viên cần phân quyền!');
+        if (!$staff || !$authorization->canManageOperatorPermissions(Auth::user(), $staff)) {
+            return back()->with('error', 'Không tìm thấy tài khoản cần phân quyền hoặc bạn không có quyền quản lý tài khoản này!');
         }
 
         $assignmentIds = collect($data['assignment_ids'])
@@ -204,9 +209,11 @@ class StaffController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create(AuthorizationService $authorization)
     {
-        return view('admin.staff.create');
+        return view('admin.staff.create', [
+            'allowedRoles' => $authorization->manageableOperatorRoles(Auth::user()),
+        ]);
     }
 
     /**
@@ -221,28 +228,25 @@ class StaffController extends Controller
 
         return $random_number;
     }
-    public function store(Request $request)
+    public function store(Request $request, AuthorizationService $authorization)
     {
-        $data = $request->only(['full_name', 'username', 'phone']);
-        if (User::where('username', $data['username'])->exists()) {
-            return back()->withErrors(['username' => 'Tên đăng nhập đã tồn tại!'])->withInput();
-        }
-        if (User::where('phone', $data['phone'])->exists()) {
-            return back()->withErrors(['username' => 'Số điện thoại đã tồn tại!'])->withInput();
-        }
-        if ($request->password != "") {
-            if ($request->password >= 6) {
-                $data['password'] = $request->password;
-            } else {
-                return back()->withErrors(['password' => 'Mật khẩu phải lớn hơn hoặc bằng 6 ký tự!'])->withInput();
-            }
-        } else {
-            $data['password'] = '123456';
-        }
+        $actor = Auth::user();
+        $allowedRoles = $authorization->manageableOperatorRoles($actor);
+        $data = $request->validate([
+            'full_name' => ['required', 'string', 'max:255'],
+            'username' => ['required', 'string', 'min:6', 'max:255', 'unique:users,username'],
+            'phone' => ['required', 'string', 'max:50', 'unique:users,phone'],
+            'password' => ['nullable', 'string', 'min:6'],
+            'role' => ['nullable', Rule::in($allowedRoles)],
+        ]);
+
+        $requestedRole = $data['role'] ?? User::ROLE_STAFF;
+        abort_unless(in_array($requestedRole, $allowedRoles, true), 403);
+        $data['password'] = $data['password'] ?: '123456';
         $data['password'] = Hash::make($data['password']);
-        $data['referrer_id'] = Auth::user()->id;
+        $data['referrer_id'] = $actor->id;
         $data['status'] = "activated";
-        $data['role'] = "staff";
+        $data['role'] = $requestedRole;
         $data['referral_code'] = $this->return_random_referral_code();
         $new_user = User::create($data);
         $list_manager_settings = Manager_setting::get();
@@ -257,7 +261,7 @@ class StaffController extends Controller
         }
         return redirect()->route('staff.index')->with('success', 'Tạo tài khoản nhân viên thành công!');
     }
-    public function show(string $id)
+    public function show(string $id, AuthorizationService $authorization)
     {
         $staff = User::with([
             'referrer',
@@ -266,8 +270,9 @@ class StaffController extends Controller
         ->withSum(['deposits_made as total_deposit' => function ($q) {
             $q->where('type', 'deposit')->where('status', 'completed');
         }], 'value')
-        ->where('role', 'staff')
         ->findOrFail($id);
+
+        abort_unless($authorization->canManageOperator(Auth::user(), $staff), 403);
 
         $referrals = User::where('referrer_id', $staff->id)->latest()->paginate(10);
 
@@ -277,12 +282,13 @@ class StaffController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit(string $id, AuthorizationService $authorization)
     {
         $get_staff_old = User::find($id);
         if (!$get_staff_old) {
             return back()->with('error', 'Người dùng không xác định!');
         }
+        abort_unless($authorization->canManageOperator(Auth::user(), $get_staff_old), 403);
 
         return view('admin.staff.edit', compact('get_staff_old'));
     }
@@ -290,9 +296,10 @@ class StaffController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, string $id, AuthorizationService $authorization)
     {
         $get_user = User::find($id);
+        abort_unless($get_user && $authorization->canManageOperator(Auth::user(), $get_user), 403);
         $data = $request->only(['full_name', 'username', 'phone']);
         if (User::where('username', $data['username'])->where('username', '!=', $get_user->username)->exists()) {
             return back()->withErrors(['username' => 'Tên đăng nhập đã tồn tại!'])->withInput();

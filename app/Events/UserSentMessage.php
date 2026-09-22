@@ -2,6 +2,8 @@
 
 namespace App\Events;
 
+use App\Models\User;
+use App\Services\ManagementRecipientResolver;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
@@ -33,36 +35,19 @@ class UserSentMessage implements ShouldBroadcast
             ];
         }
 
-        // Load user từ database với conversation relationship
-        $user = \App\Models\User::with('conversation')->find($this->userId);
+        $user = User::with(['conversation', 'referrer'])->find($this->userId);
         
-        // Nếu không tìm thấy user hoặc không có conversation, broadcast như cũ
-        if (!$user || !$user->conversation) {
+        if (!$user) {
             return [
                 new PrivateChannel("sent.message"),
             ];
         }
 
-        $channels = [];
-        $broadcastedIds = [];
-        
         try {
-            // Broadcast đến người được assign conversation này (có thể là staff hoặc admin)
-            if ($user->conversation->staff_id) {
-                $channels[] = new PrivateChannel('staff.' . $user->conversation->staff_id);
-                $broadcastedIds[] = $user->conversation->staff_id;
-            }
-            
-            // Broadcast đến tất cả admin (trừ người đã nhận ở trên) - Cache 5 phút
-            $admins = \Illuminate\Support\Facades\Cache::remember('admin_ids', 300, function () {
-                return \App\Models\User::where('role', 'admin')->pluck('id')->toArray();
-            });
-            
-            foreach ($admins as $adminId) {
-                if (!in_array($adminId, $broadcastedIds)) {
-                    $channels[] = new PrivateChannel('staff.' . $adminId);
-                }
-            }
+            return app(ManagementRecipientResolver::class)
+                ->forUser($user)
+                ->map(fn (User $recipient) => new PrivateChannel('staff.' . $recipient->id))
+                ->all();
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error('UserSentMessage: Error in broadcastOn', [
                 'error' => $e->getMessage(),
@@ -71,8 +56,6 @@ class UserSentMessage implements ShouldBroadcast
             // Return fallback channel
             return [new PrivateChannel("sent.message")];
         }
-        
-        return $channels;
     }
 
     public function broadcastAs()

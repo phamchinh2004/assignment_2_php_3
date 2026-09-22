@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Models\User;
+use App\Services\AuthorizationService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -24,6 +25,8 @@ class UpdateUserRequest extends FormRequest
     public function rules(): array
     {
         $userId = $this->route('user')->id ?? null;
+        $actor = auth()->user();
+        $authorization = app(AuthorizationService::class);
         
         return [
             'full_name' => 'required|string|max:255',
@@ -44,14 +47,14 @@ class UpdateUserRequest extends FormRequest
             'warehouse_area' => 'nullable|string|max:191',
             'warehouse_address' => 'nullable|string',
             'lucky_wheel_bonus_spins' => [
-                Rule::prohibitedIf(fn () => auth()->user()?->role !== User::ROLE_ADMIN),
+                Rule::prohibitedIf(fn () => $actor === null || !$authorization->can($actor, config('authorization.capabilities.manage_all_users'))),
                 'nullable',
                 'integer',
                 'min:0',
                 'max:100000',
             ],
             'role' => [
-                Rule::prohibitedIf(fn () => auth()->user()?->role !== User::ROLE_ADMIN),
+                Rule::prohibitedIf(fn () => $actor === null || !$authorization->isSuperuser($actor)),
                 'nullable',
                 Rule::in([User::ROLE_MEMBER, User::ROLE_STAFF, User::ROLE_ADMIN]),
             ],

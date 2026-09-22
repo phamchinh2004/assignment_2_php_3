@@ -11,6 +11,8 @@
 @section('content')
 @php
     $activePermissions = $staff->user_manager_settings ? $staff->user_manager_settings->where('is_active', true) : collect();
+    $canManagePermissions = app(\App\Services\AuthorizationService::class)
+        ->canManageOperatorPermissions(auth()->user(), $staff);
 @endphp
 
 <div class="container-fluid px-4 pb-5">
@@ -59,9 +61,11 @@
         </div>
 
         <div class="d-flex align-items-center gap-2">
-            <a href="{{ route('staff.edit.permissions', ['id' => $staff->id]) }}" class="btn btn-outline-primary btn-sm px-3" style="border-radius: 8px; font-weight: 600;">
-                <i class="fas fa-shield-halved mr-1"></i> Phân quyền
-            </a>
+            @if($canManagePermissions)
+                <a href="{{ route('staff.edit.permissions', ['id' => $staff->id]) }}" class="btn btn-outline-primary btn-sm px-3" style="border-radius: 8px; font-weight: 600;">
+                    <i class="fas fa-shield-halved mr-1"></i> Phân quyền
+                </a>
+            @endif
             <a href="{{ route('staff.edit', ['staff' => $staff->id]) }}" class="btn-create-modern">
                 <i class="fas fa-pen mr-1"></i> Chỉnh sửa
             </a>

@@ -68,7 +68,7 @@ class SendAutoReplyMessage implements ShouldQueue
                 ->where('conversation_id', $this->conversationId)
                 ->where('id', '>', $triggerMessage->id)
                 ->whereHas('sender', function ($query) {
-                    $query->whereIn('role', ['admin', 'staff']);
+                    $query->whereIn('role', \App\Models\User::MANAGEMENT_ROLES);
                 })
                 ->exists();
 

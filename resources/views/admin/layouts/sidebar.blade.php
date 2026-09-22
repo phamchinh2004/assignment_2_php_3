@@ -1,4 +1,13 @@
 @php
+    $currentUser = Auth::user();
+    $authorization = app(\App\Services\AuthorizationService::class);
+    $capabilities = config('authorization.capabilities');
+    $canSystemStatistics = $authorization->can($currentUser, $capabilities['system_statistics']);
+    $canManageStaff = in_array($currentUser->role, [\App\Models\User::ROLE_ADMIN, \App\Models\User::ROLE_OWNER], true)
+        && $authorization->can($currentUser, $capabilities['manage_staff']);
+    $canOrderDistributions = $authorization->can($currentUser, $capabilities['order_distributions']);
+    $canOrderTimingSettings = $authorization->can($currentUser, $capabilities['order_timing_settings']);
+    $isOwner = $authorization->isSuperuser($currentUser);
     $isDashboardActive = request()->routeIs('admin.dashboard', 'tong.doanh.thu');
     $isStatisticsActive = request()->routeIs(
         'doanh.thu.theo.nhan.vien',
@@ -24,7 +33,7 @@
 <aside class="admin-sidebar" id="accordionSidebar" aria-label="Điều hướng quản trị">
     <div class="admin-sidebar__header">
         <a class="admin-sidebar__brand"
-            href="{{ Auth::user()->role === 'admin' ? route('tong.doanh.thu') : route('chat-panel') }}">
+            href="{{ $canSystemStatistics ? route('tong.doanh.thu') : route('chat-panel') }}">
             <span class="admin-sidebar__brand-mark" aria-hidden="true">
                 <i class="fas fa-layer-group"></i>
             </span>
@@ -50,7 +59,7 @@
             <section class="admin-sidebar__section" aria-labelledby="sidebar-overview-title">
                 <h2 class="admin-sidebar__section-title" id="sidebar-overview-title">Tổng quan</h2>
 
-                @if (Auth::user()->role === 'admin')
+                @if ($canSystemStatistics)
                     <a class="admin-sidebar__link {{ $isDashboardActive ? 'is-active' : '' }}"
                         href="{{ route('tong.doanh.thu') }}" data-sidebar-tooltip="Dashboard"
                         @if($isDashboardActive) aria-current="page" @endif>
@@ -81,7 +90,7 @@
                             </div>
                         </div>
                     </div>
-                @elseif (Auth::user()->role === 'staff')
+                @else
                     <a class="admin-sidebar__link {{ request()->routeIs('doanh.thu.ban.than') ? 'is-active' : '' }}"
                         href="{{ route('doanh.thu.ban.than') }}" data-sidebar-tooltip="Thống kê"
                         @if(request()->routeIs('doanh.thu.ban.than')) aria-current="page" @endif>
@@ -130,7 +139,7 @@
                     </div>
                 </div>
 
-                @if (Auth::user()->role === 'admin')
+                @if ($canManageStaff)
                     <a class="admin-sidebar__link {{ request()->routeIs('staff.*') ? 'is-active' : '' }}"
                         href="{{ route('staff.index') }}" data-sidebar-tooltip="Quản lý nhân viên"
                         @if(request()->routeIs('staff.*')) aria-current="page" @endif>
@@ -147,7 +156,7 @@
                     <span class="admin-sidebar__label">Quản lý đơn hàng</span>
                 </a>
 
-                @if (Auth::user()->role === 'admin')
+                @if ($canOrderDistributions)
                     <a class="admin-sidebar__link {{ request()->routeIs('order_distributions.*') ? 'is-active' : '' }}"
                         href="{{ route('order_distributions.index') }}" data-sidebar-tooltip="Phân phối đơn hàng"
                         @if(request()->routeIs('order_distributions.*')) aria-current="page" @endif>
@@ -168,7 +177,7 @@
             <section class="admin-sidebar__section" aria-labelledby="sidebar-settings-title">
                 <h2 class="admin-sidebar__section-title" id="sidebar-settings-title">Cấu hình</h2>
 
-                @if (Auth::user()->role === 'admin')
+                @if ($canOrderTimingSettings)
                     <a class="admin-sidebar__link {{ request()->routeIs('admin.order_status_timing.*') ? 'is-active' : '' }}"
                         href="{{ route('admin.order_status_timing.index') }}" data-sidebar-tooltip="Thời gian đơn hàng"
                         @if(request()->routeIs('admin.order_status_timing.*')) aria-current="page" @endif>
@@ -225,7 +234,7 @@
                     <span class="admin-sidebar__label">Quản lý ngôn ngữ</span>
                 </a>
 
-                @if (Auth::user()->role === 'admin')
+                @if ($isOwner)
                     <a class="admin-sidebar__link {{ request()->routeIs('manager_setting.*') ? 'is-active' : '' }}"
                         href="{{ route('manager_setting.index') }}" data-sidebar-tooltip="Quản lý chức năng"
                         @if(request()->routeIs('manager_setting.*')) aria-current="page" @endif>

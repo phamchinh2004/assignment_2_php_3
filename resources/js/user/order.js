@@ -299,6 +299,9 @@
                                 <span class="order_hero_spark order_hero_spark--one"></span>
                                 <span class="order_hero_spark order_hero_spark--two"></span>
                                 <span class="order_hero_spark order_hero_spark--three"></span>
+                                <span class="order_hero_spark order_hero_spark--four"></span>
+                                <span class="order_hero_spark order_hero_spark--five"></span>
+                                <span class="order_hero_spark order_hero_spark--six"></span>
                             </div>
                         ` : ''}
                         <div class="order_product_main">

@@ -36,6 +36,8 @@ class CheckRole
                     return redirect()->route('chat-panel')->with('warning', 'Bạn đã đăng nhập!');
                 case 'admin':
                     return redirect()->route('chat-panel')->with('warning', 'Bạn đã đăng nhập!');
+                case 'own':
+                    return redirect()->route('chat-panel')->with('warning', 'Bạn đã đăng nhập!');
                 default:
                     abort(403, 'Bạn đã đăng nhập, vui lòng quay lại trang chủ.');
             }
@@ -52,6 +54,8 @@ class CheckRole
             case 'staff':
                 return redirect()->route('chat-panel')->with('warning', 'Bạn không có quyền truy cập!');
             case 'admin':
+                return redirect()->route('chat-panel');
+            case 'own':
                 return redirect()->route('chat-panel');
             default:
                 abort(403, 'Bạn không có quyền truy cập.');

@@ -30,15 +30,8 @@ class ChatAutoReplyService
 
     public static function getEscalationRecipients(User $user): array
     {
-        if ($user->referrer_id) {
-            $referrer = User::find($user->referrer_id);
-            if ($referrer && $referrer->email) {
-                return [$referrer->email];
-            }
-        }
-
-        return User::where('role', User::ROLE_ADMIN)
-            ->whereNotNull('email')
+        return app(ManagementRecipientResolver::class)
+            ->forUser($user)
             ->pluck('email')
             ->filter()
             ->unique()

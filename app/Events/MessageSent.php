@@ -2,6 +2,8 @@
 
 namespace App\Events;
 
+use App\Models\User;
+use App\Services\ManagementRecipientResolver;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
@@ -32,25 +34,10 @@ class MessageSent implements ShouldBroadcastNow
             new PrivateChannel('chat.conversation.' . $message->conversation_id)
         ];
 
-        $broadcastedIds = []; // Tránh duplicate channels
-
-        // Ưu tiên tài khoản quản lý hiện tại của user theo referrer_id.
-        $managerId = $message->conversation?->user?->referrer_id;
-        if (!$managerId) {
-            $managerId = $message->conversation?->staff_id;
-        }
-
-        if ($managerId) {
-            $channels[] = new PrivateChannel('staff.' . $managerId);
-            $broadcastedIds[] = (int) $managerId;
-        }
-
-        // Broadcast đến tất cả admin, kể cả admin không quản lý trực tiếp user.
-        $admins = \App\Models\User::where('role', 'admin')->pluck('id');
-
-        foreach ($admins as $adminId) {
-            if (!in_array((int) $adminId, $broadcastedIds, true)) {
-                $channels[] = new PrivateChannel('staff.' . $adminId);
+        $customer = $message->conversation?->user;
+        if ($customer) {
+            foreach (app(ManagementRecipientResolver::class)->forUser($customer) as $recipient) {
+                $channels[] = new PrivateChannel('staff.' . $recipient->id);
             }
         }
 

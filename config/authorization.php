@@ -24,5 +24,9 @@ return [
         'order_processing_time_alert_settings' => 'cau_hinh_thoi_gian_hoan_thanh_don_hang',
         'order_timing_settings' => 'cau_hinh_thoi_gian_don_hang',
         'order_distributions' => 'quan_ly_phan_phoi_don_hang',
+        'manage_staff' => 'quan_ly_nhan_vien',
+        'manage_staff_permissions' => 'phan_quyen_nhan_vien',
+        'system_statistics' => 'xem_thong_ke_he_thong',
+        'manage_all_chats' => 'quan_ly_tat_ca_tin_nhan',
     ],
 ];

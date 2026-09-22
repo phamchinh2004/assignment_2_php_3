@@ -36,7 +36,7 @@ class NotifyAutoReplyEscalation implements ShouldQueue
         try {
             $latestStaffReply = Message::where('conversation_id', $this->conversationId)
                 ->whereHas('sender', function ($query) {
-                    $query->whereIn('role', ['admin', 'staff']);
+                    $query->whereIn('role', \App\Models\User::MANAGEMENT_ROLES);
                 })
                 ->orderBy('created_at', 'desc')
                 ->first();

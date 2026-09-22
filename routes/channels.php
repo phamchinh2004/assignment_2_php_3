@@ -2,6 +2,7 @@
 
 use App\Models\Conversation;
 use App\Models\User;
+use App\Services\AuthorizationService;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Log;
 
@@ -43,26 +44,8 @@ Broadcast::channel('chat.conversation.{conversationId}', function ($user, $conve
         return false;
     }
 
-    // Admin có thể xem tất cả các conversation
-    if ($user->role === User::ROLE_ADMIN) {
-        Log::debug('Admin access granted');
-        return true;
-    }
+    $hasAccess = app(AuthorizationService::class)->canViewConversation($user, $conversation);
+    Log::debug('Conversation access check', ['has_access' => $hasAccess]);
 
-    // Staff chỉ có thể xem conversation mà họ được assign
-    if ($user->role === User::ROLE_STAFF) {
-        $hasAccess = $conversation->staff_id === $user->id;
-        Log::debug('Staff access check', ['has_access' => $hasAccess]);
-        return $hasAccess;
-    }
-
-    // Member chỉ có thể xem conversation của chính họ
-    if ($user->role === User::ROLE_MEMBER) {
-        $hasAccess = $conversation->user_id === $user->id;
-        Log::debug('Member access check', ['has_access' => $hasAccess]);
-        return $hasAccess;
-    }
-
-    Log::warning('Access denied - unknown role', ['role' => $user->role]);
-    return false;
+    return $hasAccess;
 });

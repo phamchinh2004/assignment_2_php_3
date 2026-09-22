@@ -1,6 +1,6 @@
 @extends('admin.layouts.master')
 @section('title')
-    Danh sách nhân viên
+    Danh sách nhân sự quản trị
 @endsection
 
 @section('style-libs')
@@ -91,6 +91,7 @@
     $activeStaff = !empty($list_staffs) ? $list_staffs->where('status', 'activated')->count() : 0;
     $bannedStaff = !empty($list_staffs) ? $list_staffs->where('status', 'banned')->count() : 0;
     $totalRevenue = !empty($list_staffs) ? $list_staffs->sum('total_deposit') : 0;
+    $authorization = app(\App\Services\AuthorizationService::class);
 @endphp
 
 <div class="container-fluid px-4 pb-5">
@@ -100,14 +101,14 @@
         <div>
             <h1 class="page-title-main">
                 <span class="page-title-icon teal"><i class="fas fa-user-tie"></i></span>
-                Quản lý nhân viên
+                Quản lý admin & nhân viên
             </h1>
-            <p class="page-subtitle">Quản lý đội ngũ nhân viên, theo dõi trạng thái hoạt động trực tuyến và doanh số đóng góp</p>
+            <p class="page-subtitle">Owner quản lý admin và staff; admin chỉ quản lý staff khi có permission tương ứng.</p>
         </div>
         <div class="d-flex align-items-center gap-2">
             <a href="{{ route('staff.create') }}" class="btn-create-modern text-decoration-none">
                 <i class="fas fa-user-plus"></i>
-                <span>Thêm nhân viên mới</span>
+                <span>Thêm tài khoản mới</span>
             </a>
         </div>
     </div>
@@ -224,7 +225,7 @@
                     <thead>
                         <tr>
                             <th class="text-center" style="width: 50px;">#</th>
-                            <th>Nhân viên</th>
+                            <th>Tài khoản</th>
                             <th class="text-center" style="width: 140px;">Hoạt động</th>
                             <th>Người tạo / Giới thiệu</th>
                             <th>Tổng doanh số nạp</th>
@@ -256,6 +257,9 @@
                                                 </a>
                                                 <span class="entity-subtitle">
                                                     <span>@<span>{{ $item->username }}</span></span> • {{ $item->phone ?: 'Chưa có SĐT' }}
+                                                </span>
+                                                <span class="badge-status-modern {{ $item->role === \App\Models\User::ROLE_ADMIN ? 'warning' : 'success' }}" style="width: fit-content; margin-top: .25rem;">
+                                                    {{ $item->role === \App\Models\User::ROLE_ADMIN ? 'Admin' : 'Staff' }}
                                                 </span>
                                             </div>
                                         </div>
@@ -315,11 +319,13 @@
                                                 <i class="fas fa-eye"></i>
                                             </a>
 
-                                            {{-- Phân quyền --}}
-                                            <a href="{{ route('staff.edit.permissions', ['id' => $item->id]) }}"
-                                               class="btn-action-icon edit" title="Chỉnh sửa quyền hạn" style="color: #4f46e5;">
-                                                <i class="fas fa-shield-halved"></i>
-                                            </a>
+                                            @if($authorization->canManageOperatorPermissions(auth()->user(), $item))
+                                                {{-- Phân quyền --}}
+                                                <a href="{{ route('staff.edit.permissions', ['id' => $item->id]) }}"
+                                                   class="btn-action-icon edit" title="Chỉnh sửa quyền hạn" style="color: #4f46e5;">
+                                                    <i class="fas fa-shield-halved"></i>
+                                                </a>
+                                            @endif
 
                                             {{-- Sửa tài khoản --}}
                                             <a href="{{ route('staff.edit', ['staff' => $item->id]) }}"

@@ -322,8 +322,8 @@ class StatisticalDashboard {
 
         try {
             const [revRes, statusRes] = await Promise.all([
-                fetch(url).then(r => r.json()),
-                fetch(statusUrl).then(r => r.json())
+                this.fetchJson(url),
+                this.fetchJson(statusUrl)
             ]);
 
             if (revRes.success) {
@@ -342,6 +342,28 @@ class StatisticalDashboard {
         } finally {
             this.isLoading = false;
         }
+    }
+
+    async fetchJson(url) {
+        const response = await fetch(url, {
+            credentials: 'same-origin',
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+
+        const contentType = response.headers.get('content-type') || '';
+        if (!contentType.includes('application/json')) {
+            throw new Error(`API ${url} trả về HTTP ${response.status} với nội dung không phải JSON.`);
+        }
+
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.message || `API ${url} trả về HTTP ${response.status}.`);
+        }
+
+        return data;
     }
 
     updateSummaryCards(summary) {

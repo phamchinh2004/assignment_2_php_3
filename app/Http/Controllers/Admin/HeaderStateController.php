@@ -45,7 +45,7 @@ class HeaderStateController extends Controller
     {
         $user = $request->user();
 
-        abort_unless($user && in_array($user->role, [User::ROLE_ADMIN, User::ROLE_STAFF], true), 403);
+        abort_unless($user && in_array($user->role, User::MANAGEMENT_ROLES, true), 403);
 
         return $user;
     }

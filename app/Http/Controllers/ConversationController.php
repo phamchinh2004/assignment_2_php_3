@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 
 class ConversationController extends Controller
@@ -11,7 +12,7 @@ class ConversationController extends Controller
      */
     public function index()
     {
-        if (!in_array(Auth::user()->role, ['admin', 'staff'])) {
+        if (!in_array(Auth::user()->role, User::MANAGEMENT_ROLES, true)) {
             abort(403, 'Unauthorized');
         }
 

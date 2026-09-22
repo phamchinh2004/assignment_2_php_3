@@ -111,7 +111,7 @@ Chỉnh sửa người dùng
                                 </div>
                             </div>
 
-                            @if (auth()->user()->role === \App\Models\User::ROLE_ADMIN)
+                            @if (auth()->user()->role === \App\Models\User::ROLE_OWNER)
                             <div class="col-md-6">
                                 <div class="form-group-custom">
                                     <label for="role">Vai trò <span class="text-danger">*</span></label>
@@ -275,7 +275,7 @@ Chỉnh sửa người dùng
                                 </div>
                             </div>
 
-                            @if (auth()->user()->role === \App\Models\User::ROLE_ADMIN)
+                            @if (app(\App\Services\AuthorizationService::class)->can(auth()->user(), config('authorization.capabilities.manage_all_users')))
                             <div class="col-md-6">
                                 <div class="form-group-custom">
                                     <label for="lucky_wheel_bonus_spins">Lượt quay may mắn được cấp còn lại</label>

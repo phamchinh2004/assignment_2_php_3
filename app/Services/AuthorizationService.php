@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Conversation;
 use App\Models\User;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Arr;
@@ -141,7 +142,95 @@ class AuthorizationService
 
     public function isSuperuser(User $user): bool
     {
-        return $user->role === User::ROLE_ADMIN;
+        return $user->role === User::ROLE_OWNER;
+    }
+
+    public function isManagementUser(User $user): bool
+    {
+        return in_array($user->role, User::MANAGEMENT_ROLES, true);
+    }
+
+    public function canDeleteChatMessages(User $user): bool
+    {
+        return $this->isSuperuser($user);
+    }
+
+    public function canViewOperatorChats(User $actor, User $operator): bool
+    {
+        if ($this->isSuperuser($actor)) {
+            return in_array($operator->role, [User::ROLE_ADMIN, User::ROLE_STAFF], true);
+        }
+
+        if ($actor->role === User::ROLE_ADMIN) {
+            if ((int) $actor->id === (int) $operator->id) {
+                return true;
+            }
+
+            return $operator->role === User::ROLE_STAFF
+                && $this->can($actor, config('authorization.capabilities.manage_all_chats'));
+        }
+
+        return $actor->role === User::ROLE_STAFF
+            && $operator->role === User::ROLE_STAFF
+            && (int) $actor->id === (int) $operator->id;
+    }
+
+    public function canViewConversation(User $actor, Conversation $conversation): bool
+    {
+        if ($actor->role === User::ROLE_MEMBER) {
+            return (int) $conversation->user_id === (int) $actor->id;
+        }
+
+        $conversation->loadMissing('staff:id,role');
+
+        return $conversation->staff
+            ? $this->canViewOperatorChats($actor, $conversation->staff)
+            : false;
+    }
+
+    public function visibleTeamChatRoles(User $actor): array
+    {
+        if ($this->isSuperuser($actor)) {
+            return [User::ROLE_STAFF, User::ROLE_ADMIN];
+        }
+
+        if (
+            $actor->role === User::ROLE_ADMIN
+            && $this->can($actor, config('authorization.capabilities.manage_all_chats'))
+        ) {
+            return [User::ROLE_STAFF];
+        }
+
+        return [];
+    }
+
+    public function canManageOperator(User $actor, User $target): bool
+    {
+        if ($this->isSuperuser($actor)) {
+            return in_array($target->role, [User::ROLE_ADMIN, User::ROLE_STAFF], true);
+        }
+
+        return $actor->role === User::ROLE_ADMIN
+            && $target->role === User::ROLE_STAFF
+            && $this->can($actor, config('authorization.capabilities.manage_staff'));
+    }
+
+    public function canManageOperatorPermissions(User $actor, User $target): bool
+    {
+        if ($this->isSuperuser($actor)) {
+            return in_array($target->role, [User::ROLE_ADMIN, User::ROLE_STAFF], true);
+        }
+
+        return $actor->role === User::ROLE_ADMIN
+            && $target->role === User::ROLE_STAFF
+            && $this->can($actor, config('authorization.capabilities.manage_staff_permissions'));
+    }
+
+    public function manageableOperatorRoles(User $actor): array
+    {
+        return $this->isSuperuser($actor)
+            ? [User::ROLE_ADMIN, User::ROLE_STAFF]
+            : [User::ROLE_STAFF];
     }
 
     private function cleanPermissions(array $permissions): array

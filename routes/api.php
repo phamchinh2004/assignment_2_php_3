@@ -19,7 +19,12 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 // API Routes cho thống kê doanh thu
-Route::prefix('statistical')->name('api.statistical.')->group(function () {
+Route::middleware([
+    'web',
+    'auth',
+    'role:staff|admin|own',
+    'permission:' . config('authorization.capabilities.system_statistics'),
+])->prefix('statistical')->name('api.statistical.')->group(function () {
     // API lấy dữ liệu thống kê doanh thu chính
     Route::get('revenue-data', [StatisticalController::class, 'getRevenueData'])->name('revenue');
 
@@ -34,14 +39,23 @@ Route::prefix('statistical')->name('api.statistical.')->group(function () {
 });
 
 // Middleware bảo vệ API (nếu cần)
-Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin/statistical')->name('api.admin.statistical.')->group(function () {
+Route::middleware([
+    'auth:sanctum',
+    'role:staff|admin|own',
+    'permission:' . config('authorization.capabilities.system_statistics'),
+])->prefix('admin/statistical')->name('api.admin.statistical.')->group(function () {
     // Các API chỉ dành cho admin
     Route::get('revenue-data', [StatisticalController::class, 'getRevenueData'])->name('revenue');
     Route::get('user-revenue-stats', [StatisticalController::class, 'getUserRevenueStats'])->name('user.revenue');
     Route::get('transaction-status-stats', [StatisticalController::class, 'getTransactionStatusStats'])->name('transaction.status');
     Route::get('export-revenue-data', [StatisticalController::class, 'exportRevenueData'])->name('export.revenue');
 });
-Route::prefix('revenue')->group(function () {
+Route::middleware([
+    'web',
+    'auth',
+    'role:staff|admin|own',
+    'permission:' . config('authorization.capabilities.system_statistics'),
+])->prefix('revenue')->group(function () {
     // Tổng quan doanh thu
     Route::get('overview', [StatisticalController::class, 'revenueOverview'])->name('api.revenue.overview');
 
@@ -77,11 +91,18 @@ Route::prefix('revenue')->group(function () {
 });
 
 // Routes tương thích với frontend JavaScript
-Route::get('revenue-overview', [StatisticalController::class, 'revenueOverview']);
-Route::get('revenue-chart', [StatisticalController::class, 'revenueChart']);
-Route::get('top-customers', [StatisticalController::class, 'topCustomers']);
-Route::get('revenue-distribution', [StatisticalController::class, 'revenueDistribution']);
-Route::get('customer-revenue-detail', [StatisticalController::class, 'customerRevenueDetail']);
+Route::middleware([
+    'web',
+    'auth',
+    'role:staff|admin|own',
+    'permission:' . config('authorization.capabilities.system_statistics'),
+])->group(function () {
+    Route::get('revenue-overview', [StatisticalController::class, 'revenueOverview']);
+    Route::get('revenue-chart', [StatisticalController::class, 'revenueChart']);
+    Route::get('top-customers', [StatisticalController::class, 'topCustomers']);
+    Route::get('revenue-distribution', [StatisticalController::class, 'revenueDistribution']);
+    Route::get('customer-revenue-detail', [StatisticalController::class, 'customerRevenueDetail']);
+});
 
 
 // Route::get('/personal-revenue-stats', [StatisticalController::class, 'getPersonalRevenueStats']);

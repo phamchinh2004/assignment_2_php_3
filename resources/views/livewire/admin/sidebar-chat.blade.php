@@ -3,7 +3,29 @@
 
     // Keep distinct keys and element IDs for the desktop and mobile sidebars.
     $keyPrefix = ($isMobile ?? false) ? 'mobile-' : 'desktop-';
-    $isAdmin = auth()->user()->role === 'admin';
+    $authorization = app(\App\Services\AuthorizationService::class);
+    $visibleTeamRoles = $authorization->visibleTeamChatRoles(auth()->user());
+    $canManageTeamChats = !empty($visibleTeamRoles);
+    $operatorSections = [];
+
+    if (in_array(\App\Models\User::ROLE_STAFF, $visibleTeamRoles, true)) {
+        $operatorSections[] = [
+            'key' => 'staff',
+            'title' => 'Danh sách nhân viên',
+            'empty' => 'Chưa có nhân viên trong danh sách',
+            'users' => $staffUsers,
+        ];
+    }
+
+    if (in_array(\App\Models\User::ROLE_ADMIN, $visibleTeamRoles, true)) {
+        $operatorSections[] = [
+            'key' => 'admin',
+            'title' => 'Danh sách admin',
+            'empty' => 'Chưa có admin trong danh sách',
+            'users' => $adminUsers,
+        ];
+    }
+
     $ownConversations = $conversations->where('staff_id', auth()->id());
 @endphp
 
@@ -16,7 +38,7 @@
         <div class="chat-sidebar-heading-icon" aria-hidden="true"><i class="fas fa-comments"></i></div>
         <div>
             <h2 class="chat-sidebar-title">Hộp thư</h2>
-            <p class="chat-sidebar-subtitle">{{ $isAdmin ? 'Quản lý hội thoại khách hàng' : 'Kết nối với khách hàng của bạn' }}</p>
+            <p class="chat-sidebar-subtitle">{{ $canManageTeamChats ? 'Quản lý hội thoại khách hàng' : 'Kết nối với khách hàng của bạn' }}</p>
         </div>
     </div>
 
@@ -36,7 +58,7 @@
     <div class="chat-sidebar-list custom-scrollbar">
         <section class="chat-sidebar-section" aria-labelledby="{{ $keyPrefix }}my-chats-title">
             <h3 class="sidebar-section-title" id="{{ $keyPrefix }}my-chats-title">
-                <span>{{ $isAdmin ? 'Tin nhắn của tôi' : 'Khách hàng của tôi' }}</span>
+                <span>{{ $canManageTeamChats ? 'Tin nhắn của tôi' : 'Khách hàng của tôi' }}</span>
                 <span class="sidebar-section-count">{{ $ownConversations->count() }}</span>
             </h3>
 
@@ -52,7 +74,7 @@
                     $isOnline = $conversation->user->last_seen && $conversation->user->last_seen->diffInMinutes(now()) <= 5;
                     $lastMessage = $conversation->messages->last();
                 @endphp
-                <button type="button" wire:key="{{ $keyPrefix }}{{ $isAdmin ? 'admin' : 'staff' }}-conversation-{{ $conversation->id }}"
+                <button type="button" wire:key="{{ $keyPrefix }}{{ $canManageTeamChats ? 'manager' : 'staff' }}-conversation-{{ $conversation->id }}"
                     class="conversation-item {{ $isSelected ? 'is-selected active bg-primary' : '' }} {{ $hasUnread ? 'has-unread' : '' }} {{ $hasPenalty ? 'has-penalty' : '' }}"
                     aria-current="{{ $isSelected ? 'true' : 'false' }}" wire:click="selectConversation({{ $conversation->id }})">
                     <span class="conversation-avatar">
@@ -103,7 +125,7 @@
                     </span>
                 </button>
             @empty
-                <div class="sidebar-empty-state {{ $isAdmin ? 'sidebar-empty-state-compact' : '' }}">
+                <div class="sidebar-empty-state {{ $canManageTeamChats ? 'sidebar-empty-state-compact' : '' }}">
                     <span class="sidebar-empty-icon" aria-hidden="true"><i class="{{ trim($searchTerm ?? '') !== '' ? 'fas fa-search' : 'far fa-comment-dots' }}"></i></span>
                     <p>{{ trim($searchTerm ?? '') !== '' ? 'Không tìm thấy hội thoại' : 'Chưa có hội thoại' }}</p>
                     <span>{{ trim($searchTerm ?? '') !== '' ? 'Thử tìm bằng tên hoặc tài khoản khác.' : 'Tin nhắn khách hàng sẽ xuất hiện tại đây.' }}</span>
@@ -111,17 +133,17 @@
             @endforelse
         </section>
 
-        @if($isAdmin)
-            <section class="chat-sidebar-section" aria-labelledby="{{ $keyPrefix }}team-chats-title">
-                <h3 class="sidebar-section-title" id="{{ $keyPrefix }}team-chats-title">
-                    <span>Nhân viên &amp; khách hàng</span>
-                    <span class="sidebar-section-count">{{ count($staffUsers) }}</span>
+        @foreach($operatorSections as $operatorSection)
+            <section class="chat-sidebar-section" aria-labelledby="{{ $keyPrefix }}{{ $operatorSection['key'] }}-chats-title">
+                <h3 class="sidebar-section-title" id="{{ $keyPrefix }}{{ $operatorSection['key'] }}-chats-title">
+                    <span>{{ $operatorSection['title'] }}</span>
+                    <span class="sidebar-section-count">{{ count($operatorSection['users']) }}</span>
                 </h3>
-                @forelse($staffUsers as $staff)
+                @forelse($operatorSection['users'] as $staff)
                     @php $isExpanded = in_array($staff['id'], $expandedStaff); @endphp
-                    <div wire:key="{{ $keyPrefix }}staff-section-{{ $staff['id'] }}" class="sidebar-staff-group">
+                    <div wire:key="{{ $keyPrefix }}{{ $operatorSection['key'] }}-section-{{ $staff['id'] }}" class="sidebar-staff-group">
                         <button type="button" class="staff-header {{ $isExpanded ? 'is-expanded' : '' }}"
-                            aria-expanded="{{ $isExpanded ? 'true' : 'false' }}" aria-controls="{{ $keyPrefix }}staff-users-{{ $staff['id'] }}"
+                            aria-expanded="{{ $isExpanded ? 'true' : 'false' }}" aria-controls="{{ $keyPrefix }}{{ $operatorSection['key'] }}-users-{{ $staff['id'] }}"
                             wire:click="toggleStaffExpansion({{ $staff['id'] }})">
                             <span class="staff-avatar" aria-hidden="true">{{ mb_strtoupper(mb_substr($staff['full_name'], 0, 1)) }}</span>
                             <span class="staff-details">
@@ -131,7 +153,7 @@
                             <i class="fas fa-chevron-down staff-chevron {{ $isExpanded ? 'rotated' : '' }}" aria-hidden="true"></i>
                         </button>
 
-                        <div id="{{ $keyPrefix }}staff-users-{{ $staff['id'] }}" class="staff-users-list {{ $isExpanded ? 'expanded' : 'collapsed' }}">
+                        <div id="{{ $keyPrefix }}{{ $operatorSection['key'] }}-users-{{ $staff['id'] }}" class="staff-users-list {{ $isExpanded ? 'expanded' : 'collapsed' }}">
                             @if($isExpanded)
                                 @forelse($staff['invited_users'] as $user)
                                     @php
@@ -146,7 +168,7 @@
                                         $lastMsg = isset($user['latest_conversation']) && !empty($user['latest_conversation']['messages'])
                                             ? end($user['latest_conversation']['messages']) : null;
                                     @endphp
-                                    <button type="button" wire:key="{{ $keyPrefix }}staff-{{ $staff['id'] }}-user-{{ $user['id'] }}"
+                                    <button type="button" wire:key="{{ $keyPrefix }}{{ $operatorSection['key'] }}-{{ $staff['id'] }}-user-{{ $user['id'] }}"
                                         class="conversation-item {{ $isSelected ? 'is-selected active bg-primary' : '' }} {{ $userHasUnread ? 'has-unread' : '' }} {{ $userHasPenalty ? 'has-penalty' : '' }}"
                                         aria-current="{{ $isSelected ? 'true' : 'false' }}" wire:click="selectUserForChat({{ $user['id'] }}, {{ $staff['id'] }})">
                                         <span class="conversation-avatar">
@@ -204,11 +226,11 @@
                     </div>
                 @empty
                     <div class="sidebar-empty-state sidebar-empty-state-compact">
-                        <p>Chưa có nhân viên trong danh sách</p>
+                        <p>{{ $operatorSection['empty'] }}</p>
                         @if(trim($searchTerm ?? '') !== '')<span>Thử tìm bằng tên hoặc tài khoản khác.</span>@endif
                     </div>
                 @endforelse
             </section>
-        @endif
+        @endforeach
     </div>
 </div>

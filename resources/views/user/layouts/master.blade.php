@@ -35,8 +35,8 @@
     @vite('resources/css/user/notification.css')
     @vite('resources/css/floating-chat.css')
     @yield('css-libs')
-    @vite('resources/css/user/tiktok-theme.css')
     @stack('page-styles')
+    @vite('resources/css/user/tiktok-theme.css')
     @livewireStyles
     <style>
         /* Smooth scroll for better UX */

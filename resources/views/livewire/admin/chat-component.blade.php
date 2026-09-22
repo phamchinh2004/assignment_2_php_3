@@ -1,5 +1,11 @@
 @php
     use Illuminate\Support\Facades\Storage;
+    $isOwner = auth()->user()->role === \App\Models\User::ROLE_OWNER;
+    $isManagementUser = in_array(auth()->user()->role, \App\Models\User::MANAGEMENT_ROLES, true);
+    $canManageAllChats = app(\App\Services\AuthorizationService::class)->can(
+        auth()->user(),
+        config('authorization.capabilities.manage_all_chats')
+    );
 @endphp
 
 @push('css')
@@ -91,7 +97,7 @@
                         </div>
                         <div class="chat-contact-meta d-flex flex-wrap align-items-center gap-2">
                             <span class="chat-contact-username">{{ $this->selectedConversation->user->username }}</span>
-                            @if(auth()->user()->role === 'admin' || auth()->user()->role === 'staff')
+                            @if($isManagementUser)
                                 <span class="chat-header-chip chip-staff">
                                     <i class="fas fa-user-shield me-1"></i>QL: {{ $this->selectedConversation->staff->full_name }}
                                 </span>
@@ -163,7 +169,7 @@
                             <li>
                                 <hr class="dropdown-divider">
                             </li>
-                            @if(auth()->user()->role === 'admin')
+                            @if($isOwner)
                                 <li>
                                     <a class="dropdown-item text-warning" href="javascript:void(0)"
                                         onclick="confirmDeleteMessages()">
@@ -479,6 +485,10 @@
                                     $tailClass = '';
 
                                     switch ($senderRole) {
+                                        case 'own':
+                                            $bubbleClass = 'admin-message text-white';
+                                            $tailColor = '#7c3aed';
+                                            break;
                                         case 'admin':
                                             $bubbleClass = 'admin-message text-white';
                                             $tailColor = '#dc3545';
@@ -509,7 +519,8 @@
                                                 {{ $message['sender']['full_name'] ?? 'Unknown User' }}
                                             </small>
                                             <span class="role-badge ms-2">
-                                                @if($senderRole === 'admin') Quản trị viên
+                                                @if($senderRole === 'own') Chủ hệ thống
+                                                @elseif($senderRole === 'admin') Quản trị viên
                                                 @elseif($senderRole === 'staff') Nhân viên
                                                 @else Khách hàng
                                                 @endif
@@ -535,7 +546,7 @@
                                     @endif
 
                                     <!-- Thao tác tin nhắn -->
-                                    @if(($isCurrentUser && ($message['type'] ?? 'text') === 'text') || auth()->user()->role === 'admin')
+                                    @if(($isCurrentUser && ($message['type'] ?? 'text') === 'text') || $isOwner)
                                     <div class="message-actions d-flex" aria-label="Thao tác tin nhắn">
                                         @if($isCurrentUser && ($message['type'] ?? 'text') === 'text')
                                             <button type="button" class="btn btn-link btn-sm text-muted" title="Sửa tin nhắn" aria-label="Sửa tin nhắn"
@@ -543,7 +554,7 @@
                                                 <i class="fas fa-edit"></i>
                                             </button>
                                         @endif
-                                        @if(auth()->user()->role === 'admin')
+                                        @if($isOwner)
                                             <button type="button" class="btn btn-link btn-sm text-danger" title="Xóa tin nhắn" aria-label="Xóa tin nhắn"
                                                     onclick="confirmDeleteSingleMessage({{ $message['id'] }})">
                                                 <i class="fas fa-trash-alt"></i>
@@ -910,7 +921,7 @@
         });
 
         // Listen MessageSent event trên staff channel để update sidebar khi có tin nhắn mới
-        @if(auth()->user()->role === 'admin' || auth()->user()->role === 'staff')
+        @if($isManagementUser)
             const staffChannel = `staff.{{ auth()->id() }}`;
             const currentUserId = {{ auth()->id() }};
 
@@ -936,7 +947,7 @@
                     if (e.message.sender_id === currentUserId) {
                         // Chỉ reload sidebar, không hiển thị notification
                         component.call('loadConversations');
-                        @if(auth()->user()->role === 'admin')
+                        @if($canManageAllChats)
                             component.call('loadStaffUsersAlternative');
                         @endif
                                     return;
@@ -945,7 +956,7 @@
                     // Tin nhắn của người khác và conversation khác
                     // → Reload sidebar và gọi messageReceived() để hiển thị notification
                     component.call('loadConversations');
-                    @if(auth()->user()->role === 'admin')
+                    @if($canManageAllChats)
                         component.call('loadStaffUsersAlternative');
                     @endif
                     component.call('messageReceived', e.message);
@@ -955,7 +966,7 @@
                     const root = document.getElementById('chat-root');
                     const component = Livewire.find(root.getAttribute('wire:id'));
                     component.call('loadConversations');
-                    @if(auth()->user()->role === 'admin')
+                    @if($canManageAllChats)
                         component.call('loadStaffUsersAlternative');
                     @endif
                             })

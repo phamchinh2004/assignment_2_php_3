@@ -24,6 +24,13 @@
     box-sizing: border-box;
 }
 
+/* Keep the linked/unlinked modal states mutually exclusive.
+   Component layout rules below use display:grid/flex, which would
+   otherwise override the browser's default [hidden] behavior. */
+.bank-account [hidden] {
+    display: none !important;
+}
+
 .bank-account-card {
     display: grid;
     grid-template-columns: 44px minmax(0, 1fr) auto;

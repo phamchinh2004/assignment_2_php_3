@@ -24,10 +24,7 @@ class TransactionHistoryController extends Controller
             // })
             ->where('type', 'withdraw');
         $actor = Auth::user();
-        if (
-            $actor->role === User::ROLE_STAFF
-            && !$authorization->can($actor, config('authorization.capabilities.manage_all_user_transactions'))
-        ) {
+        if (!$authorization->can($actor, config('authorization.capabilities.manage_all_user_transactions'))) {
             $query->whereHas('user', function ($q) use ($actor) {
                 $q->where('referrer_id', $actor->id);
             });
@@ -85,10 +82,7 @@ class TransactionHistoryController extends Controller
             // })
             ->where('type', 'deposit');
         $actor = Auth::user();
-        if (
-            $actor->role === User::ROLE_STAFF
-            && !$authorization->can($actor, config('authorization.capabilities.manage_all_user_transactions'))
-        ) {
+        if (!$authorization->can($actor, config('authorization.capabilities.manage_all_user_transactions'))) {
             $query->where('by_user_id', $actor->id);
         }
         $list_deposit_transactions = $query->orderByDesc('id')->get();
@@ -156,10 +150,7 @@ class TransactionHistoryController extends Controller
 
         $actor = Auth::user();
 
-        if (
-            $actor->role !== User::ROLE_STAFF
-            || $authorization->can($actor, config('authorization.capabilities.manage_all_user_transactions'))
-        ) {
+        if ($authorization->can($actor, config('authorization.capabilities.manage_all_user_transactions'))) {
             return;
         }
 

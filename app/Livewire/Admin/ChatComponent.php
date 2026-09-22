@@ -12,6 +12,7 @@ use Livewire\Component;
 use App\Models\User;
 use App\Models\Conversation;
 use App\Models\Message;
+use App\Services\AuthorizationService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -31,6 +32,7 @@ class ChatComponent extends Component
     public $messages = [];
     public $conversations = [];
     public $staffUsers = [];
+    public $adminUsers = [];
     public $expandedStaff = [];
     public $messagesPerPage = 20; // Tăng số tin nhắn mỗi lần tải
     public $currentPage = 1;
@@ -46,10 +48,28 @@ class ChatComponent extends Component
         'message-received' => 'messageReceived'
     ];
 
+    private function canManageAllChats(): bool
+    {
+        return app(AuthorizationService::class)->can(
+            Auth::user(),
+            config('authorization.capabilities.manage_all_chats')
+        );
+    }
+
+    private function isOwner(): bool
+    {
+        return app(AuthorizationService::class)->canDeleteChatMessages(Auth::user());
+    }
+
+    private function canViewConversation(Conversation $conversation): bool
+    {
+        return app(AuthorizationService::class)->canViewConversation(Auth::user(), $conversation);
+    }
+
     public function mount()
     {
         $this->loadConversations();
-        if (Auth::user()->role === 'admin') {
+        if ($this->canManageAllChats()) {
             $this->loadStaffUsersAlternative();
         }
     }
@@ -57,15 +77,23 @@ class ChatComponent extends Component
     {
         $this->loadConversations();
 
-        if (Auth::user()->role === 'admin') {
+        if ($this->canManageAllChats()) {
             $this->loadStaffUsersAlternative();
         }
     }
     public function getSelectedConversationProperty()
     {
         $conv = $this->conversations->firstWhere('id', $this->selectedConversationId);
+        if ($conv && !$this->canViewConversation($conv)) {
+            return null;
+        }
+
         if (!$conv && $this->selectedConversationId) {
             $conv = Conversation::with(['user', 'staff', 'messages'])->find($this->selectedConversationId);
+
+            if ($conv && !$this->canViewConversation($conv)) {
+                return null;
+            }
         }
         return $conv;
     }
@@ -78,7 +106,7 @@ class ChatComponent extends Component
         $query = Conversation::query()
             ->with([
                 'user',
-                'staff:id,full_name,username',
+                'staff:id,full_name,username,role',
                 'messages' => function ($query) {
                     $query->select('id', 'conversation_id', 'message', 'type', 'kind', 'created_at')->latest()->limit(1);
                 }
@@ -91,7 +119,20 @@ class ChatComponent extends Component
             ])
             ->orderByDesc('updated_at');
 
-        if ($user->role === 'staff') {
+        $authorization = app(AuthorizationService::class);
+
+        if ($authorization->isSuperuser($user)) {
+            $query->whereHas('staff', function ($staffQuery) {
+                $staffQuery->whereIn('role', [User::ROLE_STAFF, User::ROLE_ADMIN]);
+            });
+        } elseif ($user->role === User::ROLE_ADMIN && $this->canManageAllChats()) {
+            $query->where(function ($conversationQuery) use ($user) {
+                $conversationQuery->where('staff_id', $user->id)
+                    ->orWhereHas('staff', function ($staffQuery) {
+                        $staffQuery->where('role', User::ROLE_STAFF);
+                    });
+            });
+        } else {
             $query->where('staff_id', $user->id);
         }
 
@@ -107,7 +148,7 @@ class ChatComponent extends Component
     public function updatedSearchTerm()
     {
         $this->loadConversations();
-        if (Auth::user()->role === 'admin') {
+        if ($this->canManageAllChats()) {
             $this->loadStaffUsersAlternative();
         }
     }
@@ -116,15 +157,25 @@ class ChatComponent extends Component
 
     public function loadStaffUsersAlternative()
     {
+        $authorization = app(AuthorizationService::class);
+        $visibleRoles = $authorization->visibleTeamChatRoles(Auth::user());
+
+        if (empty($visibleRoles)) {
+            $this->staffUsers = [];
+            $this->adminUsers = [];
+            return;
+        }
+
         $currentUserId = Auth::id();
 
-        $staffData = User::where('role', 'staff')
-            ->select('id', 'full_name') // Optimize fields
+        $staffData = User::whereIn('role', $visibleRoles)
+            ->select('id', 'full_name', 'role') // Optimize fields
             ->orderBy('id', 'asc')
             ->get();
 
         // Tạo array mới hoàn toàn
         $staffArray = [];
+        $adminArray = [];
 
         // Lấy tất cả thông tin các staff member bằng IN clause trước để giảm query N+1
         $staffIds = $staffData->pluck('id');
@@ -132,8 +183,9 @@ class ChatComponent extends Component
             ->whereIn('referrer_id', $staffIds)
             // Lấy kèm hộp thoại và message mới nhất
             ->with([
-                'memberConversations' => function ($q) use ($currentUserId) {
-                    $q->orderBy('updated_at', 'desc')
+                'memberConversations' => function ($q) use ($currentUserId, $staffIds) {
+                    $q->whereIn('staff_id', $staffIds)
+                        ->orderBy('updated_at', 'desc')
                         ->with([
                             'messages' => function ($qm) {
                                 $qm->select('id', 'conversation_id', 'message', 'type', 'kind', 'created_at', 'is_read')
@@ -157,7 +209,7 @@ class ChatComponent extends Component
             $usersArray = [];
 
             foreach ($users as $user) {
-                $latestConv = $user->memberConversations->firstWhere('staff_id', $staff->id) ?? $user->memberConversations->first();
+                $latestConv = $user->memberConversations->firstWhere('staff_id', $staff->id);
 
                 $userData = [
                     'id' => $user->id,
@@ -189,14 +241,21 @@ class ChatComponent extends Component
                 return $b['conv_updated_at_timestamp'] - $a['conv_updated_at_timestamp'];
             });
 
-            $staffArray[] = [
+            $operatorData = [
                 'id' => $staff->id,
                 'full_name' => $staff->full_name,
                 'invited_users' => $usersArray,
             ];
+
+            if ($staff->role === User::ROLE_ADMIN) {
+                $adminArray[] = $operatorData;
+            } else {
+                $staffArray[] = $operatorData;
+            }
         }
 
         $this->staffUsers = $staffArray;
+        $this->adminUsers = $adminArray;
         $this->staffUsersUpdateKey++;
     }
 
@@ -205,6 +264,9 @@ class ChatComponent extends Component
 
     public function selectConversation($conversationId)
     {
+        $conversation = Conversation::with('staff:id,role')->find($conversationId);
+        abort_unless($conversation && $this->canViewConversation($conversation), 403);
+
         logger('🎯 selectConversation called', [
             'conversationId' => $conversationId,
             'previousConversationId' => $this->selectedConversationId
@@ -258,24 +320,31 @@ class ChatComponent extends Component
             }
         }
 
-        // Nếu là admin, cập nhật trong staffUsers (array format)
-        if (Auth::user()->role === 'admin' && is_array($this->staffUsers)) {
-            foreach ($this->staffUsers as &$staff) {
-                if (isset($staff['invited_users']) && is_array($staff['invited_users'])) {
-                    foreach ($staff['invited_users'] as &$user) {
-                        if (
-                            isset($user['latest_conversation']) &&
-                            $user['latest_conversation']['id'] == $conversationId
-                        ) {
-                            $user['latest_conversation']['unread_count'] = 0;
-                            break 2; // Break cả 2 vòng lặp
-                        }
-                    }
+        if ($this->canManageAllChats()) {
+            $this->staffUsers = $this->clearOperatorUnreadCount($this->staffUsers, $conversationId);
+            $this->adminUsers = $this->clearOperatorUnreadCount($this->adminUsers, $conversationId);
+        }
+    }
+
+    private function clearOperatorUnreadCount(array $operators, $conversationId): array
+    {
+        foreach ($operators as &$operator) {
+            if (!isset($operator['invited_users']) || !is_array($operator['invited_users'])) {
+                continue;
+            }
+
+            foreach ($operator['invited_users'] as &$user) {
+                if (
+                    isset($user['latest_conversation'])
+                    && $user['latest_conversation']['id'] == $conversationId
+                ) {
+                    $user['latest_conversation']['unread_count'] = 0;
+                    break 2;
                 }
             }
-            // Reassign để Livewire detect change (Deep array modification)
-            $this->staffUsers = collect($this->staffUsers)->toArray();
         }
+
+        return $operators;
     }
 
     /**
@@ -283,8 +352,8 @@ class ChatComponent extends Component
      */
     private function markMessagesAsRead($conversationId)
     {
-        $conversation = Conversation::find($conversationId);
-        if (!$conversation) {
+        $conversation = Conversation::with('staff:id,role')->find($conversationId);
+        if (!$conversation || !$this->canViewConversation($conversation)) {
             return;
         }
 
@@ -313,7 +382,7 @@ class ChatComponent extends Component
     #[On('delete-all-messages')]
     public function deleteAllMessages()
     {
-        if (Auth::user()->role !== User::ROLE_ADMIN) {
+        if (!$this->isOwner()) {
             return;
         }
 
@@ -338,7 +407,7 @@ class ChatComponent extends Component
             $this->messages = [];
 
             $this->loadConversations();
-            if (Auth::user()->role === 'admin') {
+            if ($this->canManageAllChats()) {
                 $this->loadStaffUsersAlternative();
             }
             $this->dispatch('scroll-to-bottom');
@@ -360,7 +429,7 @@ class ChatComponent extends Component
 
     public function deleteConversation()
     {
-        if (Auth::user()->role !== User::ROLE_ADMIN) {
+        if (!$this->isOwner()) {
             return false;
         }
 
@@ -387,7 +456,7 @@ class ChatComponent extends Component
 
             // Reload danh sách
             $this->loadConversations();
-            if (Auth::user()->role === 'admin') {
+            if ($this->canManageAllChats()) {
                 $this->loadStaffUsersAlternative();
             }
 
@@ -438,7 +507,7 @@ class ChatComponent extends Component
         }
         $getUser->save();
         $this->loadConversations();
-        if (Auth::user()->role === 'admin') {
+        if ($this->canManageAllChats()) {
             $this->loadStaffUsersAlternative();
         }
         $this->loadMessages();
@@ -552,6 +621,11 @@ class ChatComponent extends Component
     public function openConversationFromNotification($conversationId, $userId, $staffId)
     {
         $currentUserId = Auth::id();
+        $conversation = Conversation::with('staff:id,role')->find($conversationId);
+        abort_unless($conversation && $this->canViewConversation($conversation), 403);
+
+        $userId = $conversation->user_id;
+        $staffId = $conversation->staff_id;
 
         logger('🔔 openConversationFromNotification called', [
             'conversationId' => $conversationId,
@@ -588,9 +662,10 @@ class ChatComponent extends Component
     public function selectUserForChat($userId, $staffId = null)
     {
         $currentUser = Auth::user();
+        $authorization = app(AuthorizationService::class);
 
         // Nếu là admin và không truyền staffId, tìm staff đã mời user này
-        if ($currentUser->role === 'admin' && !$staffId) {
+        if ($this->canManageAllChats() && !$staffId) {
             $member = User::find($userId);
             if ($member && $member->referrer_id) {
                 $staffId = $member->referrer_id;
@@ -605,16 +680,20 @@ class ChatComponent extends Component
             }
         }
 
-        if ($staffId && !User::find($staffId)?->invitedUsers->contains('id', $userId)) {
-            abort(403, 'Không được phép truy cập người dùng này.');
-        }
-
         $actualStaffId = $staffId ?? $currentUser->id;
+        $operator = User::find($actualStaffId);
 
-        // Kiểm tra quyền truy cập
-        if ($currentUser->role === 'staff' && $actualStaffId !== $currentUser->id) {
-            return;
-        }
+        abort_unless(
+            $operator && $authorization->canViewOperatorChats($currentUser, $operator),
+            403,
+            'Không được phép truy cập hội thoại của tài khoản này.'
+        );
+
+        abort_unless(
+            $operator->invitedUsers->contains('id', $userId),
+            403,
+            'Không được phép truy cập người dùng này.'
+        );
 
         // Đảm bảo accordion của nhân viên này được giữ mở
         if (!in_array($actualStaffId, $this->expandedStaff)) {
@@ -625,7 +704,7 @@ class ChatComponent extends Component
         $this->messages = [];
 
         // Admin: CHỈ TÌM conversation hiện có, KHÔNG TẠO MỚI
-        if ($currentUser->role === 'admin') {
+        if ($this->canManageAllChats()) {
             $conversation = Conversation::where('user_id', $userId)
                 ->where('staff_id', $actualStaffId)
                 ->first();
@@ -698,23 +777,21 @@ class ChatComponent extends Component
     #[On('delete-single-message')]
     public function deleteMessage($messageId)
     {
-        if (Auth::user()->role !== User::ROLE_ADMIN) {
+        if (!$this->isOwner()) {
             return;
         }
 
         $message = Message::find($messageId);
         if ($message) {
-            if (Auth::user()->role === User::ROLE_ADMIN) {
-                $conversationId = $message->conversation_id;
-                $message->delete();
-                broadcast(new MessageDeleted($messageId, $conversationId));
+            $conversationId = $message->conversation_id;
+            $message->delete();
+            broadcast(new MessageDeleted($messageId, $conversationId));
 
-                // Xóa khỏi mảng hiển thị
-                if (is_array($this->messages)) {
-                    $this->messages = array_values(array_filter($this->messages, function ($msg) use ($messageId) {
-                        return $msg['id'] != $messageId;
-                    }));
-                }
+            // Xóa khỏi mảng hiển thị
+            if (is_array($this->messages)) {
+                $this->messages = array_values(array_filter($this->messages, function ($msg) use ($messageId) {
+                    return $msg['id'] != $messageId;
+                }));
             }
         }
     }
@@ -805,6 +882,11 @@ class ChatComponent extends Component
             return;
         }
 
+        $conversation = Conversation::with(['user', 'staff:id,role'])->find($message['conversation_id']);
+        if (!$conversation || !$this->canViewConversation($conversation)) {
+            return;
+        }
+
         // KIỂM TRA DUPLICATE: Sử dụng session để cache (tốt hơn property vì shared across requests)
         $messageId = $message['id'];
         $processedIds = session()->get('chat.processed_message_ids', []);
@@ -880,8 +962,6 @@ class ChatComponent extends Component
                 default => Str::limit($message['message'] ?? '', 30, '...'),
             };
 
-            // Tìm thông tin về user và staff để quyết định cách mở conversation
-            $conversation = Conversation::with(['user', 'staff'])->find($message['conversation_id']);
             $userId = $conversation->user_id ?? null;
             $staffId = $conversation->staff_id ?? null;
 
@@ -901,7 +981,7 @@ class ChatComponent extends Component
 
         // Cập nhật sidebar
         $this->loadConversations();
-        if (Auth::user()->role === 'admin') {
+        if ($this->canManageAllChats()) {
             $this->loadStaffUsersAlternative();
         }
         $this->dispatch('refresh-conversations');
@@ -912,7 +992,16 @@ class ChatComponent extends Component
      */
     public function markSingleMessageAsRead($messageId, $conversationId)
     {
-        $message = Message::find($messageId);
+        $message = Message::with('conversation.staff:id,role')->find($messageId);
+        if (!$message || (int) $message->conversation_id !== (int) $conversationId) {
+            return;
+        }
+
+        abort_unless(
+            $message->conversation && $this->canViewConversation($message->conversation),
+            403
+        );
+
         if ($message && !$message->is_read) {
             $message->update(['is_read' => true]);
 

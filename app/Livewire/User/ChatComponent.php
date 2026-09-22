@@ -11,6 +11,7 @@ use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
 use App\Services\ChatReferenceService;
+use App\Services\ManagementRecipientResolver;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -713,7 +714,7 @@ class ChatComponent extends Component
             $lastStaffMessage = Message::where('conversation_id', $this->conversation->id)
                 ->where('sender_id', '!=', Auth::id())
                 ->whereHas('sender', function ($query) {
-                    $query->whereIn('role', ['admin', 'staff']);
+                    $query->whereIn('role', User::MANAGEMENT_ROLES);
                 })
                 ->select('id', 'created_at', 'sender_id')
                 ->orderBy('created_at', 'desc')
@@ -805,55 +806,22 @@ class ChatComponent extends Component
     {
         try {
             $currentUser = Auth::user();
-            $emailsSent = [];
-            $recipients = collect([]);
+            $recipients = app(ManagementRecipientResolver::class)
+                ->forUser($currentUser)
+                ->filter(fn (User $recipient) => $recipient->email && !$recipient->isOnline())
+                ->unique('id')
+                ->values();
 
-            // 1. Lấy nhân viên mời (referrer) nếu có
-            $referrer = null;
-            if ($currentUser->referrer_id) {
-                $referrer = User::find($currentUser->referrer_id);
-            }
-
-            // 2. Lấy admin (người có quyền cao nhất)
-            $admin = User::where('role', 'admin')->first();
-
-            // LOGIC GỬI EMAIL:
-            // - Nếu user CÓ referrer (được nhân viên mời):
-            //   + Gửi cho referrer nếu offline
-            //   + Gửi cho admin nếu offline (và admin khác referrer)
-            // - Nếu user KHÔNG CÓ referrer:
-            //   + Chỉ gửi cho admin nếu offline
-
-            if ($referrer) {
-                // User được mời bởi nhân viên
-
-                // Gửi cho referrer nếu offline
-                if (!$referrer->isOnline()) {
-                    $recipients->push($referrer);
-                    $emailsSent[] = "Nhân viên: {$referrer->full_name} ({$referrer->email})";
-                }
-
-                // Gửi cho admin nếu offline và admin khác referrer
-                if ($admin && !$admin->isOnline() && $admin->id !== $referrer->id) {
-                    $recipients->push($admin);
-                    $emailsSent[] = "Admin: {$admin->full_name} ({$admin->email})";
-                }
-
-            } else {
-                // User đăng ký không có ai mời → chỉ gửi cho admin
-
-                if ($admin && !$admin->isOnline()) {
-                    $recipients->push($admin);
-                    $emailsSent[] = "Admin: {$admin->full_name} ({$admin->email})";
-                }
-            }
+            $emailsSent = $recipients
+                ->map(fn (User $recipient) => "{$recipient->role}: {$recipient->full_name} ({$recipient->email})")
+                ->all();
 
             // Nếu không có ai offline, không gửi email
             if ($recipients->isEmpty()) {
                 Log::info('Tất cả staff/admin đang online, không cần gửi email', [
                     'user_id' => Auth::id(),
                     'conversation_id' => $this->conversation->id,
-                    'has_referrer' => $referrer ? true : false
+                    'has_referrer' => (bool) $currentUser->referrer_id
                 ]);
                 return;
             }
@@ -872,7 +840,7 @@ class ChatComponent extends Component
                 'user_id' => Auth::id(),
                 'user_name' => $currentUser->full_name,
                 'conversation_id' => $this->conversation->id,
-                'has_referrer' => $referrer ? true : false,
+                'has_referrer' => (bool) $currentUser->referrer_id,
                 'recipients' => $emailsSent,
                 'total_emails' => $recipients->count()
             ]);

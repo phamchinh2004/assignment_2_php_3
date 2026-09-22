@@ -6,6 +6,8 @@ use App\Models\Manager_setting;
 use App\Models\User;
 use App\Models\User_manager_setting;
 use App\Services\AuthorizationService;
+use Illuminate\Config\Repository;
+use Illuminate\Container\Container;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Collection;
 use PHPUnit\Framework\TestCase;
@@ -17,6 +19,15 @@ class AuthorizationServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        Container::getInstance()->instance('config', new Repository([
+            'authorization' => [
+                'capabilities' => [
+                    'manage_all_chats' => 'quan_ly_tat_ca_tin_nhan',
+                ],
+            ],
+        ]));
+
         $this->authorization = new AuthorizationService();
     }
 
@@ -30,14 +41,81 @@ class AuthorizationServiceTest extends TestCase
         $this->assertFalse($this->authorization->canAll($staff, ['orders.manage', 'orders.delete']));
     }
 
-    public function test_admin_is_superuser_without_assignments(): void
+    public function test_admin_without_assignments_is_not_superuser(): void
     {
         $admin = new User();
         $admin->role = User::ROLE_ADMIN;
+        $admin->setRelation('user_manager_settings', collect());
 
-        $this->assertTrue($this->authorization->can($admin, 'anything'));
-        $this->assertTrue($this->authorization->canAll($admin, ['a', 'b']));
-        $this->assertTrue($this->authorization->canAny($admin, ['a', 'b']));
+        $this->assertFalse($this->authorization->isSuperuser($admin));
+        $this->assertFalse($this->authorization->can($admin, 'anything'));
+        $this->assertFalse($this->authorization->canAll($admin, ['a', 'b']));
+        $this->assertFalse($this->authorization->canAny($admin, ['a', 'b']));
+        $this->assertFalse($this->authorization->canDeleteChatMessages($admin));
+    }
+
+    public function test_admin_permissions_are_resolved_like_staff_permissions(): void
+    {
+        $admin = $this->userWithPermissions(User::ROLE_ADMIN, ['orders.manage'], ['orders.delete']);
+
+        $this->assertTrue($this->authorization->can($admin, 'orders.manage'));
+        $this->assertFalse($this->authorization->can($admin, 'orders.delete'));
+    }
+
+    public function test_owner_is_the_only_superuser_and_can_delete_chat_messages(): void
+    {
+        $owner = new User();
+        $owner->role = User::ROLE_OWNER;
+
+        $this->assertTrue($this->authorization->isSuperuser($owner));
+        $this->assertTrue($this->authorization->can($owner, 'anything'));
+        $this->assertTrue($this->authorization->canAll($owner, ['a', 'b']));
+        $this->assertTrue($this->authorization->canAny($owner, ['a', 'b']));
+        $this->assertTrue($this->authorization->canDeleteChatMessages($owner));
+    }
+
+    public function test_admin_with_manage_all_chats_can_view_staff_and_own_chats_but_not_other_admin_chats(): void
+    {
+        $admin = $this->userWithPermissions(
+            User::ROLE_ADMIN,
+            [config('authorization.capabilities.manage_all_chats')]
+        );
+        $admin->id = 10;
+
+        $staff = new User();
+        $staff->id = 20;
+        $staff->role = User::ROLE_STAFF;
+
+        $otherAdmin = new User();
+        $otherAdmin->id = 30;
+        $otherAdmin->role = User::ROLE_ADMIN;
+
+        $this->assertTrue($this->authorization->canViewOperatorChats($admin, $admin));
+        $this->assertTrue($this->authorization->canViewOperatorChats($admin, $staff));
+        $this->assertFalse($this->authorization->canViewOperatorChats($admin, $otherAdmin));
+        $this->assertSame([User::ROLE_STAFF], $this->authorization->visibleTeamChatRoles($admin));
+    }
+
+    public function test_owner_can_view_both_staff_and_admin_chat_groups(): void
+    {
+        $owner = new User();
+        $owner->id = 1;
+        $owner->role = User::ROLE_OWNER;
+
+        $staff = new User();
+        $staff->id = 20;
+        $staff->role = User::ROLE_STAFF;
+
+        $admin = new User();
+        $admin->id = 30;
+        $admin->role = User::ROLE_ADMIN;
+
+        $this->assertTrue($this->authorization->canViewOperatorChats($owner, $staff));
+        $this->assertTrue($this->authorization->canViewOperatorChats($owner, $admin));
+        $this->assertSame(
+            [User::ROLE_STAFF, User::ROLE_ADMIN],
+            $this->authorization->visibleTeamChatRoles($owner)
+        );
     }
 
     public function test_permission_middleware_supports_any_and_all_modes(): void
@@ -57,7 +135,7 @@ class AuthorizationServiceTest extends TestCase
         $staff = $this->staffWithPermissions(['orders.manage']);
         $route = new Route(['GET'], 'admin/orders', fn () => null);
         $route->middleware([
-            'role:staff|admin',
+            'role:staff|admin|own',
             'permission:orders.manage',
             'authorization.context:users.manage_all',
         ]);
@@ -76,15 +154,20 @@ class AuthorizationServiceTest extends TestCase
     {
         $staff = $this->staffWithPermissions([]);
         $route = new Route(['GET'], 'admin/orders', fn () => null);
-        $route->middleware(['role:staff|admin', 'permission:orders.manage']);
+        $route->middleware(['role:staff|admin|own', 'permission:orders.manage']);
 
         $this->assertFalse($this->authorization->routeState($staff, $route)['can_access']);
     }
 
     private function staffWithPermissions(array $active, array $inactive = []): User
     {
+        return $this->userWithPermissions(User::ROLE_STAFF, $active, $inactive);
+    }
+
+    private function userWithPermissions(string $role, array $active, array $inactive = []): User
+    {
         $staff = new User();
-        $staff->role = User::ROLE_STAFF;
+        $staff->role = $role;
 
         $assignments = collect();
         foreach ($active as $code) {

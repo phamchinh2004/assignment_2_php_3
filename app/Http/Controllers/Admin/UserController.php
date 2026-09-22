@@ -34,10 +34,7 @@ class UserController extends Controller
         $query = User::with(['frozen_orders', 'referrer', 'rank'])->where('role', 'member');
         $actor = Auth::user();
 
-        if (
-            $actor->role === User::ROLE_STAFF
-            && !$authorization->can($actor, config('authorization.capabilities.manage_all_users'))
-        ) {
+        if (!$authorization->can($actor, config('authorization.capabilities.manage_all_users'))) {
             $query->where('referrer_id', $actor->id);
         }
 
@@ -263,11 +260,11 @@ class UserController extends Controller
             'warehouse_address',
         ]);
 
-        // Chỉ quản trị viên mới có thể thay đổi vai trò, kể cả khi nhân viên tự gửi trường role.
-        if (Auth::user()->role === User::ROLE_ADMIN && $request->filled('role')) {
+        // Only the owner may change account roles.
+        if ($authorization->isSuperuser(Auth::user()) && $request->filled('role')) {
             $data['role'] = $request->role;
         }
-        if (Auth::user()->role === User::ROLE_ADMIN && $request->filled('lucky_wheel_bonus_spins')) {
+        if ($authorization->can(Auth::user(), config('authorization.capabilities.manage_all_users')) && $request->filled('lucky_wheel_bonus_spins')) {
             $data['lucky_wheel_bonus_spins'] = (int) $request->lucky_wheel_bonus_spins;
         }
         $data['rank_id'] = $request->rank;
@@ -679,15 +676,14 @@ class UserController extends Controller
         abort_unless($member->role === User::ROLE_MEMBER, 404);
 
         $actor = Auth::user();
-        if ($actor->role !== User::ROLE_STAFF) {
-            return;
-        }
-
         $canManageAll = $authorization->can(
             $actor,
             config('authorization.capabilities.manage_all_users')
         );
 
-        abort_unless($canManageAll || (int) $member->referrer_id === (int) $actor->id, 403);
+        abort_unless(
+            $canManageAll || (int) $member->referrer_id === (int) $actor->id,
+            403
+        );
     }
 }

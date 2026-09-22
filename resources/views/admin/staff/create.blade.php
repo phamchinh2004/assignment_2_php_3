@@ -1,6 +1,6 @@
 @extends('admin.layouts.master')
 @section('title')
-    Thêm mới nhân viên
+    Thêm tài khoản quản trị
 @endsection
 
 @section('style-libs')
@@ -20,9 +20,9 @@
         <div>
             <h1 class="page-title-main">
                 <span class="page-title-icon teal"><i class="fas fa-user-plus"></i></span>
-                Tạo tài khoản nhân viên
+                Tạo tài khoản quản trị
             </h1>
-            <p class="page-subtitle">Thêm nhân sự mới vào hệ thống quản trị nội bộ</p>
+            <p class="page-subtitle">Tạo tài khoản staff hoặc admin theo phạm vi bạn được phép quản lý</p>
         </div>
     </div>
 
@@ -102,6 +102,19 @@
                                 @enderror
                                 <span class="form-hint-modern">Mặc định là 123456 nếu để trống.</span>
                             </div>
+
+                            @if(count($allowedRoles ?? []) > 1)
+                                <div class="form-group-modern">
+                                    <label class="form-label-modern" for="role">Vai trò <span class="text-danger">*</span></label>
+                                    <select name="role" id="role" class="form-control-modern" required>
+                                        <option value="staff" @selected(old('role', 'staff') === 'staff')>Nhân viên (staff)</option>
+                                        <option value="admin" @selected(old('role') === 'admin')>Quản trị viên (admin)</option>
+                                    </select>
+                                    <span class="form-hint-modern">Admin vẫn hoạt động theo permission do owner cấp.</span>
+                                </div>
+                            @else
+                                <input type="hidden" name="role" value="staff">
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -113,7 +126,7 @@
                     <i class="fas fa-times"></i> Hủy bỏ
                 </a>
                 <button type="submit" class="btn-submit-modern">
-                    <i class="fas fa-check"></i> Lưu tài khoản nhân viên
+                    <i class="fas fa-check"></i> Lưu tài khoản
                 </button>
             </div>
         </form>

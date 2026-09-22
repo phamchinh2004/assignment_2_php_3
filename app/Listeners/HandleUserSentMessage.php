@@ -3,17 +3,17 @@
 namespace App\Listeners;
 
 use App\Events\UserSentMessage;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Queue\InteractsWithQueue;
+use App\Models\User;
+use App\Notifications\ChatMessageNotification;
+use App\Services\ManagementRecipientResolver;
 
 class HandleUserSentMessage
 {
     /**
      * Create the event listener.
      */
-    public function __construct()
+    public function __construct(private ManagementRecipientResolver $recipients)
     {
-        //
     }
 
     /**
@@ -21,8 +21,21 @@ class HandleUserSentMessage
      */
     public function handle(UserSentMessage $event): void
     {
-        // Event giờ chỉ truyền userId, không cần xử lý ở đây
-        // Relationship đã được load trong broadcastOn() của event UserSentMessage
-        // Listener này có thể để trống hoặc thêm logic khác nếu cần
+        if (!$event->userId) {
+            return;
+        }
+
+        $user = User::with(['referrer', 'conversation'])->find($event->userId);
+        if (!$user || !$user->conversation) {
+            return;
+        }
+
+        foreach ($this->recipients->forUser($user) as $recipient) {
+            $recipient->notify(new ChatMessageNotification(
+                $user->conversation->id,
+                (string) $event->full_name,
+                (string) $event->message
+            ));
+        }
     }
 }

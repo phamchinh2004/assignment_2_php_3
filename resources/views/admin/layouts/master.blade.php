@@ -372,7 +372,7 @@
             @auth
             if (window.Echo) {
                 // Listen staff channel cho admin/staff để nhận notifications từ users
-                @if(auth()->user()->role === 'admin' || auth()->user()->role === 'staff')
+                @if(in_array(auth()->user()->role, \App\Models\User::MANAGEMENT_ROLES, true))
                     window.Echo.private(`staff.{{ auth()->id() }}`)
                         .listen('.UserJoinChat', function(e) {
                             const title = 'Tham gia hội thoại';

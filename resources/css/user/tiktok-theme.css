@@ -377,3 +377,498 @@ textarea:focus {
 .alert-info {
     border-left: 3px solid var(--tt-red) !important;
 }
+
+/* =========================================================
+   User UI color system — TikTok Shop inspired, light-first.
+   This block intentionally sits last so every user page shares
+   the same palette even when legacy page CSS uses raw colors.
+   ========================================================= */
+:root {
+    --shop-primary: #fe2c55;
+    --shop-primary-hover: #e61e4d;
+    --shop-primary-soft: #fff0f3;
+    --shop-cyan: #12bfc2;
+    --shop-cyan-soft: #eafafa;
+    --shop-ink: #161823;
+    --shop-muted: #6f7684;
+    --shop-canvas: #f6f7f9;
+    --shop-surface: #ffffff;
+    --shop-surface-soft: #fafbfc;
+    --shop-line: #e7e9ee;
+    --shop-line-strong: #d8dce3;
+    --shop-success: #07865c;
+    --shop-success-soft: #eaf7f1;
+    --shop-warning: #b97312;
+    --shop-warning-soft: #fff7e8;
+    --shop-danger: #d92d4f;
+    --shop-danger-soft: #fff0f3;
+    --shop-dark: #11131a;
+    --shop-dark-2: #232735;
+    --shop-shadow-sm: 0 4px 14px rgba(22, 24, 35, .06);
+    --shop-shadow-md: 0 12px 30px rgba(22, 24, 35, .09);
+    --shop-shadow-dark: 0 18px 44px rgba(15, 18, 28, .20);
+
+    --tt-red: var(--shop-primary);
+    --tt-red-dark: var(--shop-primary-hover);
+    --tt-black: var(--shop-ink);
+    --tt-ink: var(--shop-ink);
+    --tt-muted: var(--shop-muted);
+    --tt-line: var(--shop-line);
+    --tt-surface: var(--shop-surface);
+    --tt-canvas: var(--shop-canvas);
+    --tt-white: #fff;
+
+    --home-ink: var(--shop-ink);
+    --home-muted: var(--shop-muted);
+    --home-paper: var(--shop-canvas);
+    --home-surface: var(--shop-surface);
+    --home-line: var(--shop-line);
+    --home-dark: var(--shop-dark);
+    --home-coral: var(--shop-primary);
+    --home-cyan: var(--shop-cyan);
+
+    --me-ink: var(--shop-ink);
+    --me-muted: var(--shop-muted);
+    --me-line: var(--shop-line);
+    --me-accent: var(--shop-primary);
+    --me-green: var(--shop-success);
+
+    --dist-ink: var(--shop-ink);
+    --dist-muted: var(--shop-muted);
+    --dist-paper: var(--shop-canvas);
+    --dist-line: var(--shop-line);
+    --dist-coral: var(--shop-primary);
+    --dist-cyan: var(--shop-cyan);
+
+    --withdraw-ink: var(--shop-ink);
+    --withdraw-muted: var(--shop-muted);
+    --withdraw-line: var(--shop-line);
+    --withdraw-soft: var(--shop-canvas);
+    --withdraw-brand: var(--shop-primary);
+    --withdraw-green: var(--shop-success);
+
+    --member-ink: var(--shop-ink);
+    --member-muted: var(--shop-muted);
+    --member-line: var(--shop-line);
+    --member-bg: var(--shop-canvas);
+    --member-accent: var(--shop-primary);
+}
+
+html,
+body,
+.container-1,
+.around-content {
+    background: var(--shop-canvas) !important;
+}
+
+body {
+    color: var(--shop-ink) !important;
+}
+
+.bg-white,
+.bg-light,
+.stat-card,
+.chart-container,
+.recent-transactions,
+.setting-card,
+.order-detail-card,
+.box_content,
+.section_3_item_content,
+.transaction-item,
+.transaction-list-item,
+.modal-content,
+.dropdown-menu,
+.finance-card,
+.finance-filter,
+.withdraw-card,
+.review-card,
+.description-card {
+    background: var(--shop-surface) !important;
+    color: var(--shop-ink) !important;
+    border-color: var(--shop-line) !important;
+}
+
+.stat-card,
+.setting-card,
+.order-detail-card,
+.box_content,
+.finance-card,
+.finance-filter,
+.withdraw-card,
+.review-card {
+    box-shadow: var(--shop-shadow-sm) !important;
+}
+
+.text-dark {
+    color: var(--shop-ink) !important;
+}
+
+.text-muted,
+.form-text {
+    color: var(--shop-muted) !important;
+}
+
+.btn-primary,
+.btn-danger,
+.btn-distribute-modern,
+.btn-process-modern,
+.btn-submit-frozen,
+.btn-withdraw-all,
+.withdraw-submit,
+.deposit-btn,
+.withdraw-btn,
+.wheel-spin-button,
+.filter-submit {
+    background: var(--shop-primary) !important;
+    border-color: var(--shop-primary) !important;
+    color: #fff !important;
+    box-shadow: 0 8px 20px rgba(254, 44, 85, .18);
+}
+
+.btn-primary:hover,
+.btn-danger:hover,
+.btn-distribute-modern:hover,
+.btn-process-modern:hover,
+.btn-submit-frozen:hover,
+.btn-withdraw-all:hover,
+.withdraw-submit:hover,
+.deposit-btn:hover,
+.withdraw-btn:hover,
+.wheel-spin-button:hover,
+.filter-submit:hover {
+    background: var(--shop-primary-hover) !important;
+    border-color: var(--shop-primary-hover) !important;
+}
+
+.btn-outline-primary,
+.btn-back-modern,
+.filter-btn.active,
+.tab-btn:has(.active-tab),
+.membership-eyebrow,
+.finance-eyebrow {
+    color: var(--shop-primary) !important;
+    border-color: rgba(254, 44, 85, .42) !important;
+}
+
+.filter-btn.active,
+.tab-btn:has(.active-tab),
+.preset.active {
+    background: var(--shop-primary) !important;
+    color: #fff !important;
+    border-color: var(--shop-primary) !important;
+}
+
+.btn-warning {
+    background: var(--shop-warning) !important;
+    border-color: var(--shop-warning) !important;
+    color: #fff !important;
+}
+
+.btn-dark {
+    background: var(--shop-ink) !important;
+    border-color: var(--shop-ink) !important;
+    color: #fff !important;
+}
+
+.form-control,
+.form-select,
+input,
+select,
+textarea {
+    background-color: var(--shop-surface) !important;
+    color: var(--shop-ink) !important;
+    border-color: var(--shop-line-strong) !important;
+}
+
+.form-control:focus,
+.form-select:focus,
+input:focus,
+select:focus,
+textarea:focus {
+    border-color: var(--shop-primary) !important;
+    box-shadow: 0 0 0 .2rem rgba(254, 44, 85, .12) !important;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    outline: 3px solid rgba(18, 191, 194, .32) !important;
+    outline-offset: 2px;
+}
+
+.home-wallet-card,
+.profile-hero,
+.wallet-card,
+.membership-overview,
+.withdraw-summary-card,
+.balance-hero,
+.distribution-command,
+.order-history-intro,
+.profile-identity-hero {
+    background:
+        radial-gradient(circle at 90% 8%, rgba(18, 191, 194, .18), transparent 28%),
+        radial-gradient(circle at 7% 100%, rgba(254, 44, 85, .14), transparent 32%),
+        linear-gradient(145deg, var(--shop-dark) 0%, var(--shop-dark-2) 62%, #171a24 100%) !important;
+    color: #fff !important;
+    border-color: rgba(255, 255, 255, .08) !important;
+    box-shadow: var(--shop-shadow-dark) !important;
+}
+
+.home-announcement {
+    border-color: #f4ccd5 !important;
+    background: linear-gradient(145deg, #fffafa 0%, var(--shop-primary-soft) 100%) !important;
+    box-shadow: var(--shop-shadow-sm) !important;
+}
+
+.home-announcement__icon {
+    background: var(--shop-ink) !important;
+    color: #fff !important;
+}
+
+.home-announcement__heading span {
+    background: #ffe0e7 !important;
+    color: #ad2440 !important;
+}
+
+.home-progress-card,
+.home-rank-card,
+.home-partner-card,
+.home-section-card {
+    border-color: var(--shop-line) !important;
+    background: var(--shop-surface) !important;
+    box-shadow: var(--shop-shadow-sm) !important;
+}
+
+.btn-distribute-modern .btn-icon {
+    background: rgba(255, 255, 255, .18) !important;
+    color: #fff !important;
+}
+
+.btn-distribute-modern .btn-copy small,
+.btn-distribute-modern .btn-text,
+.btn-distribute-modern .btn-arrow {
+    color: #fff !important;
+}
+
+.progress-bar-modern,
+.progress-bar-fill,
+.loading-progress-bar {
+    background: linear-gradient(90deg, var(--shop-cyan), var(--shop-primary)) !important;
+}
+
+.route-finish,
+.current-number,
+.command-copy h2 em {
+    color: #4ee7e1 !important;
+}
+
+.stat-card.balance-card,
+.ledger-strip .stat-card,
+.stat-card.frozen-card,
+.description-card {
+    background: var(--shop-surface) !important;
+    border-color: var(--shop-line) !important;
+    color: var(--shop-ink) !important;
+}
+
+.stat-card.balance-card .stat-value,
+.stat-card.frozen-card .stat-value {
+    color: var(--shop-ink) !important;
+}
+
+.metric-icon,
+.frozen-symbol {
+    background: var(--shop-ink) !important;
+    color: #fff !important;
+}
+
+.commission-card .stat-value,
+.commission-added-card .stat-value,
+.profit-color,
+.summary-row.highlight .summary-value {
+    color: var(--shop-success) !important;
+}
+
+.order-history-balance,
+.order-history-filter,
+.order_item:not(.high-value-order),
+.order-detail-card {
+    background: var(--shop-surface) !important;
+    border-color: var(--shop-line) !important;
+}
+
+.order-history-live i {
+    background: var(--shop-cyan) !important;
+}
+
+.order-header-normal,
+.modal-header,
+.loading-modal-container {
+    background:
+        radial-gradient(circle at 92% 0%, rgba(18, 191, 194, .15), transparent 34%),
+        linear-gradient(145deg, var(--shop-dark), var(--shop-dark-2)) !important;
+    color: #fff !important;
+}
+
+.order-content-modern,
+.product-card-modern,
+.summary-card-modern,
+.transaction-details,
+.modal-container,
+.success-modal-content {
+    background: var(--shop-surface) !important;
+    color: var(--shop-ink) !important;
+    border-color: var(--shop-line) !important;
+}
+
+.summary-card-modern,
+.transaction-details,
+.frozen-balance-info {
+    background: var(--shop-surface-soft) !important;
+}
+
+.finance-page {
+    --ink: var(--shop-ink);
+    --muted: var(--shop-muted);
+    --line: var(--shop-line);
+    --bg: var(--shop-canvas);
+    --brand: var(--shop-primary);
+    --green: var(--shop-success);
+    --red: var(--shop-danger);
+}
+
+.personal-profile-page {
+    --profile-ink: var(--shop-ink);
+    --profile-muted: var(--shop-muted);
+    --profile-soft: var(--shop-canvas);
+    --profile-surface: var(--shop-surface);
+    --profile-line: var(--shop-line);
+    --profile-dark: var(--shop-dark);
+    --profile-coral: var(--shop-primary);
+    --profile-cyan: var(--shop-cyan);
+    --profile-green: var(--shop-success);
+}
+
+.finance-page,
+.withdraw-page,
+.membership-page {
+    background: var(--shop-canvas) !important;
+}
+
+.transaction-icon.in,
+.linked-badge,
+.success-checkmark,
+.review-card__shield {
+    background: var(--shop-success-soft) !important;
+    color: var(--shop-success) !important;
+}
+
+.transaction-icon.out,
+.negative {
+    color: var(--shop-danger) !important;
+}
+
+.positive {
+    color: var(--shop-success) !important;
+}
+
+.profile-appbar__back,
+.profile-appbar__action,
+.withdraw-back,
+.withdraw-history-link,
+.membership-back {
+    background: var(--shop-surface) !important;
+    color: var(--shop-ink) !important;
+    border-color: var(--shop-line) !important;
+    box-shadow: var(--shop-shadow-sm) !important;
+}
+
+.step-badge,
+.bank-account-card__icon,
+.bank-empty-state > span {
+    background: var(--shop-ink) !important;
+    color: #fff !important;
+}
+
+.amount-max-button {
+    background: var(--shop-primary-soft) !important;
+    color: var(--shop-primary) !important;
+}
+
+.footer {
+    background: rgba(255, 255, 255, .96) !important;
+    border-top: 1px solid var(--shop-line) !important;
+    box-shadow: 0 -8px 28px rgba(22, 24, 35, .08) !important;
+    backdrop-filter: blur(16px);
+}
+
+.footer-item,
+.footer-item i,
+.footer-item .text-footer {
+    color: #777e8b !important;
+}
+
+.footer-item.active,
+.footer-item.active i,
+.footer-item.active .text-footer,
+.footer-item:hover,
+.footer-item:hover i,
+.footer-item:hover .text-footer {
+    color: var(--shop-primary) !important;
+}
+
+.amazon_btn {
+    background: var(--shop-ink) !important;
+    box-shadow: 0 8px 22px rgba(22, 24, 35, .18), 0 0 0 4px #fff !important;
+}
+
+.alert-success,
+.status-success {
+    background: var(--shop-success-soft) !important;
+    color: #076447 !important;
+    border-color: #bde8d7 !important;
+}
+
+.alert-warning,
+.status-warning,
+.remaining-orders-alert {
+    border-color: #f0d3a6 !important;
+}
+
+.alert-danger,
+.status-danger {
+    background: var(--shop-danger-soft) !important;
+    color: #a82440 !important;
+    border-color: #f4c3cf !important;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #b7bcc6 !important;
+    border-radius: 999px;
+}
+
+* {
+    scrollbar-color: #b7bcc6 var(--shop-canvas);
+}
+
+@media (hover: hover) {
+    .setting-card:hover,
+    .finance-card:hover,
+    .withdraw-card:hover {
+        border-color: #d2d6dd !important;
+        box-shadow: var(--shop-shadow-md) !important;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+    }
+}

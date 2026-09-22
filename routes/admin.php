@@ -20,10 +20,12 @@ use App\Http\Controllers\ConversationController;
 use App\Models\Language;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['role:staff|admin', 'checkBanned', 'auth'])->group(function () {
+Route::middleware(['role:staff|admin|own', 'checkBanned', 'auth'])->group(function () {
     $capabilities = config('authorization.capabilities');
 
-    Route::get('/', [DashboardController::class, 'index'])->name('admin.dashboard');
+    Route::get('/', [DashboardController::class, 'index'])
+        ->middleware('permission:' . $capabilities['system_statistics'])
+        ->name('admin.dashboard');
     Route::get('/authorization-state', [AuthorizationController::class, 'state'])->name('authorization.state');
     Route::get('/header-state', [HeaderStateController::class, 'show'])->name('header.state');
     Route::post('/header/notifications/read-all', [HeaderStateController::class, 'markAllNotificationsRead'])
@@ -74,8 +76,10 @@ Route::middleware(['role:staff|admin', 'checkBanned', 'auth'])->group(function (
         Route::post('/user/plus-money', [UserController::class, 'plus_money'])->name('plus_money');
     });
 
-    Route::get('/frozen-order-settings', [\App\Http\Controllers\Admin\FrozenOrderSettingController::class, 'index'])->name('frozen_order_settings.index');
-    Route::post('/frozen-order-settings', [\App\Http\Controllers\Admin\FrozenOrderSettingController::class, 'store'])->name('frozen_order_settings.store');
+    Route::middleware(['permission:' . $capabilities['order_processing_time_alert_settings']])->group(function () {
+        Route::get('/frozen-order-settings', [\App\Http\Controllers\Admin\FrozenOrderSettingController::class, 'index'])->name('frozen_order_settings.index');
+        Route::post('/frozen-order-settings', [\App\Http\Controllers\Admin\FrozenOrderSettingController::class, 'store'])->name('frozen_order_settings.store');
+    });
 
     Route::middleware(['authorization.context:' . $capabilities['manage_all_user_transactions']])->group(function () {
         Route::get('/withdraw-transaction', [TransactionHistoryController::class, 'index_withdraw'])->name(name: 'withdraw_transaction');
@@ -90,30 +94,43 @@ Route::middleware(['role:staff|admin', 'checkBanned', 'auth'])->group(function (
     Route::get('/chat-panel', [ConversationController::class, 'index'])->name('chat-panel');
 });
 
-Route::middleware(['role:admin'])->group(function () {
-    Route::get('/order-distributions', [OrderDistributionController::class, 'index'])->name('order_distributions.index');
-    Route::get('/order-distributions/{frozenOrder}', [OrderDistributionController::class, 'show'])->name('order_distributions.show');
-    Route::post('/order-distributions/{frozenOrder}/restore', [OrderDistributionController::class, 'restore'])->name('order_distributions.restore');
-    Route::post('/order-distributions/bulk-restore', [OrderDistributionController::class, 'bulkRestore'])->name('order_distributions.bulk_restore');
+Route::middleware(['role:staff|admin|own', 'checkBanned', 'auth'])->group(function () {
+    $capabilities = config('authorization.capabilities');
+    Route::middleware(['permission:' . $capabilities['order_distributions']])->group(function () {
+        Route::get('/order-distributions', [OrderDistributionController::class, 'index'])->name('order_distributions.index');
+        Route::get('/order-distributions/{frozenOrder}', [OrderDistributionController::class, 'show'])->name('order_distributions.show');
+        Route::post('/order-distributions/{frozenOrder}/restore', [OrderDistributionController::class, 'restore'])->name('order_distributions.restore');
+        Route::post('/order-distributions/bulk-restore', [OrderDistributionController::class, 'bulkRestore'])->name('order_distributions.bulk_restore');
+    });
 
-    Route::resource('staffs', StaffController::class);
-    Route::resource('manager_setting', ManagerSettingController::class);
-    Route::resource('staff', StaffController::class);
-    Route::get('/staff-online-statuses', [StaffController::class, 'getOnlineStatuses'])->name('staff.online.statuses');
+    Route::middleware(['role:admin|own', 'permission:' . $capabilities['manage_staff']])->group(function () {
+        Route::resource('staffs', StaffController::class)->except(['destroy']);
+        Route::resource('staff', StaffController::class)->except(['destroy']);
+        Route::get('/staff-online-statuses', [StaffController::class, 'getOnlineStatuses'])->name('staff.online.statuses');
+        Route::get('/staff/change-status/{id}', [StaffController::class, 'change_status_staff'])->name('staff.change.status');
+    });
+
+    Route::middleware(['role:admin|own', 'permission:' . $capabilities['manage_staff_permissions']])->group(function () {
+        Route::get('/staff/edit-permissions/{id}', [StaffController::class, 'edit_permissions'])->name('staff.edit.permissions');
+        Route::post('/staff/change-status-permission', [StaffController::class, 'change_status_permission'])->name('staff.change.status.permission');
+        Route::post('/staff/change-status-permissions', [StaffController::class, 'change_status_permissions'])->name('staff.change.status.permissions');
+    });
+
+    Route::middleware(['role:own'])->group(function () {
+        Route::resource('manager_setting', ManagerSettingController::class);
+    });
     
-    // Quản lý thời gian chuyển trạng thái đơn hàng
-    Route::get('/order-status-timing', [\App\Http\Controllers\Admin\OrderStatusTimingController::class, 'index'])->name('admin.order_status_timing.index');
-    Route::get('/order-status-timing/{orderStatusTiming}/edit', [\App\Http\Controllers\Admin\OrderStatusTimingController::class, 'edit'])->name('admin.order_status_timing.edit');
-    Route::put('/order-status-timing/{orderStatusTiming}', [\App\Http\Controllers\Admin\OrderStatusTimingController::class, 'update'])->name('admin.order_status_timing.update');
-    Route::post('/order-status-timing/update-multiple', [\App\Http\Controllers\Admin\OrderStatusTimingController::class, 'updateMultiple'])->name('admin.order_status_timing.update_multiple');
-    Route::get('/staff/change-status/{id}', [StaffController::class, 'change_status_staff'])->name('staff.change.status');
-    Route::get('/staff/edit-permissions/{id}', [StaffController::class, 'edit_permissions'])->name('staff.edit.permissions');
-    Route::post('/staff/change-status-permission', [StaffController::class, 'change_status_permission'])->name('staff.change.status.permission');
-    Route::post('/staff/change-status-permissions', [StaffController::class, 'change_status_permissions'])->name('staff.change.status.permissions');
+    Route::middleware(['permission:' . $capabilities['order_timing_settings']])->group(function () {
+        Route::get('/order-status-timing', [\App\Http\Controllers\Admin\OrderStatusTimingController::class, 'index'])->name('admin.order_status_timing.index');
+        Route::get('/order-status-timing/{orderStatusTiming}/edit', [\App\Http\Controllers\Admin\OrderStatusTimingController::class, 'edit'])->name('admin.order_status_timing.edit');
+        Route::put('/order-status-timing/{orderStatusTiming}', [\App\Http\Controllers\Admin\OrderStatusTimingController::class, 'update'])->name('admin.order_status_timing.update');
+        Route::post('/order-status-timing/update-multiple', [\App\Http\Controllers\Admin\OrderStatusTimingController::class, 'updateMultiple'])->name('admin.order_status_timing.update_multiple');
+    });
 
-    // Tổng doanh thu
-    Route::get('tong-doanh-thu', [StatisticalController::class, 'tongDoanhThu'])->name('tong.doanh.thu');
-    Route::get('statistical/revenue', [StatisticalController::class, 'tongDoanhThu'])->name('admin.statistical.revenue');
+    Route::middleware(['permission:' . $capabilities['system_statistics']])->group(function () {
+        // Tổng doanh thu
+        Route::get('tong-doanh-thu', [StatisticalController::class, 'tongDoanhThu'])->name('tong.doanh.thu');
+        Route::get('statistical/revenue', [StatisticalController::class, 'tongDoanhThu'])->name('admin.statistical.revenue');
 
     // Route cho các trang thống kê khác
     Route::prefix('statistical')->name('admin.statistical.')->group(function () {
@@ -141,8 +158,11 @@ Route::middleware(['role:admin'])->group(function () {
     // Lấy biểu đồ doanh thu theo thời gian (route dành cho admin, tránh trùng với API)
     Route::get('chart', [StatisticalController::class, 'getRevenueChart'])
         ->name('admin.revenue.chart');
-    Route::get('doanh-thu-tu-khach-hang', [StatisticalController::class, 'doanhThuTuKhachHang'])->name('doanh.thu.tu.khach.hang');
+        Route::get('doanh-thu-tu-khach-hang', [StatisticalController::class, 'doanhThuTuKhachHang'])->name('doanh.thu.tu.khach.hang');
+    });
 });
-Route::get('doanh-thu-ban-than', [StatisticalController::class, 'doanhThuBanThan'])->name('doanh.thu.ban.than');
-Route::get('/personal-revenue-stats', [StatisticalController::class, 'getPersonalRevenueStats']);
-Route::middleware('auth')->get('/personal-transactions', [StatisticalController::class, 'getPersonalTransactions']);
+Route::middleware(['role:staff|admin|own', 'checkBanned', 'auth'])->group(function () {
+    Route::get('doanh-thu-ban-than', [StatisticalController::class, 'doanhThuBanThan'])->name('doanh.thu.ban.than');
+    Route::get('/personal-revenue-stats', [StatisticalController::class, 'getPersonalRevenueStats']);
+    Route::get('/personal-transactions', [StatisticalController::class, 'getPersonalTransactions']);
+});
