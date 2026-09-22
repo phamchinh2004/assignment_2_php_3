@@ -135,8 +135,11 @@
                 $can_spin = false;
                 $spin_message = '';
 
-                // Kiểm tra đã quay hôm nay chưa
-                if ($has_spun_today) {
+                // Lượt admin cấp được dùng trước và không phụ thuộc tiến trình đơn hàng.
+                if (($bonus_spins_remaining ?? 0) > 0) {
+                    $can_spin = true;
+                    $spin_message = 'Bạn có ' . $bonus_spins_remaining . ' lượt quay được cấp!';
+                } elseif ($has_spun_today) {
                     $spin_message = 'Bạn đã quay vòng quay hôm nay rồi. Hãy quay lại vào ngày mai!';
                 } elseif ($user_spin_progress && $rank) {
                     $current = $user_spin_progress->current_spin ?? 0;

@@ -143,6 +143,7 @@
                     Đồng ý với <span class="text-decoration-underline">điều khoản</span> của chúng tôi.
                 </label>
             </div>
+            <x-turnstile action="register" />
             <div class="d-grid mt-4">
                 <button type="button" class="btn auth-submit" id="register">Tạo tài khoản <i class="fa-solid fa-arrow-right ms-2"></i></button>
             </div>

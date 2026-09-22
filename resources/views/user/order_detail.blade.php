@@ -3,68 +3,1032 @@
 @section('css-libs')
     @vite('resources/css/user/order.css')
     <style>
-        :root{--od-red:#fe2c55;--od-dark:#161823;--od-muted:#6b7280;--od-line:#e8eaed;--od-green:#11865b;--od-blue:#2563eb}.od-page{max-width:1320px;margin:auto;padding:24px 18px 48px;color:var(--od-dark)}.od-back{display:inline-flex;gap:8px;margin-bottom:16px;color:#4b5563;font-weight:600;text-decoration:none}.od-card{background:#fff;border-radius:14px;box-shadow:0 1px 3px rgba(16,24,40,.08);margin-bottom:16px;overflow:hidden}.od-header{padding:24px;display:flex;justify-content:space-between;gap:20px}.od-eyebrow{color:var(--od-muted);font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}.od-title{margin:5px 0 4px;font-size:25px;font-weight:750}.od-subtitle{color:var(--od-muted);font-size:13px}.od-badges{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px}.od-badge{display:inline-flex;align-items:center;gap:6px;padding:7px 11px;border-radius:7px;font-size:12px;font-weight:700;background:#f1f3f5;color:#4b5563}.od-badge.cancelled,.od-badge.canceled,.od-badge.penalty{background:#fff0f3;color:#c5163a}.od-badge.completed,.od-badge.settled{background:#eaf8f2;color:#087653}.od-badge.pending,.od-badge.needs_review{background:#fff7e5;color:#9a5700}.od-badge.confirmed,.od-badge.preparing,.od-badge.transit,.od-badge.shipping,.od-badge.delivered{background:#eef5ff;color:#1d5bbf}.od-metrics{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));border-top:1px solid var(--od-line)}.od-metric{padding:18px 20px;border-right:1px solid var(--od-line)}.od-metric:last-child{border-right:0}.od-metric-label{color:var(--od-muted);font-size:12px;margin-bottom:7px}.od-metric-value{font-size:20px;font-weight:750;white-space:nowrap}.od-metric-value.green{color:var(--od-green)}.od-page .red{color:#c5163a}.od-metric-value.blue{color:var(--od-blue)}.od-layout{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(310px,.85fr);gap:16px;align-items:start}.od-section-head{display:flex;align-items:center;gap:10px;padding:17px 20px;border-bottom:1px solid var(--od-line);font-size:15px;font-weight:750}.od-section-head i{color:#5b6472;width:18px;text-align:center}.od-body{padding:20px}.od-product{display:grid;grid-template-columns:112px 1fr;gap:18px}.od-product img{width:112px;height:112px;border-radius:10px;object-fit:cover;background:#f5f6f8}.od-product-name{font-size:17px;font-weight:700;margin-bottom:12px}.od-info-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 24px}.od-field dt{color:var(--od-muted);font-size:12px;font-weight:500;margin-bottom:4px}.od-field dd{margin:0;font-size:14px;font-weight:600;word-break:break-word}.od-wide{grid-column:1/-1}.od-finance-row{display:flex;justify-content:space-between;gap:20px;padding:12px 0;border-bottom:1px solid #f0f1f2;font-size:14px}.od-finance-row:last-child{border-bottom:0}.od-finance-row span:first-child{color:#5f6672}.od-finance-row strong{text-align:right}.od-highlight{margin-top:8px;padding:15px;border-radius:10px;background:#eaf8f2;display:flex;justify-content:space-between;align-items:center;gap:12px}.od-highlight strong{color:var(--od-green);font-size:22px}.od-alert{margin:0 20px 20px;padding:13px 15px;border-radius:9px;font-size:13px;background:#fff7e5;color:#7a4800}.od-alert.danger{background:#fff0f3;color:#9f1239}.od-event{position:relative;padding:0 0 22px 28px}.od-event:before{content:'';position:absolute;left:7px;top:8px;bottom:-4px;width:2px;background:#e5e7eb}.od-event:last-child:before{display:none}.od-dot{position:absolute;left:1px;top:4px;width:14px;height:14px;border:3px solid #fff;border-radius:50%;background:#a7adb7;box-shadow:0 0 0 1px #cfd3d8}.od-event.current .od-dot{background:var(--od-red);box-shadow:0 0 0 2px #ffd5df}.od-event-title{font-weight:700;font-size:13px}.od-event-meta,.od-event-note{color:var(--od-muted);font-size:12px;margin-top:3px}.od-transactions{width:100%;border-collapse:collapse}.od-transactions th{color:var(--od-muted);font-size:11px;text-transform:uppercase;text-align:left;padding:0 10px 10px}.od-transactions td{border-top:1px solid var(--od-line);padding:11px 10px;font-size:13px}.od-type{font-weight:700}.od-type.profit{color:var(--od-green)}.od-type.penalty,.od-type.order{color:#b42318}.od-actions{display:flex;flex-wrap:wrap;gap:10px;padding:18px 20px}.od-actions button{border:0;border-radius:8px;padding:10px 15px;font-weight:700}.btn-confirm{background:var(--od-red);color:#fff}.btn-report{background:#fff0f3;color:#bd1738}.btn-contact-cskh{background:#eef2f6;color:#28313d}.btn-copy-api{border:0;background:#edf2f7;border-radius:7px;padding:7px 10px}.od-empty{color:var(--od-muted);font-size:13px}@media(max-width:1000px){.od-metrics{grid-template-columns:repeat(2,1fr)}.od-metric{border-bottom:1px solid var(--od-line)}.od-layout{grid-template-columns:1fr}}@media(max-width:620px){.od-page{padding:14px 10px 32px}.od-header{padding:18px;display:block}.od-badges{justify-content:flex-start;margin-top:14px}.od-metrics{grid-template-columns:1fr 1fr}.od-metric{padding:14px}.od-metric-value{font-size:16px}.od-product{grid-template-columns:76px 1fr}.od-product img{width:76px;height:76px}.od-info-grid{grid-template-columns:1fr}.od-wide{grid-column:auto}.od-body{padding:16px}.od-transactions{display:block;overflow-x:auto}.od-title{font-size:21px}}
+        :root {
+            --od-red: #fe2c55;
+            --od-dark: #161823;
+            --od-muted: #6b7280;
+            --od-line: #e8eaed;
+            --od-green: #11865b;
+            --od-blue: #2563eb
+        }
+
+        .od-page {
+            max-width: 1320px;
+            margin: auto;
+            padding: 24px 18px 48px;
+            color: var(--od-dark)
+        }
+
+        .od-back {
+            display: inline-flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            color: #4b5563;
+            font-weight: 600;
+            text-decoration: none
+        }
+
+        .od-card {
+            background: #fff;
+            border-radius: 14px;
+            box-shadow: 0 1px 3px rgba(16, 24, 40, .08);
+            margin-bottom: 16px;
+            overflow: hidden
+        }
+
+        .od-header {
+            padding: 24px;
+            display: flex;
+            justify-content: space-between;
+            gap: 20px
+        }
+
+        .od-eyebrow {
+            color: var(--od-muted);
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: .08em;
+            text-transform: uppercase
+        }
+
+        .od-title {
+            margin: 5px 0 4px;
+            font-size: 25px;
+            font-weight: 750
+        }
+
+        .od-subtitle {
+            color: var(--od-muted);
+            font-size: 13px
+        }
+
+        .od-badges {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            gap: 8px
+        }
+
+        .od-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 11px;
+            border-radius: 7px;
+            font-size: 12px;
+            font-weight: 700;
+            background: #f1f3f5;
+            color: #4b5563
+        }
+
+        .od-badge.cancelled,
+        .od-badge.canceled,
+        .od-badge.penalty {
+            background: #fff0f3;
+            color: #c5163a
+        }
+
+        .od-badge.completed,
+        .od-badge.settled {
+            background: #eaf8f2;
+            color: #087653
+        }
+
+        .od-badge.pending,
+        .od-badge.needs_review {
+            background: #fff7e5;
+            color: #9a5700
+        }
+
+        .od-badge.confirmed,
+        .od-badge.preparing,
+        .od-badge.transit,
+        .od-badge.shipping,
+        .od-badge.delivered {
+            background: #eef5ff;
+            color: #1d5bbf
+        }
+
+        .od-metrics {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            border-top: 1px solid var(--od-line)
+        }
+
+        .od-metric {
+            padding: 18px 20px;
+            border-right: 1px solid var(--od-line)
+        }
+
+        .od-metric:last-child {
+            border-right: 0
+        }
+
+        .od-metric-label {
+            color: var(--od-muted);
+            font-size: 12px;
+            margin-bottom: 7px
+        }
+
+        .od-metric-value {
+            font-size: 20px;
+            font-weight: 750;
+            white-space: nowrap
+        }
+
+        .od-metric-value.green {
+            color: var(--od-green)
+        }
+
+        .od-page .red {
+            color: #c5163a
+        }
+
+        .od-metric-value.blue {
+            color: var(--od-blue)
+        }
+
+        .od-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1.65fr) minmax(310px, .85fr);
+            gap: 16px;
+            align-items: start
+        }
+
+        .od-section-head {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 17px 20px;
+            border-bottom: 1px solid var(--od-line);
+            font-size: 15px;
+            font-weight: 750
+        }
+
+        .od-section-head i {
+            color: #5b6472;
+            width: 18px;
+            text-align: center
+        }
+
+        .od-body {
+            padding: 20px
+        }
+
+        .od-product {
+            display: grid;
+            grid-template-columns: 112px 1fr;
+            gap: 18px
+        }
+
+        .od-product img {
+            width: 112px;
+            height: 112px;
+            border-radius: 10px;
+            object-fit: cover;
+            background: #f5f6f8
+        }
+
+        .od-product-name {
+            font-size: 17px;
+            font-weight: 700;
+            margin-bottom: 12px
+        }
+
+        .od-info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px 24px
+        }
+
+        .od-field dt {
+            color: var(--od-muted);
+            font-size: 12px;
+            font-weight: 500;
+            margin-bottom: 4px
+        }
+
+        .od-field dd {
+            margin: 0;
+            font-size: 14px;
+            font-weight: 600;
+            word-break: break-word
+        }
+
+        .od-wide {
+            grid-column: 1/-1
+        }
+
+        .od-finance-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f1f2;
+            font-size: 14px
+        }
+
+        .od-finance-row:last-child {
+            border-bottom: 0
+        }
+
+        .od-finance-row span:first-child {
+            color: #5f6672
+        }
+
+        .od-finance-row strong {
+            text-align: right
+        }
+
+        .od-highlight {
+            margin-top: 8px;
+            padding: 15px;
+            border-radius: 10px;
+            background: #eaf8f2;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px
+        }
+
+        .od-highlight strong {
+            color: var(--od-green);
+            font-size: 22px
+        }
+
+        .od-alert {
+            margin: 0 20px 20px;
+            padding: 13px 15px;
+            border-radius: 9px;
+            font-size: 13px;
+            background: #fff7e5;
+            color: #7a4800
+        }
+
+        .od-alert.danger {
+            background: #fff0f3;
+            color: #9f1239
+        }
+
+        .od-event {
+            position: relative;
+            padding: 0 0 22px 28px
+        }
+
+        .od-event:before {
+            content: '';
+            position: absolute;
+            left: 7px;
+            top: 8px;
+            bottom: -4px;
+            width: 2px;
+            background: #e5e7eb
+        }
+
+        .od-event:last-child:before {
+            display: none
+        }
+
+        .od-dot {
+            position: absolute;
+            left: 1px;
+            top: 4px;
+            width: 14px;
+            height: 14px;
+            border: 3px solid #fff;
+            border-radius: 50%;
+            background: #a7adb7;
+            box-shadow: 0 0 0 1px #cfd3d8
+        }
+
+        .od-event.current .od-dot {
+            background: var(--od-red);
+            box-shadow: 0 0 0 2px #ffd5df
+        }
+
+        .od-event-title {
+            font-weight: 700;
+            font-size: 13px
+        }
+
+        .od-event-meta,
+        .od-event-note {
+            color: var(--od-muted);
+            font-size: 12px;
+            margin-top: 3px
+        }
+
+        .od-transactions {
+            width: 100%;
+            border-collapse: collapse
+        }
+
+        .od-transactions th {
+            color: var(--od-muted);
+            font-size: 11px;
+            text-transform: uppercase;
+            text-align: left;
+            padding: 0 10px 10px
+        }
+
+        .od-transactions td {
+            border-top: 1px solid var(--od-line);
+            padding: 11px 10px;
+            font-size: 13px
+        }
+
+        .od-type {
+            font-weight: 700
+        }
+
+        .od-type.profit {
+            color: var(--od-green)
+        }
+
+        .od-type.penalty,
+        .od-type.order {
+            color: #b42318
+        }
+
+        .od-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 18px 20px
+        }
+
+        .od-actions button {
+            border: 0;
+            border-radius: 8px;
+            padding: 10px 15px;
+            font-weight: 700
+        }
+
+        .btn-confirm {
+            background: var(--od-red);
+            color: #fff
+        }
+
+        .btn-report {
+            background: #fff0f3;
+            color: #bd1738
+        }
+
+        .btn-contact-cskh {
+            background: #eef2f6;
+            color: #28313d
+        }
+
+        .btn-copy-api {
+            border: 0;
+            background: #edf2f7;
+            border-radius: 7px;
+            padding: 7px 10px
+        }
+
+        .od-empty {
+            color: var(--od-muted);
+            font-size: 13px
+        }
+
+        @media(max-width:1000px) {
+            .od-metrics {
+                grid-template-columns: repeat(2, 1fr)
+            }
+
+            .od-metric {
+                border-bottom: 1px solid var(--od-line)
+            }
+
+            .od-layout {
+                grid-template-columns: 1fr
+            }
+        }
+
+        @media(max-width:620px) {
+            .od-page {
+                padding: 14px 10px 32px
+            }
+
+            .od-header {
+                padding: 18px;
+                display: block
+            }
+
+            .od-badges {
+                justify-content: flex-start;
+                margin-top: 14px
+            }
+
+            .od-metrics {
+                grid-template-columns: 1fr 1fr
+            }
+
+            .od-metric {
+                padding: 14px
+            }
+
+            .od-metric-value {
+                font-size: 16px
+            }
+
+            .od-product {
+                grid-template-columns: 76px 1fr
+            }
+
+            .od-product img {
+                width: 76px;
+                height: 76px
+            }
+
+            .od-info-grid {
+                grid-template-columns: 1fr
+            }
+
+            .od-wide {
+                grid-column: auto
+            }
+
+            .od-body {
+                padding: 16px
+            }
+
+            .od-transactions {
+                display: block;
+                overflow-x: auto
+            }
+
+            .od-title {
+                font-size: 21px
+            }
+        }
     </style>
     <style>
-        .od-back{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:40px;margin:0 0 16px;padding:0 14px;border:1px solid #e2e5e9;border-radius:11px;background:#fff;box-shadow:0 2px 8px rgba(16,24,40,.05);color:#3f4652;font-size:13px;font-weight:700;line-height:1;text-decoration:none;transition:background-color .18s ease,border-color .18s ease,color .18s ease,box-shadow .18s ease,transform .18s ease}.od-back i{font-size:12px;transition:transform .18s ease}.od-back:hover{border-color:#cfd4da;background:#f8f9fa;box-shadow:0 5px 14px rgba(16,24,40,.08);color:#17191f;text-decoration:none;transform:translateY(-1px)}.od-back:hover i{transform:translateX(-2px)}.od-back:focus-visible{outline:3px solid rgba(37,99,235,.18);outline-offset:2px}.od-page.is-hvo .od-back{border-color:#e4d6a5;background:#fffdf5;color:#765815}.od-page.is-hvo .od-back:hover{border-color:#ceb45a;background:#fff7d9;color:#4f3a0c;box-shadow:0 5px 16px rgba(126,94,22,.12)}
-        .od-hvo-hero{position:relative;isolation:isolate;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:18px;margin:0 0 16px;padding:22px 24px;overflow:hidden;border:1px solid rgba(231,190,76,.5);border-radius:18px;background:linear-gradient(135deg,#171712 0%,#222018 52%,#121311 100%);box-shadow:0 18px 42px rgba(35,29,14,.16);color:#fff}.od-hvo-hero:before{content:'';position:absolute;z-index:-1;inset:-60% 34% auto -10%;height:230px;background:radial-gradient(circle,rgba(243,205,99,.25),rgba(243,205,99,0) 68%);transform:rotate(-12deg)}.od-hvo-hero:after{content:'';position:absolute;z-index:-1;right:-70px;bottom:-110px;width:260px;height:260px;border:1px solid rgba(243,205,99,.16);border-radius:50%;box-shadow:0 0 0 34px rgba(243,205,99,.035),0 0 0 68px rgba(243,205,99,.02)}.od-hvo-emblem{display:grid;place-items:center;width:58px;height:58px;border:1px solid rgba(255,226,139,.55);border-radius:17px;background:linear-gradient(145deg,#f8da78,#a77b18);box-shadow:0 9px 24px rgba(166,123,24,.25);color:#171712;font-size:24px;transform:rotate(-4deg)}.od-hvo-copy{min-width:0}.od-hvo-kicker{display:flex;align-items:center;gap:8px;margin-bottom:3px;color:#f3cd63;font-size:11px;font-weight:850;letter-spacing:.16em;text-transform:uppercase}.od-hvo-kicker:before{content:'';width:20px;height:1px;background:currentColor}.od-hvo-title{margin:0;font-size:21px;font-weight:850;letter-spacing:-.02em}.od-hvo-note{margin:4px 0 0;color:#c8c3b4;font-size:12px}.od-hvo-seal{display:flex;align-items:center;gap:8px;padding:9px 12px;border:1px solid rgba(243,205,99,.28);border-radius:999px;background:rgba(243,205,99,.08);color:#f3cd63;font-size:11px;font-weight:850;letter-spacing:.08em}.od-page.is-hvo>.od-back+.od-card{border:1px solid #eadca8;box-shadow:0 8px 28px rgba(126,94,22,.09)}.od-page.is-hvo>.od-back+.od-card .od-header{background:linear-gradient(180deg,#fffdf6,#fff)}.od-page.is-hvo>.od-back+.od-card .od-eyebrow{color:#9b7418}.od-page.is-hvo>.od-back+.od-card .od-title{color:#262116}.od-page.is-hvo>.od-back+.od-card .od-metrics{border-top-color:#eee2b8;background:linear-gradient(180deg,#fffdf7,#fff)}.od-page.is-hvo>.od-back+.od-card .od-metric{border-right-color:#eee2b8}.od-page.is-hvo>.od-back+.od-card .od-metric:first-child .od-metric-value,.od-page.is-hvo>.od-back+.od-card .od-metric:nth-child(3) .od-metric-value{color:#9d7412}.od-page.is-hvo .od-section-head{position:relative}.od-page.is-hvo .od-section-head:after{content:'';position:absolute;left:20px;right:20px;bottom:-1px;height:1px;background:linear-gradient(90deg,rgba(211,165,50,.72),rgba(211,165,50,0))}.od-page.is-hvo .od-section-head i{color:#b4861e}.od-page.is-hvo .od-product{position:relative;border-radius:12px;background:linear-gradient(135deg,rgba(252,246,225,.68),rgba(255,255,255,0) 55%)}.od-page.is-hvo .od-product img{border:2px solid #ead99e;box-shadow:0 8px 22px rgba(139,102,18,.12)}.od-page.is-hvo .od-highlight{border:1px solid #ecd78f;background:linear-gradient(135deg,#fff8db,#fffdf4)}.od-page.is-hvo .od-highlight strong{color:#98700e}.od-page.is-hvo .btn-confirm{background:linear-gradient(135deg,#d9a82d,#f2cf68);box-shadow:0 8px 18px rgba(181,133,22,.22);color:#1f1a0d}.od-page.is-hvo .btn-contact-cskh{border:1px solid #dec77f;background:#fff9e6;color:#715410}.od-page.is-hvo .od-event.current .od-dot{background:#c99722;box-shadow:0 0 0 2px #f8e8ae}.od-page.is-hvo .od-badge.pending,.od-page.is-hvo .od-badge.needs_review{background:#fff3c7;color:#7c5800}@media(max-width:620px){.od-hvo-hero{grid-template-columns:auto 1fr;gap:13px;padding:17px 16px;border-radius:15px}.od-hvo-emblem{width:48px;height:48px;border-radius:14px;font-size:20px}.od-hvo-title{font-size:17px}.od-hvo-note{font-size:11px}.od-hvo-seal{grid-column:1/-1;justify-self:start;margin-left:61px;padding:7px 10px}.od-page.is-hvo>.od-back+.od-card .od-metric{border-right-color:#eee2b8}}
+        .od-back {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            min-height: 40px;
+            margin: 0 0 16px;
+            padding: 0 14px;
+            border: 1px solid #e2e5e9;
+            border-radius: 11px;
+            background: #fff;
+            box-shadow: 0 2px 8px rgba(16, 24, 40, .05);
+            color: #3f4652;
+            font-size: 13px;
+            font-weight: 700;
+            line-height: 1;
+            text-decoration: none;
+            transition: background-color .18s ease, border-color .18s ease, color .18s ease, box-shadow .18s ease, transform .18s ease
+        }
+
+        .od-back i {
+            font-size: 12px;
+            transition: transform .18s ease
+        }
+
+        .od-back:hover {
+            border-color: #cfd4da;
+            background: #f8f9fa;
+            box-shadow: 0 5px 14px rgba(16, 24, 40, .08);
+            color: #17191f;
+            text-decoration: none;
+            transform: translateY(-1px)
+        }
+
+        .od-back:hover i {
+            transform: translateX(-2px)
+        }
+
+        .od-back:focus-visible {
+            outline: 3px solid rgba(37, 99, 235, .18);
+            outline-offset: 2px
+        }
+
+        .od-page.is-hvo .od-back {
+            border-color: #e4d6a5;
+            background: #fffdf5;
+            color: #765815
+        }
+
+        .od-page.is-hvo .od-back:hover {
+            border-color: #ceb45a;
+            background: #fff7d9;
+            color: #4f3a0c;
+            box-shadow: 0 5px 16px rgba(126, 94, 22, .12)
+        }
+
+        .od-hvo-hero {
+            position: relative;
+            isolation: isolate;
+            display: grid;
+            grid-template-columns: auto minmax(0, 1fr) auto;
+            align-items: center;
+            gap: 18px;
+            margin: 0 0 16px;
+            padding: 22px 24px;
+            overflow: hidden;
+            border: 1px solid rgba(231, 190, 76, .5);
+            border-radius: 18px;
+            background: linear-gradient(135deg, #171712 0%, #222018 52%, #121311 100%);
+            box-shadow: 0 18px 42px rgba(35, 29, 14, .16);
+            color: #fff
+        }
+
+        .od-hvo-hero:before {
+            content: '';
+            position: absolute;
+            z-index: -1;
+            inset: -60% 34% auto -10%;
+            height: 230px;
+            background: radial-gradient(circle, rgba(243, 205, 99, .25), rgba(243, 205, 99, 0) 68%);
+            transform: rotate(-12deg)
+        }
+
+        .od-hvo-hero:after {
+            content: '';
+            position: absolute;
+            z-index: -1;
+            right: -70px;
+            bottom: -110px;
+            width: 260px;
+            height: 260px;
+            border: 1px solid rgba(243, 205, 99, .16);
+            border-radius: 50%;
+            box-shadow: 0 0 0 34px rgba(243, 205, 99, .035), 0 0 0 68px rgba(243, 205, 99, .02)
+        }
+
+        .od-hvo-emblem {
+            display: grid;
+            place-items: center;
+            width: 58px;
+            height: 58px;
+            border: 1px solid rgba(255, 226, 139, .55);
+            border-radius: 17px;
+            background: linear-gradient(145deg, #f8da78, #a77b18);
+            box-shadow: 0 9px 24px rgba(166, 123, 24, .25);
+            color: #171712;
+            font-size: 24px;
+            transform: rotate(-4deg)
+        }
+
+        .od-hvo-copy {
+            min-width: 0
+        }
+
+        .od-hvo-kicker {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 3px;
+            color: #f3cd63;
+            font-size: 11px;
+            font-weight: 850;
+            letter-spacing: .16em;
+            text-transform: uppercase
+        }
+
+        .od-hvo-kicker:before {
+            content: '';
+            width: 20px;
+            height: 1px;
+            background: currentColor
+        }
+
+        .od-hvo-title {
+            margin: 0;
+            font-size: 21px;
+            font-weight: 850;
+            letter-spacing: -.02em
+        }
+
+        .od-hvo-note {
+            margin: 4px 0 0;
+            color: #c8c3b4;
+            font-size: 12px
+        }
+
+        .od-hvo-seal {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 12px;
+            border: 1px solid rgba(243, 205, 99, .28);
+            border-radius: 999px;
+            background: rgba(243, 205, 99, .08);
+            color: #f3cd63;
+            font-size: 11px;
+            font-weight: 850;
+            letter-spacing: .08em
+        }
+
+        .od-page.is-hvo>.od-back+.od-card {
+            border: 1px solid #eadca8;
+            box-shadow: 0 8px 28px rgba(126, 94, 22, .09)
+        }
+
+        .od-page.is-hvo>.od-back+.od-card .od-header {
+            background: linear-gradient(180deg, #fffdf6, #fff)
+        }
+
+        .od-page.is-hvo>.od-back+.od-card .od-eyebrow {
+            color: #9b7418
+        }
+
+        .od-page.is-hvo>.od-back+.od-card .od-title {
+            color: #262116
+        }
+
+        .od-page.is-hvo>.od-back+.od-card .od-metrics {
+            border-top-color: #eee2b8;
+            background: linear-gradient(180deg, #fffdf7, #fff)
+        }
+
+        .od-page.is-hvo>.od-back+.od-card .od-metric {
+            border-right-color: #eee2b8
+        }
+
+        .od-page.is-hvo>.od-back+.od-card .od-metric:first-child .od-metric-value,
+        .od-page.is-hvo>.od-back+.od-card .od-metric:nth-child(3) .od-metric-value {
+            color: #9d7412
+        }
+
+        .od-page.is-hvo .od-section-head {
+            position: relative
+        }
+
+        .od-page.is-hvo .od-section-head:after {
+            content: '';
+            position: absolute;
+            left: 20px;
+            right: 20px;
+            bottom: -1px;
+            height: 1px;
+            background: linear-gradient(90deg, rgba(211, 165, 50, .72), rgba(211, 165, 50, 0))
+        }
+
+        .od-page.is-hvo .od-section-head i {
+            color: #b4861e
+        }
+
+        .od-page.is-hvo .od-product {
+            position: relative;
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(252, 246, 225, .68), rgba(255, 255, 255, 0) 55%)
+        }
+
+        .od-page.is-hvo .od-product img {
+            border: 2px solid #ead99e;
+            box-shadow: 0 8px 22px rgba(139, 102, 18, .12)
+        }
+
+        .od-page.is-hvo .od-highlight {
+            border: 1px solid #ecd78f;
+            background: linear-gradient(135deg, #fff8db, #fffdf4)
+        }
+
+        .od-page.is-hvo .od-highlight strong {
+            color: #98700e
+        }
+
+        .od-page.is-hvo .btn-confirm {
+            background: linear-gradient(135deg, #d9a82d, #f2cf68);
+            box-shadow: 0 8px 18px rgba(181, 133, 22, .22);
+            color: #1f1a0d
+        }
+
+        .od-page.is-hvo .btn-contact-cskh {
+            border: 1px solid #dec77f;
+            background: #fff9e6;
+            color: #715410
+        }
+
+        .od-page.is-hvo .od-event.current .od-dot {
+            background: #c99722;
+            box-shadow: 0 0 0 2px #f8e8ae
+        }
+
+        .od-page.is-hvo .od-badge.pending,
+        .od-page.is-hvo .od-badge.needs_review {
+            background: #fff3c7;
+            color: #7c5800
+        }
+
+        @media(max-width:620px) {
+            .od-hvo-hero {
+                grid-template-columns: auto 1fr;
+                gap: 13px;
+                padding: 17px 16px;
+                border-radius: 15px
+            }
+
+            .od-hvo-emblem {
+                width: 48px;
+                height: 48px;
+                border-radius: 14px;
+                font-size: 20px
+            }
+
+            .od-hvo-title {
+                font-size: 17px
+            }
+
+            .od-hvo-note {
+                font-size: 11px
+            }
+
+            .od-hvo-seal {
+                grid-column: 1/-1;
+                justify-self: start;
+                margin-left: 61px;
+                padding: 7px 10px
+            }
+
+            .od-page.is-hvo>.od-back+.od-card .od-metric {
+                border-right-color: #eee2b8
+            }
+        }
     </style>
 @endsection
 
 @section('script-libs')
     @php
-        $orderDetailConfig=['trans'=>['XacNhanDonHang'=>'Xác nhận đơn hàng','HuyDonHang'=>'Hủy đơn hàng','ThanhCong'=>'Thành công','Loi'=>'Lỗi','CanhBao'=>'Cảnh báo'],'routes'=>['confirm'=>route('order.confirm',$frozen_order->id),'cancel'=>route('order.cancel',$frozen_order->id),'report'=>route('order.report',$frozen_order->id),'order'=>route('order')],'csrf'=>csrf_token(),'frozen_order_id'=>$frozen_order->id];
+        $orderDetailConfig = ['trans' => ['XacNhanDonHang' => 'Xác nhận đơn hàng', 'HuyDonHang' => 'Hủy đơn hàng', 'ThanhCong' => 'Thành công', 'Loi' => 'Lỗi', 'CanhBao' => 'Cảnh báo'], 'routes' => ['confirm' => route('order.confirm', $frozen_order->id), 'cancel' => route('order.cancel', $frozen_order->id), 'report' => route('order.report', $frozen_order->id), 'order' => route('order'), 'distribution' => route('distribution')], 'csrf' => csrf_token(), 'frozen_order_id' => $frozen_order->id];
     @endphp
     <div id="order-detail-config" data-config='@json($orderDetailConfig)' hidden></div>
     @vite('resources/js/user/order_detail.js')
 @endsection
 
 @section('content')
-@php
-    $isHighValueOrder=$frozen_order->custom_price!==null;
-    $status=$frozen_order->status ?: 'pending';
-    $statusLabels=['pending'=>'Chờ xử lý','confirmed'=>'Đã xác nhận','preparing'=>'Đang chuẩn bị','transit'=>'Đang trung chuyển','shipping'=>'Đang vận chuyển','delivered'=>'Đã giao hàng','completed'=>'Đã hoàn thành','cancelled'=>'Đã huỷ','canceled'=>'Đã huỷ'];
-    $money=fn($value,$precision=2)=>$value===null?'—':format_money($value,$precision).'$';
-    $walletLabels=['balance'=>'Số dư khả dụng','frozen_balance'=>'Số dư đóng băng'];
-    $cancellationReason=$cancellation?->notes ?: $frozen_order->orderReport?->resolved_note ?: $frozen_order->orderReport?->reason;
-    $cancellationActor=$cancellation?->changedBy?->full_name ?? $cancellation?->changedBy?->username ?? $frozen_order->orderReport?->resolver?->full_name;
-    $typeLabels=['order'=>'Trừ tiền đơn','profit'=>'Hoa hồng','penalty'=>'Tiền phạt','deposit'=>'Nạp tiền','withdraw'=>'Rút tiền'];
-@endphp
-<main class="od-page {{ $isHighValueOrder ? 'is-hvo' : '' }}">
-    @if($isHighValueOrder)
-        <section class="od-hvo-hero" aria-label="Đơn hàng giá trị cao">
-            <div class="od-hvo-emblem"><i class="fas fa-gem"></i></div>
-            <div class="od-hvo-copy">
-                <div class="od-hvo-kicker">High-Value Order</div>
-                <h2 class="od-hvo-title">Đơn hàng giá trị cao</h2>
-                <p class="od-hvo-note">Đơn hàng HVO được đánh dấu riêng để bạn dễ nhận biết và ưu tiên xử lý.</p>
+    @php
+        $isHighValueOrder = $frozen_order->custom_price !== null;
+        $status = $frozen_order->status ?: 'pending';
+        $statusLabels = ['pending' => 'Chờ xử lý', 'confirmed' => 'Đã xác nhận', 'preparing' => 'Đang chuẩn bị', 'transit' => 'Đang trung chuyển', 'shipping' => 'Đang vận chuyển', 'delivered' => 'Đã giao hàng', 'completed' => 'Đã hoàn thành', 'cancelled' => 'Đã huỷ', 'canceled' => 'Đã huỷ'];
+        $money = fn($value, $precision = 2) => $value === null ? '—' : format_money($value, $precision) . '$';
+        $walletLabels = ['balance' => 'Số dư khả dụng', 'frozen_balance' => 'Số dư đóng băng'];
+        $cancellationReason = $cancellation?->notes ?: $frozen_order->orderReport?->resolved_note ?: $frozen_order->orderReport?->reason;
+        $cancellationActor = $cancellation?->changedBy?->full_name ?? $cancellation?->changedBy?->username ?? $frozen_order->orderReport?->resolver?->full_name;
+        $typeLabels = ['order' => 'Trừ tiền đơn', 'profit' => 'Hoa hồng', 'penalty' => 'Tiền phạt', 'deposit' => 'Nạp tiền', 'withdraw' => 'Rút tiền'];
+    @endphp
+    <main class="od-page {{ $isHighValueOrder ? 'is-hvo' : '' }}">
+
+        @if($isHighValueOrder)
+            <section class="od-hvo-hero" aria-label="Đơn hàng giá trị cao">
+                <div class="od-hvo-emblem"><i class="fas fa-gem"></i></div>
+                <div class="od-hvo-copy">
+                    <div class="od-hvo-kicker">High-Value Order</div>
+                    <h2 class="od-hvo-title">Đơn hàng giá trị cao</h2>
+                    <p class="od-hvo-note">Đơn hàng HVO được đánh dấu riêng để bạn dễ nhận biết và ưu tiên xử lý.</p>
+                </div>
+                <div class="od-hvo-seal"><i class="fas fa-crown"></i><span>HVO</span></div>
+            </section>
+        @endif
+        <a class="od-back" href="{{ route('order') }}"><i class="fas fa-arrow-left"></i> Danh sách đơn hàng</a>
+        @if($status === 'pending')
+            <section class="od-card">
+                <div class="od-actions"><button type="button" class="btn-confirm" id="btn_confirm_order"><i
+                            class="fas fa-check me-1"></i> Xác nhận đơn
+                        hàng</button>@if($frozen_order->custom_price !== null)<button type="button" class="btn-contact-cskh"
+                        id="btn_contact_cskh"><i class="fas fa-headset me-1"></i> Liên hệ CSKH</button>@else<button
+                            type="button" class="btn-report" id="btn_report_fake_order" @disabled($frozen_order->orderReport)><i
+                                class="fas fa-flag me-1"></i>
+                        {{ $frozen_order->orderReport ? 'Đã báo cáo - chờ xử lý' : 'Báo cáo đơn hàng' }}</button>@endif</div>
+        </section>@endif
+
+        <section class="od-card">
+            <div class="od-header">
+                <div>
+                    <div class="od-eyebrow">Chi tiết đơn hàng</div>
+                    <h1 class="od-title">{{ $frozen_order->display_order_code ?? '#' . $frozen_order->id }}</h1>
+                    <div class="od-subtitle">Nhận lúc
+                        {{ optional($frozen_order->order_date ?? $frozen_order->created_at)->format('d/m/Y H:i') }}</div>
+                </div>
+                <div class="od-badges">@if($financial['has_penalty'])<span class="od-badge penalty"><i
+                class="fas fa-triangle-exclamation"></i> Có tiền phạt</span>@endif<span
+                        class="od-badge {{ $status }}"><i class="fas fa-circle"></i>
+                        {{ $currentStatus?->display_name ?? ($statusLabels[$status] ?? $status) }}</span></div>
             </div>
-            <div class="od-hvo-seal"><i class="fas fa-crown"></i><span>HVO</span></div>
+            <div class="od-metrics">
+                <div class="od-metric">
+                    <div class="od-metric-label">Giá trị lúc nhận</div>
+                    <div class="od-metric-value">{{ $money($financial['order_amount']) }}</div>
+                </div>
+                <div class="od-metric">
+                    <div class="od-metric-label">Đã trừ</div>
+                    <div class="od-metric-value red">{{ $money($financial['deducted_amount']) }}</div>
+                </div>
+                <div class="od-metric">
+                    <div class="od-metric-label">Hoa hồng thực nhận</div>
+                    <div class="od-metric-value blue">{{ $money($financial['commission_paid'], 5) }}</div>
+                </div>
+                <div class="od-metric">
+                    <div class="od-metric-label">Tiền phạt</div>
+                    <div class="od-metric-value red">
+                        {{ $money($financial['penalty_paid'] ?? ($financial['has_penalty'] ? $frozen_order->penalty_amount : 0)) }}
+                    </div>
+                </div>
+                <div class="od-metric">
+                    <div class="od-metric-label">Hoàn nhập / quyết toán</div>
+                    <div class="od-metric-value green">{{ $money($financial['refund_amount'], 5) }}</div>
+                </div>
+            </div>
         </section>
-    @endif
-    <a class="od-back" href="{{ route('order') }}"><i class="fas fa-arrow-left"></i> Danh sách đơn hàng</a>
-    <section class="od-card">
-        <div class="od-header"><div><div class="od-eyebrow">Chi tiết đơn hàng</div><h1 class="od-title">{{ $frozen_order->display_order_code ?? '#'.$frozen_order->id }}</h1><div class="od-subtitle">Nhận lúc {{ optional($frozen_order->order_date ?? $frozen_order->created_at)->format('d/m/Y H:i') }}</div></div><div class="od-badges">@if($financial['has_penalty'])<span class="od-badge penalty"><i class="fas fa-triangle-exclamation"></i> Có tiền phạt</span>@endif<span class="od-badge {{ $status }}"><i class="fas fa-circle"></i> {{ $currentStatus?->display_name ?? ($statusLabels[$status] ?? $status) }}</span></div></div>
-        <div class="od-metrics"><div class="od-metric"><div class="od-metric-label">Giá trị lúc nhận</div><div class="od-metric-value">{{ $money($financial['order_amount']) }}</div></div><div class="od-metric"><div class="od-metric-label">Đã trừ</div><div class="od-metric-value red">{{ $money($financial['deducted_amount']) }}</div></div><div class="od-metric"><div class="od-metric-label">Hoa hồng thực nhận</div><div class="od-metric-value blue">{{ $money($financial['commission_paid'],5) }}</div></div><div class="od-metric"><div class="od-metric-label">Tiền phạt</div><div class="od-metric-value red">{{ $money($financial['penalty_paid'] ?? ($financial['has_penalty'] ? $frozen_order->penalty_amount : 0)) }}</div></div><div class="od-metric"><div class="od-metric-label">Hoàn nhập / quyết toán</div><div class="od-metric-value green">{{ $money($financial['refund_amount'],5) }}</div></div></div>
-    </section>
-    <div class="od-layout"><div>
-        <section class="od-card"><div class="od-section-head"><i class="fas fa-box"></i> Sản phẩm</div><div class="od-body od-product">@if($frozen_order->display_image)<img src="{{ Storage::url($frozen_order->display_image) }}" alt="{{ $frozen_order->display_name }}">@else<div></div>@endif<div><div class="od-product-name">{{ $frozen_order->display_name ?? 'Không có tên sản phẩm' }}</div><dl class="od-info-grid"><div class="od-field"><dt>Đơn giá</dt><dd>{{ $money($frozen_order->display_unit_price) }}</dd></div><div class="od-field"><dt>Số lượng</dt><dd>{{ $frozen_order->display_quantity ?? '—' }}</dd></div><div class="od-field"><dt>Nền tảng</dt><dd>{{ $frozen_order->display_partner_name ?? '—' }}</dd></div><div class="od-field"><dt>Thanh toán</dt><dd>{{ $frozen_order->display_payment_method ?? '—' }} · {{ $frozen_order->display_is_paid ? 'Đã thanh toán' : 'Chưa thanh toán' }}</dd></div></dl></div></div></section>
-        <section class="od-card"><div class="od-section-head"><i class="fas fa-coins"></i> Tài chính và quyết toán</div><div class="od-body">
-            <div class="od-finance-row"><span>Giá trị đơn lúc nhận</span><strong>{{ $money($financial['order_amount']) }}</strong></div><div class="od-finance-row"><span>Số tiền đã trừ trước đó</span><strong>{{ $money($financial['deducted_amount']) }}</strong></div><div class="od-finance-row"><span>Hoa hồng dự kiến ({{ format_money($frozen_order->display_commission_percentage ?? 0) }}%)</span><strong>{{ $money($financial['expected_commission'],5) }}</strong></div><div class="od-finance-row"><span>Hoa hồng đã nhận</span><strong>{{ $money($financial['commission_paid'],5) }}</strong></div>
-            @if($financial['is_cancelled'])<div class="od-finance-row"><span>Hoa hồng sau huỷ</span><strong>{{ $financial['commission_paid'] ? 'Đã ghi nhận '.$money($financial['commission_paid'],5) : 'Đã huỷ / chưa phát sinh' }}</strong></div>@endif
-            @if($financial['has_penalty'])<div class="od-finance-row"><span>Tiền phạt ghi nhận</span><strong class="red">{{ $money($financial['penalty_paid'] ?? $frozen_order->penalty_amount) }}</strong></div>@endif
-            <div class="od-finance-row"><span>Ví nhận tiền</span><strong>{{ $walletLabels[$financial['balance_destination']] ?? 'Không có dữ liệu' }}</strong></div><div class="od-finance-row"><span>Trạng thái quyết toán</span><strong><span class="od-badge {{ $financial['settlement_state'] }}">{{ $financial['settlement_label'] }}</span></strong></div>@if($financial['settled_at'])<div class="od-finance-row"><span>Thời điểm quyết toán</span><strong>{{ \Carbon\Carbon::parse($financial['settled_at'])->format('d/m/Y H:i:s') }}</strong></div>@endif
-            @if($financial['refund_amount'] !== null)<div class="od-highlight"><span>{{ $financial['is_cancelled'] ? 'Số tiền hoàn nhập sau huỷ' : 'Số tiền quyết toán thực tế' }}</span><strong>{{ $money($financial['refund_amount'],5) }}</strong></div>@endif
-        </div>@if($financial['settlement_reason'] && $financial['settlement_state']==='needs_review')<div class="od-alert">{{ $financial['settlement_reason'] }}</div>@endif</section>
-        @if($financial['is_cancelled'])<section class="od-card"><div class="od-section-head"><i class="fas fa-ban"></i> Thông tin huỷ đơn</div><div class="od-body"><dl class="od-info-grid"><div class="od-field"><dt>Trạng thái</dt><dd><span class="od-badge cancelled">Đã huỷ</span></dd></div><div class="od-field"><dt>Thời điểm huỷ</dt><dd>{{ optional($frozen_order->cancelled_at ?? $cancellation?->created_at)->format('d/m/Y H:i:s') ?? 'Không có dữ liệu' }}</dd></div><div class="od-field"><dt>Thực hiện bởi</dt><dd>{{ $cancellationActor ?: 'Hệ thống / không có dữ liệu' }}</dd></div><div class="od-field"><dt>Nguồn xử lý</dt><dd>{{ $frozen_order->orderReport?->status === 'approved' ? 'Admin duyệt báo cáo đơn hàng' : 'Huỷ trực tiếp' }}</dd></div><div class="od-field od-wide"><dt>Lý do huỷ</dt><dd>{{ $cancellationReason ?: 'Không ghi nhận lý do' }}</dd></div></dl></div>@if($financial['deducted_amount'] && $financial['refund_amount']===null)<div class="od-alert danger">Đơn đã có giao dịch trừ tiền nhưng không có settlement snapshot hoặc giao dịch hoàn nhập để xác nhận số tiền hoàn. Cần đối soát.</div>@endif</section>@endif
-        @if($financial['transactions']->isNotEmpty())<section class="od-card"><div class="od-section-head"><i class="fas fa-receipt"></i> Giao dịch liên quan</div><div class="od-body"><table class="od-transactions"><thead><tr><th>Thời gian</th><th>Loại</th><th>Số tiền</th><th>Tham chiếu</th></tr></thead><tbody>@foreach($financial['transactions'] as $transaction)<tr><td>{{ optional($transaction->created_at)->format('d/m/Y H:i:s') }}</td><td class="od-type {{ $transaction->type }}">{{ $typeLabels[$transaction->type] ?? $transaction->type }}</td><td>{{ $money($transaction->value,5) }}</td><td>{{ $transaction->note ?: '—' }}</td></tr>@endforeach</tbody></table></div></section>@endif
-    </div><aside>
-        <section class="od-card"><div class="od-section-head"><i class="fas fa-location-dot"></i> Người nhận</div><div class="od-body"><dl class="od-info-grid"><div class="od-field od-wide"><dt>Họ tên</dt><dd>{{ $frozen_order->display_customer_name ?? '—' }}</dd></div><div class="od-field od-wide"><dt>Số điện thoại</dt><dd>{{ $frozen_order->display_customer_phone ?? '—' }}</dd></div><div class="od-field od-wide"><dt>Địa chỉ</dt><dd>{{ $frozen_order->display_customer_address ?? '—' }}</dd></div>@if($frozen_order->display_customer_note)<div class="od-field od-wide"><dt>Ghi chú</dt><dd>{{ $frozen_order->display_customer_note }}</dd></div>@endif</dl></div></section>
-        <section class="od-card"><div class="od-section-head"><i class="fas fa-clock-rotate-left"></i> Lịch sử xử lý</div><div class="od-body">@forelse($statusHistory as $event)<div class="od-event {{ $event->status?->name===$status?'current':'' }}"><span class="od-dot"></span><div class="od-event-title">{{ $event->status?->display_name ?? ($statusLabels[$event->status?->name] ?? 'Cập nhật trạng thái') }}</div><div class="od-event-meta">{{ optional($event->created_at)->format('d/m/Y H:i:s') }} · {{ $event->changedBy?->full_name ?? $event->changedBy?->username ?? 'Hệ thống' }}</div>@if($event->notes)<div class="od-event-note">{{ $event->notes }}</div>@endif</div>@empty<div class="od-empty">Chưa có lịch sử trạng thái.</div>@endforelse</div></section>
-        @if($frozen_order->tracking_number || $frozen_order->shipping_carrier)<section class="od-card"><div class="od-section-head"><i class="fas fa-truck"></i> Vận chuyển</div><div class="od-body"><dl class="od-info-grid"><div class="od-field od-wide"><dt>Mã vận đơn</dt><dd>{{ $frozen_order->tracking_number ?? '—' }}</dd></div><div class="od-field od-wide"><dt>Đơn vị vận chuyển</dt><dd>{{ $frozen_order->shipping_carrier ?? '—' }}</dd></div></dl></div></section>@endif
-        @if($frozen_order->display_api)<section class="od-card"><div class="od-section-head"><i class="fas fa-code"></i> API theo dõi</div><div class="od-body"><div style="display:flex;gap:8px;align-items:center"><code style="word-break:break-all;flex:1">{{ $frozen_order->display_api }}</code><button class="btn-copy-api" type="button" data-api="{{ $frozen_order->display_api }}"><i class="fas fa-copy"></i></button></div>@if($apiUrl)<a href="{{ $apiUrl }}" target="_blank" rel="noopener" style="font-size:12px">Mở API theo dõi</a>@endif</div></section>@endif
-    </aside></div>
-    @if($status==='pending')<section class="od-card"><div class="od-actions"><button type="button" class="btn-confirm" id="btn_confirm_order"><i class="fas fa-check me-1"></i> Xác nhận đơn hàng</button>@if($frozen_order->custom_price!==null)<button type="button" class="btn-contact-cskh" id="btn_contact_cskh"><i class="fas fa-headset me-1"></i> Liên hệ CSKH</button>@else<button type="button" class="btn-report" id="btn_report_fake_order" @disabled($frozen_order->orderReport)><i class="fas fa-flag me-1"></i> {{ $frozen_order->orderReport?'Đã báo cáo - chờ xử lý':'Báo cáo đơn hàng' }}</button>@endif</div></section>@endif
-</main>
-@push('scripts')<script>document.addEventListener('DOMContentLoaded',()=>document.querySelectorAll('.btn-copy-api').forEach(button=>button.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(button.dataset.api);button.innerHTML='<i class="fas fa-check"></i>';setTimeout(()=>button.innerHTML='<i class="fas fa-copy"></i>',1600)}catch(error){console.error(error)}})));</script>@endpush
+        <div class="od-layout">
+            <div>
+                <section class="od-card">
+                    <div class="od-section-head"><i class="fas fa-box"></i> Sản phẩm</div>
+                    <div class="od-body od-product">@if($frozen_order->display_image)<img
+                        src="{{ Storage::url($frozen_order->display_image) }}"
+                    alt="{{ $frozen_order->display_name }}">@else<div></div>@endif<div>
+                            <div class="od-product-name">{{ $frozen_order->display_name ?? 'Không có tên sản phẩm' }}</div>
+                            <dl class="od-info-grid">
+                                <div class="od-field">
+                                    <dt>Đơn giá</dt>
+                                    <dd>{{ $money($frozen_order->display_unit_price) }}</dd>
+                                </div>
+                                <div class="od-field">
+                                    <dt>Số lượng</dt>
+                                    <dd>{{ $frozen_order->display_quantity ?? '—' }}</dd>
+                                </div>
+                                <div class="od-field">
+                                    <dt>Nền tảng</dt>
+                                    <dd>{{ $frozen_order->display_partner_name ?? '—' }}</dd>
+                                </div>
+                                <div class="od-field">
+                                    <dt>Thanh toán</dt>
+                                    <dd>{{ $frozen_order->display_payment_method ?? '—' }} ·
+                                        {{ $frozen_order->display_is_paid ? 'Đã thanh toán' : 'Chưa thanh toán' }}</dd>
+                                </div>
+                            </dl>
+                        </div>
+                    </div>
+                </section>
+                <section class="od-card">
+                    <div class="od-section-head"><i class="fas fa-coins"></i> Tài chính và quyết toán</div>
+                    <div class="od-body">
+                        <div class="od-finance-row"><span>Giá trị đơn lúc
+                                nhận</span><strong>{{ $money($financial['order_amount']) }}</strong></div>
+                        <div class="od-finance-row"><span>Số tiền đã trừ trước
+                                đó</span><strong>{{ $money($financial['deducted_amount']) }}</strong></div>
+                        <div class="od-finance-row"><span>Hoa hồng dự kiến
+                                ({{ format_money($frozen_order->display_commission_percentage ?? 0) }}%)</span><strong>{{ $money($financial['expected_commission'], 5) }}</strong>
+                        </div>
+                        <div class="od-finance-row"><span>Hoa hồng đã
+                                nhận</span><strong>{{ $money($financial['commission_paid'], 5) }}</strong></div>
+                        @if($financial['is_cancelled'])
+                            <div class="od-finance-row"><span>Hoa hồng sau
+                                    huỷ</span><strong>{{ $financial['commission_paid'] ? 'Đã ghi nhận ' . $money($financial['commission_paid'], 5) : 'Đã huỷ / chưa phát sinh' }}</strong>
+                        </div>@endif
+                        @if($financial['has_penalty'])
+                            <div class="od-finance-row"><span>Tiền phạt ghi nhận</span><strong
+                                    class="red">{{ $money($financial['penalty_paid'] ?? $frozen_order->penalty_amount) }}</strong>
+                        </div>@endif
+                        <div class="od-finance-row"><span>Ví nhận
+                                tiền</span><strong>{{ $walletLabels[$financial['balance_destination']] ?? 'Không có dữ liệu' }}</strong>
+                        </div>
+                        <div class="od-finance-row"><span>Trạng thái quyết toán</span><strong><span
+                                    class="od-badge {{ $financial['settlement_state'] }}">{{ $financial['settlement_label'] }}</span></strong>
+                        </div>@if($financial['settled_at'])
+                            <div class="od-finance-row"><span>Thời điểm quyết
+                                    toán</span><strong>{{ \Carbon\Carbon::parse($financial['settled_at'])->format('d/m/Y H:i:s') }}</strong>
+                        </div>@endif
+                        @if($financial['refund_amount'] !== null)
+                            <div class="od-highlight">
+                                <span>{{ $financial['is_cancelled'] ? 'Số tiền hoàn nhập sau huỷ' : 'Số tiền quyết toán thực tế' }}</span><strong>{{ $money($financial['refund_amount'], 5) }}</strong>
+                        </div>@endif
+                    </div>@if($financial['settlement_reason'] && $financial['settlement_state'] === 'needs_review')
+                    <div class="od-alert">{{ $financial['settlement_reason'] }}</div>@endif
+                </section>
+                @if($financial['is_cancelled'])
+                    <section class="od-card">
+                        <div class="od-section-head"><i class="fas fa-ban"></i> Thông tin huỷ đơn</div>
+                        <div class="od-body">
+                            <dl class="od-info-grid">
+                                <div class="od-field">
+                                    <dt>Trạng thái</dt>
+                                    <dd><span class="od-badge cancelled">Đã huỷ</span></dd>
+                                </div>
+                                <div class="od-field">
+                                    <dt>Thời điểm huỷ</dt>
+                                    <dd>{{ optional($frozen_order->cancelled_at ?? $cancellation?->created_at)->format('d/m/Y H:i:s') ?? 'Không có dữ liệu' }}
+                                    </dd>
+                                </div>
+                                <div class="od-field">
+                                    <dt>Thực hiện bởi</dt>
+                                    <dd>{{ $cancellationActor ?: 'Hệ thống / không có dữ liệu' }}</dd>
+                                </div>
+                                <div class="od-field">
+                                    <dt>Nguồn xử lý</dt>
+                                    <dd>{{ $frozen_order->orderReport?->status === 'approved' ? 'Admin duyệt báo cáo đơn hàng' : 'Huỷ trực tiếp' }}
+                                    </dd>
+                                </div>
+                                <div class="od-field od-wide">
+                                    <dt>Lý do huỷ</dt>
+                                    <dd>{{ $cancellationReason ?: 'Không ghi nhận lý do' }}</dd>
+                                </div>
+                            </dl>
+                        </div>@if($financial['deducted_amount'] && $financial['refund_amount'] === null)
+                            <div class="od-alert danger">Đơn đã có giao dịch trừ tiền nhưng không có settlement snapshot hoặc giao
+                        dịch hoàn nhập để xác nhận số tiền hoàn. Cần đối soát.</div>@endif
+                </section>@endif
+                @if($financial['transactions']->isNotEmpty())
+                    <section class="od-card">
+                        <div class="od-section-head"><i class="fas fa-receipt"></i> Giao dịch liên quan</div>
+                        <div class="od-body">
+                            <table class="od-transactions">
+                                <thead>
+                                    <tr>
+                                        <th>Thời gian</th>
+                                        <th>Loại</th>
+                                        <th>Số tiền</th>
+                                        <th>Tham chiếu</th>
+                                    </tr>
+                                </thead>
+                                <tbody>@foreach($financial['transactions'] as $transaction)
+                                    <tr>
+                                        <td>{{ optional($transaction->created_at)->format('d/m/Y H:i:s') }}</td>
+                                        <td class="od-type {{ $transaction->type }}">
+                                            {{ $typeLabels[$transaction->type] ?? $transaction->type }}</td>
+                                        <td>{{ $money($transaction->value, 5) }}</td>
+                                        <td>{{ $transaction->note ?: '—' }}</td>
+                                </tr>@endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                </section>@endif
+            </div>
+            <aside>
+                <section class="od-card">
+                    <div class="od-section-head"><i class="fas fa-location-dot"></i> Người nhận</div>
+                    <div class="od-body">
+                        <dl class="od-info-grid">
+                            <div class="od-field od-wide">
+                                <dt>Họ tên</dt>
+                                <dd>{{ $frozen_order->display_customer_name ?? '—' }}</dd>
+                            </div>
+                            <div class="od-field od-wide">
+                                <dt>Số điện thoại</dt>
+                                <dd>{{ $frozen_order->display_customer_phone ?? '—' }}</dd>
+                            </div>
+                            <div class="od-field od-wide">
+                                <dt>Địa chỉ</dt>
+                                <dd>{{ $frozen_order->display_customer_address ?? '—' }}</dd>
+                            </div>@if($frozen_order->display_customer_note)
+                                <div class="od-field od-wide">
+                                    <dt>Ghi chú</dt>
+                                    <dd>{{ $frozen_order->display_customer_note }}</dd>
+                            </div>@endif
+                        </dl>
+                    </div>
+                </section>
+                <section class="od-card">
+                    <div class="od-section-head"><i class="fas fa-clock-rotate-left"></i> Lịch sử xử lý</div>
+                    <div class="od-body">@forelse($statusHistory as $event)
+                        <div class="od-event {{ $event->status?->name === $status ? 'current' : '' }}"><span
+                                class="od-dot"></span>
+                            <div class="od-event-title">
+                                {{ $event->status?->display_name ?? ($statusLabels[$event->status?->name] ?? 'Cập nhật trạng thái') }}
+                            </div>
+                            <div class="od-event-meta">{{ optional($event->created_at)->format('d/m/Y H:i:s') }} ·
+                                {{ $event->changedBy?->full_name ?? $event->changedBy?->username ?? 'Hệ thống' }}</div>
+                            @if($event->notes)
+                            <div class="od-event-note">{{ $event->notes }}</div>@endif
+                    </div>@empty<div class="od-empty">Chưa có lịch sử trạng thái.</div>@endforelse
+                    </div>
+                </section>
+                @if($frozen_order->tracking_number || $frozen_order->shipping_carrier)
+                    <section class="od-card">
+                        <div class="od-section-head"><i class="fas fa-truck"></i> Vận chuyển</div>
+                        <div class="od-body">
+                            <dl class="od-info-grid">
+                                <div class="od-field od-wide">
+                                    <dt>Mã vận đơn</dt>
+                                    <dd>{{ $frozen_order->tracking_number ?? '—' }}</dd>
+                                </div>
+                                <div class="od-field od-wide">
+                                    <dt>Đơn vị vận chuyển</dt>
+                                    <dd>{{ $frozen_order->shipping_carrier ?? '—' }}</dd>
+                                </div>
+                            </dl>
+                        </div>
+                </section>@endif
+                @if($frozen_order->display_api)
+                    <section class="od-card">
+                        <div class="od-section-head"><i class="fas fa-code"></i> API theo dõi</div>
+                        <div class="od-body">
+                            <div style="display:flex;gap:8px;align-items:center"><code
+                                    style="word-break:break-all;flex:1">{{ $frozen_order->display_api }}</code><button
+                                    class="btn-copy-api" type="button" data-api="{{ $frozen_order->display_api }}"><i
+                                        class="fas fa-copy"></i></button></div>@if($apiUrl)<a href="{{ $apiUrl }}"
+                                        target="_blank" rel="noopener" style="font-size:12px">Mở API theo dõi</a>@endif
+                        </div>
+                </section>@endif
+            </aside>
+        </div>
+    </main>
+    @push('scripts')
+        <script>document.addEventListener('DOMContentLoaded', () => document.querySelectorAll('.btn-copy-api').forEach(button => button.addEventListener('click', async () => { try { await navigator.clipboard.writeText(button.dataset.api); button.innerHTML = '<i class="fas fa-check"></i>'; setTimeout(() => button.innerHTML = '<i class="fas fa-copy"></i>', 1600) } catch (error) { console.error(error) } })));</script>
+    @endpush
 @endsection

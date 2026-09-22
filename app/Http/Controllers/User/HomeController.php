@@ -38,8 +38,9 @@ class HomeController extends Controller
 
         // Kiểm tra xem user đã quay vòng quay may mắn hôm nay chưa
         $has_spun_today = LuckyWheelSpin::hasSpunToday(Auth::id());
+        $bonus_spins_remaining = (int) (Auth::user()->lucky_wheel_bonus_spins ?? 0);
 
-        return view('user.home', compact('list_sections', 'list_partners', 'get_banner', 'user_spin_progress', 'rank', 'has_spun_today'));
+        return view('user.home', compact('list_sections', 'list_partners', 'get_banner', 'user_spin_progress', 'rank', 'has_spun_today', 'bonus_spins_remaining'));
         // return view('info');
     }
 
@@ -193,7 +194,8 @@ class HomeController extends Controller
                             'is_high_value_order' => true,
                             'is_order_special' => true,
                             'is_new_order' => false,
-                            'message' => __('home.CoDonHangDangBiDongBang')
+                            'redirect' => url('/order/' . $check_frozen->getRouteKey()),
+                            'message' => __('home.CoDonHangChuaXuLy')
                         ]);
                     } else {
                         $rank = Rank::find($query_current_spin->rank_id);
@@ -252,6 +254,7 @@ class HomeController extends Controller
                         'is_high_value_order' => false,
                         'is_order_special' => false,
                         'is_new_order' => false,
+                        'redirect' => url('/order/' . $check_frozen->getRouteKey()),
                         'message' => __('home.CoDonHangChuaXuLy')
                     ]);
                 }
@@ -656,57 +659,77 @@ class HomeController extends Controller
      */
     public function spinLuckyWheel(Request $request)
     {
+        $validated = $request->validate([
+            'prize' => ['required', 'string', 'max:255'],
+        ]);
+
         try {
-            $userId = Auth::id();
+            $result = DB::transaction(function () use ($validated) {
+                $user = User::whereKey(Auth::id())->lockForUpdate()->firstOrFail();
+                $userId = $user->id;
+                $prize = $validated['prize'];
 
-            // Kiểm tra đã quay hôm nay chưa
-            if (LuckyWheelSpin::hasSpunToday($userId)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Bạn đã quay vòng quay hôm nay rồi. Hãy quay lại vào ngày mai!'
-                ], 400);
-            }
+                // Lượt admin cấp luôn được ưu tiên và không phụ thuộc tiến trình đơn hàng / giới hạn 1 lần mỗi ngày.
+                if ((int) $user->lucky_wheel_bonus_spins > 0) {
+                    $user->lucky_wheel_bonus_spins = (int) $user->lucky_wheel_bonus_spins - 1;
+                    $user->save();
 
-            // Kiểm tra điều kiện: phải hoàn thành đủ đơn hàng trong cấp độ
-            $user = Auth::user();
-            if (!$user->rank_id) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Bạn cần có cấp độ để tham gia quay thưởng!'
-                ], 400);
-            }
+                    LuckyWheelSpin::recordSpin($userId, $prize, LuckyWheelSpin::TYPE_ADMIN_BONUS);
 
-            $rank = Rank::find($user->rank_id);
-            $user_spin_progress = User_spin_progress::where('user_id', $userId)->first();
+                    return [
+                        'success' => true,
+                        'message' => 'Chúc mừng bạn đã trúng ' . $prize . '!',
+                        'prize' => $prize,
+                        'bonus_spins_remaining' => (int) $user->lucky_wheel_bonus_spins,
+                    ];
+                }
 
-            if (!$user_spin_progress) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Bạn chưa có tiến trình phân phối!'
-                ], 400);
-            }
+                // Hết lượt admin cấp thì quay lại đúng logic hằng ngày hiện có.
+                if (LuckyWheelSpin::hasSpunToday($userId)) {
+                    return [
+                        'success' => false,
+                        'message' => 'Bạn đã quay vòng quay hôm nay rồi. Hãy quay lại vào ngày mai!',
+                    ];
+                }
 
-            $current = $user_spin_progress->current_spin ?? 0;
-            $total = $rank->spin_count ?? 0;
+                if (!$user->rank_id) {
+                    return [
+                        'success' => false,
+                        'message' => 'Bạn cần có cấp độ để tham gia quay thưởng!',
+                    ];
+                }
 
-            if ($current < $total) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Bạn cần hoàn thành ' . ($total - $current) . ' đơn hàng nữa để quay!'
-                ], 400);
-            }
+                $rank = Rank::find($user->rank_id);
+                $user_spin_progress = User_spin_progress::where('user_id', $userId)->first();
 
-            // Lấy phần thưởng từ request
-            $prize = $request->input('prize');
+                if (!$rank || !$user_spin_progress) {
+                    return [
+                        'success' => false,
+                        'message' => 'Bạn chưa có tiến trình phân phối!',
+                    ];
+                }
 
-            // Lưu lịch sử quay
-            LuckyWheelSpin::recordSpin($userId, $prize);
+                $current = $user_spin_progress->current_spin ?? 0;
+                $total = $rank->spin_count ?? 0;
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Chúc mừng bạn đã trúng ' . $prize . '!',
-                'prize' => $prize
-            ]);
+                if ($current < $total) {
+                    return [
+                        'success' => false,
+                        'message' => 'Bạn cần hoàn thành ' . ($total - $current) . ' đơn hàng nữa để quay!',
+                    ];
+                }
+
+                LuckyWheelSpin::recordSpin($userId, $prize);
+
+                return [
+                    'success' => true,
+                    'message' => 'Chúc mừng bạn đã trúng ' . $prize . '!',
+                    'prize' => $prize,
+                    'bonus_spins_remaining' => 0,
+                ];
+            });
+
+            return response()->json($result, $result['success'] ? 200 : 400);
 
         } catch (\Exception $e) {
             Log::error('Lucky wheel spin error: ' . $e->getMessage());

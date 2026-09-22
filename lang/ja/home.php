@@ -62,7 +62,6 @@ return [
     "KhongTimThayDonHang" => "注文が見つかりません！",
     "KhongTimThayTienTrinhQuay" => "スピンプロセスが見つかりません！",
     "ChucMungBanNhanDuocDonHangGiaTriCao" => "おめでとうございます！高額注文を獲得しました！",
-    "CoDonHangDangBiDongBang" => "凍結された注文があります。注文履歴ページをご確認ください！",
     "CoDonHangChuaXuLy" => "未処理の注文があります。注文履歴ページをご確認ください！",
     "LuotQuayDaDatDenGioiHanToiDa" => "スピン制限に達しました！",
     "DaXayRaLoiKhiKiemTraDonHang" => "注文確認中にエラーが発生しました！",

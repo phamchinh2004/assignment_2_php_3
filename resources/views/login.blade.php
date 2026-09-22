@@ -94,6 +94,7 @@
                 <a href="{{ route('forgot_password') }}" class="cspt"
                     id="label_forgot_password">Quên mật khẩu?</a>
             </div>
+            <x-turnstile action="login" />
             <div class="d-grid mt-4">
                 <button class="btn auth-submit" id="login" type="submit">Đăng nhập <i class="fa-solid fa-arrow-right ms-2"></i></button>
             </div>

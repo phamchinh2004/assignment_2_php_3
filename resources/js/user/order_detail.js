@@ -30,6 +30,7 @@ const route_confirm_order = getGlobalVar('route_confirm_order', pageConfig?.rout
 const route_cancel_order = getGlobalVar('route_cancel_order', pageConfig?.routes?.cancel || '');
 const route_report_order = getGlobalVar('route_report_order', pageConfig?.routes?.report || '');
 const route_order = getGlobalVar('route_order', pageConfig?.routes?.order || '');
+const route_distribution = getGlobalVar('route_distribution', pageConfig?.routes?.distribution || '');
 const csrf = getGlobalVar('csrf', pageConfig?.csrf || document.querySelector('meta[name="csrf-token"]')?.content || '');
 
 // Expose lại lên window để các đoạn debug/khác có thể dùng
@@ -39,6 +40,7 @@ if (typeof window !== 'undefined') {
     window.route_cancel_order = route_cancel_order;
     window.route_report_order = route_report_order;
     window.route_order = route_order;
+    window.route_distribution = route_distribution;
     window.csrf = csrf;
 }
 
@@ -48,6 +50,7 @@ console.log('Variables loaded:', {
     route_cancel_order,
     route_report_order,
     route_order,
+    route_distribution,
     csrf: csrf ? 'CSRF token exists' : 'No CSRF token'
 });
 
@@ -135,9 +138,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         alert(successMessage);
                     }
 
-                    // Reload trang sau 1.5 giây
+                    // Quay lại trang phân phối để nhận đơn hàng tiếp theo.
                     setTimeout(() => {
-                        window.location.reload();
+                        window.location.href = route_distribution || '/distribution';
                     }, 1500);
                 } else {
                     // Ẩn spinner
@@ -433,4 +436,3 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
-

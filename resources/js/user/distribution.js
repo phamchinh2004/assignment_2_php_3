@@ -174,23 +174,29 @@ document.addEventListener('DOMContentLoaded', function () {
         const responseIsHighValueOrder = check_frozen.is_high_value_order ?? check_frozen.is_order_special ?? false;
         let can_spin = false;
         if (check_frozen.status == 200 && check_frozen.is_frozen == true && responseIsHighValueOrder == false && check_frozen.is_new_order == false) {
-            AppDialog.alert({
+            spinner.hidden = true;
+            const acknowledged = await AppDialog.alert({
                 title: trans.donHangChuaXuLy,
                 text: check_frozen.message,
                 icon: "warning",
                 button: "OK",
                 dangerMode: true,
-            })
-            spinner.hidden = true;
+            });
+            if (acknowledged && check_frozen.redirect) {
+                window.location.href = check_frozen.redirect;
+            }
         } else if (check_frozen.status == 200 && check_frozen.is_frozen == true && responseIsHighValueOrder == true && check_frozen.is_new_order == false) {
-            AppDialog.alert({
+            spinner.hidden = true;
+            const acknowledged = await AppDialog.alert({
                 title: trans.DonHangDangBiDongBang,
                 text: check_frozen.message,
                 icon: "warning",
                 button: "OK",
                 dangerMode: true,
-            })
-            spinner.hidden = true;
+            });
+            if (acknowledged && check_frozen.redirect) {
+                window.location.href = check_frozen.redirect;
+            }
         } else if (check_frozen.status == 200 && check_frozen.is_frozen == true && responseIsHighValueOrder == true && check_frozen.is_new_order == true) {
             is_high_value_order = true;
             fake_price = check_frozen.custom_price;

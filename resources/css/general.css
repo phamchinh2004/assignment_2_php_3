@@ -258,6 +258,16 @@
     color: #fff;
 }
 
+.auth-turnstile {
+    display: flex;
+    justify-content: center;
+    margin-top: 18px;
+}
+
+.auth-turnstile .cf-turnstile {
+    width: min(100%, 360px);
+}
+
 .auth-social {
     display: flex;
     justify-content: center;

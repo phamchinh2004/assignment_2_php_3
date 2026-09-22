@@ -43,6 +43,13 @@ class UpdateUserRequest extends FormRequest
             'status' => ['required', Rule::in(['inactivated', 'activated', 'banned'])],
             'warehouse_area' => 'nullable|string|max:191',
             'warehouse_address' => 'nullable|string',
+            'lucky_wheel_bonus_spins' => [
+                Rule::prohibitedIf(fn () => auth()->user()?->role !== User::ROLE_ADMIN),
+                'nullable',
+                'integer',
+                'min:0',
+                'max:100000',
+            ],
             'role' => [
                 Rule::prohibitedIf(fn () => auth()->user()?->role !== User::ROLE_ADMIN),
                 'nullable',

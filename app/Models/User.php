@@ -36,6 +36,7 @@ class User extends Authenticatable
         'distribution_today',
         'todays_discount',
         'count_withdrawals',
+        'lucky_wheel_bonus_spins',
         'role',
         'status',
         'rank_id',
@@ -77,6 +78,7 @@ class User extends Authenticatable
         'location_latitude' => 'float',
         'location_longitude' => 'float',
         'location_accuracy' => 'float',
+        'lucky_wheel_bonus_spins' => 'integer',
         'password' => 'hashed',
     ];
 

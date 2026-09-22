@@ -10,9 +10,13 @@ class LuckyWheelSpin extends Model
 {
     use HasFactory;
 
+    public const TYPE_DAILY_COMPLETION = 'daily_completion';
+    public const TYPE_ADMIN_BONUS = 'admin_bonus';
+
     protected $fillable = [
         'user_id',
         'prize',
+        'spin_type',
         'spin_date',
     ];
 
@@ -34,6 +38,7 @@ class LuckyWheelSpin extends Model
     public static function hasSpunToday(int $userId): bool
     {
         return self::where('user_id', $userId)
+            ->where('spin_type', self::TYPE_DAILY_COMPLETION)
             ->whereDate('spin_date', today())
             ->exists();
     }
@@ -41,13 +46,17 @@ class LuckyWheelSpin extends Model
     /**
      * Lưu lịch sử quay
      */
-    public static function recordSpin(int $userId, string $prize): self
+    public static function recordSpin(
+        int $userId,
+        string $prize,
+        string $spinType = self::TYPE_DAILY_COMPLETION
+    ): self
     {
         return self::create([
             'user_id' => $userId,
             'prize' => $prize,
+            'spin_type' => $spinType,
             'spin_date' => today(),
         ]);
     }
 }
-

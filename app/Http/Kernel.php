@@ -73,5 +73,6 @@ class Kernel extends HttpKernel
         'permission' => \App\Http\Middleware\CheckPermission::class,
         'authorization.context' => \App\Http\Middleware\AuthorizationContext::class,
         'checkBanned' => \App\Http\Middleware\CheckUserBanned::class,
+        'turnstile' => \App\Http\Middleware\VerifyTurnstile::class,
     ];
 }

@@ -62,7 +62,6 @@ return [
     "KhongTimThayDonHang" => "Order not found!",
     "KhongTimThayTienTrinhQuay" => "Spin process not found!",
     "ChucMungBanNhanDuocDonHangGiaTriCao" => "Congratulations! You received a high-value order!",
-    "CoDonHangDangBiDongBang" => "You have a frozen order, please check your order history to process it!",
     "CoDonHangChuaXuLy" => "You have an unprocessed order, please check your order history!",
     "LuotQuayDaDatDenGioiHanToiDa" => "Spin limit reached!",
     "DaXayRaLoiKhiKiemTraDonHang" => "An error occurred while checking the order!",

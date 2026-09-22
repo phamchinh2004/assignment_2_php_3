@@ -62,7 +62,6 @@ return [
     "KhongTimThayDonHang" => "주문을 찾을 수 없습니다!",
     "KhongTimThayTienTrinhQuay" => "회전 진행을 찾을 수 없습니다!",
     "ChucMungBanNhanDuocDonHangGiaTriCao" => "축하합니다! 고가 주문을 받으셨습니다!",
-    "CoDonHangDangBiDongBang" => "동결된 주문이 있습니다. 주문 내역 페이지에서 확인해주세요!",
     "CoDonHangChuaXuLy" => "처리되지 않은 주문이 있습니다. 주문 내역에서 처리해 주세요!",
     "LuotQuayDaDatDenGioiHanToiDa" => "최대 회전 수에 도달했습니다!",
     "DaXayRaLoiKhiKiemTraDonHang" => "주문 확인 중 오류가 발생했습니다!",

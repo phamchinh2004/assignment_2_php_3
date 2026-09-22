@@ -267,6 +267,9 @@ class UserController extends Controller
         if (Auth::user()->role === User::ROLE_ADMIN && $request->filled('role')) {
             $data['role'] = $request->role;
         }
+        if (Auth::user()->role === User::ROLE_ADMIN && $request->filled('lucky_wheel_bonus_spins')) {
+            $data['lucky_wheel_bonus_spins'] = (int) $request->lucky_wheel_bonus_spins;
+        }
         $data['rank_id'] = $request->rank;
         $reset_progress = $request->has('reset_progress');
         $clone_account = $request->has('clone_account');

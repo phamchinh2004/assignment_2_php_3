@@ -70,7 +70,6 @@ return [
     "KhongTimThayDonHang" => "Không tìm thấy đơn hàng!",
     "KhongTimThayTienTrinhQuay" => "Không tìm thấy tiến trình quay!",
     "ChucMungBanNhanDuocDonHangGiaTriCao" => "Chúc mừng! Bạn nhận được đơn hàng giá trị cao!",
-    "CoDonHangDangBiDongBang" => "Có đơn hàng đang bị đóng băng, vui lòng truy cập trang lịch sử đơn hàng để xử lý!",
     "CoDonHangChuaXuLy" => "Có đơn hàng chưa xử lý, vui lòng truy cập trang lịch sử đơn hàng để xử lý đơn hàng!",
     "LuotQuayDaDatDenGioiHanToiDa" => "Lượt quay đã đạt đến giới hạn tối đa trong ngày!",
     "DaXayRaLoiKhiKiemTraDonHang" => "Đã xảy ra lỗi khi kiểm tra đơn hàng!",

@@ -274,6 +274,21 @@ Chỉnh sửa người dùng
                                     </select>
                                 </div>
                             </div>
+
+                            @if (auth()->user()->role === \App\Models\User::ROLE_ADMIN)
+                            <div class="col-md-6">
+                                <div class="form-group-custom">
+                                    <label for="lucky_wheel_bonus_spins">Lượt quay may mắn được cấp còn lại</label>
+                                    <input type="number" name="lucky_wheel_bonus_spins" id="lucky_wheel_bonus_spins"
+                                        value="{{ old('lucky_wheel_bonus_spins', $user->lucky_wheel_bonus_spins ?? 0) }}"
+                                        class="form-control form-control-custom"
+                                        min="0" step="1">
+                                    @error('lucky_wheel_bonus_spins')
+                                    <small class="error-message">{{ $message }}</small>
+                                    @enderror
+                                </div>
+                            </div>
+                            @endif
                         </div>
 
                         <div class="checkbox-card">
