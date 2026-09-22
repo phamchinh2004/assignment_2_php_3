@@ -5,17 +5,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hệ thống</title>
-    <meta name="description" content="TikTok Shop - Nền tảng mua sắm trực tuyến">
+    <meta name="description" content="TT Affiliate là nền tảng thương mại điện tử tích hợp trực tiếp vào ứng dụng Dropshipping, cho phép người dùng mua sắm sản phẩm ngay trong video. Thông qua TT Affiliate, các thương hiệu và người bán có thể tiếp cận hàng triệu người dùng trẻ tuổi, tạo ra trải nghiệm mua sắm thú vị và tương tác. Sự phát triển vượt bậc của TT Affiliate trong những năm gần đây đã biến nó thành một trong những mạng xã hội phổ biến nhất thế giới.">
     <meta property="og:type" content="website">
-    <meta property="og:title" content="TikTok Shop">
-    <meta property="og:description" content="TikTok Shop - Nền tảng mua sắm trực tuyến">
+    <meta property="og:title" content="TT Affiliate">
+    <meta property="og:description" content="TT Affiliate là nền tảng thương mại điện tử tích hợp trực tiếp vào ứng dụng Dropshipping, cho phép người dùng mua sắm sản phẩm ngay trong video. Thông qua TT Affiliate, các thương hiệu và người bán có thể tiếp cận hàng triệu người dùng trẻ tuổi, tạo ra trải nghiệm mua sắm thú vị và tương tác. Sự phát triển vượt bậc của TT Affiliate trong những năm gần đây đã biến nó thành một trong những mạng xã hội phổ biến nhất thế giới.">
     <meta property="og:url" content="{{ url()->current() }}">
-    <meta property="og:image" content="{{ asset('images/logo/tiktok-shop.webp') }}">
-    <meta property="og:image:alt" content="TikTok Shop">
+    <meta property="og:image" content="{{ asset('images/logo/tta.webp') }}">
+    <meta property="og:image:alt" content="TT Affiliate">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="TikTok Shop">
-    <meta name="twitter:description" content="TikTok Shop - Nền tảng mua sắm trực tuyến">
-    <meta name="twitter:image" content="{{ asset('images/logo/tiktok-shop.webp') }}">
+    <meta name="twitter:title" content="TT Affiliate">
+    <meta name="twitter:description"
+        content="TT Affiliate là nền tảng thương mại điện tử tích hợp trực tiếp vào Dropshipping, cho phép người dùng mua sắm sản phẩm ngay trong video. Thông qua TT Affiliate, các thương hiệu và người bán có thể tiếp cận hàng triệu người dùng trẻ tuổi, tạo ra trải nghiệm mua sắm thú vị và tương tác. Sự phát triển vượt bậc của TT Affiliate trong những năm gần đây đã biến nó thành một trong những mạng xã hội phổ biến nhất thế giới.">
+    <meta name="twitter:image" content="{{ asset('images/logo/tta.webp') }}">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -26,7 +27,7 @@
         };
     </script>
     @vite(['resources/js/app.js', 'resources/css/app.css'])
-    <link rel="icon" href="{{ asset('images/logo/tiktok-shop.png') }}">
+    <link rel="icon" href="{{ asset('images/logo/tta.png') }}">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet" />
 
     @vite('resources/css/user.css')
@@ -65,7 +66,8 @@
                 <a href="{{ route('distribution') }}"
                     class="d-flex footer-item justify-content-center align-items-center p-0 cspt text-dark text-decoration-none">
                     <div class="amazon_btn d-flex justify-content-center align-items-center">
-                        <img class="footer-logo" src="{{ asset('images/home/distribution_button.webp') }}" alt="Trang phân phối">
+                        <img class="footer-logo" src="{{ asset('images/home/distribution_button.webp') }}"
+                            alt="Trang phân phối">
                     </div>
                 </a>
 
@@ -100,7 +102,8 @@
                             <h5 class="modal-title" id="changePasswordModalLabel">Đổi mật khẩu đăng nhập</h5>
                             <p>Cập nhật mật khẩu dùng để đăng nhập vào tài khoản.</p>
                         </div>
-                        <button type="button" class="account-security-modal__close" data-bs-dismiss="modal" aria-label="Đóng">
+                        <button type="button" class="account-security-modal__close" data-bs-dismiss="modal"
+                            aria-label="Đóng">
                             <i class="fa-solid fa-xmark" aria-hidden="true"></i>
                         </button>
                     </div>
@@ -113,7 +116,8 @@
                                 <div class="account-security-field__control">
                                     <i class="fa-solid fa-key" aria-hidden="true"></i>
                                     <input type="password" name="present_password" id="present_password"
-                                        class="form-control" placeholder="Nhập mật khẩu hiện tại" autocomplete="current-password" required>
+                                        class="form-control" placeholder="Nhập mật khẩu hiện tại"
+                                        autocomplete="current-password" required>
                                 </div>
                             </div>
                             <div class="account-security-field">
@@ -121,7 +125,8 @@
                                 <div class="account-security-field__control">
                                     <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
                                     <input type="password" name="new_password" id="new_password" class="form-control"
-                                        placeholder="Nhập mật khẩu mới" autocomplete="new-password" minlength="6" required>
+                                        placeholder="Nhập mật khẩu mới" autocomplete="new-password" minlength="6"
+                                        required>
                                 </div>
                                 <small>Tối thiểu 6 ký tự.</small>
                             </div>
@@ -130,14 +135,17 @@
                                 <div class="account-security-field__control">
                                     <i class="fa-solid fa-check" aria-hidden="true"></i>
                                     <input type="password" name="confirm_new_password" id="confirm_new_password"
-                                        class="form-control" placeholder="Nhập lại mật khẩu mới" autocomplete="new-password" required>
+                                        class="form-control" placeholder="Nhập lại mật khẩu mới"
+                                        autocomplete="new-password" required>
                                 </div>
                             </div>
                         </form>
                     </div>
                     <div class="modal-footer">
-                        <button class="account-security-modal__button is-secondary" type="button" data-bs-dismiss="modal">Hủy</button>
-                        <button class="account-security-modal__button is-primary" type="button" onclick="change_password()">
+                        <button class="account-security-modal__button is-secondary" type="button"
+                            data-bs-dismiss="modal">Hủy</button>
+                        <button class="account-security-modal__button is-primary" type="button"
+                            onclick="change_password()">
                             <span>Cập nhật mật khẩu</span><i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
                         </button>
                     </div>
@@ -158,7 +166,8 @@
                             <h5 class="modal-title" id="changeTransactionPasswordModalLabel">Đổi mật khẩu giao dịch</h5>
                             <p>Mật khẩu này được dùng khi xác nhận các thao tác tài chính.</p>
                         </div>
-                        <button type="button" class="account-security-modal__close" data-bs-dismiss="modal" aria-label="Đóng">
+                        <button type="button" class="account-security-modal__close" data-bs-dismiss="modal"
+                            aria-label="Đóng">
                             <i class="fa-solid fa-xmark" aria-hidden="true"></i>
                         </button>
                     </div>
@@ -173,7 +182,8 @@
                                     <i class="fa-solid fa-key" aria-hidden="true"></i>
                                     <input type="password" name="present_transaction_password"
                                         id="present_transaction_password" class="form-control"
-                                        placeholder="Nhập mật khẩu giao dịch hiện tại" autocomplete="current-password" required>
+                                        placeholder="Nhập mật khẩu giao dịch hiện tại" autocomplete="current-password"
+                                        required>
                                 </div>
                             </div>
                             <div class="account-security-field">
@@ -181,7 +191,8 @@
                                 <div class="account-security-field__control">
                                     <i class="fa-solid fa-shield" aria-hidden="true"></i>
                                     <input type="password" name="new_transaction_password" id="new_transaction_password"
-                                        class="form-control" placeholder="Nhập mật khẩu giao dịch mới" autocomplete="new-password" minlength="6" required>
+                                        class="form-control" placeholder="Nhập mật khẩu giao dịch mới"
+                                        autocomplete="new-password" minlength="6" required>
                                 </div>
                                 <small>Tối thiểu 6 ký tự.</small>
                             </div>
@@ -191,14 +202,16 @@
                                     <i class="fa-solid fa-check" aria-hidden="true"></i>
                                     <input type="password" name="confirm_new_transaction_password"
                                         id="confirm_new_transaction_password" class="form-control"
-                                        placeholder="Nhập lại mật khẩu giao dịch mới" autocomplete="new-password" required>
+                                        placeholder="Nhập lại mật khẩu giao dịch mới" autocomplete="new-password"
+                                        required>
                                 </div>
                             </div>
                         </form>
 
                         <button type="button" class="account-security-reset-link" id="resetTransactionPasswordLink"
                             data-reset-transaction-password>
-                            <span class="account-security-reset-link__icon"><i class="fa-solid fa-rotate" aria-hidden="true"></i></span>
+                            <span class="account-security-reset-link__icon"><i class="fa-solid fa-rotate"
+                                    aria-hidden="true"></i></span>
                             <span>
                                 <strong>Quên mật khẩu giao dịch?</strong>
                                 <small>Xác minh bằng mật khẩu đăng nhập để cấp lại.</small>
@@ -207,8 +220,10 @@
                         </button>
                     </div>
                     <div class="modal-footer">
-                        <button class="account-security-modal__button is-secondary" type="button" data-bs-dismiss="modal">Hủy</button>
-                        <button class="account-security-modal__button is-primary" type="button" onclick="change_transaction_password()">
+                        <button class="account-security-modal__button is-secondary" type="button"
+                            data-bs-dismiss="modal">Hủy</button>
+                        <button class="account-security-modal__button is-primary" type="button"
+                            onclick="change_transaction_password()">
                             <span>Cập nhật mật khẩu</span><i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
                         </button>
                     </div>
@@ -226,10 +241,12 @@
                         </span>
                         <div class="account-security-modal__heading">
                             <span class="account-security-modal__eyebrow">Khôi phục truy cập</span>
-                            <h5 class="modal-title" id="resetTransactionPasswordModalLabel">Cấp lại mật khẩu giao dịch</h5>
+                            <h5 class="modal-title" id="resetTransactionPasswordModalLabel">Cấp lại mật khẩu giao dịch
+                            </h5>
                             <p>Xác minh mật khẩu đăng nhập trước khi hệ thống tạo mật khẩu giao dịch mới.</p>
                         </div>
-                        <button type="button" class="account-security-modal__close" data-bs-dismiss="modal" aria-label="Đóng">
+                        <button type="button" class="account-security-modal__close" data-bs-dismiss="modal"
+                            aria-label="Đóng">
                             <i class="fa-solid fa-xmark" aria-hidden="true"></i>
                         </button>
                     </div>
@@ -247,14 +264,17 @@
                                 <div class="account-security-field__control">
                                     <i class="fa-solid fa-lock" aria-hidden="true"></i>
                                     <input type="password" name="present_login_password" id="present_login_password"
-                                        class="form-control" placeholder="Nhập mật khẩu đăng nhập hiện tại" autocomplete="current-password" required>
+                                        class="form-control" placeholder="Nhập mật khẩu đăng nhập hiện tại"
+                                        autocomplete="current-password" required>
                                 </div>
                             </div>
                         </form>
                     </div>
                     <div class="modal-footer">
-                        <button class="account-security-modal__button is-secondary" type="button" data-bs-dismiss="modal">Hủy</button>
-                        <button class="account-security-modal__button is-primary" type="button" onclick="reset_transaction_password()">
+                        <button class="account-security-modal__button is-secondary" type="button"
+                            data-bs-dismiss="modal">Hủy</button>
+                        <button class="account-security-modal__button is-primary" type="button"
+                            onclick="reset_transaction_password()">
                             <span>Xác nhận cấp lại</span><i class="fa-solid fa-rotate" aria-hidden="true"></i>
                         </button>
                     </div>
@@ -349,27 +369,27 @@
         @endif
     </script>
     <script>
-            // ===== HỆ THỐNG NOTIFICATION =====
+        // ===== HỆ THỐNG NOTIFICATION =====
 
-            // Function phát âm thanh notification
-            function playNotificationSound(soundFile = 'notification_fb.mp3') {
-                try {
-                    // Tạo audio element mới mỗi lần để tránh conflict
-                    const audio = new Audio('/audio/' + soundFile);
-                    audio.volume = 1.0;
+        // Function phát âm thanh notification
+        function playNotificationSound(soundFile = 'notification_fb.mp3') {
+            try {
+                // Tạo audio element mới mỗi lần để tránh conflict
+                const audio = new Audio('/audio/' + soundFile);
+                audio.volume = 1.0;
 
-                    // Play âm thanh
-                    const playPromise = audio.play();
+                // Play âm thanh
+                const playPromise = audio.play();
 
-                    if (playPromise !== undefined) {
-                        playPromise.catch(() => {
-                            // Ignore error - user may need to interact with page first
-                        });
-                    }
-                } catch (error) {
-                    // Ignore error
+                if (playPromise !== undefined) {
+                    playPromise.catch(() => {
+                        // Ignore error - user may need to interact with page first
+                    });
                 }
+            } catch (error) {
+                // Ignore error
             }
+        }
 
         // Define userId for notification system
         @auth
@@ -378,7 +398,7 @@
 
         window.addEventListener('load', function () {
             @auth
-                    if (window.Echo) {
+                                if (window.Echo) {
                     window.Echo.private(`user.{{ auth()->id() }}`)
                         .listen('.UserLocked', function (e) {
                             location.href = '/log-out-by-locked';

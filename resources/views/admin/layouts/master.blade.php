@@ -5,19 +5,19 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="description" content="">
+    <meta name="description" content="TT Affiliate là nền tảng thương mại điện tử tích hợp trực tiếp vào Dropshipping, cho phép người dùng mua sắm sản phẩm ngay trong video. Thông qua TT Affiliate, các thương hiệu và người bán có thể tiếp cận hàng triệu người dùng trẻ tuổi, tạo ra trải nghiệm mua sắm thú vị và tương tác. Sự phát triển vượt bậc của TT Affiliate trong những năm gần đây đã biến nó thành một trong những mạng xã hội phổ biến nhất thế giới.">
     <meta property="og:type" content="website">
-    <meta property="og:title" content="TikTok Shop">
-    <meta property="og:description" content="TikTok Shop - Nền tảng mua sắm trực tuyến">
+    <meta property="og:title" content="TT Affiliate">
+    <meta property="og:description" content="TT Affiliate là nền tảng thương mại điện tử tích hợp trực tiếp vào Dropshipping, cho phép người dùng mua sắm sản phẩm ngay trong video. Thông qua TT Affiliate, các thương hiệu và người bán có thể tiếp cận hàng triệu người dùng trẻ tuổi, tạo ra trải nghiệm mua sắm thú vị và tương tác. Sự phát triển vượt bậc của TT Affiliate trong những năm gần đây đã biến nó thành một trong những mạng xã hội phổ biến nhất thế giới.">
     <meta property="og:url" content="{{ url()->current() }}">
-    <meta property="og:image" content="{{ asset('images/logo/tiktok-shop.webp') }}">
-    <meta property="og:image:alt" content="TikTok Shop">
+    <meta property="og:image" content="{{ asset('images/logo/tta.webp') }}">
+    <meta property="og:image:alt" content="TT Affiliate">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:image" content="{{ asset('images/logo/tiktok-shop.webp') }}">
+    <meta name="twitter:image" content="{{ asset('images/logo/tta.webp') }}">
     <meta name="author" content="">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title')</title>
-    <link rel="icon" href="{{ asset('images/logo/tiktok-shop.png') }}">
+    <link rel="icon" href="{{ asset('images/logo/tta.png') }}">
 
     <!-- Custom fonts for this template-->
     <link href="{{ asset('theme/admin/vendor/fontawesome-free/css/all.min.css') }}" rel="stylesheet" type="text/css">
