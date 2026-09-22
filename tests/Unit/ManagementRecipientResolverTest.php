@@ -58,4 +58,35 @@ class ManagementRecipientResolverTest extends TestCase
             $this->resolver->idsForLegacyFallback(null, [20, 21, 20])
         );
     }
+
+    public function test_conversation_manager_targets_manager_all_admins_and_all_owners_without_duplicates(): void
+    {
+        $staff = new User();
+        $staff->id = 10;
+        $staff->role = User::ROLE_STAFF;
+
+        $admin = new User();
+        $admin->id = 20;
+        $admin->role = User::ROLE_ADMIN;
+
+        $owner = new User();
+        $owner->id = 30;
+        $owner->role = User::ROLE_OWNER;
+
+        $this->assertSame(
+            [10, 20, 21, 30, 31],
+            $this->resolver->idsForConversationManager($staff, [20, 21, 10], [30, 31, 20])
+        );
+
+        $this->assertSame(
+            [20, 21, 30, 31],
+            $this->resolver->idsForConversationManager($admin, [20, 21], [30, 31, 20])
+        );
+
+        $this->assertSame(
+            [30, 20, 21, 31],
+            $this->resolver->idsForConversationManager($owner, [20, 21], [30, 31, 30])
+        );
+    }
+
 }

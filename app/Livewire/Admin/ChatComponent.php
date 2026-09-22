@@ -11,6 +11,7 @@ use App\Events\UserLocked;
 use Livewire\Component;
 use App\Models\User;
 use App\Models\Conversation;
+use App\Models\ConversationNotificationMute;
 use App\Models\Message;
 use App\Services\AuthorizationService;
 use Illuminate\Support\Facades\Auth;
@@ -18,6 +19,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Livewire\Attributes\On;
+use Livewire\Attributes\Url;
 use Livewire\WithFileUploads;
 
 
@@ -27,6 +29,8 @@ class ChatComponent extends Component
     public $image; // Hình ảnh được chọn
     public $imagePreviewUrl; // URL preview ảnh
     public $selectedConversationId = null;
+    #[Url(as: 'conversation', history: true)]
+    public ?string $conversationPublicId = null;
     public $selectedStaffId = null;
     public $messageText = '';
     public $messages = [];
@@ -66,12 +70,126 @@ class ChatComponent extends Component
         return app(AuthorizationService::class)->canViewConversation(Auth::user(), $conversation);
     }
 
+    public function getSelectedConversationNotificationMuteProperty(): ?ConversationNotificationMute
+    {
+        if (!$this->selectedConversationId || !Auth::id()) {
+            return null;
+        }
+
+        return ConversationNotificationMute::query()
+            ->where('user_id', Auth::id())
+            ->where('conversation_id', $this->selectedConversationId)
+            ->active()
+            ->first();
+    }
+
+    public function muteSelectedConversation(string $duration): void
+    {
+        $this->muteConversation((int) $this->selectedConversationId, $duration);
+    }
+
+    public function muteConversationFromNotification(int $conversationId, string $duration): void
+    {
+        $this->muteConversation($conversationId, $duration);
+    }
+
+    private function muteConversation(int $conversationId, string $duration): void
+    {
+        $conversation = Conversation::with('staff:id,role')->find($conversationId);
+        abort_unless($conversation && $this->canViewConversation($conversation), 403);
+
+        $mutedUntil = match ($duration) {
+            '15m' => now()->addMinutes(15),
+            '1h' => now()->addHour(),
+            '8h' => now()->addHours(8),
+            'forever' => null,
+            default => null,
+        };
+
+        abort_unless(in_array($duration, ['15m', '1h', '8h', 'forever'], true), 422);
+
+        ConversationNotificationMute::updateOrCreate(
+            [
+                'user_id' => Auth::id(),
+                'conversation_id' => $conversation->id,
+            ],
+            ['muted_until' => $mutedUntil]
+        );
+
+        $this->dispatch('conversation-notification-mute-updated', [
+            'conversationId' => $conversation->id,
+            'muted' => true,
+            'mutedUntil' => $mutedUntil?->toIso8601String(),
+        ]);
+    }
+
+    public function unmuteSelectedConversation(): void
+    {
+        $conversation = Conversation::with('staff:id,role')->find($this->selectedConversationId);
+        abort_unless($conversation && $this->canViewConversation($conversation), 403);
+
+        ConversationNotificationMute::query()
+            ->where('user_id', Auth::id())
+            ->where('conversation_id', $conversation->id)
+            ->delete();
+
+        $this->dispatch('conversation-notification-mute-updated', [
+            'conversationId' => $conversation->id,
+            'muted' => false,
+            'mutedUntil' => null,
+        ]);
+    }
+
     public function mount()
     {
         $this->loadConversations();
         if ($this->canManageAllChats()) {
             $this->loadStaffUsersAlternative();
         }
+
+        if ($this->conversationPublicId) {
+            $this->openConversationFromPublicId($this->conversationPublicId);
+        }
+    }
+
+    public function updatedConversationPublicId(?string $publicId): void
+    {
+        if (!$publicId) {
+            $this->clearConversationSelection();
+            return;
+        }
+
+        $this->openConversationFromPublicId($publicId);
+    }
+
+    private function openConversationFromPublicId(string $publicId): void
+    {
+        abort_unless(Str::isUuid($publicId), 404);
+
+        $conversation = Conversation::with('staff:id,role')
+            ->where('public_id', $publicId)
+            ->first();
+
+        abort_unless($conversation && $this->canViewConversation($conversation), 404);
+
+        if ((int) $this->selectedConversationId === (int) $conversation->id) {
+            return;
+        }
+
+        $this->openConversationFromNotification($conversation->id, null, null);
+    }
+
+    private function clearConversationSelection(): void
+    {
+        $this->dispatch('leave-conversation-channel');
+        $this->selectedConversationId = null;
+        $this->messages = [];
+        $this->messageText = '';
+        $this->currentPage = 1;
+        $this->hasMoreMessages = true;
+        $this->isLoading = false;
+        $this->editingMessageId = null;
+        $this->editingMessageText = '';
     }
     public function refreshChatState()
     {
@@ -267,6 +385,8 @@ class ChatComponent extends Component
         $conversation = Conversation::with('staff:id,role')->find($conversationId);
         abort_unless($conversation && $this->canViewConversation($conversation), 403);
 
+        $this->conversationPublicId = $conversation->public_id;
+
         logger('🎯 selectConversation called', [
             'conversationId' => $conversationId,
             'previousConversationId' => $this->selectedConversationId
@@ -443,8 +563,10 @@ class ChatComponent extends Component
             $conversationId = $conversationToDelete->id;
 
             // Reset state trước khi xóa
+            $this->dispatch('leave-conversation-channel');
             $this->messages = [];
             $this->selectedConversationId = null;
+            $this->conversationPublicId = null;
             $this->messageText = '';
 
             // Xóa tất cả messages trong conversation
@@ -970,13 +1092,15 @@ class ChatComponent extends Component
                 'senderName' => $senderName
             ]);
 
-            $this->dispatch('chat-notification', [
-                'conversationId' => $message['conversation_id'],
-                'userId' => $userId,
-                'staffId' => $staffId,
-                'senderName' => $senderName,
-                'message' => $messagePreview
-            ]);
+            if (!ConversationNotificationMute::isMutedFor((int) Auth::id(), (int) $message['conversation_id'])) {
+                $this->dispatch('chat-notification', [
+                    'conversationId' => $message['conversation_id'],
+                    'userId' => $userId,
+                    'staffId' => $staffId,
+                    'senderName' => $senderName,
+                    'message' => $messagePreview
+                ]);
+            }
         }
 
         // Cập nhật sidebar

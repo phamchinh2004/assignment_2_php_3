@@ -21,28 +21,55 @@ class NotifyAutoReplyEscalation implements ShouldQueue
     public $autoReplyMessage;
     public $recipientEmails;
     public $afterMinutes;
+    public $triggerCustomerMessageId;
+    public $cancelIfManagementReplied;
 
-    public function __construct($conversationId, $userId, $autoReplyMessage, array $recipientEmails, int $afterMinutes)
-    {
+    public function __construct(
+        $conversationId,
+        $userId,
+        $autoReplyMessage,
+        array $recipientEmails,
+        int $afterMinutes,
+        $triggerCustomerMessageId,
+        bool $cancelIfManagementReplied
+    ) {
         $this->conversationId = $conversationId;
         $this->userId = $userId;
         $this->autoReplyMessage = $autoReplyMessage;
-        $this->recipientEmails = $recipientEmails;
+        $this->recipientEmails = array_values(array_unique(array_filter($recipientEmails)));
         $this->afterMinutes = $afterMinutes;
+        $this->triggerCustomerMessageId = $triggerCustomerMessageId;
+        $this->cancelIfManagementReplied = $cancelIfManagementReplied;
     }
 
     public function handle(): void
     {
         try {
-            $latestStaffReply = Message::where('conversation_id', $this->conversationId)
-                ->whereHas('sender', function ($query) {
-                    $query->whereIn('role', \App\Models\User::MANAGEMENT_ROLES);
-                })
-                ->orderBy('created_at', 'desc')
-                ->first();
+            if ($this->cancelIfManagementReplied) {
+                $triggerMessage = Message::query()
+                    ->whereKey($this->triggerCustomerMessageId)
+                    ->where('conversation_id', $this->conversationId)
+                    ->where('sender_id', $this->userId)
+                    ->first();
 
-            if ($latestStaffReply && $latestStaffReply->created_at->diffInMinutes(now()) < $this->afterMinutes) {
-                return;
+                if (!$triggerMessage) {
+                    return;
+                }
+
+                $managementHasReplied = Message::query()
+                    ->where('conversation_id', $this->conversationId)
+                    ->where('id', '>', $triggerMessage->id)
+                    ->where(function ($query) {
+                        $query->whereNull('kind')->orWhere('kind', '!=', 'auto_reply');
+                    })
+                    ->whereHas('sender', function ($query) {
+                        $query->whereIn('role', \App\Models\User::MANAGEMENT_ROLES);
+                    })
+                    ->exists();
+
+                if ($managementHasReplied) {
+                    return;
+                }
             }
 
             foreach ($this->recipientEmails as $email) {

@@ -26,20 +26,38 @@ class AdminHeaderService
     {
         $limit = max(1, min($limit, 30));
 
+        $notifications = $user->notifications()
+            ->latest()
+            ->limit($limit)
+            ->get();
+
+        $conversationIds = $notifications
+            ->pluck('data.conversation_id')
+            ->filter()
+            ->map(fn ($conversationId) => (int) $conversationId)
+            ->unique()
+            ->values();
+
+        $conversationPublicIds = $conversationIds->isEmpty()
+            ? collect()
+            : Conversation::query()
+                ->whereIn('id', $conversationIds)
+                ->pluck('public_id', 'id');
+
         return [
             'unread_count' => $user->unreadNotifications()->count(),
             'total_count' => $user->notifications()->count(),
-            'items' => $user->notifications()
-                ->latest()
-                ->limit($limit)
-                ->get()
-                ->map(fn (DatabaseNotification $notification) => $this->notificationItem($notification))
+            'items' => $notifications
+                ->map(fn (DatabaseNotification $notification) => $this->notificationItem(
+                    $notification,
+                    $conversationPublicIds
+                ))
                 ->values()
                 ->all(),
         ];
     }
 
-    private function notificationItem(DatabaseNotification $notification): array
+    private function notificationItem(DatabaseNotification $notification, $conversationPublicIds): array
     {
         $data = is_array($notification->data) ? $notification->data : [];
         $type = (string) ($data['type'] ?? class_basename($notification->type));
@@ -50,14 +68,23 @@ class AdminHeaderService
             'message' => (string) ($data['message'] ?? $data['body'] ?? ''),
             'type' => $type,
             'icon' => $this->notificationIcon($type),
-            'target_url' => $this->notificationTarget($data),
+            'target_url' => $this->notificationTarget($data, $type, $conversationPublicIds),
             'is_read' => $notification->read_at !== null,
             'created_at' => optional($notification->created_at)->toIso8601String(),
         ];
     }
 
-    private function notificationTarget(array $data): ?string
+    private function notificationTarget(array $data, string $type, $conversationPublicIds): ?string
     {
+        $conversationId = (int) ($data['conversation_id'] ?? 0);
+        $conversationPublicId = $conversationId > 0
+            ? $conversationPublicIds->get($conversationId)
+            : null;
+
+        if ($conversationPublicId && Str::contains(Str::lower($type), ['message', 'chat'])) {
+            return route('chat-panel', ['conversation' => $conversationPublicId]);
+        }
+
         $target = $data['target_url'] ?? $data['url'] ?? null;
 
         return is_string($target) && $target !== '' ? $target : null;
@@ -128,7 +155,9 @@ class AdminHeaderService
                         'unread_count' => (int) $conversation->unread_count,
                         'is_unread' => (int) $conversation->unread_count > 0,
                         'created_at' => optional($message?->created_at)->toIso8601String(),
-                        'target_url' => route('chat-panel') . '#conversation-' . $conversation->id,
+                        'target_url' => route('chat-panel', [
+                            'conversation' => $conversation->public_id,
+                        ]),
                     ];
                 })
                 ->values()

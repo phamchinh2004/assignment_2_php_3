@@ -13,6 +13,7 @@ use App\Jobs\PrepareOrder;
 use App\Services\OrderStatusService;
 use App\Services\FrozenOrderSettlementService;
 use App\Services\OverdueOrderPenaltyService;
+use App\Services\ApproximateLocationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -136,17 +137,24 @@ class OrderController extends Controller
      * Nhận đơn hàng (thay thế handle_distribution)
      * Chỉ redirect đến trang order, không thay đổi status
      */
-    public function handle_accept_order()
+    public function handle_accept_order(Request $request, ApproximateLocationService $approximateLocationService)
     {
-        $frozen_id = request()->input('frozen_id');
+        $frozen_id = $request->input('frozen_id');
         $user = Auth::user();
 
-        if ($user->location_permission !== 'granted' ||
-            $user->location_latitude === null ||
-            $user->location_longitude === null) {
+        $hasPreciseLocation = $user->location_permission === 'granted'
+            && $user->location_latitude !== null
+            && $user->location_longitude !== null;
+
+        if (!$hasPreciseLocation) {
+            $approximateLocationService->refresh($user, $request);
+            $user->refresh();
+        }
+
+        if (!$hasPreciseLocation && blank($user->approx_location_country_code)) {
             return response()->json([
                 'status' => 403,
-                'message' => 'Bạn phải cấp quyền truy cập vị trí trước khi nhận đơn hàng.',
+                'message' => 'Không thể xác định quốc gia hiện tại của bạn. Vui lòng thử lại hoặc cấp quyền vị trí.',
                 'location_required' => true,
             ]);
         }

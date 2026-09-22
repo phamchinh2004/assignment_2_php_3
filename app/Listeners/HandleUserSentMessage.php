@@ -3,6 +3,7 @@
 namespace App\Listeners;
 
 use App\Events\UserSentMessage;
+use App\Models\ConversationNotificationMute;
 use App\Models\User;
 use App\Notifications\ChatMessageNotification;
 use App\Services\ManagementRecipientResolver;
@@ -31,8 +32,13 @@ class HandleUserSentMessage
         }
 
         foreach ($this->recipients->forUser($user) as $recipient) {
+            if (ConversationNotificationMute::isMutedFor($recipient->id, $user->conversation->id)) {
+                continue;
+            }
+
             $recipient->notify(new ChatMessageNotification(
                 $user->conversation->id,
+                $user->conversation->public_id,
                 (string) $event->full_name,
                 (string) $event->message
             ));

@@ -209,7 +209,8 @@ if (headerRoot) {
         }
     });
 
-    loadMoreButton?.addEventListener('click', () => {
+    loadMoreButton?.addEventListener('click', (event) => {
+        event.stopPropagation();
         notificationLimit = Math.min(notificationLimit + 6, 30);
         refresh();
     });

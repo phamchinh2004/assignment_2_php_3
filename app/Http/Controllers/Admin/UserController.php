@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Events\ApproximateLocationRefreshRequested;
 use App\Events\UserLocked;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreFrozenOrderRequest;
@@ -19,6 +20,7 @@ use App\Models\User_spin_progress;
 use App\Models\Wallet_balance_history;
 use App\Services\AuthorizationService;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -304,6 +306,54 @@ class UserController extends Controller
         }
         return redirect()->route('user.index')->with('success', 'Cập nhật tài khoản người dùng thành công!');
     }
+
+    public function refreshApproximateLocation(User $user, AuthorizationService $authorization)
+    {
+        $this->authorizeMemberAccess($user, $authorization);
+
+        if (!$user->isOnline()) {
+            return redirect()
+                ->route('user.edit', ['user' => $user->id])
+                ->with('warning', 'Người dùng đang ngoại tuyến, chưa thể lấy vị trí tương đối mới.');
+        }
+
+        Cache::put('approx-location-force-refresh:' . $user->id, true, now()->addMinutes(5));
+        try {
+            event(new ApproximateLocationRefreshRequested($user->id));
+        } catch (\Throwable $exception) {
+            Log::warning('Không thể broadcast yêu cầu cập nhật vị trí tương đối.', [
+                'user_id' => $user->id,
+                'message' => $exception->getMessage(),
+            ]);
+        }
+
+        return redirect()
+            ->route('user.edit', ['user' => $user->id])
+            ->with('success', 'Đã gửi yêu cầu cập nhật vị trí tương đối tới người dùng đang online.');
+    }
+
+    public function destroyLocation(User $user, AuthorizationService $authorization)
+    {
+        $this->authorizeMemberAccess($user, $authorization);
+
+        $user->update([
+            'location_latitude' => null,
+            'location_longitude' => null,
+            'location_accuracy' => null,
+            'location_country_code' => null,
+            'location_country' => null,
+            'location_city' => null,
+            'location_updated_at' => null,
+            'approx_location_country_code' => null,
+            'approx_location_country' => null,
+            'approx_location_updated_at' => null,
+        ]);
+
+        return redirect()
+            ->route('user.edit', ['user' => $user->id])
+            ->with('success', 'Đã xoá dữ liệu vị trí người dùng!');
+    }
+
     public function changeStatusUser(User $user, AuthorizationService $authorization)
     {
         $this->authorizeMemberAccess($user, $authorization);

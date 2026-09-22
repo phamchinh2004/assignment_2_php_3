@@ -21,6 +21,7 @@
         PhanPhoiThanhCong2: @json(__('home.PhanPhoiThanhCong2')),
     };
     const route_update_location = @json(route('location.update'));
+    const route_update_approximate_location = @json(route('location.approximate.update'));
 </script>
 @endsection
 @section('content')

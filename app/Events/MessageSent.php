@@ -65,6 +65,7 @@ class MessageSent implements ShouldBroadcastNow
                 'reference_payload' => $message->reference_payload,
                 'sender_id' => $message->sender_id,
                 'conversation_id' => $message->conversation_id,
+                'conversation_public_id' => $message->conversation?->public_id,
                 'is_read' => $message->is_read ?? false,
                 'created_at' => $message->created_at,
                 'sender' => $message->sender ? [

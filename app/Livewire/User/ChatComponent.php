@@ -6,12 +6,10 @@ use App\Events\MessageSent;
 use App\Events\MessageRead;
 use App\Events\UserJoinChat;
 use App\Events\UserSentMessage;
-use App\Jobs\SendChatNotificationEmail;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
 use App\Services\ChatReferenceService;
-use App\Services\ManagementRecipientResolver;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -73,6 +71,43 @@ class ChatComponent extends Component
         $this->loadUnreadCount();
         $this->loadQuickReplies();
         $this->dispatch('join-conversation-channel', conversationId: $this->conversation->id);
+    }
+
+    public function hydrate(): void
+    {
+        if (!$this->chatMessages) {
+            return;
+        }
+
+        $messages = collect($this->chatMessages);
+        $messageIds = $messages
+            ->map(fn ($message) => is_array($message) ? ($message['id'] ?? null) : ($message->id ?? null))
+            ->filter()
+            ->map(fn ($id) => (int) $id)
+            ->values();
+
+        if ($messageIds->isEmpty()) {
+            return;
+        }
+
+        $readStatuses = Message::whereIn('id', $messageIds)
+            ->pluck('is_read', 'id');
+
+        $this->chatMessages = $messages->map(function ($message) use ($readStatuses) {
+            $messageId = is_array($message) ? ($message['id'] ?? null) : ($message->id ?? null);
+
+            if (!$messageId || !$readStatuses->has($messageId)) {
+                return $message;
+            }
+
+            if (is_array($message)) {
+                $message['is_read'] = (bool) $readStatuses->get($messageId);
+            } else {
+                $message->is_read = (bool) $readStatuses->get($messageId);
+            }
+
+            return $message;
+        });
     }
 
     /**
@@ -219,7 +254,6 @@ class ChatComponent extends Component
     {
         abort_unless((int) $this->conversation->user_id === (int) Auth::id(), 403);
 
-        $isFirstCustomerMessage = Message::where('conversation_id', $this->conversation->id)->count() === 0;
         $message = Message::create([
             'conversation_id' => $this->conversation->id,
             'sender_id' => Auth::id(),
@@ -245,8 +279,7 @@ class ChatComponent extends Component
             ? 'Đã gửi đơn hàng liên quan'
             : 'Đã gửi giao dịch liên quan';
         event(new UserSentMessage(Auth::user()->full_name, $notificationText, Auth::id()));
-        $this->checkAndSendEmailNotification($notificationText);
-        $this->sendAutoReplyIfNeeded($isFirstCustomerMessage);
+        $this->sendAutoReplyIfNeeded();
     }
 
     public function sendMessage()
@@ -265,7 +298,6 @@ class ChatComponent extends Component
         $conversationId = $this->conversation->id;
         $userId = Auth::id();
         $userName = Auth::user()->full_name;
-        $isFirstCustomerMessage = Message::where('conversation_id', $conversationId)->count() === 0;
 
         $messages = [];
         $template_message_for_notification = "";
@@ -369,10 +401,8 @@ class ChatComponent extends Component
         // Event và Email notification (đã dùng Queue, không block)
         $user = Auth::user();
         event(new UserSentMessage($userName, $template_message_for_notification, $user->id));
-        $this->checkAndSendEmailNotification($template_message_for_notification);
-
-        // Kiểm tra và gửi tin nhắn chào tự động nếu là tin nhắn đầu tiên hoặc đã quá thời gian chờ
-        $this->sendAutoReplyIfNeeded($isFirstCustomerMessage);
+        // Apply the manager online/offline auto-reply flow.
+        $this->sendAutoReplyIfNeeded();
     }
 
     public function messageReceived($message)
@@ -690,18 +720,15 @@ class ChatComponent extends Component
     }
 
     /**
-     * Gửi tin nhắn chào tự động nếu đã lâu không có tin nhắn từ staff
+     * Handle auto-reply and escalation email from the manager assigned to the conversation.
      */
-    protected function sendAutoReplyIfNeeded($isFirstCustomerMessage = false)
+    protected function sendAutoReplyIfNeeded(): void
     {
         try {
             if (!config('chat.auto_reply.enabled', true)) {
                 return;
             }
 
-            $timeoutHours = (float) config('chat.auto_reply.timeout_hours', 1);
-            $repeatAfterHours = (float) config('chat.auto_reply.repeat_after_hours', 1);
-            $escalationAfterMinutes = (int) config('chat.auto_reply.escalation_after_minutes', 5);
             $currentLocale = app()->getLocale();
             $defaultLocale = config('chat.auto_reply.default_language', 'vi');
             $messages = config('chat.auto_reply.messages', []);
@@ -711,40 +738,18 @@ class ChatComponent extends Component
                 return;
             }
 
-            $lastStaffMessage = Message::where('conversation_id', $this->conversation->id)
-                ->where('sender_id', '!=', Auth::id())
-                ->whereHas('sender', function ($query) {
-                    $query->whereIn('role', User::MANAGEMENT_ROLES);
-                })
-                ->select('id', 'created_at', 'sender_id')
-                ->orderBy('created_at', 'desc')
-                ->first();
+            $staffId = (int) $this->conversation->staff_id;
+            $manager = $staffId > 0 ? User::find($staffId) : null;
 
-            $lastAutoReply = Message::where('conversation_id', $this->conversation->id)
-                ->where('sender_id', $this->conversation->staff_id)
-                ->whereIn('message', array_values($messages))
-                ->select('id', 'created_at', 'message')
-                ->orderBy('created_at', 'desc')
-                ->first();
-
-            $shouldSendAutoReply = false;
-
-            if ($isFirstCustomerMessage) {
-                $shouldSendAutoReply = true;
-            } elseif ($lastAutoReply && $lastAutoReply->created_at->diffInHours(now()) >= $repeatAfterHours && (!$lastStaffMessage || $lastStaffMessage->created_at->diffInHours(now()) >= $timeoutHours)) {
-                $shouldSendAutoReply = true;
-            } elseif (!$lastStaffMessage && (!$lastAutoReply || $lastAutoReply->created_at->diffInHours(now()) >= $repeatAfterHours)) {
-                $shouldSendAutoReply = true;
-            }
-
-            if (!$shouldSendAutoReply) {
+            if (!$manager) {
+                Log::warning('Cannot process chat auto-reply because the conversation has no valid manager', [
+                    'conversation_id' => $this->conversation->id,
+                    'user_id' => Auth::id(),
+                    'staff_id' => $this->conversation->staff_id,
+                ]);
                 return;
             }
 
-            $staffId = $this->conversation->staff_id;
-            $manager = User::find($staffId);
-            $managerIsOnline = $manager?->isOnline() ?? false;
-            $onlineManagerDelayMinutes = max(0, (int) config('chat.auto_reply.online_manager_delay_minutes', 1));
             $triggerCustomerMessageId = Message::where('conversation_id', $this->conversation->id)
                 ->where('sender_id', Auth::id())
                 ->orderByDesc('id')
@@ -754,13 +759,17 @@ class ChatComponent extends Component
                 return;
             }
 
+            $managerIsOnline = $manager->isOnline();
+            $onlineManagerDelayMinutes = max(0, (int) config('chat.auto_reply.online_manager_delay_minutes', 1));
+            $escalationAfterMinutes = max(0, (int) config('chat.auto_reply.escalation_after_minutes', 5));
+
             $pendingAutoReply = \App\Jobs\SendAutoReplyMessage::dispatch(
                 $this->conversation->id,
-                $staffId,
+                $manager->id,
                 $autoReplyMessage,
                 Auth::id(),
                 $currentLocale,
-                $lastStaffMessage ? $lastStaffMessage->created_at->diffInHours(now()) : null,
+                null,
                 $triggerCustomerMessageId
             );
 
@@ -768,90 +777,39 @@ class ChatComponent extends Component
                 $pendingAutoReply->delay(now()->addMinutes($onlineManagerDelayMinutes));
             }
 
-            $recipientEmails = \App\Services\ChatAutoReplyService::getEscalationRecipients(Auth::user());
-            \App\Jobs\NotifyAutoReplyEscalation::dispatch(
+            $recipientEmails = \App\Services\ChatAutoReplyService::getEscalationRecipients($manager);
+            $emailAfterMinutes = $managerIsOnline ? $escalationAfterMinutes : 0;
+            $pendingEscalation = \App\Jobs\NotifyAutoReplyEscalation::dispatch(
                 $this->conversation->id,
                 Auth::id(),
                 $autoReplyMessage,
                 $recipientEmails,
-                $escalationAfterMinutes
-            )->delay(now()->addMinutes($escalationAfterMinutes));
+                $emailAfterMinutes,
+                $triggerCustomerMessageId,
+                $managerIsOnline
+            );
 
-            Log::info('Đã đưa tin nhắn chào tự động vào queue', [
+            if ($managerIsOnline && $escalationAfterMinutes > 0) {
+                $pendingEscalation->delay(now()->addMinutes($escalationAfterMinutes));
+            }
+
+            Log::info('Queued chat auto-reply and escalation email flow', [
                 'conversation_id' => $this->conversation->id,
                 'user_id' => Auth::id(),
-                'staff_id' => $staffId,
-                'locale' => $currentLocale,
-                'hours_since_last_message' => $lastStaffMessage ? $lastStaffMessage->created_at->diffInHours(now()) : null,
-                'is_first_customer_message' => $isFirstCustomerMessage,
+                'staff_id' => $manager->id,
+                'manager_role' => $manager->role,
                 'manager_is_online' => $managerIsOnline,
                 'auto_reply_delay_minutes' => $managerIsOnline ? $onlineManagerDelayMinutes : 0,
+                'email_delay_minutes' => $emailAfterMinutes,
                 'trigger_customer_message_id' => $triggerCustomerMessageId,
+                'recipient_count' => count($recipientEmails),
             ]);
-
         } catch (\Exception $e) {
-            Log::error('Lỗi gửi tin nhắn chào tự động: ' . $e->getMessage(), [
+            Log::error('Chat auto-reply flow failed: ' . $e->getMessage(), [
                 'conversation_id' => $this->conversation->id ?? null,
                 'user_id' => Auth::id(),
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-        }
-    }
-
-    /**
-     * Kiểm tra và gửi email thông báo nếu admin/staff offline
-     */
-    protected function checkAndSendEmailNotification($messageContent)
-    {
-        try {
-            $currentUser = Auth::user();
-            $recipients = app(ManagementRecipientResolver::class)
-                ->forUser($currentUser)
-                ->filter(fn (User $recipient) => $recipient->email && !$recipient->isOnline())
-                ->unique('id')
-                ->values();
-
-            $emailsSent = $recipients
-                ->map(fn (User $recipient) => "{$recipient->role}: {$recipient->full_name} ({$recipient->email})")
-                ->all();
-
-            // Nếu không có ai offline, không gửi email
-            if ($recipients->isEmpty()) {
-                Log::info('Tất cả staff/admin đang online, không cần gửi email', [
-                    'user_id' => Auth::id(),
-                    'conversation_id' => $this->conversation->id,
-                    'has_referrer' => (bool) $currentUser->referrer_id
-                ]);
-                return;
-            }
-
-            // Dispatch email jobs vào queue (gửi bất đồng bộ để không block UI)
-            foreach ($recipients as $recipient) {
-                SendChatNotificationEmail::dispatch(
-                    $currentUser,
-                    $messageContent,
-                    $this->conversation->id,
-                    $recipient->email
-                );
-            }
-
-            Log::info('Đã đưa email thông báo chat vào queue', [
-                'user_id' => Auth::id(),
-                'user_name' => $currentUser->full_name,
-                'conversation_id' => $this->conversation->id,
-                'has_referrer' => (bool) $currentUser->referrer_id,
-                'recipients' => $emailsSent,
-                'total_emails' => $recipients->count()
-            ]);
-
-        } catch (\Exception $e) {
-            // Log lỗi nhưng không làm gián đoạn việc gửi tin nhắn
-            Log::error('Lỗi gửi email thông báo chat: ' . $e->getMessage(), [
-                'conversation_id' => $this->conversation->id ?? null,
-                'user_id' => Auth::id(),
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
         }
     }

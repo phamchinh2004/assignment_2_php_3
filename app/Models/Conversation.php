@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Str;
 
 class Conversation extends Model
 {
@@ -18,6 +19,15 @@ class Conversation extends Model
         'user_id' => 'integer',
         'staff_id' => 'integer',
     ];
+
+    protected static function booted(): void
+    {
+        static::creating(function (Conversation $conversation) {
+            if (!$conversation->public_id) {
+                $conversation->public_id = (string) Str::uuid();
+            }
+        });
+    }
 
     public function messages(): HasMany
     {

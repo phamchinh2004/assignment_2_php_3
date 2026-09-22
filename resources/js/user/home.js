@@ -10,39 +10,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const announcement = root.querySelector('[data-home-announcement]');
     if (announcement) {
         const closeButton = announcement.querySelector('[data-home-announcement-close]');
-        const announcementKey = announcement.dataset.announcementKey || 'default';
-        const reappearAfter = Number(announcement.dataset.reappearAfter || 21600000);
-        const storageKey = `home-announcement-dismissed:${announcementKey}`;
-
-        const getDismissedAt = () => {
-            try {
-                return Number(window.localStorage.getItem(storageKey) || 0);
-            } catch (error) {
-                return 0;
-            }
-        };
-
-        const saveDismissedAt = () => {
-            try {
-                window.localStorage.setItem(storageKey, String(Date.now()));
-            } catch (error) {
-                // Keep the close action working even when storage is unavailable.
-            }
-        };
-
-        const dismissedAt = getDismissedAt();
-        if (dismissedAt > 0 && Date.now() - dismissedAt < reappearAfter) {
-            announcement.hidden = true;
-        } else if (dismissedAt > 0) {
-            try {
-                window.localStorage.removeItem(storageKey);
-            } catch (error) {
-                // Storage cleanup is optional.
-            }
-        }
 
         closeButton?.addEventListener('click', () => {
-            saveDismissedAt();
             announcement.classList.add('is-hiding');
             window.setTimeout(() => {
                 announcement.hidden = true;

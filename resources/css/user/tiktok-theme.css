@@ -617,8 +617,8 @@ textarea:focus-visible {
 }
 
 .home-announcement {
-    border-color: #f4ccd5 !important;
-    background: linear-gradient(145deg, #fffafa 0%, var(--shop-primary-soft) 100%) !important;
+    border-color: #f0d4dc !important;
+    background: linear-gradient(145deg, #ffffff 0%, var(--shop-primary-soft) 62%, #fafafa 100%) !important;
     box-shadow: var(--shop-shadow-sm) !important;
 }
 
@@ -628,8 +628,15 @@ textarea:focus-visible {
 }
 
 .home-announcement__heading span {
-    background: #ffe0e7 !important;
-    color: #ad2440 !important;
+    background: #ffe3e9 !important;
+    color: #b42342 !important;
+}
+
+.page-home .home-wallet-card {
+    background:
+        radial-gradient(circle at 90% 8%, rgba(254, 44, 85, .18), transparent 28%),
+        radial-gradient(circle at 7% 100%, rgba(255, 255, 255, .07), transparent 32%),
+        linear-gradient(145deg, var(--shop-dark) 0%, var(--shop-dark-2) 62%, #171a24 100%) !important;
 }
 
 .home-progress-card,
@@ -817,6 +824,25 @@ textarea:focus-visible {
 .footer-item:hover i,
 .footer-item:hover .text-footer {
     color: var(--shop-primary) !important;
+}
+
+.footer-item.active:not(.footer-item--distribution) {
+    background: var(--shop-primary-soft) !important;
+}
+
+.footer-item.active::after {
+    background: var(--shop-primary) !important;
+}
+
+.footer-item--distribution.active {
+    background: transparent !important;
+}
+
+.footer-item--distribution.active .amazon_btn {
+    box-shadow:
+        0 10px 26px rgba(22, 24, 35, .22),
+        0 0 0 4px #fff,
+        0 0 0 7px rgba(254, 44, 85, .82) !important;
 }
 
 .amazon_btn {

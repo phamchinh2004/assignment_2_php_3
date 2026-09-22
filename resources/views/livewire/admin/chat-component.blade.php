@@ -105,15 +105,27 @@
 
                             <span class="chat-header-chip chip-location">
                                 <i class="fas fa-location-dot me-1 text-primary"></i>
-                                @if($this->selectedConversation->user->location_country_code)
-                                    <span class="me-1">{{ country_flag($this->selectedConversation->user->location_country_code) }}</span>
+                                @php
+                                    $chatCountryCode = $this->selectedConversation->user->location_country_code
+                                        ?: $this->selectedConversation->user->approx_location_country_code;
+                                    $chatCountry = $this->selectedConversation->user->location_country
+                                        ?: $this->selectedConversation->user->approx_location_country;
+                                @endphp
+                                @if($chatCountryCode)
+                                    <span class="me-1">{{ country_flag($chatCountryCode) }}</span>
                                 @endif
-                                {{ $this->selectedConversation->user->location_city ?: 'Chưa xác định TP' }}
-                                @if($this->selectedConversation->user->location_country)
-                                    , {{ $this->selectedConversation->user->location_country }}
+                                @if($this->selectedConversation->user->location_city)
+                                    {{ $this->selectedConversation->user->location_city }}
+                                    @if($chatCountry), {{ $chatCountry }}@endif
+                                @elseif($chatCountry)
+                                    {{ $chatCountry }}
+                                @elseif($chatCountryCode)
+                                    {{ $chatCountryCode }}
+                                @else
+                                    Chưa xác định
                                 @endif
                                 @if($this->selectedConversation->user->location_permission !== 'granted')
-                                    <span class="text-warning ms-1" style="font-size: 10px;">(Chưa cấp quyền)</span>
+                                    <span class="text-warning ms-1" style="font-size: 10px;">(Vị trí tương đối)</span>
                                 @endif
                             </span>
 
@@ -130,12 +142,68 @@
                             @endif
                         </div>
                     </div>
-                    <div class="dropdown chat-header-actions">
-                        <button class="btn chat-icon-button" type="button" data-bs-toggle="dropdown"
-                            aria-expanded="false" title="Thao tác hội thoại" aria-label="Thao tác hội thoại">
-                            <i class="fas fa-ellipsis-h" aria-hidden="true"></i>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end">
+                    @php
+                        $conversationNotificationMute = $this->selectedConversationNotificationMute;
+                    @endphp
+                    <div class="chat-header-actions d-flex gap-2">
+                        <div class="dropdown">
+                            <button class="btn chat-icon-button {{ $conversationNotificationMute ? 'is-muted' : '' }}"
+                                type="button" data-bs-toggle="dropdown" aria-expanded="false"
+                                title="{{ $conversationNotificationMute ? 'Đang tắt thông báo hội thoại' : 'Tắt thông báo hội thoại' }}"
+                                aria-label="{{ $conversationNotificationMute ? 'Đang tắt thông báo hội thoại' : 'Tắt thông báo hội thoại' }}">
+                                <i class="fas {{ $conversationNotificationMute ? 'fa-bell-slash' : 'fa-bell' }}" aria-hidden="true"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end chat-mute-menu">
+                                @if($conversationNotificationMute)
+                                    <li>
+                                        <span class="dropdown-item-text chat-mute-status">
+                                            <i class="fas fa-bell-slash me-2"></i>
+                                            @if($conversationNotificationMute->muted_until)
+                                                Đã tắt đến {{ $conversationNotificationMute->muted_until->format('H:i d/m/Y') }}
+                                            @else
+                                                Đã tắt đến khi bật lại
+                                            @endif
+                                        </span>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <button type="button" class="dropdown-item text-primary"
+                                            wire:click="unmuteSelectedConversation">
+                                            <i class="fas fa-bell me-2"></i>Bật lại thông báo
+                                        </button>
+                                    </li>
+                                @else
+                                    <li><h6 class="dropdown-header">Tắt thông báo trong</h6></li>
+                                    <li>
+                                        <button type="button" class="dropdown-item" wire:click="muteSelectedConversation('15m')">
+                                            <i class="far fa-clock me-2"></i>15 phút
+                                        </button>
+                                    </li>
+                                    <li>
+                                        <button type="button" class="dropdown-item" wire:click="muteSelectedConversation('1h')">
+                                            <i class="far fa-clock me-2"></i>1 giờ
+                                        </button>
+                                    </li>
+                                    <li>
+                                        <button type="button" class="dropdown-item" wire:click="muteSelectedConversation('8h')">
+                                            <i class="far fa-clock me-2"></i>8 giờ
+                                        </button>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <button type="button" class="dropdown-item" wire:click="muteSelectedConversation('forever')">
+                                            <i class="fas fa-infinity me-2"></i>Đến khi bật lại
+                                        </button>
+                                    </li>
+                                @endif
+                            </ul>
+                        </div>
+                        <div class="dropdown">
+                            <button class="btn chat-icon-button" type="button" data-bs-toggle="dropdown"
+                                aria-expanded="false" title="Thao tác hội thoại" aria-label="Thao tác hội thoại">
+                                <i class="fas fa-ellipsis-h" aria-hidden="true"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
                             <li>
                                 <a class="dropdown-item text-primary"
                                     href="{{ route('user.index') }}#user-{{ $this->selectedConversation->user->id }}">
@@ -183,7 +251,8 @@
                                     </a>
                                 </li>
                             @endif
-                        </ul>
+                            </ul>
+                        </div>
                     </div>
                 </div>
                 <div class="chat-context-toolbar">
@@ -849,6 +918,10 @@
             const eventData = Array.isArray(data) ? data[0] : data;
             const { conversationId, userId, staffId, senderName, message } = eventData;
 
+            if (window.isAdminConversationMuted?.(conversationId)) {
+                return;
+            }
+
             // Phát âm thanh thông báo
             playNotificationSound();
 
@@ -871,7 +944,100 @@
             };
 
             // Sử dụng toastr.success() để có nền màu xanh success
-            toastr.success(message, '💬 ' + senderName);
+            const toast = toastr.success(message, '💬 ' + senderName);
+            const toastElement = toast?.[0];
+
+            if (!toastElement) {
+                return;
+            }
+
+            toastElement.classList.add('chat-message-toast');
+            toastElement.dataset.conversationId = String(conversationId);
+
+            const moreButton = document.createElement('button');
+            moreButton.type = 'button';
+            moreButton.className = 'chat-toast-more';
+            moreButton.setAttribute('aria-label', 'Tùy chọn thông báo');
+            moreButton.setAttribute('aria-expanded', 'false');
+            moreButton.innerHTML = '<i class="fas fa-ellipsis-h" aria-hidden="true"></i>';
+
+            const muteMenu = document.createElement('div');
+            muteMenu.className = 'chat-toast-mute-menu';
+            muteMenu.hidden = true;
+            muteMenu.setAttribute('role', 'menu');
+
+            const muteOptions = [
+                ['15m', 'Tắt trong 15 phút'],
+                ['1h', 'Tắt trong 1 giờ'],
+                ['8h', 'Tắt trong 8 giờ'],
+                ['forever', 'Tắt đến khi bật lại'],
+            ];
+
+            muteOptions.forEach(([duration, label]) => {
+                const option = document.createElement('button');
+                option.type = 'button';
+                option.className = 'chat-toast-mute-option';
+                option.textContent = label;
+                option.setAttribute('role', 'menuitem');
+
+                option.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    option.disabled = true;
+
+                    component.call('muteConversationFromNotification', conversationId, duration)
+                        .catch((error) => {
+                            option.disabled = false;
+                            console.error('Không thể tắt thông báo hội thoại:', error);
+
+                            const toastOnClick = toastr.options.onclick;
+                            toastr.options.onclick = null;
+                            toastr.error('Không thể tắt thông báo hội thoại. Vui lòng thử lại.', 'Có lỗi xảy ra');
+                            toastr.options.onclick = toastOnClick;
+                        });
+                });
+
+                muteMenu.appendChild(option);
+            });
+
+            moreButton.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+
+                muteMenu.hidden = !muteMenu.hidden;
+                moreButton.setAttribute('aria-expanded', String(!muteMenu.hidden));
+            });
+
+            muteMenu.addEventListener('click', (event) => {
+                event.stopPropagation();
+            });
+
+            toastElement.appendChild(moreButton);
+            toastElement.appendChild(muteMenu);
+        });
+
+        Livewire.on('conversation-notification-mute-updated', (data) => {
+            const eventData = Array.isArray(data) ? data[0] : data;
+            const { conversationId, muted, mutedUntil } = eventData;
+
+            window.setAdminConversationMute?.(conversationId, muted, mutedUntil);
+
+            if (muted) {
+                document.querySelectorAll('.chat-message-toast').forEach((toastElement) => {
+                    if (toastElement.dataset.conversationId === String(conversationId)) {
+                        toastr.clear($(toastElement));
+                    }
+                });
+
+                toastr.options.onclick = null;
+                toastr.info(
+                    mutedUntil ? 'Thông báo của hội thoại đã được tắt tạm thời.' : 'Thông báo của hội thoại đã được tắt đến khi bạn bật lại.',
+                    'Đã tắt thông báo'
+                );
+            } else {
+                toastr.options.onclick = null;
+                toastr.success('Bạn sẽ tiếp tục nhận thông báo từ hội thoại này.', 'Đã bật thông báo');
+            }
         });
 
         // Listen to scroll-to-conversation event
@@ -997,7 +1163,9 @@
 
                     // Chỉ giải quyết tin nhắn của khách đến (tin nhắn gửi đi đã được hàm sendMessage xử lý thẳng)
                     if (message.sender_id !== currentUserId) {
-                        playNotificationSound();
+                        if (!window.isAdminConversationMuted?.(message.conversation_id)) {
+                            playNotificationSound();
+                        }
 
                         const root = document.getElementById('chat-root');
                         const component = Livewire.find(root.getAttribute('wire:id'));
@@ -1046,6 +1214,13 @@
                 .error((error) => {
                     console.error('Echo error:', error);
                 }));
+        });
+
+        Livewire.on('leave-conversation-channel', () => {
+            if (!currentChannel) return;
+
+            window.Echo.leave(currentChannel);
+            currentChannel = null;
         });
 
         window.loadMoreMessagesAdmin = function () {

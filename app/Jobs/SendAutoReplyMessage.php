@@ -64,9 +64,22 @@ class SendAutoReplyMessage implements ShouldQueue
                 return null;
             }
 
+            $autoReplyAlreadySent = Message::query()
+                ->where('conversation_id', $this->conversationId)
+                ->where('id', '>', $triggerMessage->id)
+                ->where('kind', 'auto_reply')
+                ->exists();
+
+            if ($autoReplyAlreadySent) {
+                return null;
+            }
+
             $staffHasReplied = Message::query()
                 ->where('conversation_id', $this->conversationId)
                 ->where('id', '>', $triggerMessage->id)
+                ->where(function ($query) {
+                    $query->whereNull('kind')->orWhere('kind', '!=', 'auto_reply');
+                })
                 ->whereHas('sender', function ($query) {
                     $query->whereIn('role', \App\Models\User::MANAGEMENT_ROLES);
                 })
@@ -87,6 +100,7 @@ class SendAutoReplyMessage implements ShouldQueue
                 'sender_id' => $conversation->staff_id ?: $this->staffId,
                 'message' => $this->autoReplyMessage,
                 'type' => 'text',
+                'kind' => 'auto_reply',
                 'image_path' => null,
                 'is_read' => false,
             ]);

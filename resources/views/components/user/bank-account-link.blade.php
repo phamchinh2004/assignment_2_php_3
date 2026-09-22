@@ -33,12 +33,12 @@
         <span class="bank-account-card__body">
             <span class="bank-account-card__eyebrow">Tài khoản ngân hàng</span>
             <strong data-bank-summary-name>{{ $bankLinked ? $user->bank_name : 'Chưa liên kết' }}</strong>
-            <span class="bank-account-card__meta" data-bank-summary-meta @hidden(!$bankLinked)>
+            <span class="bank-account-card__meta" data-bank-summary-meta @if(!$bankLinked) hidden @endif>
                 <span data-bank-summary-account>{{ $maskedAccount }}</span>
                 <span aria-hidden="true">•</span>
                 <span data-bank-summary-owner>{{ $user->username_bank }}</span>
             </span>
-            <span class="bank-account-card__meta" data-bank-summary-empty @hidden($bankLinked)>
+            <span class="bank-account-card__meta" data-bank-summary-empty @if($bankLinked) hidden @endif>
                 Thiết lập tài khoản nhận tiền và mật khẩu giao dịch.
             </span>
         </span>
@@ -77,7 +77,7 @@
                     </button>
                 </header>
 
-                <div class="bank-account-linked-view" data-bank-linked-view @hidden(!$bankLinked)>
+                <div class="bank-account-linked-view" data-bank-linked-view @if(!$bankLinked) hidden @endif>
                         <div class="bank-account-linked-view__notice">
                             <i class="fa-solid fa-lock" aria-hidden="true"></i>
                             <div>

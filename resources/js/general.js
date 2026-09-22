@@ -95,9 +95,19 @@ document.addEventListener('DOMContentLoaded', function () {
         const permission = document.getElementById('location_permission');
         const latitude = document.getElementById('location_latitude');
         const longitude = document.getElementById('location_longitude');
-        if (!permission || !latitude || !longitude || !navigator.geolocation) {
-            if (showError) notification('error', 'Trình duyệt không hỗ trợ truy cập vị trí.', 'Lỗi');
-            return false;
+        if (!permission || !latitude || !longitude) {
+            return true;
+        }
+
+        if (!navigator.geolocation) {
+            permission.value = 'denied';
+            latitude.value = '';
+            longitude.value = '';
+            document.getElementById('location_accuracy').value = '';
+            document.getElementById('location_country_code').value = '';
+            document.getElementById('location_country').value = '';
+            document.getElementById('location_city').value = '';
+            return true;
         }
 
         return new Promise((resolve) => {
@@ -123,8 +133,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 permission.value = 'denied';
                 latitude.value = '';
                 longitude.value = '';
-                if (showError) notification('warning', 'Bạn cần cấp quyền vị trí để tạo tài khoản.', 'Cảnh báo!');
-                resolve(false);
+                document.getElementById('location_accuracy').value = '';
+                document.getElementById('location_country_code').value = '';
+                document.getElementById('location_country').value = '';
+                document.getElementById('location_city').value = '';
+                resolve(true);
             }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
         });
     }
@@ -151,11 +164,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (document.getElementById('location_permission')?.value !== 'granted' ||
             !document.getElementById('location_latitude')?.value ||
             !document.getElementById('location_longitude')?.value) {
-            const locationReady = await requestRegistrationLocation(true);
-            if (!locationReady) {
-                spinner.hidden = true;
-                return;
-            }
+            await requestRegistrationLocation(true);
         }
         if (!accept_terms.checked) {
             notification('warning', 'Vui lòng chấp nhận điều khoản của chúng tôi!', 'Cảnh báo!');

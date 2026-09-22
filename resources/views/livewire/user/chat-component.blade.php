@@ -1,10 +1,5 @@
-@php
-    $supportAgent = $conversation?->staff;
-    $supportIsOnline = $supportAgent?->isOnline() ?? false;
-@endphp
-
 <div id="chat-root">
-    <div class="floating-chat-container" x-data="{
+    <div class="floating-chat-container" wire:ignore.self x-data="{
         isOpen: @entangle('showBox'),
         isLoading: false,
         showQuick: @entangle('showQuickReplies'),
@@ -69,7 +64,7 @@
         }
     }" x-init="restorePosition()" :class="{ 'is-open': isOpen }" @pointermove.window="drag($event)" @pointerup.window="endDrag()">
         <!-- Floating Chat Button -->
-        <button class="floating-chat-button"
+        <button class="floating-chat-button" wire:ignore.self
             @pointerdown="startDrag($event)"
             @click="suppressClick($event); if (!moved) { isOpen = true; $wire.call('toggleBox', true) }"
             x-show="!isOpen" type="button" aria-label="Mở hỗ trợ khách hàng">
@@ -85,8 +80,8 @@
         </button>
 
         <!-- Hộp thoại chat -->
-        <div class="floating-chat-window" x-show="isOpen" x-transition:enter="chat-enter"
-            x-transition:leave="chat-leave" style="display: none;" wire:init="scrollToBottom" id="box_arround">
+        <div class="floating-chat-window" wire:ignore.self x-cloak x-show="isOpen" x-transition:enter="chat-enter"
+            x-transition:leave="chat-leave" wire:init="scrollToBottom" id="box_arround">
 
             <!-- Header với gradient -->
             <div class="p-3 d-flex justify-content-between align-items-center"
@@ -97,11 +92,9 @@
                     </div>
                     <div class="ms-2">
                         <div class="fw-bold" style="font-size: 14px;">{{__('home.HoTroKhachHang')}}</div>
-                        <div class="text-start {{ $supportIsOnline ? 'is-online' : '' }}" style="font-size: 11px; opacity: 0.9;">
+                        <div class="text-start is-online" style="font-size: 11px; opacity: 0.9;">
                             Bộ phận CSKH
-                            @if($supportIsOnline)
-                                · {{ __('home.DangTrucTuyen') }}
-                            @endif
+                            · {{ __('home.DangTrucTuyen') }}
                         </div>
                     </div>
                 </div>
@@ -123,7 +116,7 @@
                     </div>
                 @endif
 
-                <div class="chat-messages-content" style="display: flex; flex-direction: column-reverse; width: 100%;">
+                <div class="chat-messages-content" wire:key="user-chat-message-list" style="display: flex; flex-direction: column-reverse; width: 100%;">
                     @foreach ($chatMessages as $msg)
                         @php
                             $isCurrentUser = (is_array($msg) ? $msg['sender_id'] : $msg->sender_id) == auth()->id();
@@ -217,7 +210,7 @@
                                             </div>
                                         @else
                                             <div class="message-bubble rounded-4 position-relative member-message text-start"
-                                                style="transition: all 0.2s ease; display: inline-block; width: fit-content; max-width: 100%; margin: 0;">{{ trim($message) }}</div>
+                                                style="display: inline-block; width: fit-content; max-width: 100%; margin: 0;">{{ trim($message) }}</div>
                                         @endif
                                         <div class="mt-1 ps-2" style="font-size: 10px; color: #6c757d;text-align:left;">
                                             {{ __('home.HoTro') }} · {{ \Carbon\Carbon::parse($createdAt)->setTimezone('Asia/Ho_Chi_Minh')->format('H:i') }}
@@ -228,7 +221,7 @@
                         @endif
 
                         @if($showDateSeparator)
-                            <div class="chat-date-separator" aria-label="{{ $messageDate->format('d/m/Y') }}">
+                            <div class="chat-date-separator" wire:key="date-separator-{{ $messageId }}" aria-label="{{ $messageDate->format('d/m/Y') }}">
                                 <span>{{ $messageDate->locale(app()->getLocale())->translatedFormat('d M Y') }}</span>
                             </div>
                         @endif
@@ -1004,14 +997,8 @@
                     }
                 })
                 .listen('.MessageRead', (e) => {
-
-                    // Update Livewire property để giữ trạng thái khi re-render
-                    const root = document.getElementById('chat-root');
-                    const component = Livewire.find(root.getAttribute('wire:id'));
-                    component.call('onMessageReadUpdate', e.message_id);
-
                     // Update icon seen cho tin nhắn trong DOM ngay lập tức
-                    const messageElement = document.querySelector(`[data-message-id="${e.message_id}"]`);
+                    const messageElement = document.querySelector(`#chat-root [data-message-id="${e.message_id}"]`);
                     if (messageElement) {
                         messageElement.setAttribute('data-seen-status', 'true');
                         const icon = messageElement.querySelector('i');
@@ -1023,15 +1010,9 @@
                     }
                 })
                 .listen('.ConversationRead', (e) => {
-                    
-                    // Update Livewire backend
-                    const root = document.getElementById('chat-root');
-                    const component = Livewire.find(root.getAttribute('wire:id'));
-                    component.call('onConversationRead', e);
-
                     // Cập nhật tất cả các tin nhắn của mình (người đang ngồi trước máy) sang Đã xem
                     // Vì conversation_id đã khớp (nhờ listen đúng channel)
-                    const myMessages = document.querySelectorAll('[data-seen-status="false"]');
+                    const myMessages = document.querySelectorAll('#chat-root [data-seen-status="false"]');
                     myMessages.forEach(el => {
                         el.setAttribute('data-seen-status', 'true');
                         const icon = el.querySelector('i');

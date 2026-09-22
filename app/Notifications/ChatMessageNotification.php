@@ -11,6 +11,7 @@ class ChatMessageNotification extends Notification
 
     public function __construct(
         private int $conversationId,
+        private string $conversationPublicId,
         private string $senderName,
         private string $message
     ) {
@@ -28,7 +29,7 @@ class ChatMessageNotification extends Notification
             'title' => $this->senderName . ' đã gửi tin nhắn',
             'message' => $this->message,
             'conversation_id' => $this->conversationId,
-            'target_url' => route('chat-panel') . '#conversation-' . $this->conversationId,
+            'target_url' => route('chat-panel', ['conversation' => $this->conversationPublicId]),
         ];
     }
 }

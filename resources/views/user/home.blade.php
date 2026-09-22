@@ -30,7 +30,6 @@
             ENT_QUOTES | ENT_HTML5,
             'UTF-8'
         ));
-        $announcementKey = $announcement !== '' ? substr(hash('sha256', $announcement), 0, 20) : '';
         $currentOrders = (int) ($user_spin_progress->current_spin ?? 0);
         $totalOrders = (int) ($rank->spin_count ?? 0);
         $orderProgress = $totalOrders > 0 ? min(100, round(($currentOrders / $totalOrders) * 100)) : 0;
@@ -40,15 +39,19 @@
     <main class="page-home" data-home-page>
         <section class="home-dashboard" aria-label="Tổng quan trang chủ">
             @if($announcement !== '')
-                <div class="home-announcement" role="status" aria-live="polite" data-home-announcement
-                    data-announcement-key="{{ $announcementKey }}" data-reappear-after="21600000">
+                <div class="home-announcement" role="status" aria-live="polite" data-home-announcement>
                     <span class="home-announcement__icon" aria-hidden="true"><i class="fa-solid fa-bullhorn"></i></span>
                     <div class="home-announcement__content">
                         <div class="home-announcement__heading">
                             <strong>Thông báo hệ thống</strong>
                             <span>Mới</span>
                         </div>
-                        <p>{{ $announcement }}</p>
+                        <div class="home-announcement__marquee">
+                            <div class="home-announcement__track">
+                                <p>{{ $announcement }}</p>
+                                <p aria-hidden="true">{{ $announcement }}</p>
+                            </div>
+                        </div>
                     </div>
                     <button type="button" class="home-announcement__close" data-home-announcement-close
                         aria-label="Ẩn thông báo này">

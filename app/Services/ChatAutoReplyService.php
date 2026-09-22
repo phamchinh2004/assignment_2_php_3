@@ -28,10 +28,10 @@ class ChatAutoReplyService
         return true;
     }
 
-    public static function getEscalationRecipients(User $user): array
+    public static function getEscalationRecipients(User $manager): array
     {
         return app(ManagementRecipientResolver::class)
-            ->forUser($user)
+            ->forConversationManager($manager)
             ->pluck('email')
             ->filter()
             ->unique()

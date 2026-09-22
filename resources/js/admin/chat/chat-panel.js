@@ -1,4 +1,9 @@
 document.addEventListener('livewire:initialized', () => {
+    function clearLegacyHash() {
+        const cleanUrl = window.location.pathname + window.location.search;
+        window.history.replaceState(window.history.state, '', cleanUrl);
+    }
+
     // Auto-select conversation/user from hash
     function selectFromHash() {
         const hash = window.location.hash;
@@ -12,6 +17,8 @@ document.addEventListener('livewire:initialized', () => {
                 const component = window.Livewire.find(chatRoot.getAttribute('wire:id'));
                 
                 if (component) {
+                    clearLegacyHash();
+
                     // Gọi method selectUserForChat
                     component.call('selectUserForChat', userId).then(() => {
                         console.log('✅ Auto-selected user:', userId);
@@ -34,6 +41,8 @@ document.addEventListener('livewire:initialized', () => {
                 const component = window.Livewire.find(chatRoot.getAttribute('wire:id'));
                 
                 if (component) {
+                    clearLegacyHash();
+
                     // Show loading spinner
                     const spinner = document.getElementById('chat-loading-spinner');
                     if (spinner) {
@@ -41,8 +50,9 @@ document.addEventListener('livewire:initialized', () => {
                         setTimeout(() => spinner.style.opacity = '1', 10);
                     }
                     
-                    // Gọi method selectConversation
-                    component.call('selectConversation', conversationId).then(() => {
+                    // Dùng cùng logic với notification realtime để conversation của
+                    // staff/admin khác được tự mở rộng trước khi focus.
+                    component.call('openConversationFromNotification', conversationId, null, null).then(() => {
                         console.log('✅ Auto-selected conversation:', conversationId);
                         
                         // Đợi một chút rồi scroll vào conversation
@@ -50,8 +60,6 @@ document.addEventListener('livewire:initialized', () => {
                             highlightSelectedConversation();
                         }, 500);
                         
-                        // Clear hash để tránh reload lại
-                        history.replaceState(null, null, ' ');
                     }).catch(error => {
                         console.error('❌ Error selecting conversation:', error);
                     });
@@ -104,4 +112,3 @@ if (!document.querySelector('#chat-pulse-animation')) {
     `;
     document.head.appendChild(style);
 }
-

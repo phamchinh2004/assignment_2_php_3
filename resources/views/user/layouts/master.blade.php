@@ -68,16 +68,19 @@
                 </p>
             </div>
             <div class="footer text-center w-100 m-0 d-flex align-items-center">
-                <a class="cspt footer-item text-dark text-decoration-none" href="{{ route('home') }}">
+                <a class="cspt footer-item text-dark text-decoration-none {{ request()->routeIs('home') ? 'active' : '' }}"
+                    href="{{ route('home') }}" @if(request()->routeIs('home')) aria-current="page" @endif>
                     <i class="fa-solid fa-house"></i>
                     <div class="fw-bold text-footer">{{__('layout.TrangChu')}}</div>
                 </a>
-                <a class="cspt footer-item text-dark text-decoration-none" href="{{ route('order') }}?tab=tat-ca">
+                <a class="cspt footer-item text-dark text-decoration-none {{ request()->routeIs('order', 'order.*') ? 'active' : '' }}"
+                    href="{{ route('order') }}?tab=tat-ca" @if(request()->routeIs('order', 'order.*')) aria-current="page" @endif>
                     <i class="fa-solid fa-clock-rotate-left"></i>
                     <div class="fw-bold text-footer">{{__('layout.LichSu')}}</div>
                 </a>
                 <a href="{{ route('distribution') }}"
-                    class="d-flex footer-item justify-content-center align-items-center p-0 cspt text-dark text-decoration-none">
+                    class="d-flex footer-item footer-item--distribution justify-content-center align-items-center p-0 cspt text-dark text-decoration-none {{ request()->routeIs('distribution') ? 'active' : '' }}"
+                    @if(request()->routeIs('distribution')) aria-current="page" @endif>
                     <div class="amazon_btn d-flex justify-content-center align-items-center">
                         <img class="footer-logo" src="{{ asset('images/home/distribution_button.webp') }}"
                             alt="Trang phân phối">
@@ -85,12 +88,14 @@
                 </a>
 
                 <!-- Thống kê giao dịch -->
-                <a class="cspt footer-item text-dark text-decoration-none" href="{{ route('balance_fluctuation') }}">
+                <a class="cspt footer-item text-dark text-decoration-none {{ request()->routeIs('balance_fluctuation') ? 'active' : '' }}"
+                    href="{{ route('balance_fluctuation') }}" @if(request()->routeIs('balance_fluctuation')) aria-current="page" @endif>
                     <i class="fa-solid fa-chart-line"></i>
                     <div class="fw-bold text-footer">{{__('layout.ThongKe')}}</div>
                 </a>
 
-                <a class="cspt footer-item text-dark text-decoration-none" href="{{ route('me') }}">
+                <a class="cspt footer-item text-dark text-decoration-none {{ request()->routeIs('me', 'personal_information', 'vip', 'withdraw_money') ? 'active' : '' }}"
+                    href="{{ route('me') }}" @if(request()->routeIs('me', 'personal_information', 'vip', 'withdraw_money')) aria-current="page" @endif>
                     <i class="fa fa-regular fa-user"></i>
                     <div class="fw-bold text-footer">{{__('layout.Toi')}}</div>
                 </a>
@@ -327,6 +332,11 @@
         const route_change_password = "{{ route('change_password') }}";
         const route_change_transaction_password = "{{ route('change_transaction_password') }}";
         const route_reset_transaction_password = "{{ route('reset_transaction_password') }}";
+        window.approximateLocationConfig = {
+            endpoint: @json(route('location.approximate.update')),
+            csrf: @json(csrf_token()),
+            intervalMs: 600000,
+        };
 
         function notification(type, data, title, timeOut = "10000") {
             $(document).ready();
@@ -423,6 +433,7 @@
             @endauth
         });
     </script>
+    @vite('resources/js/user/approximate-location.js')
     @yield('script-libs')
     @stack('scripts')
     @vite('resources/js/user/notification.js')

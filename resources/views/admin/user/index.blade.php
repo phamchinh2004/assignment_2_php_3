@@ -269,11 +269,23 @@ Danh sách người dùng
                             <td>
                                 <div class="location-box">
                                     <div class="location-place">
-                                        @if($item->location_country_code)
-                                            <span class="fs-6">{{ country_flag($item->location_country_code) }}</span>
+                                        @php
+                                            $displayCountryCode = $item->location_country_code ?: $item->approx_location_country_code;
+                                            $displayCountry = $item->location_country ?: $item->approx_location_country;
+                                        @endphp
+                                        @if($displayCountryCode)
+                                            <span class="fs-6">{{ country_flag($displayCountryCode) }}</span>
                                         @endif
                                         <span>
-                                            {{ $item->location_city ?: 'Chưa rõ' }}@if($item->location_country), {{ $item->location_country }}@endif
+                                            @if($item->location_city)
+                                                {{ $item->location_city }}@if($displayCountry), {{ $displayCountry }}@endif
+                                            @elseif($displayCountry)
+                                                {{ $displayCountry }}
+                                            @elseif($displayCountryCode)
+                                                {{ $displayCountryCode }}
+                                            @else
+                                                Chưa rõ
+                                            @endif
                                         </span>
                                     </div>
                                     @if($item->location_latitude !== null && $item->location_longitude !== null)

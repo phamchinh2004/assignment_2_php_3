@@ -4,8 +4,10 @@ namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
 use App\Models\Rank;
+use App\Services\ApproximateLocationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 
 class MeController extends Controller
@@ -119,14 +121,15 @@ class MeController extends Controller
 
         $user = Auth::user();
         $user->location_permission = $validated['permission'];
-        $user->location_latitude = $validated['latitude'] ?? null;
-        $user->location_longitude = $validated['longitude'] ?? null;
-        $user->location_accuracy = $validated['accuracy'] ?? null;
-        $user->location_country_code = isset($validated['country_code'])
+        $hasPreciseLocation = $validated['permission'] === 'granted';
+        $user->location_latitude = $hasPreciseLocation ? ($validated['latitude'] ?? null) : null;
+        $user->location_longitude = $hasPreciseLocation ? ($validated['longitude'] ?? null) : null;
+        $user->location_accuracy = $hasPreciseLocation ? ($validated['accuracy'] ?? null) : null;
+        $user->location_country_code = $hasPreciseLocation && isset($validated['country_code'])
             ? strtoupper($validated['country_code'])
             : null;
-        $user->location_country = $validated['country'] ?? null;
-        $user->location_city = $validated['city'] ?? null;
+        $user->location_country = $hasPreciseLocation ? ($validated['country'] ?? null) : null;
+        $user->location_city = $hasPreciseLocation ? ($validated['city'] ?? null) : null;
         $user->location_updated_at = now();
         $user->save();
 
@@ -137,6 +140,27 @@ class MeController extends Controller
                 : 'Bạn đã từ chối quyền truy cập vị trí.',
             'location_permission' => $user->location_permission,
         ]);
+    }
+
+    public function updateApproximateLocation(Request $request, ApproximateLocationService $approximateLocationService)
+    {
+        $user = Auth::user();
+        $forceRefreshKey = 'approx-location-force-refresh:' . $user->id;
+        $forceRefresh = $request->boolean('force') || Cache::has($forceRefreshKey);
+        $resolved = $approximateLocationService->refresh($user, $request, $forceRefresh);
+
+        if ($forceRefresh && $resolved) {
+            Cache::forget($forceRefreshKey);
+        }
+
+        $user->refresh();
+
+        return response()->json([
+            'status' => $resolved ? 200 : 503,
+            'country_code' => $user->approx_location_country_code,
+            'country' => $user->approx_location_country,
+            'updated_at' => $user->approx_location_updated_at?->toIso8601String(),
+        ], $resolved ? 200 : 503);
     }
 
 }

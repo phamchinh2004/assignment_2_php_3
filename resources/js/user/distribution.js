@@ -78,10 +78,47 @@ document.addEventListener('DOMContentLoaded', function () {
     let currentIndex = 0;
     const order_award = document.getElementById('order_award');
 
+    async function updateApproximateLocation() {
+        try {
+            const response = await fetch(route_update_approximate_location, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrf,
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({}),
+            });
+            const result = await response.json();
+            return response.ok && result.status === 200 && !!result.country_code;
+        } catch (error) {
+            console.warn('Không thể cập nhật vị trí tương đối.', error);
+            return false;
+        }
+    }
+
+    async function useApproximateLocationFallback() {
+        try {
+            await fetch(route_update_location, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
+                body: JSON.stringify({ permission: 'denied' })
+            });
+        } catch (error) {
+            console.warn('Không thể lưu trạng thái quyền vị trí.', error);
+        }
+
+        const approximateReady = await updateApproximateLocation();
+        if (!approximateReady) {
+            notification('warning', 'Không thể xác định quốc gia hiện tại. Vui lòng thử lại hoặc cấp quyền vị trí.', trans.CanhBao);
+        }
+
+        return approximateReady;
+    }
+
     async function updateCurrentLocation() {
         if (!navigator.geolocation) {
-            notification('error', 'Trình duyệt không hỗ trợ truy cập vị trí.', trans.Loi);
-            return false;
+            return useApproximateLocationFallback();
         }
 
         return new Promise((resolve) => {
@@ -126,17 +163,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     resolve(false);
                 }
             }, async () => {
-                try {
-                    await fetch(route_update_location, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
-                        body: JSON.stringify({ permission: 'denied' })
-                    });
-                } catch (error) {
-                    console.warn('Không thể lưu trạng thái quyền vị trí.', error);
-                }
-                notification('warning', 'Bạn cần cấp quyền vị trí để nhận đơn hàng.', trans.CanhBao);
-                resolve(false);
+                resolve(await useApproximateLocationFallback());
             }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
         });
     }

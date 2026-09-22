@@ -277,7 +277,54 @@
     <script>
         const spinner = document.getElementById('spinner');
     </script>
+    @php
+        $adminChatNotificationMutes = [];
+        if (auth()->check() && in_array(auth()->user()->role, \App\Models\User::MANAGEMENT_ROLES, true)) {
+            $adminChatNotificationMutes = \App\Models\ConversationNotificationMute::query()
+                ->where('user_id', auth()->id())
+                ->active()
+                ->get(['conversation_id', 'muted_until'])
+                ->mapWithKeys(fn ($mute) => [
+                    (string) $mute->conversation_id => [
+                        'mutedUntil' => $mute->muted_until?->toIso8601String(),
+                        'forever' => $mute->muted_until === null,
+                    ],
+                ])
+                ->all();
+        }
+    @endphp
     <script>
+        window.adminChatNotificationMutes = @json($adminChatNotificationMutes);
+
+        window.isAdminConversationMuted = function(conversationId) {
+            const key = String(conversationId ?? '');
+            const mute = window.adminChatNotificationMutes?.[key];
+
+            if (!mute) return false;
+            if (mute.forever) return true;
+
+            const mutedUntil = Date.parse(mute.mutedUntil || '');
+            if (!Number.isNaN(mutedUntil) && mutedUntil > Date.now()) return true;
+
+            delete window.adminChatNotificationMutes[key];
+            return false;
+        };
+
+        window.setAdminConversationMute = function(conversationId, muted, mutedUntil = null) {
+            const key = String(conversationId ?? '');
+            if (!key) return;
+
+            if (!muted) {
+                delete window.adminChatNotificationMutes[key];
+                return;
+            }
+
+            window.adminChatNotificationMutes[key] = {
+                mutedUntil: mutedUntil || null,
+                forever: !mutedUntil,
+            };
+        };
+
         // ===== HỆ THỐNG NOTIFICATION MỚI =====
         
         // Function phát âm thanh notification
@@ -385,6 +432,10 @@
                         .listen('.MessageSent', function(e) {
                             // Chỉ show notification nếu không phải tin nhắn của mình
                             if (e.message && e.message.sender_id !== {{ auth()->id() }}) {
+                                if (window.isAdminConversationMuted(e.message.conversation_id)) {
+                                    return;
+                                }
+
                                 // Kiểm tra xem đang ở trang chat hay không
                                 const isOnChatPage = window.location.pathname.includes('/admin/chat-panel');
                                 
@@ -398,7 +449,7 @@
                                     ? (e.message.message.length > 30 ? e.message.message.substring(0, 30) + '...' : e.message.message)
                                     : "Đã gửi hình ảnh";
                                 const title = e.message.sender.full_name + ' đã gửi tin nhắn';
-                                const chatUrl = '{{ route("chat-panel") }}#conversation-' + e.message.conversation_id;
+                                const chatUrl = '{{ route("chat-panel") }}?conversation=' + encodeURIComponent(e.message.conversation_public_id);
                                 
                                 // Hiển thị cả toastr và desktop notification (có thể click để chuyển đến chat)
                                 notification('success', messageText, title, 10000, chatUrl);

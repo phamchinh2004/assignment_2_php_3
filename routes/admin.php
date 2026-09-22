@@ -67,6 +67,8 @@ Route::middleware(['role:staff|admin|own', 'checkBanned', 'auth'])->group(functi
 
     Route::middleware(['authorization.context:' . $capabilities['manage_all_users']])->group(function () {
         Route::resource('user', UserController::class);
+        Route::post('/user/{user}/location/refresh', [UserController::class, 'refreshApproximateLocation'])->name('user.location.refresh');
+        Route::delete('/user/{user}/location', [UserController::class, 'destroyLocation'])->name('user.location.destroy');
         Route::get('/user/change-status-user/{user}', [UserController::class, 'changeStatusUser'])->name('user.change.status');
         Route::get('/user/frozen-order/{user}', [UserController::class, 'frozenOrderInterface'])->name('user.frozen.order.interface');
         Route::post('/user/frozen-order/{user}', [UserController::class, 'frozenOrder'])->name('user.frozen.order');

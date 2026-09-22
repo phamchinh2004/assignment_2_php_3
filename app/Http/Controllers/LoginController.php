@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Services\ApproximateLocationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -17,7 +18,7 @@ class LoginController extends Controller
         return response()->view('login')
             ->header('Cache-Control', 'no-store, private');
     }
-    public function login(Request $request)
+    public function login(Request $request, ApproximateLocationService $approximateLocationService)
     {
         $credentials = $request->validate([
             'username' => [
@@ -51,7 +52,8 @@ class LoginController extends Controller
             if (Auth::attempt($credentials, $request->boolean('remember_password'))) {
                 if ($get_user_from_username->status == "activated") {
                     $request->session()->regenerate();
-                    if ($get_user_from_username->role == "member") {
+                    if ($get_user_from_username->role === User::ROLE_MEMBER) {
+                        $approximateLocationService->refresh($get_user_from_username, $request, true);
                         return redirect()->route('home')->with('success', 'Đăng nhập thành công!');
                     } else {
                         return redirect()->route('chat-panel')->with('success', 'Đăng nhập thành công!');

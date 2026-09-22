@@ -55,6 +55,9 @@ class User extends Authenticatable
         'location_country',
         'location_city',
         'location_updated_at',
+        'approx_location_country_code',
+        'approx_location_country',
+        'approx_location_updated_at',
         'last_seen'
     ];
 
@@ -77,6 +80,7 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'last_seen' => 'datetime',
         'location_updated_at' => 'datetime',
+        'approx_location_updated_at' => 'datetime',
         'location_latitude' => 'float',
         'location_longitude' => 'float',
         'location_accuracy' => 'float',
