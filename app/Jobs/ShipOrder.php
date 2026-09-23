@@ -9,6 +9,7 @@ use App\Services\OrderStatusService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class ShipOrder implements ShouldQueue
 {
@@ -19,7 +20,7 @@ class ShipOrder implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct($frozenOrderId)
+    public function __construct($frozenOrderId, public bool $scheduleNext = true)
     {
         $this->frozenOrderId = $frozenOrderId;
     }
@@ -42,11 +43,23 @@ class ShipOrder implements ShouldQueue
         $carriers = ['Vietnam Post', 'Viettel Post', 'J&T Express', 'Giao Hàng Nhanh', 'Shopee Express'];
         
         // Chuyển sang trạng thái shipping sử dụng OrderStatusService
-        $success = OrderStatusService::changeStatus(
-            $frozenOrder,
-            'shipping',
-            'Đơn hàng đang vận chuyển đến khách hàng. Mã vận đơn: ' . $trackingNumber
-        );
+        $success = DB::transaction(function () use ($frozenOrder, $trackingNumber, $carriers) {
+            if (!OrderStatusService::changeStatusIfCurrent(
+                $frozenOrder,
+                'transit',
+                'shipping',
+                ($this->scheduleNext ? 'Đơn hàng đang vận chuyển đến khách hàng.' : 'Quản trị viên chuyển đơn sang vận chuyển.')
+                    . ' Mã vận đơn: ' . $trackingNumber
+            )) {
+                return false;
+            }
+
+            $frozenOrder->tracking_number = $trackingNumber;
+            $frozenOrder->shipping_carrier = $carriers[array_rand($carriers)];
+            $frozenOrder->save();
+
+            return true;
+        });
         
         if (!$success) {
             Log::error('Không thể chuyển trạng thái sang shipping', [
@@ -55,15 +68,14 @@ class ShipOrder implements ShouldQueue
             return;
         }
         
-        // Cập nhật thông tin vận chuyển
-        $frozenOrder->tracking_number = $trackingNumber;
-        $frozenOrder->shipping_carrier = $carriers[array_rand($carriers)];
-        $frozenOrder->save();
-
         Log::info('Đơn hàng đã được giao vận chuyển', [
             'frozen_order_id' => $this->frozenOrderId,
             'tracking_number' => $trackingNumber
         ]);
+
+        if (!$this->scheduleNext) {
+            return;
+        }
 
         // Lấy cấu hình thời gian từ database
         $timing = OrderStatusTiming::getTiming('shipping', 'delivered');

@@ -108,8 +108,7 @@ class AdminHeaderService
         $limit = max(1, min($limit, 12));
 
         $unreadQuery = Message::query()
-            ->where('sender_id', '!=', $user->id)
-            ->where('is_read', false)
+            ->unreadFor($user->id)
             ->whereHas('conversation', function ($query) use ($user) {
                 $this->scopeVisibleConversations($query, $user);
             });
@@ -121,8 +120,7 @@ class AdminHeaderService
             ])
             ->withCount([
                 'messages as unread_count' => fn ($query) => $query
-                    ->where('sender_id', '!=', $user->id)
-                    ->where('is_read', false),
+                    ->unreadFor($user->id),
             ])
             ->whereHas('messages');
 
@@ -136,7 +134,7 @@ class AdminHeaderService
         return [
             'unread_count' => $unreadQuery->count(),
             'conversations' => $conversations
-                ->map(function (Conversation $conversation) {
+                ->map(function (Conversation $conversation) use ($user) {
                     $message = $conversation->latestMessage;
 
                     return [
@@ -146,7 +144,7 @@ class AdminHeaderService
                             ?: 'Người dùng',
                         'sender_name' => $message?->sender?->full_name
                             ?: $message?->sender?->username,
-                        'preview' => match ($message?->kind ?? $message?->type) {
+                        'preview' => ($message && (int) $message->sender_id === (int) $user->id ? 'Bạn: ' : '') . match ($message?->kind ?? $message?->type) {
                             'order_reference' => 'Đã gửi đơn hàng liên quan',
                             'transaction_reference' => 'Đã gửi giao dịch liên quan',
                             'image' => 'Đã gửi hình ảnh',
@@ -169,8 +167,11 @@ class AdminHeaderService
     private function scopeVisibleConversations($query, User $user): void
     {
         if ($this->authorization->isSuperuser($user)) {
-            $query->whereHas('staff', fn ($staff) => $staff
-                ->whereIn('role', [User::ROLE_STAFF, User::ROLE_ADMIN]));
+            $query->where(function ($conversation) use ($user) {
+                $conversation->where('staff_id', $user->id)
+                    ->orWhereHas('staff', fn ($staff) => $staff
+                        ->whereIn('role', [User::ROLE_STAFF, User::ROLE_ADMIN]));
+            });
             return;
         }
 

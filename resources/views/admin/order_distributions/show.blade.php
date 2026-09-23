@@ -1,117 +1,133 @@
 @extends('admin.layouts.master')
 
-@section('title', 'Audit Frozen Order #' . $frozenOrder->id)
+@section('title', 'Audit phân phối #' . $frozenOrder->id)
 
 @section('style-libs')
     @vite('resources/css/admin/common-modern.css')
     @vite('resources/css/admin/order_distribution/index.css')
 @endsection
 
+@section('script-libs')
+    @vite('resources/js/admin/order_distribution/show.js')
+@endsection
+
 @section('content')
 @php
-    $order = $frozenOrder->order;
-    $stateLabels = ['complete' => 'Đầy đủ', 'legacy' => 'Legacy', 'incomplete' => 'Thiếu dữ liệu', 'invalid' => 'Bất thường'];
-    $rows = [
-        ['Mã đơn', $frozenOrder->snapshot_order_code, $order?->order_code],
-        ['Tên sản phẩm', $frozenOrder->snapshot_name, $order?->name],
-        ['Ảnh', $frozenOrder->snapshot_image, $order?->image],
-        ['Số lượng', $frozenOrder->snapshot_quantity, $order?->quantity],
-        ['Đơn giá', $frozenOrder->snapshot_unit_price, $order?->price],
-        ['Tổng giá trị', $frozenOrder->snapshot_order_amount, $order ? $order->price * $order->quantity : null],
-        ['Commission rate', $frozenOrder->commission_percentage, $order?->commission_percentage],
-        ['Commission amount', $frozenOrder->snapshot_commission_amount, $order ? ($order->price * $order->quantity * (($order->commission_percentage ?? 0) / 100)) : null],
-        ['Người nhận', $frozenOrder->snapshot_customer_name, $order?->customer_name],
-        ['Số điện thoại', $frozenOrder->snapshot_customer_phone, $order?->customer_phone],
-        ['Địa chỉ', $frozenOrder->snapshot_customer_address, $order?->customer_address],
-        ['Ghi chú', $frozenOrder->snapshot_customer_note, $order?->customer_note],
-        ['Đối tác', $frozenOrder->snapshot_partner_name, $order?->partner?->name],
-        ['Thanh toán', $frozenOrder->snapshot_payment_method, $order?->payment_method],
-        ['Đã thanh toán', $frozenOrder->snapshot_is_paid === null ? null : ($frozenOrder->snapshot_is_paid ? 'Có' : 'Không'), $order ? ($order->is_paid ? 'Có' : 'Không') : null],
-        ['API', $frozenOrder->snapshot_api, $order?->api],
-    ];
+    $currentLabel = $statusLabels[$frozenOrder->status] ?? ($frozenOrder->status ?: 'Chưa ghi nhận');
+    $nextLabel = $transition['next'] ? ($statusLabels[$transition['next']] ?? $transition['next']) : null;
+    $assignee = $frozenOrder->user?->full_name ?: $frozenOrder->user?->username;
+    $assigner = $frozenOrder->assignedBy?->full_name ?: $frozenOrder->assignedBy?->username;
+    $backUrl = route('order_distributions.index', request()->query());
 @endphp
-<div class="container-fluid px-4 pb-5 distribution-page">
-    <div class="distribution-header d-flex justify-content-between align-items-center flex-wrap">
-        <div><h1>Audit Frozen Order #{{ $frozenOrder->id }}</h1><p>So sánh snapshot lịch sử với Order nguồn hiện tại.</p></div>
-        <a href="{{ route('order_distributions.index') }}" class="btn btn-light mt-2 mt-md-0"><i class="fas fa-arrow-left mr-1"></i>Danh sách</a>
-    </div>
-
-    <div class="row">
-        <div class="col-xl-8 mb-4">
-            <div class="distribution-panel">
-                <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
-                    <div><strong>Đối chiếu dữ liệu</strong><div class="text-muted small">Cột Order hiện tại chỉ là tham khảo, không phải lịch sử đã xác minh.</div></div>
-                    <span class="snapshot-badge snapshot-{{ $frozenOrder->snapshot_state }}">{{ $stateLabels[$frozenOrder->snapshot_state] }}</span>
-                </div>
-                <div class="compare-grid">
-                    <div class="compare-head">Field</div><div class="compare-head">Snapshot</div><div class="compare-head">Order hiện tại</div>
-                    @foreach($rows as [$label, $snapshot, $current])
-                        @php $different = (string) $snapshot !== (string) $current; @endphp
-                        <div><strong>{{ $label }}</strong></div>
-                        <div>{{ filled($snapshot) || $snapshot === 0 ? $snapshot : '—' }} @if($snapshot === null)<span class="badge badge-warning">thiếu</span>@endif</div>
-                        <div class="{{ $different ? 'value-fallback' : '' }}">{{ filled($current) || $current === 0 ? $current : '—' }} @if($different)<span class="badge badge-light border">khác</span>@endif</div>
-                    @endforeach
-                </div>
-            </div>
+<main class="container-fluid px-3 px-lg-4 pb-5 distribution-page">
+    <header class="distribution-header distribution-audit-header">
+        <div class="distribution-heading">
+            <span class="distribution-heading-icon" aria-hidden="true"><i class="fas fa-clipboard-check"></i></span>
+            <div><h1>Audit phân phối #{{ $frozenOrder->id }}</h1><p>Kiểm tra người nhận, tiến độ và thao tác được phép trên đơn hàng.</p></div>
         </div>
+        <a href="{{ $backUrl }}" class="btn distribution-secondary-button"><i class="fas fa-arrow-left" aria-hidden="true"></i> Quay lại danh sách</a>
+    </header>
 
-        <div class="col-xl-4">
-            <div class="distribution-panel mb-4 p-3">
-                <h6 class="font-weight-bold">Tình trạng snapshot</h6>
-                <dl class="row small mb-0">
-                    <dt class="col-5">Nguồn</dt><dd class="col-7">{{ $frozenOrder->snapshot_source ?: ($frozenOrder->snapshot_state === 'complete' ? 'captured (pre-metadata)' : 'legacy / chưa ghi nhận') }}</dd>
-                    <dt class="col-5">Captured</dt><dd class="col-7">{{ optional($frozenOrder->snapshot_captured_at)->format('d/m/Y H:i') ?: '—' }}</dd>
-                    <dt class="col-5">Restored</dt><dd class="col-7">{{ optional($frozenOrder->snapshot_restored_at)->format('d/m/Y H:i') ?: '—' }}</dd>
-                    <dt class="col-5">Người restore</dt><dd class="col-7">{{ $frozenOrder->snapshotRestoredBy?->full_name ?: '—' }}</dd>
-                    <dt class="col-5">Field thiếu</dt><dd class="col-7">{{ $frozenOrder->snapshot_missing_fields ? count($frozenOrder->snapshot_missing_fields) : 'Không' }}</dd>
-                </dl>
-                @if($missingDetails)
-                    <div class="missing-audit mt-3">
-                        @foreach($missingDetails as $detail)
-                            <div class="missing-audit-item">
-                                <strong>{{ $detail['label'] }}</strong>
-                                <code>{{ $detail['field'] }}</code>
-                                <div>Nguồn: <code class="d-inline">{{ $detail['source_field'] }}</code></div>
-                                <div>Giá trị hiện tại: {{ $detail['source_available'] ? $detail['source'] : '—' }}</div>
-                                <div class="{{ $detail['can_restore'] ? 'text-success' : 'text-danger' }}">{{ $detail['reason'] }}</div>
-                            </div>
-                        @endforeach
+    @foreach(['success' => 'success', 'error' => 'danger'] as $flash => $tone)
+        @if(session($flash))<div class="alert alert-{{ $tone }}" role="alert">{{ session($flash) }}</div>@endif
+    @endforeach
+
+    <div class="distribution-audit-grid">
+        <div class="distribution-audit-main">
+            <section class="distribution-panel" aria-labelledby="distribution-summary-title">
+                <div class="distribution-panel-heading"><div><h2 id="distribution-summary-title">Thông tin phân phối</h2><p>Bản ghi phân phối và dữ liệu đã lưu tại thời điểm tạo.</p></div><span class="distribution-status distribution-status-{{ $frozenOrder->status ?: 'unknown' }}">{{ $currentLabel }}</span></div>
+                <div class="distribution-audit-content">
+                    <div class="distribution-audit-order">
+                        @if($frozenOrder->snapshot_image)<img src="{{ Storage::url($frozenOrder->snapshot_image) }}" alt="" class="distribution-audit-thumb">@endif
+                        <div><span class="distribution-eyebrow">Đơn phân phối #{{ $frozenOrder->id }}</span><h3>{{ $frozenOrder->snapshot_order_code ?: 'Chưa ghi nhận mã đơn' }}</h3><p>{{ $frozenOrder->snapshot_name ?: 'Tên sản phẩm chưa được ghi nhận trong snapshot' }}</p><span class="distribution-type">{{ $frozenOrder->custom_price !== null ? 'Đơn giá trị cao' : 'Đơn thường' }}</span></div>
                     </div>
-                @endif
-            </div>
+                    <dl class="distribution-detail-grid">
+                        <div><dt>Người nhận phân phối</dt><dd>{{ $assignee ?: 'Tài khoản không còn tồn tại' }} <small>User #{{ $frozenOrder->user_id }}</small></dd></div>
+                        <div><dt>Người phân phối</dt><dd>{{ $assigner ?: ($frozenOrder->assignment_source === 'spin' ? 'Hệ thống tự phân phối' : ($frozenOrder->assignment_source === 'admin' ? 'Không còn thông tin người phân phối' : 'Chưa ghi nhận')) }} <small>{{ $frozenOrder->assignment_source === 'admin' ? 'Giao thủ công' : ($frozenOrder->assignment_source === 'spin' ? 'Người dùng tự nhận' : 'Không có dữ liệu nguồn lịch sử') }}</small></dd></div>
+                        <div><dt>Thời gian phân phối</dt><dd>{{ $frozenOrder->created_at?->format('d/m/Y H:i:s') ?: '—' }}</dd></div>
+                        <div><dt>Cập nhật bản ghi</dt><dd>{{ $frozenOrder->updated_at?->format('d/m/Y H:i:s') ?: '—' }}</dd></div>
+                        <div><dt>Order nguồn</dt><dd>@if($frozenOrder->order && $canViewOrder)<a href="{{ route('order.show', $frozenOrder->order) }}">Order #{{ $frozenOrder->order_id }} <i class="fas fa-external-link-alt" aria-hidden="true"></i></a>@else Order #{{ $frozenOrder->order_id }} · {{ $frozenOrder->order ? 'Chỉ xem mã tham chiếu' : 'Đã xóa' }} @endif</dd></div>
+                        <div><dt>Tình trạng nhận đơn</dt><dd>{{ $frozenOrder->spun ? 'Đã nhận đơn' : 'Chưa nhận đơn' }}</dd></div>
+                    </dl>
+                </div>
+            </section>
 
-            <div class="distribution-panel mb-4 p-3">
-                <h6 class="font-weight-bold">Phân phối & tài chính</h6>
-                <dl class="row small mb-0">
-                    <dt class="col-5">User</dt><dd class="col-7"><a href="{{ route('user.show', $frozenOrder->user_id) }}">{{ $frozenOrder->user?->full_name ?: $frozenOrder->user?->username }}</a></dd>
-                    <dt class="col-5">Order nguồn</dt><dd class="col-7">@if($order)<a href="{{ route('order.show', $order) }}">#{{ $order->id }}</a>@else Đã xóa @endif</dd>
-                    <dt class="col-5">Status</dt><dd class="col-7">{{ $frozenOrder->status ?: 'legacy' }}</dd>
-                    <dt class="col-5">Spun</dt><dd class="col-7">{{ $frozenOrder->spun ? 'Có' : 'Không' }}</dd>
-                    <dt class="col-5">Commission paid</dt><dd class="col-7">{{ $frozenOrder->commission_paid ? 'Có' : 'Không' }}</dd>
-                    <dt class="col-5">Giá trị hiển thị</dt><dd class="col-7 money">{{ format_money($frozenOrder->display_order_amount ?? 0, 2) }}$</dd>
-                    <dt class="col-5">Commission</dt><dd class="col-7 money">{{ format_money($frozenOrder->display_commission_amount ?? 0, 5) }}$</dd>
-                </dl>
-                @if($frozenOrder->uses_snapshot_fallback)<div class="alert alert-warning small mt-3 mb-0">Giá trị hiển thị có fallback từ Order hiện tại. Không dùng làm bằng chứng lịch sử.</div>@endif
-            </div>
-
-            <div class="distribution-panel p-3">
-                <h6 class="font-weight-bold">Phục hồi field trống</h6>
-                <p class="small text-muted">Không ghi đè snapshot có sẵn. Dữ liệu lấy từ Order hiện tại được đánh dấu chưa xác minh.</p>
-                @if(!$order)
-                    <div class="alert alert-danger small mb-0">Order nguồn không còn tồn tại. Không thể phục hồi tự động.</div>
-                @else
-                    <form method="POST" action="{{ route('order_distributions.restore', $frozenOrder) }}" onsubmit="return confirm('Dữ liệu phục hồi lấy từ Order hiện tại, không phải lịch sử đã xác minh. Tiếp tục?')">
-                        @csrf
-                        <div class="custom-control custom-checkbox mb-3">
-                            <input type="checkbox" class="custom-control-input" id="include_financials" name="include_financials" value="1" @checked($canRestoreFinancials) @disabled(!$canRestoreFinancials)>
-                            <label class="custom-control-label" for="include_financials">Bổ sung field tài chính</label>
+            <section class="distribution-panel" aria-labelledby="distribution-history-title">
+                <div class="distribution-panel-heading"><div><h2 id="distribution-history-title">Lịch sử trạng thái</h2><p>Nhật ký hiện có từ status_orders, sắp xếp theo thời điểm ghi nhận.</p></div><span class="distribution-page-count">{{ $frozenOrder->statusOrders->count() }} sự kiện</span></div>
+                <div class="distribution-audit-content">
+                    @forelse($frozenOrder->statusOrders->sortBy('id') as $event)
+                        <div class="distribution-history-item">
+                            <span class="distribution-history-marker" aria-hidden="true"></span>
+                            <div class="distribution-history-body">
+                                <div class="distribution-history-top"><strong>{{ $event->status?->display_name ?: ($event->status?->name ?: 'Trạng thái không còn tồn tại') }}</strong><time datetime="{{ $event->created_at?->toISOString() }}">{{ $event->created_at?->format('d/m/Y H:i:s') ?: '—' }}</time></div>
+                                @php $legacyActor = $frozenOrder->assignment_source === null && $event->status?->name === 'pending' && $event->changed_by !== null && (int) $event->changed_by === (int) $frozenOrder->user_id; @endphp
+                                <p>{{ $legacyActor ? 'Tài khoản trong lịch sử cũ (chưa xác minh người thao tác)' : 'Người ghi nhận' }}: {{ $event->changedBy?->full_name ?: $event->changedBy?->username ?: 'Hệ thống / chưa ghi nhận' }}</p>
+                                @if($event->notes)<p class="distribution-history-note">{{ $event->notes }}</p>@endif
+                            </div>
                         </div>
-                        @if(!$canRestoreFinancials)<div class="small text-danger mb-3">Đơn đã xác nhận/hoàn thành hoặc commission đã trả: khóa phục hồi tài chính.</div>@endif
-                        <button class="btn btn-warning btn-block font-weight-bold"><i class="fas fa-wand-magic-sparkles mr-1"></i>Phục hồi field trống</button>
-                    </form>
-                @endif
-            </div>
+                    @empty
+                        <div class="distribution-empty distribution-history-empty"><i class="fas fa-clock" aria-hidden="true"></i><strong>Chưa có lịch sử trạng thái</strong><p>Bản ghi cũ có thể chưa được ghi vào nhật ký.</p></div>
+                    @endforelse
+                </div>
+            </section>
+
+            <section class="distribution-panel" aria-labelledby="distribution-snapshot-title">
+                <div class="distribution-panel-heading"><div><h2 id="distribution-snapshot-title">Dữ liệu snapshot</h2><p>Thông tin lịch sử đã lưu; không lấy giá trị thay thế từ Order hiện tại.</p></div><span class="distribution-snapshot-label">{{ $frozenOrder->snapshot_state === 'complete' ? 'Đầy đủ' : 'Cần đối chiếu' }}</span></div>
+                <div class="distribution-audit-content">
+                    @if($frozenOrder->snapshot_state !== 'complete')<p class="distribution-notice">Snapshot này chưa đầy đủ hoặc có dữ liệu bất thường. Các giá trị chưa ghi nhận được để trống, không suy đoán từ Order nguồn.</p>@endif
+                    <details class="distribution-snapshot-details"><summary>Xem chi tiết snapshot và nguồn dữ liệu</summary>
+                        <dl class="distribution-detail-grid">
+                            <div><dt>Số lượng</dt><dd>{{ $frozenOrder->snapshot_quantity ?? '—' }}</dd></div>
+                            <div><dt>Đơn giá snapshot</dt><dd>{{ $frozenOrder->snapshot_unit_price !== null ? format_money($frozenOrder->snapshot_unit_price, 2) . '$' : '—' }}</dd></div>
+                            <div><dt>Nguồn snapshot</dt><dd>{{ $frozenOrder->snapshot_source ?: 'Chưa ghi nhận' }}</dd></div>
+                            <div><dt>Ngày chụp snapshot</dt><dd>{{ $frozenOrder->snapshot_captured_at?->format('d/m/Y H:i') ?: '—' }}</dd></div>
+                            <div><dt>Tình trạng dữ liệu</dt><dd>{{ $frozenOrder->snapshot_state }}</dd></div>
+                            <div><dt>Ngày bổ sung dữ liệu cũ</dt><dd>{{ $frozenOrder->snapshot_restored_at?->format('d/m/Y H:i') ?: '—' }}</dd></div>
+                        </dl>
+                    </details>
+                </div>
+            </section>
         </div>
+
+        <aside class="distribution-audit-aside" aria-label="Xử lý đơn phân phối">
+            <section class="distribution-panel" aria-labelledby="distribution-action-title">
+                <div class="distribution-panel-heading"><div><h2 id="distribution-action-title">Xử lý trạng thái</h2><p>Thao tác theo đúng bước tiếp theo của quy trình.</p></div></div>
+                <div class="distribution-audit-content">
+                    <span class="distribution-eyebrow">Trạng thái hiện tại</span>
+                    <div class="distribution-current-state"><span class="distribution-status distribution-status-{{ $frozenOrder->status ?: 'unknown' }}">{{ $currentLabel }}</span></div>
+                    @if($transition['next'])
+                        <div class="distribution-next-state"><i class="fas fa-arrow-down" aria-hidden="true"></i><div><small>Bước tiếp theo</small><strong>{{ $nextLabel }}</strong></div></div>
+                    @endif
+                    @if($transition['ready'] && $canAdvance)
+                        <form id="distribution-transition-form" method="POST" action="{{ route('order_distributions.transition', array_merge(['frozenOrder' => $frozenOrder->id], request()->query())) }}" data-confirm="{{ $transition['next'] === 'completed' ? 'Xác nhận hoàn thành và quyết toán số dư, hoa hồng cho đơn hàng này?' : '' }}">
+                            @csrf
+                            <input type="hidden" name="expected_status" value="{{ $frozenOrder->status }}">
+                            <input type="hidden" name="expected_updated_at" value="{{ $frozenOrder->updated_at?->toISOString() }}">
+                            <button type="submit" class="btn distribution-primary-button distribution-transition-button"><span class="distribution-button-label">Chuyển sang {{ $nextLabel }}</span><span class="distribution-button-spinner" aria-hidden="true"></span></button>
+                            <div id="transition-feedback" class="distribution-transition-feedback" role="alert" aria-live="assertive" hidden></div>
+                            <a id="distribution-conflict-reload" class="btn distribution-secondary-button mt-2" href="{{ url()->current() . (request()->getQueryString() ? '?' . request()->getQueryString() : '') }}" hidden>Tải lại Audit</a>
+                        </form>
+                    @elseif(!$canAdvance && $transition['next'])
+                        <p class="distribution-notice mb-0">Tài khoản của bạn chỉ có quyền xem. Bước này yêu cầu quyền quản lý đơn hàng{{ $transition['next'] === 'completed' ? ' và quản lý giao dịch người dùng' : '' }}.</p>
+                    @else
+                        <p class="distribution-notice mb-0">{{ $transition['reason'] }}</p>
+                        @if($transition['available_at'])<p class="distribution-available-at">Có thể xử lý từ {{ $transition['available_at']->format('d/m/Y H:i') }}.</p>@endif
+                    @endif
+                </div>
+            </section>
+
+            <section class="distribution-panel" aria-labelledby="distribution-financial-title">
+                <div class="distribution-panel-heading"><div><h2 id="distribution-financial-title">Tình trạng tài chính</h2><p>Chỉ dùng số liệu snapshot đã lưu trên đơn.</p></div></div>
+                <div class="distribution-audit-content">
+                    <dl class="distribution-financial-list">
+                        <div><dt>Giá trị đơn</dt><dd>{{ $frozenOrder->snapshot_order_value !== null ? format_money($frozenOrder->snapshot_order_value, 2) . '$' : 'Chưa có snapshot' }}</dd></div>
+                        <div><dt>Hoa hồng</dt><dd>{{ $frozenOrder->snapshot_commission_value !== null ? format_money($frozenOrder->snapshot_commission_value, 5) . '$' : 'Chưa có snapshot' }}</dd></div>
+                        <div><dt>Đã trả hoa hồng</dt><dd>{{ $frozenOrder->commission_paid ? 'Đã trả' : 'Chưa trả' }}</dd></div>
+                        <div><dt>Thời điểm quyết toán</dt><dd>{{ $frozenOrder->settled_at?->format('d/m/Y H:i') ?: 'Chưa quyết toán' }}</dd></div>
+                    </dl>
+                </div>
+            </section>
+        </aside>
     </div>
-</div>
+</main>
 @endsection

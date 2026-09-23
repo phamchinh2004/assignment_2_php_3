@@ -38,7 +38,7 @@ class MessageUpdated implements ShouldBroadcastNow
                 'image_path' => $message->image_path,
                 'sender_id' => $message->sender_id,
                 'conversation_id' => $message->conversation_id,
-                'is_read' => (bool) $message->is_read,
+                'is_read' => false,
                 'created_at' => $message->created_at,
                 'sender' => [
                     'id' => $message->sender->id,

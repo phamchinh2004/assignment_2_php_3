@@ -7,6 +7,7 @@ use App\Events\MessageRead;
 use App\Events\MessageUpdated;
 use App\Events\MessageDeleted;
 use App\Events\ConversationCleared;
+use App\Events\ConversationAssigned;
 use App\Events\UserLocked;
 use Livewire\Component;
 use App\Models\User;
@@ -14,11 +15,13 @@ use App\Models\Conversation;
 use App\Models\ConversationNotificationMute;
 use App\Models\Message;
 use App\Services\AuthorizationService;
+use App\Services\ChatReadService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Livewire\Attributes\On;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;
 use Livewire\WithFileUploads;
 
@@ -38,6 +41,8 @@ class ChatComponent extends Component
     public $staffUsers = [];
     public $adminUsers = [];
     public $expandedStaff = [];
+    public ?int $conversationMenuId = null;
+    public ?int $dispatchConversationId = null;
     public $messagesPerPage = 20; // Tăng số tin nhắn mỗi lần tải
     public $currentPage = 1;
     public $hasMoreMessages = true;
@@ -68,6 +73,109 @@ class ChatComponent extends Component
     private function canViewConversation(Conversation $conversation): bool
     {
         return app(AuthorizationService::class)->canViewConversation(Auth::user(), $conversation);
+    }
+
+    private function canDispatchConversation(Conversation $conversation): bool
+    {
+        return app(AuthorizationService::class)->canDispatchConversation(Auth::user(), $conversation);
+    }
+
+    public function toggleConversationMenu(int $conversationId): void
+    {
+        $conversation = Conversation::with('staff:id,role')->find($conversationId);
+        abort_unless($conversation && $this->canDispatchConversation($conversation), 403);
+
+        $this->conversationMenuId = $this->conversationMenuId === $conversationId
+            ? null
+            : $conversationId;
+    }
+
+    public function openDispatchDialog(int $conversationId): void
+    {
+        $conversation = Conversation::with('staff:id,role')->find($conversationId);
+        abort_unless($conversation && $this->canDispatchConversation($conversation), 403);
+
+        $this->conversationMenuId = null;
+        $this->dispatchConversationId = $conversationId;
+    }
+
+    public function closeDispatchDialog(): void
+    {
+        $this->dispatchConversationId = null;
+    }
+
+    public function getDispatchCandidatesProperty()
+    {
+        if (!$this->dispatchConversationId || !in_array(Auth::user()->role, [User::ROLE_ADMIN, User::ROLE_OWNER], true)) {
+            return collect();
+        }
+
+        $roles = Auth::user()->role === User::ROLE_OWNER
+            ? [User::ROLE_STAFF, User::ROLE_ADMIN]
+            : [User::ROLE_STAFF];
+
+        return User::query()
+            ->whereIn('role', $roles)
+            ->where('status', 'activated')
+            ->orderBy('full_name')
+            ->get(['id', 'full_name', 'role', 'status']);
+    }
+
+    public function dispatchConversationTo(int $operatorId): void
+    {
+        $conversation = Conversation::with('staff:id,role')->find($this->dispatchConversationId);
+        abort_unless($conversation && $this->canDispatchConversation($conversation), 403);
+
+        $target = $this->dispatchCandidates->firstWhere('id', $operatorId);
+        abort_unless($target && app(AuthorizationService::class)->canReceiveDispatchedConversation(Auth::user(), $target), 403);
+
+        if ((int) $conversation->staff_id === $operatorId) {
+            $this->closeDispatchDialog();
+            return;
+        }
+
+        if (Conversation::query()
+            ->where('user_id', $conversation->user_id)
+            ->where('staff_id', $operatorId)
+            ->whereKeyNot($conversation->id)
+            ->exists()) {
+            $this->dispatch('app-dialog', [
+                'type' => 'warning',
+                'title' => 'Không thể điều phối',
+                'text' => 'Người nhận đã có hội thoại riêng với khách hàng này.',
+            ]);
+            return;
+        }
+
+        $previousOperatorId = (int) $conversation->staff_id;
+        $updated = Conversation::query()
+            ->whereKey($conversation->id)
+            ->where('staff_id', $previousOperatorId)
+            ->update(['staff_id' => $operatorId]);
+
+        if (!$updated) {
+            $this->closeDispatchDialog();
+            $this->refreshChatState();
+            $this->dispatch('app-dialog', [
+                'type' => 'warning',
+                'title' => 'Hội thoại đã thay đổi',
+                'text' => 'Vui lòng tải lại và thử điều phối lần nữa.',
+            ]);
+            return;
+        }
+
+        $this->closeDispatchDialog();
+        if (!in_array($operatorId, $this->expandedStaff, true)) {
+            $this->expandedStaff[] = $operatorId;
+        }
+
+        $this->refreshChatState();
+        event(new ConversationAssigned($conversation->id, $previousOperatorId, $operatorId));
+        $this->dispatch('app-dialog', [
+            'type' => 'success',
+            'title' => 'Điều phối thành công',
+            'text' => 'Đã chuyển hội thoại cho ' . $target->full_name . '.',
+        ]);
     }
 
     public function getSelectedConversationNotificationMuteProperty(): ?ConversationNotificationMute
@@ -198,22 +306,35 @@ class ChatComponent extends Component
         if ($this->canManageAllChats()) {
             $this->loadStaffUsersAlternative();
         }
+
+        if ($this->selectedConversationId) {
+            $selected = Conversation::with('staff:id,role')->find($this->selectedConversationId);
+            if (!$selected || !$this->canViewConversation($selected)) {
+                $this->clearConversationSelection();
+                $this->conversationPublicId = null;
+            }
+        }
     }
-    public function getSelectedConversationProperty()
+    #[Computed]
+    public function selectedConversation()
     {
-        $conv = $this->conversations->firstWhere('id', $this->selectedConversationId);
-        if ($conv && !$this->canViewConversation($conv)) {
+        if (!$this->selectedConversationId) {
             return null;
         }
 
-        if (!$conv && $this->selectedConversationId) {
-            $conv = Conversation::with(['user', 'staff', 'messages'])->find($this->selectedConversationId);
-
-            if ($conv && !$this->canViewConversation($conv)) {
-                return null;
-            }
+        // Livewire can hydrate a conversation from an earlier request. Recheck the
+        // current assignment before exposing messages or accepting a reply.
+        $current = Conversation::with('staff:id,role')->find($this->selectedConversationId);
+        if (!$current || !$this->canViewConversation($current)) {
+            return null;
         }
-        return $conv;
+
+        $cached = $this->conversations->firstWhere('id', $this->selectedConversationId);
+        if ($cached && (int) $cached->staff_id === (int) $current->staff_id) {
+            return $cached;
+        }
+
+        return $current->load(['user', 'staff', 'messages']);
     }
 
     public function loadConversations()
@@ -226,13 +347,12 @@ class ChatComponent extends Component
                 'user',
                 'staff:id,full_name,username,role',
                 'messages' => function ($query) {
-                    $query->select('id', 'conversation_id', 'message', 'type', 'kind', 'created_at')->latest()->limit(1);
+                    $query->select('id', 'conversation_id', 'sender_id', 'message', 'type', 'kind', 'created_at')->latest()->limit(1);
                 }
             ])
             ->withCount([
                 'messages as unread_count' => function ($query) use ($user) {
-                    $query->where('sender_id', '!=', $user->id)
-                        ->where('is_read', false);
+                    $query->unreadFor($user->id);
                 }
             ])
             ->orderByDesc('updated_at');
@@ -240,8 +360,11 @@ class ChatComponent extends Component
         $authorization = app(AuthorizationService::class);
 
         if ($authorization->isSuperuser($user)) {
-            $query->whereHas('staff', function ($staffQuery) {
-                $staffQuery->whereIn('role', [User::ROLE_STAFF, User::ROLE_ADMIN]);
+            $query->where(function ($conversationQuery) use ($user) {
+                $conversationQuery->where('staff_id', $user->id)
+                    ->orWhereHas('staff', function ($staffQuery) {
+                        $staffQuery->whereIn('role', [User::ROLE_STAFF, User::ROLE_ADMIN]);
+                    });
             });
         } elseif ($user->role === User::ROLE_ADMIN && $this->canManageAllChats()) {
             $query->where(function ($conversationQuery) use ($user) {
@@ -297,8 +420,14 @@ class ChatComponent extends Component
 
         // Lấy tất cả thông tin các staff member bằng IN clause trước để giảm query N+1
         $staffIds = $staffData->pluck('id');
-        $allMembers = User::where('role', 'member')
-            ->whereIn('referrer_id', $staffIds)
+        $allMembers = User::where('role', User::ROLE_MEMBER)
+            ->where(function ($query) use ($staffIds) {
+                $query->whereIn('referrer_id', $staffIds)
+                    ->orWhereHas('memberConversations', function ($conversationQuery) use ($staffIds) {
+                        $conversationQuery->whereIn('staff_id', $staffIds);
+                    });
+            })
+            ->withCount('memberConversations')
             // Lấy kèm hộp thoại và message mới nhất
             ->with([
                 'memberConversations' => function ($q) use ($currentUserId, $staffIds) {
@@ -306,24 +435,29 @@ class ChatComponent extends Component
                         ->orderBy('updated_at', 'desc')
                         ->with([
                             'messages' => function ($qm) {
-                                $qm->select('id', 'conversation_id', 'message', 'type', 'kind', 'created_at', 'is_read')
+                                $qm->select('id', 'conversation_id', 'sender_id', 'message', 'type', 'kind', 'created_at', 'is_read')
                                     ->orderBy('created_at', 'desc')
                                     ->limit(1);
                             }
                         ])
                         ->withCount([
                             'messages as unread_count' => function ($qu) use ($currentUserId) {
-                                $qu->where('sender_id', '!=', $currentUserId)
-                                    ->where('is_read', false);
+                                $qu->unreadFor($currentUserId);
                             }
                         ]);
                 }
             ])
-            ->get()
-            ->groupBy('referrer_id');
+            ->get();
 
         foreach ($staffData as $staff) {
-            $users = $allMembers->get($staff->id, collect());
+            $users = $allMembers->filter(function ($member) use ($staff) {
+                $hasAssignedConversation = $member->memberConversations->contains('staff_id', $staff->id);
+
+                return $hasAssignedConversation || (
+                    (int) $member->referrer_id === (int) $staff->id
+                    && (int) $member->member_conversations_count === 0
+                );
+            });
             $usersArray = [];
 
             foreach ($users as $user) {
@@ -477,23 +611,9 @@ class ChatComponent extends Component
             return;
         }
 
-        // Cập nhật tất cả tin nhắn bằng 1 query duy nhất
-        $updatedCount = Message::where('conversation_id', $conversationId)
-            ->where('is_read', false)
-            ->where('sender_id', '!=', Auth::id())
-            ->update(['is_read' => true]);
+        $updatedCount = app(ChatReadService::class)->markConversationRead($conversation, Auth::id());
 
         if ($updatedCount > 0) {
-            // Cập nhật in-memory array để UI đổi màu/icon ngay lập tức
-            if (is_array($this->messages)) {
-                foreach ($this->messages as &$message) {
-                    if (isset($message['sender_id']) && $message['sender_id'] != Auth::id()) {
-                        $message['is_read'] = true;
-                    }
-                }
-                unset($message);
-            }
-
             // Gửi 1 broadcast duy nhất cho toàn bộ cuộc hội thoại
             broadcast(new \App\Events\ConversationRead($conversationId, Auth::id()));
         }
@@ -654,6 +774,8 @@ class ChatComponent extends Component
             ->take($this->messagesPerPage)
             ->get();
 
+        $readStatuses = app(ChatReadService::class)->sentReadStatuses($messages, $conversation);
+
         // Log để debug
         Log::info('Loading messages', [
             'page' => $page,
@@ -664,7 +786,7 @@ class ChatComponent extends Component
         ]);
 
         $messagesArray = $messages->values() // Giữ nguyên thứ tự mới nhất (Mới -> Cũ) cho flex column-reverse
-            ->map(function ($message) {
+            ->map(function ($message) use ($readStatuses) {
                 return [
                     'id' => $message->id,
                     'message' => $message->message,
@@ -676,7 +798,7 @@ class ChatComponent extends Component
                     'reference_payload' => $message->reference_payload,
                     'sender_id' => $message->sender_id,
                     'conversation_id' => $message->conversation_id,
-                    'is_read' => $message->is_read,
+                    'is_read' => $readStatuses[$message->id] ?? false,
                     'created_at' => $message->created_at,
                     'sender' => [
                         'id' => $message->sender->id,
@@ -812,7 +934,8 @@ class ChatComponent extends Component
         );
 
         abort_unless(
-            $operator->invitedUsers->contains('id', $userId),
+            $operator->invitedUsers->contains('id', $userId)
+                || Conversation::where('user_id', $userId)->where('staff_id', $actualStaffId)->exists(),
             403,
             'Không được phép truy cập người dùng này.'
         );
@@ -841,10 +964,28 @@ class ChatComponent extends Component
             }
         } else {
             // Staff: Được phép tạo conversation mới
-            $conversation = Conversation::firstOrCreate([
-                'user_id' => $userId,
-                'staff_id' => $actualStaffId
-            ]);
+            $conversation = Conversation::where('user_id', $userId)
+                ->where('staff_id', $actualStaffId)
+                ->first();
+
+            if (!$conversation) {
+                abort_if(
+                    Conversation::where('user_id', $userId)->exists(),
+                    403,
+                    'Hội thoại này đã được điều phối cho người phụ trách khác.'
+                );
+
+                $conversation = Conversation::firstOrCreate(
+                    ['user_id' => $userId],
+                    ['staff_id' => $actualStaffId]
+                );
+            }
+
+            abort_unless(
+                (int) $conversation->staff_id === (int) $actualStaffId,
+                403,
+                'Hội thoại này đã được điều phối cho người phụ trách khác.'
+            );
 
             // Nếu tạo mới conversation, cần reload sidebar để hiển thị
             if ($conversation->wasRecentlyCreated) {
@@ -1052,8 +1193,8 @@ class ChatComponent extends Component
                     // Tự động đánh dấu tin nhắn là đã đọc vì conversation đang được mở
                     $this->markSingleMessageAsRead($message['id'], $message['conversation_id']);
 
-                    // Cập nhật message trong UI để hiển thị is_read = true
-                    $message['is_read'] = true;
+                    // Receipt của người gửi được tra riêng theo người nhận thực tế.
+                    $message['is_read'] = false;
 
                     // Thêm tin nhắn mới và force Livewire detect change
                     $tempMessages = $this->messages;
@@ -1126,31 +1267,15 @@ class ChatComponent extends Component
             403
         );
 
-        if ($message && !$message->is_read) {
-            $message->update(['is_read' => true]);
-
-            // Cập nhật trong $this->messages array để UI hiển thị đúng
-            $this->updateMessageReadStatus($messageId, true);
-
-            // Broadcast event để người gửi biết tin nhắn đã được đọc
-            broadcast(new MessageRead($message->id, $conversationId));
+        if (app(ChatReadService::class)->markMessageRead($message->id, $message->conversation, Auth::id())) {
+            broadcast(new MessageRead($message->id, $conversationId, Auth::id()));
         }
     }
 
     public function onConversationRead($data)
     {
-        if (isset($data['conversation_id']) && $data['conversation_id'] == $this->selectedConversationId) {
-            // Admin thấy user đã xem tin nhắn -> đánh dấu tất cả sang đã xem
-            if (is_array($this->messages)) {
-                $newMessages = [];
-                foreach ($this->messages as $msg) {
-                    if (isset($msg['sender_id']) && $msg['sender_id'] == Auth::id()) {
-                        $msg['is_read'] = true;
-                    }
-                    $newMessages[] = $msg;
-                }
-                $this->messages = $newMessages;
-            }
+        if (isset($data['conversation_id']) && (int) $data['conversation_id'] === (int) $this->selectedConversationId) {
+            $this->refreshReadReceipts();
         }
     }
 
@@ -1160,8 +1285,28 @@ class ChatComponent extends Component
     public function onMessageReadUpdate($messageId)
     {
         if ($messageId) {
-            $this->updateMessageReadStatus($messageId, true);
+            $this->refreshReadReceipts();
         }
+    }
+
+    public function refreshReadReceipts(): void
+    {
+        $conversation = $this->selectedConversation;
+        if (!$conversation || !is_array($this->messages) || $this->messages === []) {
+            return;
+        }
+
+        $ids = array_column($this->messages, 'id');
+        $messages = Message::query()
+            ->where('conversation_id', $conversation->id)
+            ->whereIn('id', $ids)
+            ->get(['id', 'sender_id']);
+        $statuses = app(ChatReadService::class)->sentReadStatuses($messages, $conversation);
+
+        $this->messages = array_map(function ($message) use ($statuses) {
+            $message['is_read'] = $statuses[$message['id']] ?? false;
+            return $message;
+        }, $this->messages);
     }
 
     /**

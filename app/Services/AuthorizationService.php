@@ -158,7 +158,8 @@ class AuthorizationService
     public function canViewOperatorChats(User $actor, User $operator): bool
     {
         if ($this->isSuperuser($actor)) {
-            return in_array($operator->role, [User::ROLE_ADMIN, User::ROLE_STAFF], true);
+            return in_array($operator->role, [User::ROLE_ADMIN, User::ROLE_STAFF], true)
+                || ($operator->role === User::ROLE_OWNER && (int) $operator->id === (int) $actor->id);
         }
 
         if ($actor->role === User::ROLE_ADMIN) {
@@ -186,6 +187,21 @@ class AuthorizationService
         return $conversation->staff
             ? $this->canViewOperatorChats($actor, $conversation->staff)
             : false;
+    }
+
+    public function canDispatchConversation(User $actor, Conversation $conversation): bool
+    {
+        return in_array($actor->role, [User::ROLE_ADMIN, User::ROLE_OWNER], true)
+            && $this->canViewConversation($actor, $conversation);
+    }
+
+    public function canReceiveDispatchedConversation(User $actor, User $target): bool
+    {
+        return $target->status === 'activated' && (
+            $target->role === User::ROLE_STAFF
+                && in_array($actor->role, [User::ROLE_ADMIN, User::ROLE_OWNER], true)
+            || $target->role === User::ROLE_ADMIN && $actor->role === User::ROLE_OWNER
+        );
     }
 
     public function visibleTeamChatRoles(User $actor): array

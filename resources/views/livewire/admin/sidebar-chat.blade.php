@@ -6,6 +6,7 @@
     $authorization = app(\App\Services\AuthorizationService::class);
     $visibleTeamRoles = $authorization->visibleTeamChatRoles(auth()->user());
     $canManageTeamChats = !empty($visibleTeamRoles);
+    $canDispatchChats = in_array(auth()->user()->role, [\App\Models\User::ROLE_ADMIN, \App\Models\User::ROLE_OWNER], true);
     $operatorSections = [];
 
     if (in_array(\App\Models\User::ROLE_STAFF, $visibleTeamRoles, true)) {
@@ -65,16 +66,14 @@
             @forelse($ownConversations as $conversation)
                 @php
                     $hasPenalty = $conversation->user->hasPenalizedOrders();
-                    $unreadCount = App\Models\Message::where('conversation_id', $conversation->id)
-                        ->where('sender_id', '!=', auth()->id())
-                        ->where('is_read', 0)
-                        ->count();
+                    $unreadCount = (int) $conversation->unread_count;
                     $hasUnread = $unreadCount > 0;
                     $isSelected = $this->selectedConversationId !== null && (int) $this->selectedConversationId === (int) $conversation->id;
                     $isOnline = $conversation->user->last_seen && $conversation->user->last_seen->diffInMinutes(now()) <= 5;
                     $lastMessage = $conversation->messages->last();
                 @endphp
-                <button type="button" wire:key="{{ $keyPrefix }}{{ $canManageTeamChats ? 'manager' : 'staff' }}-conversation-{{ $conversation->id }}"
+                <div class="conversation-row" wire:key="{{ $keyPrefix }}{{ $canManageTeamChats ? 'manager' : 'staff' }}-conversation-{{ $conversation->id }}">
+                <button type="button"
                     class="conversation-item {{ $isSelected ? 'is-selected active bg-primary' : '' }} {{ $hasUnread ? 'has-unread' : '' }} {{ $hasPenalty ? 'has-penalty' : '' }}"
                     aria-current="{{ $isSelected ? 'true' : 'false' }}" wire:click="selectConversation({{ $conversation->id }})">
                     <span class="conversation-avatar">
@@ -107,6 +106,7 @@
                                         default => trim($lastMessage->message ?? ''),
                                     };
                                 @endphp
+                                @if((int) $lastMessage->sender_id === (int) auth()->id())Bạn: @endif
                                 @if($lastKind !== 'text')<i class="far {{ $lastKind === 'image' ? 'fa-image' : 'fa-rectangle-list' }}" aria-hidden="true"></i>@endif
                                 {{ $lastPreview }}
                             @else
@@ -124,6 +124,21 @@
                         </span>
                     </span>
                 </button>
+                @if($canDispatchChats)
+                    <button type="button" class="conversation-action-trigger" wire:click="toggleConversationMenu({{ $conversation->id }})"
+                        aria-label="Tùy chọn hội thoại với {{ $conversation->user->full_name }}"
+                        aria-expanded="{{ $conversationMenuId === $conversation->id ? 'true' : 'false' }}" title="Tùy chọn hội thoại">
+                        <i class="fas fa-ellipsis-h" aria-hidden="true"></i>
+                    </button>
+                    @if($conversationMenuId === $conversation->id)
+                        <div class="conversation-action-menu">
+                            <button type="button" wire:click="openDispatchDialog({{ $conversation->id }})">
+                                <i class="fas fa-share" aria-hidden="true"></i> Điều phối
+                            </button>
+                        </div>
+                    @endif
+                @endif
+                </div>
             @empty
                 <div class="sidebar-empty-state {{ $canManageTeamChats ? 'sidebar-empty-state-compact' : '' }}">
                     <span class="sidebar-empty-icon" aria-hidden="true"><i class="{{ trim($searchTerm ?? '') !== '' ? 'fas fa-search' : 'far fa-comment-dots' }}"></i></span>
@@ -168,7 +183,8 @@
                                         $lastMsg = isset($user['latest_conversation']) && !empty($user['latest_conversation']['messages'])
                                             ? end($user['latest_conversation']['messages']) : null;
                                     @endphp
-                                    <button type="button" wire:key="{{ $keyPrefix }}{{ $operatorSection['key'] }}-{{ $staff['id'] }}-user-{{ $user['id'] }}"
+                                    <div class="conversation-row" wire:key="{{ $keyPrefix }}{{ $operatorSection['key'] }}-{{ $staff['id'] }}-user-{{ $user['id'] }}">
+                                    <button type="button"
                                         class="conversation-item {{ $isSelected ? 'is-selected active bg-primary' : '' }} {{ $userHasUnread ? 'has-unread' : '' }} {{ $userHasPenalty ? 'has-penalty' : '' }}"
                                         aria-current="{{ $isSelected ? 'true' : 'false' }}" wire:click="selectUserForChat({{ $user['id'] }}, {{ $staff['id'] }})">
                                         <span class="conversation-avatar">
@@ -201,6 +217,7 @@
                                                             default => trim($lastMsg['message'] ?? ''),
                                                         };
                                                     @endphp
+                                                    @if((int) ($lastMsg['sender_id'] ?? 0) === (int) auth()->id())Bạn: @endif
                                                     @if($lastKind !== 'text')<i class="far {{ $lastKind === 'image' ? 'fa-image' : 'fa-rectangle-list' }}" aria-hidden="true"></i>@endif
                                                     {{ $lastPreview }}
                                                 @else
@@ -218,6 +235,22 @@
                                             </span>
                                         </span>
                                     </button>
+                                    @if($canDispatchChats && !empty($user['latest_conversation']['id']))
+                                        <button type="button" class="conversation-action-trigger"
+                                            wire:click="toggleConversationMenu({{ $user['latest_conversation']['id'] }})"
+                                            aria-label="Tùy chọn hội thoại với {{ $user['full_name'] }}"
+                                            aria-expanded="{{ $conversationMenuId === $user['latest_conversation']['id'] ? 'true' : 'false' }}" title="Tùy chọn hội thoại">
+                                            <i class="fas fa-ellipsis-h" aria-hidden="true"></i>
+                                        </button>
+                                        @if($conversationMenuId === $user['latest_conversation']['id'])
+                                            <div class="conversation-action-menu">
+                                                <button type="button" wire:click="openDispatchDialog({{ $user['latest_conversation']['id'] }})">
+                                                    <i class="fas fa-share" aria-hidden="true"></i> Điều phối
+                                                </button>
+                                            </div>
+                                        @endif
+                                    @endif
+                                    </div>
                                 @empty
                                     <p class="staff-empty-state">Chưa có khách hàng trong danh sách.</p>
                                 @endforelse

@@ -13,6 +13,7 @@ use App\Services\AuthorizationService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class StaffController extends Controller
@@ -212,7 +213,7 @@ class StaffController extends Controller
     public function create(AuthorizationService $authorization)
     {
         return view('admin.staff.create', [
-            'allowedRoles' => $authorization->manageableOperatorRoles(Auth::user()),
+            'canChooseRole' => $authorization->isSuperuser(Auth::user()),
         ]);
     }
 
@@ -228,21 +229,34 @@ class StaffController extends Controller
 
         return $random_number;
     }
+
+    private function return_random_phone(): string
+    {
+        do {
+            $phone = '09' . str_pad((string) random_int(0, 99999999), 8, '0', STR_PAD_LEFT);
+        } while (User::where('phone', $phone)->exists());
+
+        return $phone;
+    }
+
     public function store(Request $request, AuthorizationService $authorization)
     {
         $actor = Auth::user();
-        $allowedRoles = $authorization->manageableOperatorRoles($actor);
+        $canChooseRole = $authorization->isSuperuser($actor);
         $data = $request->validate([
-            'full_name' => ['required', 'string', 'max:255'],
             'username' => ['required', 'string', 'min:6', 'max:255', 'unique:users,username'],
-            'phone' => ['required', 'string', 'max:50', 'unique:users,phone'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'password' => ['nullable', 'string', 'min:6'],
-            'role' => ['nullable', Rule::in($allowedRoles)],
+            'role' => $canChooseRole
+                ? ['required', Rule::in([User::ROLE_STAFF, User::ROLE_ADMIN])]
+                : ['prohibited'],
         ]);
 
-        $requestedRole = $data['role'] ?? User::ROLE_STAFF;
-        abort_unless(in_array($requestedRole, $allowedRoles, true), 403);
-        $data['password'] = $data['password'] ?: '123456';
+        $requestedRole = $canChooseRole ? $data['role'] : User::ROLE_STAFF;
+        $data['full_name'] = ($requestedRole === User::ROLE_ADMIN ? 'Admin ' : 'Nhân viên ')
+            . Str::upper(Str::random(8));
+        $data['phone'] = $this->return_random_phone();
+        $data['password'] = empty($data['password']) ? '123456' : $data['password'];
         $data['password'] = Hash::make($data['password']);
         $data['referrer_id'] = $actor->id;
         $data['status'] = "activated";
@@ -259,7 +273,7 @@ class StaffController extends Controller
                 ]);
             }
         }
-        return redirect()->route('staff.index')->with('success', 'Tạo tài khoản nhân viên thành công!');
+        return redirect()->route('staff.index')->with('success', 'Tạo tài khoản quản trị thành công!');
     }
     public function show(string $id, AuthorizationService $authorization)
     {
@@ -290,7 +304,10 @@ class StaffController extends Controller
         }
         abort_unless($authorization->canManageOperator(Auth::user(), $get_staff_old), 403);
 
-        return view('admin.staff.edit', compact('get_staff_old'));
+        return view('admin.staff.edit', [
+            'get_staff_old' => $get_staff_old,
+            'canChooseRole' => $authorization->isSuperuser(Auth::user()),
+        ]);
     }
 
     /**
@@ -299,14 +316,18 @@ class StaffController extends Controller
     public function update(Request $request, string $id, AuthorizationService $authorization)
     {
         $get_user = User::find($id);
-        abort_unless($get_user && $authorization->canManageOperator(Auth::user(), $get_user), 403);
-        $data = $request->only(['full_name', 'username', 'phone']);
-        if (User::where('username', $data['username'])->where('username', '!=', $get_user->username)->exists()) {
-            return back()->withErrors(['username' => 'Tên đăng nhập đã tồn tại!'])->withInput();
-        }
-        if (User::where('phone', $data['phone'])->where('phone', '!=', $get_user->phone)->exists()) {
-            return back()->withErrors(['phone' => 'Số điện thoại đã tồn tại!'])->withInput();
-        }
+        $actor = Auth::user();
+        abort_unless($get_user && $authorization->canManageOperator($actor, $get_user), 403);
+        $data = $request->validate([
+            'full_name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users', 'email')->ignore($get_user->id)],
+            'phone' => ['prohibited'],
+            'username' => ['required', 'string', 'min:6', 'max:255', Rule::unique('users', 'username')->ignore($get_user->id)],
+            'role' => $authorization->isSuperuser($actor)
+                ? ['required', Rule::in([User::ROLE_STAFF, User::ROLE_ADMIN])]
+                : ['prohibited'],
+        ]);
+        $roleChanged = isset($data['role']) && $data['role'] !== $get_user->role;
         $get_user->update($data);
         $list_manager_settings = Manager_setting::get();
         if ($list_manager_settings) {
@@ -321,6 +342,20 @@ class StaffController extends Controller
                         'is_active' => 0,
                     ]);
                 }
+            }
+        }
+        if ($roleChanged) {
+            $get_user->unsetRelation('user_manager_settings');
+            $state = $authorization->state($get_user);
+
+            try {
+                event(new AuthorizationUpdated($get_user->id, $state['version']));
+            } catch (\Throwable $exception) {
+                Log::error('Unable to broadcast staff role update.', [
+                    'staff_id' => $get_user->id,
+                    'authorization_version' => $state['version'],
+                    'error' => $exception->getMessage(),
+                ]);
             }
         }
         return redirect()->route('staff.index')->with('success', 'Cập nhật tài khoản nhân viên thành công!');

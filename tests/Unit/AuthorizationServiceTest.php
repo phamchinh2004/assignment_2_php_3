@@ -2,6 +2,7 @@
 
 namespace Tests\Unit;
 
+use App\Models\Conversation;
 use App\Models\Manager_setting;
 use App\Models\User;
 use App\Models\User_manager_setting;
@@ -112,10 +113,68 @@ class AuthorizationServiceTest extends TestCase
 
         $this->assertTrue($this->authorization->canViewOperatorChats($owner, $staff));
         $this->assertTrue($this->authorization->canViewOperatorChats($owner, $admin));
+        $this->assertTrue($this->authorization->canViewOperatorChats($owner, $owner));
         $this->assertSame(
             [User::ROLE_STAFF, User::ROLE_ADMIN],
             $this->authorization->visibleTeamChatRoles($owner)
         );
+    }
+
+    public function test_chat_dispatch_requires_management_role_and_conversation_access(): void
+    {
+        $staff = $this->staffWithPermissions([]);
+        $staff->id = 20;
+        $admin = $this->userWithPermissions(User::ROLE_ADMIN, [config('authorization.capabilities.manage_all_chats')]);
+        $admin->id = 10;
+        $limitedAdmin = $this->userWithPermissions(User::ROLE_ADMIN, []);
+        $limitedAdmin->id = 30;
+        $owner = new User();
+        $owner->id = 40;
+        $owner->role = User::ROLE_OWNER;
+
+        $conversation = new Conversation();
+        $conversation->staff_id = $staff->id;
+        $conversation->setRelation('staff', $staff);
+
+        $this->assertFalse($this->authorization->canDispatchConversation($staff, $conversation));
+        $this->assertTrue($this->authorization->canDispatchConversation($admin, $conversation));
+        $this->assertFalse($this->authorization->canDispatchConversation($limitedAdmin, $conversation));
+        $this->assertTrue($this->authorization->canDispatchConversation($owner, $conversation));
+
+        $conversation->staff_id = $limitedAdmin->id;
+        $conversation->setRelation('staff', $limitedAdmin);
+        $this->assertTrue($this->authorization->canDispatchConversation($limitedAdmin, $conversation));
+        $this->assertFalse($this->authorization->canDispatchConversation($admin, $conversation));
+
+        $conversation->staff_id = $admin->id;
+        $conversation->setRelation('staff', $admin);
+
+        $this->assertTrue($this->authorization->canDispatchConversation($admin, $conversation));
+        $this->assertFalse($this->authorization->canDispatchConversation($limitedAdmin, $conversation));
+        $this->assertTrue($this->authorization->canDispatchConversation($owner, $conversation));
+    }
+
+    public function test_chat_dispatch_recipients_are_restricted_by_role_and_status(): void
+    {
+        $staff = new User();
+        $staff->role = User::ROLE_STAFF;
+        $staff->status = 'activated';
+        $admin = new User();
+        $admin->role = User::ROLE_ADMIN;
+        $admin->status = 'activated';
+        $owner = new User();
+        $owner->role = User::ROLE_OWNER;
+        $owner->status = 'activated';
+
+        $this->assertTrue($this->authorization->canReceiveDispatchedConversation($admin, $staff));
+        $this->assertFalse($this->authorization->canReceiveDispatchedConversation($admin, $admin));
+        $this->assertTrue($this->authorization->canReceiveDispatchedConversation($owner, $staff));
+        $this->assertTrue($this->authorization->canReceiveDispatchedConversation($owner, $admin));
+        $this->assertFalse($this->authorization->canReceiveDispatchedConversation($staff, $staff));
+        $this->assertFalse($this->authorization->canReceiveDispatchedConversation($owner, $owner));
+
+        $staff->status = 'banned';
+        $this->assertFalse($this->authorization->canReceiveDispatchedConversation($owner, $staff));
     }
 
     public function test_permission_middleware_supports_any_and_all_modes(): void

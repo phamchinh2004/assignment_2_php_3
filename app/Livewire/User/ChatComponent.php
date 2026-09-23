@@ -10,6 +10,7 @@ use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
 use App\Services\ChatReferenceService;
+use App\Services\ChatReadService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -75,6 +76,8 @@ class ChatComponent extends Component
 
     public function hydrate(): void
     {
+        // The assigned operator may change while this Livewire component is open.
+        $this->conversation = Conversation::where('user_id', Auth::id())->first();
         if (!$this->chatMessages) {
             return;
         }
@@ -90,20 +93,22 @@ class ChatComponent extends Component
             return;
         }
 
-        $readStatuses = Message::whereIn('id', $messageIds)
-            ->pluck('is_read', 'id');
+        $persistedMessages = Message::where('conversation_id', $this->conversation->id)
+            ->whereIn('id', $messageIds)
+            ->get(['id', 'sender_id']);
+        $readStatuses = app(ChatReadService::class)->sentReadStatuses($persistedMessages, $this->conversation);
 
         $this->chatMessages = $messages->map(function ($message) use ($readStatuses) {
             $messageId = is_array($message) ? ($message['id'] ?? null) : ($message->id ?? null);
 
-            if (!$messageId || !$readStatuses->has($messageId)) {
+            if (!$messageId || !array_key_exists($messageId, $readStatuses)) {
                 return $message;
             }
 
             if (is_array($message)) {
-                $message['is_read'] = (bool) $readStatuses->get($messageId);
+                $message['is_read'] = $readStatuses[$messageId];
             } else {
-                $message->is_read = (bool) $readStatuses->get($messageId);
+                $message->is_read = $readStatuses[$messageId];
             }
 
             return $message;
@@ -116,8 +121,7 @@ class ChatComponent extends Component
     public function loadUnreadCount()
     {
         $this->unreadCount = Message::where('conversation_id', $this->conversation->id)
-            ->where('sender_id', '!=', Auth::id())
-            ->where('is_read', false)
+            ->unreadFor(Auth::id())
             ->count();
     }
 
@@ -128,10 +132,11 @@ class ChatComponent extends Component
             ->select('id', 'message', 'type', 'kind', 'image_path', 'reference_type', 'reference_id', 'reference_payload', 'sender_id', 'conversation_id', 'is_read', 'created_at')
             ->orderBy('created_at', 'desc')
             ->limit($this->messagesPerLoad)
-            ->get()
-            ->values()
-            ->map(function ($message) {
-                return $this->formatMessage($message);
+            ->get();
+        $readStatuses = app(ChatReadService::class)->sentReadStatuses($messages, $this->conversation);
+        $messages = $messages->values()
+            ->map(function ($message) use ($readStatuses) {
+                return $this->formatMessage($message, $readStatuses[$message->id] ?? false);
             });
 
         $this->chatMessages = collect($messages);
@@ -155,10 +160,11 @@ class ChatComponent extends Component
             ->orderBy('created_at', 'desc')
             ->offset($this->offset)
             ->limit($this->messagesPerLoad)
-            ->get()
-            ->values()
-            ->map(function ($message) {
-                return $this->formatMessage($message);
+            ->get();
+        $readStatuses = app(ChatReadService::class)->sentReadStatuses($olderMessages, $this->conversation);
+        $olderMessages = $olderMessages->values()
+            ->map(function ($message) use ($readStatuses) {
+                return $this->formatMessage($message, $readStatuses[$message->id] ?? false);
             });
 
         if ($olderMessages->count() > 0) {
@@ -175,7 +181,7 @@ class ChatComponent extends Component
         $this->dispatch('messages-loaded');
     }
 
-    private function formatMessage($message)
+    private function formatMessage($message, bool $isRead = false)
     {
         return [
             'id' => $message->id,
@@ -188,7 +194,7 @@ class ChatComponent extends Component
             'reference_payload' => $message->reference_payload,
             'sender_id' => $message->sender_id,
             'conversation_id' => $message->conversation_id,
-            'is_read' => $message->is_read ?? false,
+            'is_read' => $isRead,
             'created_at' => $message->created_at,
             'sender' => [
                 'id' => $message->sender->id,
@@ -429,8 +435,7 @@ class ChatComponent extends Component
                 // Nếu chat box đang mở, tự động đánh dấu tin nhắn là đã đọc
                 if ($this->showBox) {
                     $this->markMessageAsRead($message['id']);
-                    // Cập nhật message trong UI để hiển thị is_read = true
-                    $message['is_read'] = true;
+                    $message['is_read'] = false;
                 } else {
                     // Nếu chat box đóng, tăng số tin nhắn chưa đọc
                     $this->unreadCount++;
@@ -447,15 +452,12 @@ class ChatComponent extends Component
      */
     private function markMessageAsRead($messageId)
     {
-        $message = Message::find($messageId);
-        if ($message && !$message->is_read) {
-            $message->update(['is_read' => true]);
+        if ((int) $this->conversation->user_id !== (int) Auth::id()) {
+            return;
+        }
 
-            // Cập nhật trong $this->chatMessages collection để UI hiển thị đúng
-            $this->updateMessageReadStatus($messageId, true);
-
-            // Broadcast event để người gửi biết tin nhắn đã được đọc
-            broadcast(new MessageRead($message->id, $this->conversation->id));
+        if (app(ChatReadService::class)->markMessageRead($messageId, $this->conversation, Auth::id())) {
+            broadcast(new MessageRead($messageId, $this->conversation->id, Auth::id()));
         }
     }
 
@@ -493,27 +495,10 @@ class ChatComponent extends Component
             return;
         }
 
-        // Cập nhật tất cả tin nhắn chưa đọc sang đã đọc bằng 1 câu lệnh SQL duy nhất
-        $updatedCount = Message::where('conversation_id', $this->conversation->id)
-            ->where('is_read', false)
-            ->where('sender_id', '!=', Auth::id())
-            ->update(['is_read' => true]);
+        abort_unless((int) $this->conversation->user_id === (int) Auth::id(), 403);
+        $updatedCount = app(ChatReadService::class)->markConversationRead($this->conversation, Auth::id());
 
         if ($updatedCount > 0) {
-            // Cập nhật trạng thái in-memory collection nếu cần
-            if ($this->chatMessages instanceof Collection) {
-                $this->chatMessages = $this->chatMessages->map(function($msg) {
-                    if (is_array($msg)) {
-                        if ($msg['sender_id'] != Auth::id()) {
-                            $msg['is_read'] = true;
-                        }
-                    } else if (isset($msg->sender_id) && $msg->sender_id != Auth::id()) {
-                        $msg->is_read = true;
-                    }
-                    return $msg;
-                });
-            }
-
             // Gửi duy nhất 1 broadcast thay vì loop gửi N broadcast
             broadcast(new \App\Events\ConversationRead($this->conversation->id, Auth::id()));
         }
@@ -525,7 +510,7 @@ class ChatComponent extends Component
     public function onMessageReadUpdate($messageId)
     {
         if ($messageId) {
-            $this->updateMessageReadStatus($messageId, true);
+            $this->refreshReadReceipts();
         }
     }
 
@@ -554,21 +539,32 @@ class ChatComponent extends Component
 
     public function onConversationRead($data)
     {
-        if (isset($data['conversation_id']) && $data['conversation_id'] == $this->conversation->id) {
-            // User thấy admin đã xem tin nhắn -> đánh dấu tất cả sang đã xem
-            if ($this->chatMessages instanceof Collection) {
-                $this->chatMessages = $this->chatMessages->map(function ($msg) {
-                    if (is_array($msg)) {
-                        if ($msg['sender_id'] == Auth::id()) {
-                            $msg['is_read'] = true;
-                        }
-                    } else if (isset($msg->sender_id) && $msg->sender_id == Auth::id()) {
-                        $msg->is_read = true;
-                    }
-                    return $msg;
-                });
-            }
+        if (isset($data['conversation_id']) && (int) $data['conversation_id'] === (int) $this->conversation->id) {
+            $this->refreshReadReceipts();
         }
+    }
+
+    public function refreshReadReceipts(): void
+    {
+        if (!$this->conversation || (int) $this->conversation->user_id !== (int) Auth::id()) {
+            return;
+        }
+
+        $this->conversation->refresh();
+        $messages = collect($this->chatMessages);
+        $ids = $messages->map(fn ($message) => $message['id'] ?? null)->filter()->all();
+        if ($ids === []) {
+            return;
+        }
+
+        $persistedMessages = Message::where('conversation_id', $this->conversation->id)
+            ->whereIn('id', $ids)
+            ->get(['id', 'sender_id']);
+        $statuses = app(ChatReadService::class)->sentReadStatuses($persistedMessages, $this->conversation);
+        $this->chatMessages = $messages->map(function ($message) use ($statuses) {
+            $message['is_read'] = $statuses[$message['id']] ?? false;
+            return $message;
+        });
     }
 
     public function onMessageUpdated($data)
@@ -580,7 +576,7 @@ class ChatComponent extends Component
 
         $this->chatMessages = collect($this->chatMessages)->map(function ($currentMessage) use ($message) {
             return (int) ($currentMessage['id'] ?? 0) === (int) $message['id']
-                ? $message
+                ? array_merge($currentMessage, $message, ['is_read' => $currentMessage['is_read'] ?? false])
                 : $currentMessage;
         });
     }

@@ -68,6 +68,7 @@ Route::middleware(['role:staff|admin|own', 'checkBanned', 'auth'])->group(functi
 
     Route::middleware(['authorization.context:' . $capabilities['manage_all_users']])->group(function () {
         Route::resource('user', UserController::class);
+        Route::get('/user-online-statuses', [UserController::class, 'getOnlineStatuses'])->name('user.online.statuses');
         Route::post('/user/{user}/location/refresh', [UserController::class, 'refreshApproximateLocation'])->name('user.location.refresh');
         Route::delete('/user/{user}/location', [UserController::class, 'destroyLocation'])->name('user.location.destroy');
         Route::get('/user/change-status-user/{user}', [UserController::class, 'changeStatusUser'])->name('user.change.status');
@@ -112,8 +113,8 @@ Route::middleware(['role:staff|admin|own', 'checkBanned', 'auth'])->group(functi
     Route::middleware(['permission:' . $capabilities['order_distributions']])->group(function () {
         Route::get('/order-distributions', [OrderDistributionController::class, 'index'])->name('order_distributions.index');
         Route::get('/order-distributions/{frozenOrder}', [OrderDistributionController::class, 'show'])->name('order_distributions.show');
-        Route::post('/order-distributions/{frozenOrder}/restore', [OrderDistributionController::class, 'restore'])->name('order_distributions.restore');
-        Route::post('/order-distributions/bulk-restore', [OrderDistributionController::class, 'bulkRestore'])->name('order_distributions.bulk_restore');
+        Route::post('/order-distributions/{frozenOrder}/transition', [OrderDistributionController::class, 'transition'])
+            ->name('order_distributions.transition');
     });
 
     Route::middleware(['role:admin|own', 'permission:' . $capabilities['manage_staff']])->group(function () {

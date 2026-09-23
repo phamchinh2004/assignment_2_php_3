@@ -14,14 +14,16 @@ class MessageRead implements ShouldBroadcastNow
 
     public $messageId;
     public $conversationId;
+    public $readerId;
 
     /**
      * Create a new event instance.
      */
-    public function __construct($messageId, $conversationId)
+    public function __construct($messageId, $conversationId, $readerId)
     {
         $this->messageId = $messageId;
         $this->conversationId = $conversationId;
+        $this->readerId = $readerId;
     }
 
     /**
@@ -49,14 +51,12 @@ class MessageRead implements ShouldBroadcastNow
      */
     public function broadcastWith(): array
     {
-        // Load message từ database để lấy is_read status
-        $message = \App\Models\Message::find($this->messageId);
-
         return [
             'message_id' => $this->messageId,
-            'is_read' => $message ? ($message->is_read ?? false) : false,
+            'conversation_id' => $this->conversationId,
+            'user_id' => $this->readerId,
+            'is_read' => true,
             'read_at' => now()->toDateTimeString(),
         ];
     }
 }
-

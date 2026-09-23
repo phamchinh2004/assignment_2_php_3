@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Storage;
 
 class Message extends Model
@@ -46,6 +47,18 @@ class Message extends Model
     public function sender()
     {
         return $this->belongsTo(User::class, 'sender_id');
+    }
+
+    /** A message remains unread until this particular account has opened it. */
+    public function scopeUnreadFor(Builder $query, int $userId): Builder
+    {
+        return $query->where('sender_id', '!=', $userId)
+            ->whereNotExists(function ($read) use ($userId) {
+                $read->selectRaw('1')
+                    ->from('message_reads')
+                    ->whereColumn('message_reads.message_id', 'messages.id')
+                    ->where('message_reads.user_id', $userId);
+            });
     }
 
     // Accessor để lấy URL đầy đủ của ảnh

@@ -60,24 +60,38 @@
                                 <input type="text" name="username" id="username"
                                        value="{{ old('username', $get_staff_old->username) }}"
                                        class="form-control-modern @error('username') is-invalid @enderror"
-                                       required>
+                                       minlength="6" maxlength="255" required>
                                 @error('username')
                                     <span class="form-error-modern">{{ $message }}</span>
                                 @enderror
                             </div>
 
                             <div class="form-group-modern">
-                                <label class="form-label-modern" for="phone">
-                                    Số điện thoại <span class="text-danger">*</span>
+                                <label class="form-label-modern" for="email">
+                                    Email <span class="text-danger">*</span>
                                 </label>
-                                <input type="tel" name="phone" id="phone"
-                                       value="{{ old('phone', $get_staff_old->phone) }}"
-                                       class="form-control-modern @error('phone') is-invalid @enderror"
+                                <input type="email" name="email" id="email"
+                                       value="{{ old('email', $get_staff_old->email) }}"
+                                       class="form-control-modern @error('email') is-invalid @enderror"
                                        required>
-                                @error('phone')
+                                @error('email')
                                     <span class="form-error-modern">{{ $message }}</span>
                                 @enderror
                             </div>
+
+                            @if($canChooseRole)
+                                <div class="form-group-modern">
+                                    <label class="form-label-modern" for="role">Vai trò <span class="text-danger">*</span></label>
+                                    <select name="role" id="role"
+                                            class="form-control-modern @error('role') is-invalid @enderror" required>
+                                        <option value="staff" @selected(old('role', $get_staff_old->role) === 'staff')>Nhân viên (staff)</option>
+                                        <option value="admin" @selected(old('role', $get_staff_old->role) === 'admin')>Quản trị viên (admin)</option>
+                                    </select>
+                                    @error('role')
+                                        <span class="form-error-modern">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            @endif
                         </div>
                     </div>
                 </div>

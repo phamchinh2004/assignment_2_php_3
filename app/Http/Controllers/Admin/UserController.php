@@ -44,6 +44,36 @@ class UserController extends Controller
     }
 
     /**
+     * Return member presence data for the user management page polling.
+     */
+    public function getOnlineStatuses(AuthorizationService $authorization)
+    {
+        $query = User::where('role', User::ROLE_MEMBER)
+            ->select('id', 'last_seen');
+        $actor = Auth::user();
+
+        if (!$authorization->can($actor, config('authorization.capabilities.manage_all_users'))) {
+            $query->where('referrer_id', $actor->id);
+        }
+
+        $users = $query->get()->map(function (User $user) {
+            return [
+                'id' => $user->id,
+                'is_online' => $user->isOnline(),
+                'last_seen_formatted' => $user->last_seen_formatted,
+                'last_seen_diff' => $user->last_seen
+                    ? $user->last_seen->diffForHumans()
+                    : 'Chưa từng online',
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'users' => $users,
+        ]);
+    }
+
+    /**
      * Display the details of a member.
      */
     public function show(User $user, AuthorizationService $authorization)
@@ -480,6 +510,8 @@ class UserController extends Controller
                 'custom_price' => $custom_price,
                 'commission_percentage' => $commission_percentage,
                 'user_id' => $user->id,
+                'assigned_by' => Auth::id(),
+                'assignment_source' => 'admin',
                 'is_frozen' => true,
                 'processing_time_limit' => $processing_time_limit,
                 'notification_1_remaining_time' => $notification_1_remaining_time,
@@ -491,8 +523,8 @@ class UserController extends Controller
             \App\Services\OrderStatusService::changeStatus(
                 $frozen_order,
                 'pending',
-                'Nhân viên nhận đơn hàng',
-                $user->id
+                'Quản trị viên phân phối đơn hàng',
+                Auth::id()
             );
 
             $success_count++;

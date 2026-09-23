@@ -19,7 +19,7 @@ class DeliverOrder implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct($frozenOrderId)
+    public function __construct($frozenOrderId, public bool $scheduleNext = true)
     {
         $this->frozenOrderId = $frozenOrderId;
     }
@@ -36,10 +36,11 @@ class DeliverOrder implements ShouldQueue
         }
 
         // Chuyển sang trạng thái delivered sử dụng OrderStatusService
-        $success = OrderStatusService::changeStatus(
+        $success = OrderStatusService::changeStatusIfCurrent(
             $frozenOrder,
+            'shipping',
             'delivered',
-            'Đơn hàng đã được giao cho khách hàng'
+            $this->scheduleNext ? 'Đơn hàng đã được giao cho khách hàng' : 'Quản trị viên xác nhận đã giao hàng'
         );
         
         if (!$success) {
@@ -53,6 +54,10 @@ class DeliverOrder implements ShouldQueue
             'frozen_order_id' => $this->frozenOrderId,
             'tracking_number' => $frozenOrder->tracking_number
         ]);
+
+        if (!$this->scheduleNext) {
+            return;
+        }
 
         // Lấy cấu hình thời gian từ database
         $timing = OrderStatusTiming::getTiming('delivered', 'completed');

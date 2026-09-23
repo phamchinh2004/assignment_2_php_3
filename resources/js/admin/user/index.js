@@ -41,7 +41,55 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // =========================================================================
-    // 2. Click to Copy Text (Username / User ID)
+    // 2. Poll trạng thái Online / Offline của người dùng
+    // =========================================================================
+    const userTableElement = document.getElementById('dataTable');
+    const onlineStatusUrl = userTableElement?.dataset.onlineStatusUrl;
+
+    function refreshUserOnlineStatuses() {
+        if (!onlineStatusUrl) return;
+
+        fetch(onlineStatusUrl, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (!data?.success || !Array.isArray(data.users)) return;
+
+            const cells = new Map();
+            const table = $.fn.dataTable.isDataTable('#dataTable')
+                ? $('#dataTable').DataTable()
+                : null;
+            const rows = table
+                ? table.rows().nodes().toArray()
+                : Array.from(document.querySelectorAll('#dataTable tbody tr'));
+
+            rows.forEach(row => {
+                const cell = row.querySelector('.user-presence-cell[data-user-id]');
+                if (cell) cells.set(String(cell.dataset.userId), cell);
+            });
+
+            data.users.forEach(user => {
+                const cell = cells.get(String(user.id));
+                if (!cell) return;
+
+                cell.dataset.presence = user.is_online ? 'online' : 'offline';
+                cell.innerHTML = user.is_online
+                    ? `<span class="badge-presence online" title="Lần cuối: ${user.last_seen_formatted}"><span class="presence-dot"></span> Online</span>`
+                    : `<span class="badge-presence offline" title="Lần cuối: ${user.last_seen_formatted}"><span class="presence-dot"></span> ${user.last_seen_diff}</span>`;
+            });
+        })
+        .catch(err => console.debug('Không thể làm mới trạng thái người dùng:', err));
+    }
+
+    setInterval(refreshUserOnlineStatuses, 60000);
+    window.addEventListener('focus', refreshUserOnlineStatuses);
+
+    // =========================================================================
+    // 3. Click to Copy Text (Username / User ID)
     // =========================================================================
     document.addEventListener('click', function (e) {
         const copyBtn = e.target.closest('.btn-copy-text');

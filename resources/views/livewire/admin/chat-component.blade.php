@@ -31,6 +31,50 @@
         @include('livewire.admin.sidebar-chat', ['isMobile' => false])
     </div>
 
+    @if($dispatchConversationId)
+        @php
+            $dispatchingConversation = $conversations->firstWhere('id', $dispatchConversationId);
+        @endphp
+        @if($dispatchingConversation)
+            <div class="chat-dispatch-overlay" wire:key="chat-dispatch-dialog" wire:click.self="closeDispatchDialog"
+                x-data x-on:keydown.escape.window="$wire.closeDispatchDialog()">
+                <div class="chat-dispatch-dialog" role="dialog" aria-modal="true" aria-labelledby="chat-dispatch-title">
+                    <div class="chat-dispatch-heading">
+                        <div>
+                            <h2 id="chat-dispatch-title">Điều phối hội thoại</h2>
+                            <p>Chọn người tiếp nhận hội thoại với <strong>{{ $dispatchingConversation->user->full_name }}</strong>.</p>
+                        </div>
+                        <button type="button" class="chat-dispatch-close" wire:click="closeDispatchDialog"
+                            x-ref="dispatchClose" x-init="$nextTick(() => $refs.dispatchClose.focus())" aria-label="Đóng điều phối">
+                            <i class="fas fa-times" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                    <div class="chat-dispatch-candidates">
+                        @forelse($this->dispatchCandidates as $operator)
+                            <button type="button" class="chat-dispatch-candidate"
+                                wire:click="dispatchConversationTo({{ $operator->id }})"
+                                wire:loading.attr="disabled" wire:target="dispatchConversationTo"
+                                @disabled((int) $dispatchingConversation->staff_id === (int) $operator->id)>
+                                <span class="chat-dispatch-avatar" aria-hidden="true">{{ mb_strtoupper(mb_substr($operator->full_name, 0, 1)) }}</span>
+                                <span class="chat-dispatch-operator">
+                                    <strong>{{ $operator->full_name }}</strong>
+                                    <small>{{ $operator->role === \App\Models\User::ROLE_ADMIN ? 'Admin' : 'Nhân viên' }}</small>
+                                </span>
+                                @if((int) $dispatchingConversation->staff_id === (int) $operator->id)
+                                    <span class="chat-dispatch-current">Đang phụ trách</span>
+                                @else
+                                    <i class="fas fa-chevron-right" aria-hidden="true"></i>
+                                @endif
+                            </button>
+                        @empty
+                            <p class="chat-dispatch-empty">Chưa có nhân viên đang hoạt động để tiếp nhận.</p>
+                        @endforelse
+                    </div>
+                </div>
+            </div>
+        @endif
+    @endif
+
     <!-- Khu vực chat chính -->
     <div class="chat-main flex-grow-1 d-flex flex-column position-relative">
         <!-- Loading Spinner Overlay: Tự động hiện khi chọn cuộc hội thoại -->
@@ -877,8 +921,6 @@
             </div>
         </div>
     </div>
-</div>
-
 <script>
     let currentChannel = null;
 
@@ -1136,6 +1178,12 @@
                         component.call('loadStaffUsersAlternative');
                     @endif
                             })
+                .listen('.ConversationAssigned', () => {
+                    const root = document.getElementById('chat-root');
+                    if (root) {
+                        Livewire.find(root.getAttribute('wire:id')).call('refreshChatState');
+                    }
+                })
                 .error((error) => {
                     console.error('Staff Echo error:', error);
                 }));
@@ -1175,41 +1223,14 @@
                     }
                 })
                 .listen('.MessageRead', (e) => {
-                    // Update Livewire property để giữ trạng thái khi re-render
+                    if (Number(e.user_id) === {{ auth()->id() }}) return;
                     const root = document.getElementById('chat-root');
-                    const component = Livewire.find(root.getAttribute('wire:id'));
-                    component.call('onMessageReadUpdate', e.message_id);
-
-                    // Update icon seen cho tin nhắn trong DOM ngay lập tức
-                    const messageElement = document.querySelector(`[data-message-id="${e.message_id}"]`);
-                    if (messageElement) {
-                        messageElement.setAttribute('data-seen-status', 'true');
-                        const icon = messageElement.querySelector('i');
-                        if (icon) {
-                            icon.className = 'fas fa-check-double text-info';
-                            icon.style.fontSize = '10px';
-                            icon.title = 'Đã xem';
-                        }
-                    }
+                    if (root) Livewire.find(root.getAttribute('wire:id')).call('refreshReadReceipts');
                 })
                 .listen('.ConversationRead', (e) => {
-                    // Update Livewire backend
+                    if (Number(e.user_id) === {{ auth()->id() }}) return;
                     const root = document.getElementById('chat-root');
-                    const component = Livewire.find(root.getAttribute('wire:id'));
-                    component.call('onConversationRead', e);
-
-                    // Cập nhật tất cả icon seen cho các tin nhắn của admin (sender_id != user_id trong event)
-                    // Hoặc đơn giản là query all messages của mình (bên phải) và mark as seen
-                    const myMessages = document.querySelectorAll('[data-seen-status="false"]');
-                    myMessages.forEach(el => {
-                        el.setAttribute('data-seen-status', 'true');
-                        const icon = el.querySelector('i');
-                        if (icon) {
-                            icon.className = 'fas fa-check-double text-info';
-                            icon.style.fontSize = '10px';
-                            icon.title = 'Đã xem';
-                        }
-                    });
+                    if (root) Livewire.find(root.getAttribute('wire:id')).call('refreshReadReceipts');
                 })
                 .error((error) => {
                     console.error('Echo error:', error);
@@ -1727,6 +1748,7 @@
         })
     }
 </script>
+</div>
 
 @push('scripts')
     @vite('resources/js/admin/chat.js')

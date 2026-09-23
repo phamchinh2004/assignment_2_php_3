@@ -6,10 +6,43 @@ use App\Models\Frozen_order;
 use App\Models\Status;
 use App\Models\StatusOrder;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class OrderStatusService
 {
+    /** Only transition the status that was actually read, including when a queued job is stale. */
+    public static function changeStatusIfCurrent(
+        Frozen_order $frozenOrder,
+        string $expectedStatus,
+        string $nextStatus,
+        ?string $notes = null,
+        ?int $changedBy = null
+    ): bool {
+        try {
+            return DB::transaction(function () use ($frozenOrder, $expectedStatus, $nextStatus, $notes, $changedBy) {
+                $locked = Frozen_order::query()->lockForUpdate()->find($frozenOrder->id);
+                if (!$locked || $locked->status !== $expectedStatus) {
+                    return false;
+                }
+                if (!self::changeStatus($locked, $nextStatus, $notes, $changedBy)) {
+                    throw new \RuntimeException('Không thể lưu trạng thái và lịch sử đơn hàng.');
+                }
+                $frozenOrder->refresh();
+
+                return true;
+            });
+        } catch (\Throwable $exception) {
+            Log::error('Không thể chuyển trạng thái đơn hàng theo trạng thái dự kiến', [
+                'frozen_order_id' => $frozenOrder->id,
+                'expected_status' => $expectedStatus,
+                'next_status' => $nextStatus,
+                'error' => $exception->getMessage(),
+            ]);
+            return false;
+        }
+    }
+
     /**
      * Thay đổi trạng thái đơn hàng và lưu vào status_orders
      * 
@@ -141,4 +174,3 @@ class OrderStatusService
             ->get();
     }
 }
-

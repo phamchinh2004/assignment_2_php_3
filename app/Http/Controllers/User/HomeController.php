@@ -243,6 +243,7 @@ class HomeController extends Controller
                         $new_frozen = Frozen_order::snapshotFromOrder($order, [
                             'user_id' => $user->id,
                             'order_id' => $order->id,
+                            'assignment_source' => 'spin',
                             'spun' => true,
                             'status' => 'pending' // Trạng thái chờ nhận đơn
                         ]);
@@ -315,6 +316,7 @@ class HomeController extends Controller
                 $new_frozen = Frozen_order::snapshotFromOrder($order, [
                     'user_id' => $user->id,
                     'order_id' => $order->id,
+                    'assignment_source' => 'spin',
                     'spun' => true,
                     'status' => 'pending' // Trạng thái chờ nhận đơn
                 ]);

@@ -171,11 +171,13 @@ Danh sách người dùng
         <!-- Card Body with Modern Responsive Table -->
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-modern" id="dataTable" width="100%" cellspacing="0">
+                <table class="table table-modern" id="dataTable" width="100%" cellspacing="0"
+                       data-online-status-url="{{ route('user.online.statuses') }}">
                     <thead>
                         <tr>
                             <th style="width: 50px;" class="text-center">#</th>
                             <th>Khách hàng</th>
+                            <th class="text-center" style="width: 140px;">Hoạt động</th>
                             <th>Số dư & Tài chính</th>
                             <th>Vị trí & Khu vực</th>
                             <th>Trạng thái</th>
@@ -199,6 +201,7 @@ Danh sách người dùng
                             }
                         }
                         $initials = mb_strtoupper(mb_substr($item->full_name ?: ($item->username ?: 'U'), 0, 2));
+                        $isOnline = $item->isOnline();
                         @endphp
                         <tr id="user-{{ $item->id }}" class="user-row">
                             <!-- Col 1: STT -->
@@ -247,7 +250,23 @@ Danh sách người dùng
                                 </div>
                             </td>
 
-                            <!-- Col 3: Số dư & Tài chính -->
+                            <!-- Col 3: Trạng thái hoạt động Online / Offline -->
+                            <td class="text-center user-presence-cell"
+                                data-user-id="{{ $item->id }}"
+                                data-presence="{{ $isOnline ? 'online' : 'offline' }}">
+                                @if($isOnline)
+                                    <span class="badge-presence online" title="Lần cuối: {{ $item->last_seen_formatted }}">
+                                        <span class="presence-dot"></span> Online
+                                    </span>
+                                @else
+                                    <span class="badge-presence offline" title="Lần cuối: {{ $item->last_seen_formatted }}">
+                                        <span class="presence-dot"></span>
+                                        {{ $item->last_seen ? $item->last_seen->diffForHumans() : 'Chưa từng online' }}
+                                    </span>
+                                @endif
+                            </td>
+
+                            <!-- Col 4: Số dư & Tài chính -->
                             <td>
                                 <div class="finance-box">
                                     <div>
@@ -265,7 +284,7 @@ Danh sách người dùng
                                 </div>
                             </td>
 
-                            <!-- Col 4: Vị trí & Khu vực -->
+                            <!-- Col 5: Vị trí & Khu vực -->
                             <td>
                                 <div class="location-box">
                                     <div class="location-place">
@@ -305,7 +324,7 @@ Danh sách người dùng
                                 </div>
                             </td>
 
-                            <!-- Col 5: Trạng thái -->
+                            <!-- Col 6: Trạng thái -->
                             <td>
                                 <div class="status-container">
                                     @if($item->status == "activated")
@@ -336,12 +355,12 @@ Danh sách người dùng
                                 </div>
                             </td>
 
-                            <!-- Col 6: Lịch sử -->
+                            <!-- Col 7: Lịch sử -->
                             <td>
                                 <div class="time-box">
                                     <div class="time-item" title="Ngày đăng ký: {{ $item->created_at->format('d/m/Y H:i:s') }}">
                                         <i class="fas fa-user-plus"></i>
-                                        <span>Tạo: {{ $item->created_at->diffForHumans() }}</span>
+                                        <span style="white-space: nowrap;">Tạo: {{ $item->created_at->diffForHumans() }}</span>
                                     </div>
                                     <div class="time-item" title="Cập nhật lần cuối: {{ $item->updated_at->format('d/m/Y H:i:s') }}">
                                         <i class="fas fa-clock-rotate-left"></i>
@@ -350,7 +369,7 @@ Danh sách người dùng
                                 </div>
                             </td>
 
-                            <!-- Col 7: Thao tác -->
+                            <!-- Col 8: Thao tác -->
                             <td>
                                 <div class="actions-wrapper">
                                     <!-- Nút Nạp tiền chính -->
@@ -418,7 +437,7 @@ Danh sách người dùng
                         @endforeach
                         @else
                         <tr>
-                            <td colspan="7" class="text-center py-5">
+                            <td colspan="8" class="text-center py-5">
                                 <i class="fas fa-users-slash fa-3x text-muted mb-3"></i>
                                 <p class="text-muted fw-semibold">Không tìm thấy người dùng nào trong hệ thống!</p>
                             </td>

@@ -227,10 +227,8 @@
                             <th class="text-center" style="width: 50px;">#</th>
                             <th>Tài khoản</th>
                             <th class="text-center" style="width: 140px;">Hoạt động</th>
-                            <th>Người tạo / Giới thiệu</th>
                             <th>Tổng doanh số nạp</th>
                             <th class="text-center">Trạng thái</th>
-                            <th>Ngày tham gia</th>
                             <th class="text-center" style="width: 160px;">Thao tác</th>
                         </tr>
                     </thead>
@@ -279,17 +277,6 @@
                                     </td>
 
                                     <td>
-                                        @if (!empty($item->referrer))
-                                            <div class="d-flex flex-column" style="font-size: 0.8125rem;">
-                                                <span class="font-weight-bold text-dark">{{ $item->referrer->full_name }}</span>
-                                                <span class="text-muted">@<span>{{ $item->referrer->username }}</span></span>
-                                            </div>
-                                        @else
-                                            <span class="text-muted font-italic">Quản trị viên cấp cao</span>
-                                        @endif
-                                    </td>
-
-                                    <td>
                                         <strong class="text-success" style="font-size: 0.95rem;">
                                             {{ format_money($item->total_deposit ?? 0, 2) }}$
                                         </strong>
@@ -305,11 +292,6 @@
                                         @endif
                                     </td>
 
-                                    <td>
-                                        <span class="text-muted" style="font-size: 0.8125rem;">
-                                            {{ $item->created_at ? $item->created_at->format('d/m/Y H:i') : '—' }}
-                                        </span>
-                                    </td>
 
                                     <td class="text-center">
                                         <div class="action-btn-group justify-content-center">

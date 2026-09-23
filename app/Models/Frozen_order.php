@@ -60,6 +60,8 @@ class Frozen_order extends Model
     protected $fillable = [
         'user_id',
         'order_id',
+        'assigned_by',
+        'assignment_source',
         'snapshot_order_code',
         'snapshot_order_index',
         'snapshot_name',
@@ -437,6 +439,14 @@ class Frozen_order extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+    public function assignedBy()
+    {
+        return $this->belongsTo(User::class, 'assigned_by');
+    }
+    public function latestStatusOrder()
+    {
+        return $this->hasOne(StatusOrder::class, 'frozen_order_id')->latestOfMany();
     }
     public function order()
     {

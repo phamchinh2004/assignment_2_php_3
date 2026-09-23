@@ -997,31 +997,14 @@
                     }
                 })
                 .listen('.MessageRead', (e) => {
-                    // Update icon seen cho tin nhắn trong DOM ngay lập tức
-                    const messageElement = document.querySelector(`#chat-root [data-message-id="${e.message_id}"]`);
-                    if (messageElement) {
-                        messageElement.setAttribute('data-seen-status', 'true');
-                        const icon = messageElement.querySelector('i');
-                        if (icon) {
-                            icon.className = 'fas fa-check-double text-info';
-                            icon.style.fontSize = '10px';
-                            icon.title = 'Đã xem';
-                        }
-                    }
+                    if (Number(e.user_id) === currentUserId) return;
+                    const root = document.getElementById('chat-root');
+                    if (root) Livewire.find(root.getAttribute('wire:id')).call('refreshReadReceipts');
                 })
                 .listen('.ConversationRead', (e) => {
-                    // Cập nhật tất cả các tin nhắn của mình (người đang ngồi trước máy) sang Đã xem
-                    // Vì conversation_id đã khớp (nhờ listen đúng channel)
-                    const myMessages = document.querySelectorAll('#chat-root [data-seen-status="false"]');
-                    myMessages.forEach(el => {
-                        el.setAttribute('data-seen-status', 'true');
-                        const icon = el.querySelector('i');
-                        if (icon) {
-                            icon.className = 'fas fa-check-double text-info';
-                            icon.style.fontSize = '10px';
-                            icon.title = 'Đã xem';
-                        }
-                    });
+                    if (Number(e.user_id) === currentUserId) return;
+                    const root = document.getElementById('chat-root');
+                    if (root) Livewire.find(root.getAttribute('wire:id')).call('refreshReadReceipts');
                 })
                 .listen('.MessageUpdated', (e) => {
                     const root = document.getElementById('chat-root');

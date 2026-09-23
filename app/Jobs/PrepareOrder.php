@@ -19,7 +19,7 @@ class PrepareOrder implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct($frozenOrderId)
+    public function __construct($frozenOrderId, public bool $scheduleNext = true)
     {
         $this->frozenOrderId = $frozenOrderId;
     }
@@ -37,10 +37,11 @@ class PrepareOrder implements ShouldQueue
         }
 
         // Chuyển sang trạng thái preparing sử dụng OrderStatusService
-        $success = OrderStatusService::changeStatus(
+        $success = OrderStatusService::changeStatusIfCurrent(
             $frozenOrder,
+            'confirmed',
             'preparing',
-            'Người bán chuẩn bị hàng hóa'
+            $this->scheduleNext ? 'Người bán chuẩn bị hàng hóa' : 'Quản trị viên chuyển sang chuẩn bị hàng hóa'
         );
         
         if (!$success) {
@@ -54,6 +55,10 @@ class PrepareOrder implements ShouldQueue
             'frozen_order_id' => $this->frozenOrderId,
             'order_id' => $frozenOrder->order_id
         ]);
+
+        if (!$this->scheduleNext) {
+            return;
+        }
 
         // Lấy cấu hình thời gian từ database
         $timing = OrderStatusTiming::getTiming('preparing', 'transit');

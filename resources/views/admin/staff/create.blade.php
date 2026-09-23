@@ -22,7 +22,9 @@
                 <span class="page-title-icon teal"><i class="fas fa-user-plus"></i></span>
                 Tạo tài khoản quản trị
             </h1>
-            <p class="page-subtitle">Tạo tài khoản staff hoặc admin theo phạm vi bạn được phép quản lý</p>
+            <p class="page-subtitle">
+                {{ ($canChooseRole ?? false) ? 'Tạo tài khoản nhân viên hoặc admin' : 'Tạo tài khoản nhân viên mới' }}
+            </p>
         </div>
     </div>
 
@@ -33,46 +35,11 @@
 
             <div class="form-body-modern">
                 <div class="row">
-                    {{-- Column 1: Thông tin cá nhân --}}
+                    {{-- Column 1: Thông tin tài khoản --}}
                     <div class="col-12 col-lg-6">
                         <div class="form-section-modern">
                             <div class="form-section-title">
-                                <i class="fas fa-user-tie"></i> Thông tin cá nhân
-                            </div>
-
-                            <div class="form-group-modern">
-                                <label class="form-label-modern" for="full_name">
-                                    Họ và tên thật <span class="text-danger">*</span>
-                                </label>
-                                <input type="text" name="full_name" id="full_name"
-                                       value="{{ old('full_name', '') }}"
-                                       class="form-control-modern @error('full_name') is-invalid @enderror"
-                                       placeholder="Ví dụ: Trần Văn B" required>
-                                @error('full_name')
-                                    <span class="form-error-modern">{{ $message }}</span>
-                                @enderror
-                            </div>
-
-                            <div class="form-group-modern">
-                                <label class="form-label-modern" for="phone">
-                                    Số điện thoại <span class="text-danger">*</span>
-                                </label>
-                                <input type="tel" name="phone" id="phone"
-                                       value="{{ old('phone', '') }}"
-                                       class="form-control-modern @error('phone') is-invalid @enderror"
-                                       placeholder="Ví dụ: 0912345678" required>
-                                @error('phone')
-                                    <span class="form-error-modern">{{ $message }}</span>
-                                @enderror
-                            </div>
-                        </div>
-                    </div>
-
-                    {{-- Column 2: Thông tin đăng nhập --}}
-                    <div class="col-12 col-lg-6">
-                        <div class="form-section-modern">
-                            <div class="form-section-title">
-                                <i class="fas fa-key"></i> Tài khoản & Mật khẩu
+                                <i class="fas fa-user-tie"></i> Thông tin tài khoản
                             </div>
 
                             <div class="form-group-modern">
@@ -90,6 +57,32 @@
                             </div>
 
                             <div class="form-group-modern">
+                                <label class="form-label-modern" for="email">
+                                    Email <span class="text-danger">*</span>
+                                </label>
+                                <input type="email" name="email" id="email"
+                                       value="{{ old('email', '') }}"
+                                       class="form-control-modern @error('email') is-invalid @enderror"
+                                       placeholder="Ví dụ: nhanvien@example.com" required>
+                                @error('email')
+                                    <span class="form-error-modern">{{ $message }}</span>
+                                @enderror
+                                <span class="form-hint-modern text-danger">
+                                    <i class="fas fa-circle-exclamation"></i>
+                                    Bắt buộc sử dụng email thật để nhận thông báo và khôi phục tài khoản khi cần.
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Column 2: Thông tin đăng nhập --}}
+                    <div class="col-12 col-lg-6">
+                        <div class="form-section-modern">
+                            <div class="form-section-title">
+                                <i class="fas fa-key"></i> Tài khoản & Mật khẩu
+                            </div>
+
+                            <div class="form-group-modern">
                                 <label class="form-label-modern" for="password">
                                     Mật khẩu đăng nhập
                                 </label>
@@ -103,7 +96,7 @@
                                 <span class="form-hint-modern">Mặc định là 123456 nếu để trống.</span>
                             </div>
 
-                            @if(count($allowedRoles ?? []) > 1)
+                            @if($canChooseRole ?? false)
                                 <div class="form-group-modern">
                                     <label class="form-label-modern" for="role">Vai trò <span class="text-danger">*</span></label>
                                     <select name="role" id="role" class="form-control-modern" required>
@@ -112,8 +105,6 @@
                                     </select>
                                     <span class="form-hint-modern">Admin vẫn hoạt động theo permission do owner cấp.</span>
                                 </div>
-                            @else
-                                <input type="hidden" name="role" value="staff">
                             @endif
                         </div>
                     </div>

@@ -19,7 +19,7 @@ class TransitOrder implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct($frozenOrderId)
+    public function __construct($frozenOrderId, public bool $scheduleNext = true)
     {
         $this->frozenOrderId = $frozenOrderId;
     }
@@ -37,10 +37,11 @@ class TransitOrder implements ShouldQueue
         }
 
         // Chuyển sang trạng thái transit sử dụng OrderStatusService
-        $success = OrderStatusService::changeStatus(
+        $success = OrderStatusService::changeStatusIfCurrent(
             $frozenOrder,
+            'preparing',
             'transit',
-            'Đơn hàng đang trung chuyển'
+            $this->scheduleNext ? 'Đơn hàng đang trung chuyển' : 'Quản trị viên chuyển đơn sang trung chuyển'
         );
         
         if (!$success) {
@@ -54,6 +55,10 @@ class TransitOrder implements ShouldQueue
             'frozen_order_id' => $this->frozenOrderId,
             'order_id' => $frozenOrder->order_id
         ]);
+
+        if (!$this->scheduleNext) {
+            return;
+        }
 
         // Lấy cấu hình thời gian từ database
         $timing = OrderStatusTiming::getTiming('transit', 'shipping');
