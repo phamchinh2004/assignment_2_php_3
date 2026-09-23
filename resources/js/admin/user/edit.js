@@ -1,10 +1,18 @@
+import SlimSelect from 'slim-select';
+import 'slim-select/styles';
+
 document.addEventListener('DOMContentLoaded', function () {
     const bankSelect = document.getElementById('bank_name');
-    if (bankSelect && typeof SlimSelect !== 'undefined') {
+    if (bankSelect) {
         new SlimSelect({
             select: '#bank_name',
             settings: {
                 placeholderText: 'Chọn ngân hàng',
+                searchPlaceholder: 'Tìm kiếm ngân hàng...',
+                searchText: 'Không tìm thấy ngân hàng',
+                allowDeselect: true,
+                contentLocation: document.body,
+                contentPosition: 'fixed',
                 keepOrder: true,
             },
         });

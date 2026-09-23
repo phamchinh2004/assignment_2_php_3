@@ -229,7 +229,7 @@
 .user-edit-grid { display:grid; grid-template-columns:minmax(0,1fr) minmax(280px,340px); align-items:start; gap:18px; }
 .user-edit-container { max-width:none; margin:0; }
 .form-card,.side-card { border:1px solid var(--border-color); border-radius:var(--radius-lg); background:var(--surface-card); box-shadow:var(--shadow-card); }
-.form-card { overflow:hidden; }
+.form-card { overflow:visible; }
 .form-header { display:flex; align-items:center; justify-content:space-between; padding:20px 24px; border-bottom:1px solid var(--border-color); color:var(--text-main); background:#fff; }
 .form-header h5 { margin:0; font-size:1.05rem; font-weight:800; }
 .form-header h5 i { color:#4f46e5; }
@@ -305,7 +305,9 @@ textarea.form-control-custom { min-height:112px; resize:vertical; }
 .location-form-section h3 i { color:#4f46e5; }
 .location-form-note { display:flex; align-items:center; gap:7px; margin:12px 0 0; color:var(--text-muted); font-size:.74rem; }
 .location-form-note i { color:#94a3b8; }
-.ss-main { min-height:44px; border:1px solid #dbe2ea !important; border-radius:10px !important; box-shadow:none !important; }
+.user-edit-page .ss-main { min-height:44px; border:1px solid #dbe2ea !important; border-radius:10px !important; box-shadow:none !important; }
+.ss-content { --ss-content-height: min(320px, calc(100dvh - 24px)); border-radius:10px; box-shadow:0 12px 32px rgba(15,23,42,.14); }
+.ss-content .ss-list { min-height:0; overflow-y:auto; overscroll-behavior:contain; }
 @media (max-width: 1100px) {
     .user-edit-grid { grid-template-columns:1fr; }
     .user-edit-sidebar { position:static; grid-template-columns:repeat(2,minmax(0,1fr)); }

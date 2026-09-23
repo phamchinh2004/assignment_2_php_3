@@ -298,7 +298,9 @@ class UserController extends Controller
         if ($authorization->can(Auth::user(), config('authorization.capabilities.manage_all_users')) && $request->filled('lucky_wheel_bonus_spins')) {
             $data['lucky_wheel_bonus_spins'] = (int) $request->lucky_wheel_bonus_spins;
         }
-        $data['rank_id'] = $request->rank;
+        if ($request->filled('rank')) {
+            $data['rank_id'] = $request->rank;
+        }
         $reset_progress = $request->has('reset_progress');
         $clone_account = $request->has('clone_account');
         $progress = User_spin_progress::where('user_id', $user->id)->first();
@@ -328,7 +330,7 @@ class UserController extends Controller
             ]);
         }
         $user->update($data);
-        if ($request->rank != $oldRankId) {
+        if ($user->rank_id != $oldRankId) {
             Frozen_order::where('user_id', $user->id)
                 ->where('is_frozen', true)
                 ->update(['is_frozen' => false]);

@@ -205,6 +205,7 @@ Chỉnh sửa người dùng
                         <div class="form-section-title">
                             <i class="fas fa-university me-2"></i>Thông tin ngân hàng
                         </div>
+                        <p class="text-muted small mb-3">Các trường thông tin ngân hàng không bắt buộc.</p>
 
                         <div class="form-group-custom">
                             <label for="username_bank">Tên tài khoản ngân hàng</label>
@@ -292,7 +293,7 @@ Chỉnh sửa người dùng
                                 <div class="form-group-custom">
                                     <label for="rank">Cấp độ</label>
                                     <select name="rank" id="rank" class="form-control form-select-custom">
-                                        <option value="">--- Chọn cấp độ ---</option>
+                                        <option value="">--- Giữ cấp độ hiện tại ---</option>
                                         @if (!empty($list_ranks))
                                         @foreach ($list_ranks as $rank)
                                         <option value="{{ $rank['id'] }}" @selected((string) old('rank', $user->rank_id) === (string) $rank['id'])>
@@ -301,6 +302,10 @@ Chỉnh sửa người dùng
                                         @endforeach
                                         @endif
                                     </select>
+                                    <small class="text-muted">Để trống nếu không muốn thay đổi cấp độ.</small>
+                                    @error('rank')
+                                    <small class="error-message">{{ $message }}</small>
+                                    @enderror
                                 </div>
                             </div>
 

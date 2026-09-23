@@ -54,7 +54,7 @@ class UpdateUserRequest extends FormRequest
             'account_number' => ['nullable', 'string', 'max:100'],
             'balance'=>'numeric|min:0',
             'frozen_balance'=>'numeric|min:0',
-            'rank' => ['required', 'integer', Rule::exists('ranks', 'id')],
+            'rank' => ['nullable', 'integer', Rule::exists('ranks', 'id')],
             'status' => ['required', Rule::in(['inactivated', 'activated', 'banned'])],
             'warehouse_area' => ['nullable', 'string', 'max:191'],
             'warehouse_address' => ['nullable', 'string', 'max:1000'],
