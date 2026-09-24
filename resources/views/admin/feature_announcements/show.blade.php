@@ -70,9 +70,19 @@
                         </dd>
                         <dt>Đối tượng</dt>
                         <dd>
-                            @foreach($featureAnnouncement->target_roles ?? [] as $role)
-                                <span class="badge badge-light border">{{ $roleLabels[$role] ?? $role }}</span>
-                            @endforeach
+                            @if($featureAnnouncement->target_type === \App\Models\FeatureAnnouncement::TARGET_TYPE_USERS)
+                                <span class="badge badge-info mb-2">Chọn người cụ thể</span>
+                                @foreach($featureAnnouncement->targetedUsers as $targetUser)
+                                    <div class="small mb-1">
+                                        <strong>{{ $targetUser->full_name ?: $targetUser->username }}</strong>
+                                        <span class="text-muted">({{ $roleLabels[$targetUser->role] ?? $targetUser->role }})</span>
+                                    </div>
+                                @endforeach
+                            @else
+                                @foreach($featureAnnouncement->target_roles ?? [] as $role)
+                                    <span class="badge badge-light border">{{ $roleLabels[$role] ?? $role }}</span>
+                                @endforeach
+                            @endif
                         </dd>
                         <dt>Người tạo</dt>
                         <dd>{{ $featureAnnouncement->creator?->full_name ?: $featureAnnouncement->creator?->username ?: '—' }}</dd>

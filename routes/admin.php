@@ -35,6 +35,8 @@ Route::middleware(['role:staff|admin|own', 'checkBanned', 'auth'])->group(functi
     Route::post('/header/notifications/{notification}/read', [HeaderStateController::class, 'markNotificationRead'])
         ->name('header.notifications.read');
 
+    Route::get('/feature-announcements/unread', [FeatureAnnouncementController::class, 'unread'])
+        ->name('feature_announcements.unread');
     Route::get('/feature-announcements', [FeatureAnnouncementController::class, 'index'])
         ->middleware('permission:' . $capabilities['feature_announcements_view'])
         ->name('feature_announcements.index');

@@ -34,8 +34,21 @@ class FeatureAnnouncementRequest extends FormRequest
             'starts_at' => ['required', 'date'],
             'ends_at' => ['nullable', 'date', 'after:starts_at'],
             'is_active' => ['nullable', 'boolean'],
-            'target_roles' => ['required', 'array', 'min:1'],
+            'target_type' => ['required', Rule::in(FeatureAnnouncement::TARGET_TYPES)],
+            'target_roles' => ['required_if:target_type,roles', 'nullable', 'array', 'min:1'],
             'target_roles.*' => ['required', 'string', Rule::in(FeatureAnnouncement::TARGET_ROLES)],
+            'target_user_ids' => ['required_if:target_type,users', 'nullable', 'array', 'min:1'],
+            'target_user_ids.*' => [
+                'required',
+                'integer',
+                'distinct',
+                Rule::exists('users', 'id')->where(
+                    fn ($query) => $query->whereIn('role', [
+                        \App\Models\User::ROLE_ADMIN,
+                        \App\Models\User::ROLE_STAFF,
+                    ])
+                ),
+            ],
             'action_text' => ['nullable', 'string', 'max:120', 'required_with:action_url'],
             'action_url' => [
                 'nullable',

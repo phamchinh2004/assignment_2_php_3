@@ -10,16 +10,42 @@ use App\Services\FeatureAnnouncementService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use Throwable;
 
 class FeatureAnnouncementController extends Controller
 {
+    public function unread(FeatureAnnouncementService $service): JsonResponse
+    {
+        $announcements = $service->getUnreadAnnouncements(request()->user())
+            ->map(fn (FeatureAnnouncement $announcement) => [
+                'id' => $announcement->id,
+                'title' => $announcement->title,
+                'content' => $announcement->content,
+                'priority' => $announcement->priority,
+                'action_text' => $announcement->action_text,
+                'action_url' => $announcement->action_url,
+                'image_url' => $announcement->image_path
+                    ? Storage::disk('public')->url($announcement->image_path)
+                    : null,
+                'acknowledge_url' => route('feature_announcements.acknowledge', $announcement),
+            ])
+            ->values();
+
+        return response()->json([
+            'announcements' => $announcements,
+        ]);
+    }
+
     public function index(FeatureAnnouncementService $service): View
     {
         $announcements = FeatureAnnouncement::query()
-            ->with('creator:id,full_name,username')
+            ->with([
+                'creator:id,full_name,username',
+                'targetedUsers:id,full_name,username,role',
+            ])
             ->latest()
             ->paginate(20);
 
@@ -32,6 +58,7 @@ class FeatureAnnouncementController extends Controller
     {
         return view('admin.feature_announcements.create', [
             'roleOptions' => $this->roleOptions(),
+            'targetUsers' => $this->targetUserOptions(),
         ]);
     }
 
@@ -49,7 +76,10 @@ class FeatureAnnouncementController extends Controller
             $data['created_by'] = Auth::id();
             $data['version'] = 1;
 
-            FeatureAnnouncement::create($data);
+            DB::transaction(function () use ($request, $data) {
+                $announcement = FeatureAnnouncement::create($data);
+                $announcement->targetedUsers()->sync($this->targetUserIds($request));
+            });
 
             return redirect()
                 ->route('feature_announcements.index')
@@ -69,7 +99,10 @@ class FeatureAnnouncementController extends Controller
         FeatureAnnouncement $featureAnnouncement,
         FeatureAnnouncementService $service
     ): View {
-        $featureAnnouncement->load('creator:id,full_name,username');
+        $featureAnnouncement->load([
+            'creator:id,full_name,username',
+            'targetedUsers:id,full_name,username,email,role',
+        ]);
         $stats = $service->getAnnouncementStats($featureAnnouncement);
 
         return view('admin.feature_announcements.show', compact('featureAnnouncement', 'stats'));
@@ -77,9 +110,12 @@ class FeatureAnnouncementController extends Controller
 
     public function edit(FeatureAnnouncement $featureAnnouncement): View
     {
+        $featureAnnouncement->load('targetedUsers:id');
+
         return view('admin.feature_announcements.edit', [
             'featureAnnouncement' => $featureAnnouncement,
             'roleOptions' => $this->roleOptions(),
+            'targetUsers' => $this->targetUserOptions(),
         ]);
     }
 
@@ -104,7 +140,10 @@ class FeatureAnnouncementController extends Controller
                 $data['image_path'] = null;
             }
 
-            $featureAnnouncement->update($data);
+            DB::transaction(function () use ($request, $featureAnnouncement, $data) {
+                $featureAnnouncement->update($data);
+                $featureAnnouncement->targetedUsers()->sync($this->targetUserIds($request));
+            });
 
             if (
                 $oldImagePath
@@ -171,6 +210,16 @@ class FeatureAnnouncementController extends Controller
     private function payload(FeatureAnnouncementRequest $request): array
     {
         $validated = $request->validated();
+        $targetType = $validated['target_type'];
+        $targetUserIds = $this->targetUserIds($request);
+        $targetRoles = $targetType === FeatureAnnouncement::TARGET_TYPE_USERS
+            ? User::query()
+                ->whereKey($targetUserIds)
+                ->pluck('role')
+                ->unique()
+                ->values()
+                ->all()
+            : array_values(array_unique($validated['target_roles'] ?? []));
 
         return [
             'title' => $validated['title'],
@@ -179,7 +228,8 @@ class FeatureAnnouncementController extends Controller
             'starts_at' => $validated['starts_at'],
             'ends_at' => $validated['ends_at'] ?? null,
             'is_active' => $request->boolean('is_active'),
-            'target_roles' => array_values(array_unique($validated['target_roles'])),
+            'target_roles' => $targetRoles,
+            'target_type' => $targetType,
             'action_text' => $validated['action_text'] ?? null,
             'action_url' => $validated['action_url'] ?? null,
         ];
@@ -192,5 +242,29 @@ class FeatureAnnouncementController extends Controller
             User::ROLE_ADMIN => 'Quản trị viên',
             User::ROLE_STAFF => 'Nhân viên',
         ];
+    }
+
+    private function targetUserOptions()
+    {
+        return User::query()
+            ->whereIn('role', [User::ROLE_ADMIN, User::ROLE_STAFF])
+            ->select(['id', 'full_name', 'username', 'email', 'role'])
+            ->orderByRaw("CASE role WHEN 'admin' THEN 1 ELSE 2 END")
+            ->orderBy('full_name')
+            ->orderBy('username')
+            ->get();
+    }
+
+    private function targetUserIds(FeatureAnnouncementRequest $request): array
+    {
+        if ($request->validated('target_type') !== FeatureAnnouncement::TARGET_TYPE_USERS) {
+            return [];
+        }
+
+        return collect($request->validated('target_user_ids', []))
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
     }
 }

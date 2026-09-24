@@ -1,6 +1,14 @@
 @php
     $announcement = $featureAnnouncement ?? null;
     $selectedRoles = old('target_roles', $announcement?->target_roles ?? array_keys($roleOptions));
+    $selectedTargetType = old(
+        'target_type',
+        $announcement?->target_type ?? \App\Models\FeatureAnnouncement::TARGET_TYPE_ROLES
+    );
+    $selectedUserIds = collect(old(
+        'target_user_ids',
+        $announcement?->targetedUsers?->pluck('id')->all() ?? []
+    ))->map(fn ($id) => (int) $id)->all();
     $selectedPriority = old('priority', $announcement?->priority ?? \App\Models\FeatureAnnouncement::PRIORITY_NORMAL);
     $startsAt = old('starts_at', $announcement?->starts_at?->format('Y-m-d\TH:i') ?? now()->format('Y-m-d\TH:i'));
     $endsAt = old('ends_at', $announcement?->ends_at?->format('Y-m-d\TH:i'));
@@ -69,22 +77,92 @@
                 <div class="form-section-title">
                     <i class="fas fa-users"></i> Đối tượng nhận
                 </div>
-                <div class="row">
-                    @foreach($roleOptions as $role => $label)
-                        <div class="col-md-4 mb-2">
-                            <label class="border rounded px-3 py-3 d-flex align-items-center w-100 mb-0" style="gap: 10px; cursor: pointer;">
-                                <input type="checkbox" name="target_roles[]" value="{{ $role }}"
-                                    @checked(in_array($role, $selectedRoles ?? [], true))>
-                                <span>
-                                    <strong class="d-block">{{ $label }}</strong>
-                                    <small class="text-muted">{{ $role }}</small>
+
+                <div class="row mb-3">
+                    <div class="col-md-6 mb-2">
+                        <label class="border rounded px-3 py-3 d-flex align-items-start w-100 mb-0" style="gap: 10px; cursor: pointer;">
+                            <input type="radio" name="target_type" value="roles"
+                                @checked($selectedTargetType === \App\Models\FeatureAnnouncement::TARGET_TYPE_ROLES)>
+                            <span>
+                                <strong class="d-block">Theo vai trò</strong>
+                                <small class="text-muted">Áp dụng cho toàn bộ tài khoản thuộc các vai trò được chọn.</small>
+                            </span>
+                        </label>
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <label class="border rounded px-3 py-3 d-flex align-items-start w-100 mb-0" style="gap: 10px; cursor: pointer;">
+                            <input type="radio" name="target_type" value="users"
+                                @checked($selectedTargetType === \App\Models\FeatureAnnouncement::TARGET_TYPE_USERS)>
+                            <span>
+                                <strong class="d-block">Chọn người cụ thể</strong>
+                                <small class="text-muted">Chỉ admin/nhân viên được chọn mới nhận popup.</small>
+                            </span>
+                        </label>
+                    </div>
+                </div>
+
+                @error('target_type') <span class="form-error-modern d-block mb-3">{{ $message }}</span> @enderror
+
+                <div id="featureAnnouncementRoleTargets"
+                    style="{{ $selectedTargetType === \App\Models\FeatureAnnouncement::TARGET_TYPE_ROLES ? '' : 'display:none;' }}">
+                    <div class="row">
+                        @foreach($roleOptions as $role => $label)
+                            <div class="col-md-4 mb-2">
+                                <label class="border rounded px-3 py-3 d-flex align-items-center w-100 mb-0" style="gap: 10px; cursor: pointer;">
+                                    <input type="checkbox" name="target_roles[]" value="{{ $role }}"
+                                        @checked(in_array($role, $selectedRoles ?? [], true))>
+                                    <span>
+                                        <strong class="d-block">{{ $label }}</strong>
+                                        <small class="text-muted">{{ $role }}</small>
+                                    </span>
+                                </label>
+                            </div>
+                        @endforeach
+                    </div>
+                    @error('target_roles') <span class="form-error-modern d-block mt-2">{{ $message }}</span> @enderror
+                    @error('target_roles.*') <span class="form-error-modern d-block mt-2">{{ $message }}</span> @enderror
+                </div>
+
+                <div id="featureAnnouncementUserTargets"
+                    style="{{ $selectedTargetType === \App\Models\FeatureAnnouncement::TARGET_TYPE_USERS ? '' : 'display:none;' }}">
+                    <div class="form-group-modern mb-3">
+                        <label class="form-label-modern" for="featureAnnouncementUserSearch">Tìm admin / nhân viên</label>
+                        <input type="text" id="featureAnnouncementUserSearch" class="form-control-modern"
+                            placeholder="Nhập tên, username hoặc email..." autocomplete="off">
+                    </div>
+
+                    <div class="border rounded p-2" style="max-height: 360px; overflow-y: auto;">
+                        @forelse($targetUsers as $targetUser)
+                            @php
+                                $targetUserLabel = $targetUser->full_name ?: $targetUser->username;
+                                $targetUserRole = $targetUser->role === \App\Models\User::ROLE_ADMIN ? 'Admin' : 'Nhân viên';
+                                $searchText = strtolower(trim(implode(' ', array_filter([
+                                    $targetUser->full_name,
+                                    $targetUser->username,
+                                    $targetUser->email,
+                                    $targetUserRole,
+                                ]))));
+                            @endphp
+                            <label class="feature-announcement-user-option border rounded px-3 py-2 d-flex align-items-center mb-2"
+                                data-search="{{ $searchText }}" style="gap: 10px; cursor: pointer;">
+                                <input type="checkbox" name="target_user_ids[]" value="{{ $targetUser->id }}"
+                                    @checked(in_array((int) $targetUser->id, $selectedUserIds, true))>
+                                <span class="flex-grow-1">
+                                    <strong class="d-block">{{ $targetUserLabel }}</strong>
+                                    <small class="text-muted">
+                                        {{ '@'.$targetUser->username }} · {{ $targetUserRole }}
+                                        @if($targetUser->email) · {{ $targetUser->email }} @endif
+                                    </small>
                                 </span>
                             </label>
-                        </div>
-                    @endforeach
+                        @empty
+                            <div class="text-muted text-center py-4">Chưa có tài khoản admin/nhân viên để chọn.</div>
+                        @endforelse
+                    </div>
+
+                    @error('target_user_ids') <span class="form-error-modern d-block mt-2">{{ $message }}</span> @enderror
+                    @error('target_user_ids.*') <span class="form-error-modern d-block mt-2">{{ $message }}</span> @enderror
                 </div>
-                @error('target_roles') <span class="form-error-modern d-block mt-2">{{ $message }}</span> @enderror
-                @error('target_roles.*') <span class="form-error-modern d-block mt-2">{{ $message }}</span> @enderror
             </div>
 
             <div class="form-section-modern">
@@ -163,3 +241,39 @@
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const targetTypeInputs = document.querySelectorAll('input[name="target_type"]');
+        const roleTargets = document.getElementById('featureAnnouncementRoleTargets');
+        const userTargets = document.getElementById('featureAnnouncementUserTargets');
+        const userSearch = document.getElementById('featureAnnouncementUserSearch');
+
+        function updateTargetMode() {
+            const selected = document.querySelector('input[name="target_type"]:checked')?.value || 'roles';
+            const isUsers = selected === 'users';
+
+            roleTargets.style.display = isUsers ? 'none' : '';
+            userTargets.style.display = isUsers ? '' : 'none';
+
+            roleTargets.querySelectorAll('input[name="target_roles[]"]').forEach((input) => {
+                input.disabled = isUsers;
+            });
+            userTargets.querySelectorAll('input[name="target_user_ids[]"]').forEach((input) => {
+                input.disabled = !isUsers;
+            });
+        }
+
+        targetTypeInputs.forEach((input) => input.addEventListener('change', updateTargetMode));
+        updateTargetMode();
+
+        userSearch?.addEventListener('input', function () {
+            const keyword = userSearch.value.trim().toLocaleLowerCase('vi');
+
+            document.querySelectorAll('.feature-announcement-user-option').forEach((option) => {
+                const haystack = (option.dataset.search || '').toLocaleLowerCase('vi');
+                option.style.display = !keyword || haystack.includes(keyword) ? '' : 'none';
+            });
+        });
+    });
+</script>

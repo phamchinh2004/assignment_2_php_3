@@ -2,6 +2,7 @@
 
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schedule;
 
 /*
 |--------------------------------------------------------------------------
@@ -17,3 +18,21 @@ use Illuminate\Support\Facades\Artisan;
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
+
+Schedule::command('backup:run --only-db --disable-notifications')
+    ->dailyAt(config('backup.schedule.backup_time', '02:00'))
+    ->timezone(config('backup.schedule.timezone', 'Asia/Ho_Chi_Minh'))
+    ->withoutOverlapping();
+
+Schedule::command('backup:run --disable-notifications')
+    ->weeklyOn(
+        config('backup.schedule.full_backup_day', 0),
+        config('backup.schedule.full_backup_time', '04:00')
+    )
+    ->timezone(config('backup.schedule.timezone', 'Asia/Ho_Chi_Minh'))
+    ->withoutOverlapping();
+
+Schedule::command('backup:clean --disable-notifications')
+    ->dailyAt(config('backup.schedule.cleanup_time', '03:00'))
+    ->timezone(config('backup.schedule.timezone', 'Asia/Ho_Chi_Minh'))
+    ->withoutOverlapping();

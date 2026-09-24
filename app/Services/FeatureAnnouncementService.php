@@ -18,7 +18,7 @@ class FeatureAnnouncementService
 
         return FeatureAnnouncement::query()
             ->currentlyVisible()
-            ->forRole($user->role)
+            ->forUser($user)
             ->whereDoesntHave('reads', function ($query) use ($user) {
                 $query->where('user_id', $user->id)
                     ->whereColumn(
@@ -66,7 +66,7 @@ class FeatureAnnouncementService
             return false;
         }
 
-        if (!$announcement->is_active || !in_array($user->role, $announcement->target_roles ?? [], true)) {
+        if (!$announcement->is_active) {
             return false;
         }
 
@@ -76,7 +76,17 @@ class FeatureAnnouncementService
             return false;
         }
 
-        return !$announcement->ends_at || !$announcement->ends_at->isBefore($now);
+        if ($announcement->ends_at && $announcement->ends_at->isBefore($now)) {
+            return false;
+        }
+
+        if ($announcement->target_type === FeatureAnnouncement::TARGET_TYPE_USERS) {
+            return $announcement->targetedUsers()
+                ->where('users.id', $user->id)
+                ->exists();
+        }
+
+        return in_array($user->role, $announcement->target_roles ?? [], true);
     }
 
     public function getStatsForAnnouncements(Collection $announcements): array
@@ -84,6 +94,8 @@ class FeatureAnnouncementService
         if ($announcements->isEmpty()) {
             return [];
         }
+
+        $announcements->loadMissing('targetedUsers:id,role');
 
         $roleCounts = User::query()
             ->whereIn('role', FeatureAnnouncement::TARGET_ROLES)
@@ -107,13 +119,26 @@ class FeatureAnnouncementService
 
         return $announcements->mapWithKeys(function (FeatureAnnouncement $announcement) use ($roleCounts, $reads) {
             $targetRoles = $announcement->target_roles ?? [];
-            $targetCount = collect($targetRoles)->sum(fn ($role) => $roleCounts->get($role, 0));
-            $acknowledgedCount = $reads->get($announcement->id, collect())
-                ->filter(fn (FeatureAnnouncementRead $read) => $read->user
-                    && in_array($read->user->role, $targetRoles, true))
-                ->pluck('user_id')
-                ->unique()
-                ->count();
+            $targetUserIds = $announcement->targetedUsers
+                ->whereIn('role', FeatureAnnouncement::TARGET_ROLES)
+                ->pluck('id');
+
+            if ($announcement->target_type === FeatureAnnouncement::TARGET_TYPE_USERS) {
+                $targetCount = $targetUserIds->count();
+                $acknowledgedCount = $reads->get($announcement->id, collect())
+                    ->whereIn('user_id', $targetUserIds)
+                    ->pluck('user_id')
+                    ->unique()
+                    ->count();
+            } else {
+                $targetCount = collect($targetRoles)->sum(fn ($role) => $roleCounts->get($role, 0));
+                $acknowledgedCount = $reads->get($announcement->id, collect())
+                    ->filter(fn (FeatureAnnouncementRead $read) => $read->user
+                        && in_array($read->user->role, $targetRoles, true))
+                    ->pluck('user_id')
+                    ->unique()
+                    ->count();
+            }
 
             return [
                 $announcement->id => [
@@ -126,12 +151,19 @@ class FeatureAnnouncementService
 
     public function getAnnouncementStats(FeatureAnnouncement $announcement): array
     {
-        $targetUsers = User::query()
-            ->whereIn('role', $announcement->target_roles ?? [])
-            ->select(['id', 'full_name', 'username', 'email', 'role'])
-            ->orderBy('role')
-            ->orderBy('full_name')
-            ->get();
+        $targetUsers = $announcement->target_type === FeatureAnnouncement::TARGET_TYPE_USERS
+            ? $announcement->targetedUsers()
+                ->whereIn('role', FeatureAnnouncement::TARGET_ROLES)
+                ->select(['users.id', 'full_name', 'username', 'email', 'role'])
+                ->orderBy('role')
+                ->orderBy('full_name')
+                ->get()
+            : User::query()
+                ->whereIn('role', $announcement->target_roles ?? [])
+                ->select(['id', 'full_name', 'username', 'email', 'role'])
+                ->orderBy('role')
+                ->orderBy('full_name')
+                ->get();
 
         $reads = FeatureAnnouncementRead::query()
             ->where('announcement_id', $announcement->id)

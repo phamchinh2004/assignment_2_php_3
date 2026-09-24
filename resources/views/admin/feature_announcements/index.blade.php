@@ -85,9 +85,23 @@
                                 <small class="text-muted">Đến: {{ $announcement->ends_at?->format('d/m/Y H:i') ?? 'Không giới hạn' }}</small>
                             </td>
                             <td>
-                                @foreach($announcement->target_roles ?? [] as $role)
-                                    <span class="badge badge-light border">{{ $roleLabels[$role] ?? $role }}</span>
-                                @endforeach
+                                @if($announcement->target_type === \App\Models\FeatureAnnouncement::TARGET_TYPE_USERS)
+                                    <span class="badge badge-info">
+                                        {{ $announcement->targetedUsers->count() }} tài khoản cụ thể
+                                    </span>
+                                    @if($announcement->targetedUsers->isNotEmpty())
+                                        <small class="text-muted d-block mt-1">
+                                            {{ $announcement->targetedUsers->take(3)->map(fn ($user) => $user->full_name ?: $user->username)->join(', ') }}
+                                            @if($announcement->targetedUsers->count() > 3)
+                                                +{{ $announcement->targetedUsers->count() - 3 }}
+                                            @endif
+                                        </small>
+                                    @endif
+                                @else
+                                    @foreach($announcement->target_roles ?? [] as $role)
+                                        <span class="badge badge-light border">{{ $roleLabels[$role] ?? $role }}</span>
+                                    @endforeach
+                                @endif
                             </td>
                             <td>
                                 <strong>{{ $stats['acknowledged_count'] }} / {{ $stats['target_count'] }}</strong>

@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class FeatureAnnouncement extends Model
@@ -19,6 +20,13 @@ class FeatureAnnouncement extends Model
         self::PRIORITY_NORMAL,
         self::PRIORITY_IMPORTANT,
         self::PRIORITY_CRITICAL,
+    ];
+
+    public const TARGET_TYPE_ROLES = 'roles';
+    public const TARGET_TYPE_USERS = 'users';
+    public const TARGET_TYPES = [
+        self::TARGET_TYPE_ROLES,
+        self::TARGET_TYPE_USERS,
     ];
 
     public const TARGET_ROLES = [
@@ -36,6 +44,7 @@ class FeatureAnnouncement extends Model
         'is_active',
         'version',
         'target_roles',
+        'target_type',
         'action_text',
         'action_url',
         'image_path',
@@ -60,6 +69,16 @@ class FeatureAnnouncement extends Model
         return $this->hasMany(FeatureAnnouncementRead::class, 'announcement_id');
     }
 
+    public function targetedUsers(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            User::class,
+            'feature_announcement_targets',
+            'announcement_id',
+            'user_id'
+        )->withTimestamps();
+    }
+
     public function scopeCurrentlyVisible(Builder $query): Builder
     {
         $now = now();
@@ -73,8 +92,18 @@ class FeatureAnnouncement extends Model
             });
     }
 
-    public function scopeForRole(Builder $query, string $role): Builder
+    public function scopeForUser(Builder $query, User $user): Builder
     {
-        return $query->whereJsonContains('target_roles', $role);
+        return $query->where(function (Builder $query) use ($user) {
+            $query->where(function (Builder $query) use ($user) {
+                $query->where('target_type', self::TARGET_TYPE_ROLES)
+                    ->whereJsonContains('target_roles', $user->role);
+            })->orWhere(function (Builder $query) use ($user) {
+                $query->where('target_type', self::TARGET_TYPE_USERS)
+                    ->whereHas('targetedUsers', function (Builder $query) use ($user) {
+                        $query->where('users.id', $user->id);
+                    });
+            });
+        });
     }
 }
