@@ -304,7 +304,23 @@
 }
 
 #chat-root .staff-name { font-size: 13px; }
+#chat-root .staff-header.has-unread .staff-name { font-weight: 700; }
 #chat-root .staff-customer-count { color: #64748b; font-size: 11px; line-height: 1.6; }
+#chat-root .staff-unread {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 6px;
+    border-radius: 7px;
+    background: #4f46e5;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1;
+}
 #chat-root .staff-chevron { flex-shrink: 0; color: #64748b; font-size: 10px; transition: transform .16s ease; }
 #chat-root .staff-chevron.rotated { transform: rotate(180deg); }
 

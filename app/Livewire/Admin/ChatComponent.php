@@ -699,6 +699,10 @@ class ChatComponent extends Component
                 'id' => $staff->id,
                 'full_name' => $staff->full_name,
                 'invited_users' => $usersArray,
+                'unread_count' => array_sum(array_map(
+                    fn ($user) => (int) ($user['latest_conversation']['unread_count'] ?? 0),
+                    $usersArray
+                )),
             ];
 
             if ($staff->role === User::ROLE_ADMIN) {
@@ -795,10 +799,17 @@ class ChatComponent extends Component
                     && $user['latest_conversation']['id'] == $conversationId
                 ) {
                     $user['latest_conversation']['unread_count'] = 0;
-                    break 2;
+                    break;
                 }
             }
+            unset($user);
+
+            $operator['unread_count'] = array_sum(array_map(
+                fn ($user) => (int) ($user['latest_conversation']['unread_count'] ?? 0),
+                $operator['invited_users']
+            ));
         }
+        unset($operator);
 
         return $operators;
     }

@@ -472,6 +472,7 @@
             @endauth
         });
     </script>
+    @include('admin.feature_announcements._modal')
     @livewireScripts
     @stack('scripts')
 </body>

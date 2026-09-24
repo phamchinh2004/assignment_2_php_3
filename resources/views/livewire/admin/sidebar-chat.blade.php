@@ -155,9 +155,12 @@
                     <span class="sidebar-section-count">{{ count($operatorSection['users']) }}</span>
                 </h3>
                 @forelse($operatorSection['users'] as $staff)
-                    @php $isExpanded = in_array($staff['id'], $expandedStaff); @endphp
+                    @php
+                        $isExpanded = in_array($staff['id'], $expandedStaff);
+                        $staffUnreadCount = (int) ($staff['unread_count'] ?? 0);
+                    @endphp
                     <div wire:key="{{ $keyPrefix }}{{ $operatorSection['key'] }}-section-{{ $staff['id'] }}" class="sidebar-staff-group">
-                        <button type="button" class="staff-header {{ $isExpanded ? 'is-expanded' : '' }}"
+                        <button type="button" class="staff-header {{ $isExpanded ? 'is-expanded' : '' }} {{ $staffUnreadCount > 0 ? 'has-unread' : '' }}"
                             aria-expanded="{{ $isExpanded ? 'true' : 'false' }}" aria-controls="{{ $keyPrefix }}{{ $operatorSection['key'] }}-users-{{ $staff['id'] }}"
                             wire:click="toggleStaffExpansion({{ $staff['id'] }})">
                             <span class="staff-avatar" aria-hidden="true">{{ mb_strtoupper(mb_substr($staff['full_name'], 0, 1)) }}</span>
@@ -165,6 +168,12 @@
                                 <span class="staff-name" title="{{ $staff['full_name'] }}">{{ $staff['full_name'] }}</span>
                                 <span class="staff-customer-count">{{ count($staff['invited_users']) }} khách hàng</span>
                             </span>
+                            @if($staffUnreadCount > 0)
+                                <span class="staff-unread" aria-label="{{ $staffUnreadCount }} tin nhắn mới"
+                                    title="{{ $staffUnreadCount }} tin nhắn mới">
+                                    {{ $staffUnreadCount > 99 ? '99+' : $staffUnreadCount }}
+                                </span>
+                            @endif
                             <i class="fas fa-chevron-down staff-chevron {{ $isExpanded ? 'rotated' : '' }}" aria-hidden="true"></i>
                         </button>
 

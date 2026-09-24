@@ -104,6 +104,14 @@ class User extends Authenticatable
     {
         return $this->hasMany(Frozen_order::class);
     }
+    public function featureAnnouncementReads()
+    {
+        return $this->hasMany(FeatureAnnouncementRead::class);
+    }
+    public function createdFeatureAnnouncements()
+    {
+        return $this->hasMany(FeatureAnnouncement::class, 'created_by');
+    }
     public function referrer()
     {
         return $this->belongsTo(User::class, 'referrer_id');

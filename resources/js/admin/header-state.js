@@ -5,6 +5,7 @@ if (headerRoot) {
     const messageList = document.getElementById('adminMessageList');
     const notificationBadge = document.getElementById('adminNotificationBadge');
     const messageBadge = document.getElementById('adminMessageBadge');
+    const sidebarMessageBadge = document.getElementById('adminSidebarMessageBadge');
     const readAllButton = document.getElementById('adminNotificationReadAll');
     const loadMoreButton = document.getElementById('adminNotificationLoadMore');
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
@@ -20,6 +21,8 @@ if (headerRoot) {
     const badgeText = (count) => count > 99 ? '99+' : String(count);
 
     function updateBadge(element, count) {
+        if (!element) return;
+
         const value = Number(count || 0);
         element.hidden = value === 0;
         element.textContent = value === 0 ? '' : badgeText(value);
@@ -108,6 +111,16 @@ if (headerRoot) {
 
     function renderMessages(data) {
         updateBadge(messageBadge, data.unread_count);
+        updateBadge(sidebarMessageBadge, data.unread_count);
+
+        if (sidebarMessageBadge) {
+            const unreadCount = Number(data.unread_count || 0);
+            sidebarMessageBadge.setAttribute(
+                'aria-label',
+                unreadCount > 0 ? unreadCount + ' tin nhắn chưa đọc' : 'Không có tin nhắn chưa đọc'
+            );
+        }
+
         messageList.replaceChildren();
 
         if (!data.conversations?.length) {

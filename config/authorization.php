@@ -28,5 +28,10 @@ return [
         'manage_staff_permissions' => 'phan_quyen_nhan_vien',
         'system_statistics' => 'xem_thong_ke_he_thong',
         'manage_all_chats' => 'quan_ly_tat_ca_tin_nhan',
+        'feature_announcements_view' => 'xem_thong_bao_tinh_nang',
+        'feature_announcements_create' => 'tao_thong_bao_tinh_nang',
+        'feature_announcements_update' => 'cap_nhat_thong_bao_tinh_nang',
+        'feature_announcements_delete' => 'xoa_thong_bao_tinh_nang',
+        'feature_announcements_view_report' => 'xem_bao_cao_thong_bao_tinh_nang',
     ],
 ];

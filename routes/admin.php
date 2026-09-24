@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\AuthorizationController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\FeatureAnnouncementController;
 use App\Http\Controllers\Admin\HeaderStateController;
 use App\Http\Controllers\Admin\LanguageController;
 use App\Http\Controllers\Admin\LuckyWheelRewardController;
@@ -33,6 +34,33 @@ Route::middleware(['role:staff|admin|own', 'checkBanned', 'auth'])->group(functi
         ->name('header.notifications.read-all');
     Route::post('/header/notifications/{notification}/read', [HeaderStateController::class, 'markNotificationRead'])
         ->name('header.notifications.read');
+
+    Route::get('/feature-announcements', [FeatureAnnouncementController::class, 'index'])
+        ->middleware('permission:' . $capabilities['feature_announcements_view'])
+        ->name('feature_announcements.index');
+    Route::get('/feature-announcements/create', [FeatureAnnouncementController::class, 'create'])
+        ->middleware('permission:' . $capabilities['feature_announcements_create'])
+        ->name('feature_announcements.create');
+    Route::post('/feature-announcements', [FeatureAnnouncementController::class, 'store'])
+        ->middleware('permission:' . $capabilities['feature_announcements_create'])
+        ->name('feature_announcements.store');
+    Route::get('/feature-announcements/{feature_announcement}/edit', [FeatureAnnouncementController::class, 'edit'])
+        ->middleware('permission:' . $capabilities['feature_announcements_update'])
+        ->name('feature_announcements.edit');
+    Route::put('/feature-announcements/{feature_announcement}', [FeatureAnnouncementController::class, 'update'])
+        ->middleware('permission:' . $capabilities['feature_announcements_update'])
+        ->name('feature_announcements.update');
+    Route::post('/feature-announcements/{feature_announcement}/toggle', [FeatureAnnouncementController::class, 'toggle'])
+        ->middleware('permission:' . $capabilities['feature_announcements_update'])
+        ->name('feature_announcements.toggle');
+    Route::delete('/feature-announcements/{feature_announcement}', [FeatureAnnouncementController::class, 'destroy'])
+        ->middleware('permission:' . $capabilities['feature_announcements_delete'])
+        ->name('feature_announcements.destroy');
+    Route::get('/feature-announcements/{feature_announcement}', [FeatureAnnouncementController::class, 'show'])
+        ->middleware('permission:' . $capabilities['feature_announcements_view_report'])
+        ->name('feature_announcements.show');
+    Route::post('/feature-announcements/{feature_announcement}/acknowledge', [FeatureAnnouncementController::class, 'acknowledge'])
+        ->name('feature_announcements.acknowledge');
 
     Route::middleware(['permission:' . $capabilities['orders']])->group(function () {
         Route::get('/order/add-customer-info', [OrderController::class, 'addCustomerInfoToOrders'])->name('order.add.customer.info');

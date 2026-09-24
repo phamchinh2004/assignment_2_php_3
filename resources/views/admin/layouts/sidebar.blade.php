@@ -9,6 +9,7 @@
     $canOrderTimingSettings = $authorization->can($currentUser, $capabilities['order_timing_settings']);
     $canManageRewards = in_array($currentUser->role, [\App\Models\User::ROLE_ADMIN, \App\Models\User::ROLE_OWNER], true)
         && $authorization->can($currentUser, $capabilities['manage_all_user_transactions']);
+    $canFeatureAnnouncements = $authorization->can($currentUser, $capabilities['feature_announcements_view']);
     $isOwner = $authorization->isSuperuser($currentUser);
     $isDashboardActive = request()->routeIs('admin.dashboard', 'tong.doanh.thu');
     $isStatisticsActive = request()->routeIs(
@@ -30,6 +31,7 @@
         'change.deposit.transaction.type'
     );
     $isRewardActive = request()->routeIs('lucky_wheel_rewards.*');
+    $isFeatureAnnouncementsActive = request()->routeIs('feature_announcements.*');
     $isTransactionActive = $isWithdrawActive || $isDepositActive || $isRewardActive;
 @endphp
 
@@ -111,6 +113,7 @@
                     @if(request()->routeIs('chat-panel')) aria-current="page" @endif>
                     <span class="admin-sidebar__icon"><i class="fas fa-message" aria-hidden="true"></i></span>
                     <span class="admin-sidebar__label">Quản lý tin nhắn</span>
+                    <span id="adminSidebarMessageBadge" class="admin-sidebar__badge" hidden aria-live="polite"></span>
                 </a>
 
                 <a class="admin-sidebar__link {{ request()->routeIs('user.*') ? 'is-active' : '' }}"
@@ -183,6 +186,15 @@
 
             <section class="admin-sidebar__section" aria-labelledby="sidebar-settings-title">
                 <h2 class="admin-sidebar__section-title" id="sidebar-settings-title">Cấu hình</h2>
+
+                @if ($canFeatureAnnouncements)
+                    <a class="admin-sidebar__link {{ $isFeatureAnnouncementsActive ? 'is-active' : '' }}"
+                        href="{{ route('feature_announcements.index') }}" data-sidebar-tooltip="Thông báo tính năng"
+                        @if($isFeatureAnnouncementsActive) aria-current="page" @endif>
+                        <span class="admin-sidebar__icon"><i class="fas fa-bullhorn" aria-hidden="true"></i></span>
+                        <span class="admin-sidebar__label">Thông báo tính năng</span>
+                    </a>
+                @endif
 
                 @if ($canOrderTimingSettings)
                     <a class="admin-sidebar__link {{ request()->routeIs('admin.order_status_timing.*') ? 'is-active' : '' }}"

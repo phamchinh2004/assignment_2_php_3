@@ -270,6 +270,28 @@ body {
     transition: opacity 140ms ease, transform 180ms ease;
 }
 
+.admin-sidebar__badge {
+    min-width: 20px;
+    height: 20px;
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: #ef4444;
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.28);
+    font-size: 0.66rem;
+    font-weight: 800;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+
+.admin-sidebar__badge[hidden] {
+    display: none !important;
+}
+
 .admin-sidebar__chevron {
     margin-left: auto;
     color: #64748b;
@@ -394,6 +416,17 @@ body.admin-sidebar-collapsed .admin-sidebar:not(.is-peek) .admin-sidebar__sectio
 body.admin-sidebar-collapsed .admin-sidebar:not(.is-peek) .admin-sidebar__link {
     justify-content: center;
     padding-inline: 0.45rem;
+}
+
+body.admin-sidebar-collapsed .admin-sidebar:not(.is-peek) .admin-sidebar__badge {
+    position: absolute;
+    top: 4px;
+    right: 3px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    border: 2px solid #0f172a;
+    font-size: 0.56rem;
 }
 
 body.admin-sidebar-collapsed .admin-sidebar:not(.is-peek) .admin-sidebar__link.is-active::before,
