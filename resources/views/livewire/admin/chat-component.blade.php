@@ -492,28 +492,32 @@
                                     <div style="font-size: 10px;">
                                         <strong><i class="fas fa-bolt me-1"></i>Tin nhắn nhanh:</strong>
                                     </div>
-                                    <button class="btn btn-sm p-0 text-info" type="button" @click="quickMsgOpen = !quickMsgOpen" :aria-expanded="quickMsgOpen" aria-label="Mẫu trả lời nhanh"
-                                        style="border: none; background: none;">
-                                        <i class="fas" :class="quickMsgOpen ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
-                                    </button>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <button class="quick-msg-add-btn" type="button" wire:click="startAddingQuickMessage"
+                                            title="Thêm tin nhắn nhanh" aria-label="Thêm tin nhắn nhanh">
+                                            <i class="fas fa-plus" aria-hidden="true"></i>
+                                        </button>
+                                        <button class="btn btn-sm p-0 text-info" type="button" @click="quickMsgOpen = !quickMsgOpen" :aria-expanded="quickMsgOpen" aria-label="Mẫu trả lời nhanh"
+                                            style="border: none; background: none;">
+                                            <i class="fas" :class="quickMsgOpen ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                                        </button>
+                                    </div>
                                 </div>
                                 <div x-show="quickMsgOpen" x-transition class="flex-column gap-1" style="display: flex;">
                                     @php
-                                        $quickMessage5 = "VIB : 0987654321" . PHP_EOL . "PHAM VAN A";
-                                        $quickMessage6 = "Sau khi giao dịch thành công, bạn vui lòng cung cấp hình ảnh để xác minh. Hiệu lực trong vòng 30 phút tính từ lúc cung cấp tài khoản ngân hàng. Xin Cảm Ơn!";
+                                        $highValueQuickMessageKeys = array_values(array_filter(
+                                            array_merge(['bank_account', 'transaction_verification'], $customQuickMessageKeys),
+                                            fn ($key) => array_key_exists($key, $quickMessages)
+                                        ));
                                     @endphp
-
-                                    <button type="button" class="quick-msg-btn text-start"
-                                        onclick='copyQuickMessage(`{{ str_replace('`', '\`', $quickMessage5) }}`)'
-                                        title="Click để sao chép">
-                                        🏦 Thông tin tài khoản ngân hàng
-                                    </button>
-
-                                    <button type="button" class="quick-msg-btn text-start"
-                                        onclick='copyQuickMessage(`{{ str_replace('`', '\`', $quickMessage6) }}`)'
-                                        title="Click để sao chép">
-                                        ⏱️ Hướng dẫn xác minh giao dịch
-                                    </button>
+                                    @foreach($highValueQuickMessageKeys as $messageKey)
+                                        @include('livewire.admin.partials.quick-message-item', [
+                                            'messageKey' => $messageKey,
+                                            'messageText' => $quickMessages[$messageKey],
+                                            'context' => 'high-value',
+                                        ])
+                                    @endforeach
+                                    @include('livewire.admin.partials.quick-message-create', ['context' => 'high-value'])
                                 </div>
                             </div>
                         @else
@@ -524,32 +528,32 @@
                                     <div style="font-size: 10px;">
                                         <strong><i class="fas fa-comments me-1"></i>Tin nhắn nhanh:</strong>
                                     </div>
-                                    <button class="btn btn-sm p-0 text-secondary" type="button"
-                                        @click="generalMsgOpen = !generalMsgOpen" :aria-expanded="generalMsgOpen" aria-label="Mẫu trả lời nhanh" style="border: none; background: none;">
-                                        <i class="fas" :class="generalMsgOpen ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
-                                    </button>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <button class="quick-msg-add-btn" type="button" wire:click="startAddingQuickMessage"
+                                            title="Thêm tin nhắn nhanh" aria-label="Thêm tin nhắn nhanh">
+                                            <i class="fas fa-plus" aria-hidden="true"></i>
+                                        </button>
+                                        <button class="btn btn-sm p-0 text-secondary" type="button"
+                                            @click="generalMsgOpen = !generalMsgOpen" :aria-expanded="generalMsgOpen" aria-label="Mẫu trả lời nhanh" style="border: none; background: none;">
+                                            <i class="fas" :class="generalMsgOpen ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                                        </button>
+                                    </div>
                                 </div>
                                 <div x-show="generalMsgOpen" x-transition class="flex-column gap-1" style="display: flex;">
                                     @php
-                                        $quickMessageGeneral1 = "👋 Xin chào, tôi có thể giúp gì cho bạn?";
-                                        $quickMessageGeneral2 = "💬 Chào bạn! Nếu bạn có bất kỳ thắc mắc nào, vui lòng cho tôi biết.";
-                                        $quickMessageGeneral3 = "🙏 Cảm ơn bạn đã liên hệ. Tôi sẽ hỗ trợ bạn ngay bây giờ.";
+                                        $generalQuickMessageKeys = array_values(array_filter(
+                                            array_merge(['general_1', 'general_2', 'general_3', 'bank_account'], $customQuickMessageKeys),
+                                            fn ($key) => array_key_exists($key, $quickMessages)
+                                        ));
                                     @endphp
-
-                                    <button type="button" class="quick-msg-btn text-start"
-                                        onclick='copyQuickMessage(`{{ $quickMessageGeneral1 }}`)' title="Click để sao chép">
-                                        {{ $quickMessageGeneral1 }}
-                                    </button>
-
-                                    <button type="button" class="quick-msg-btn text-start"
-                                        onclick='copyQuickMessage(`{{ $quickMessageGeneral2 }}`)' title="Click để sao chép">
-                                        {{ $quickMessageGeneral2 }}
-                                    </button>
-
-                                    <button type="button" class="quick-msg-btn text-start"
-                                        onclick='copyQuickMessage(`{{ $quickMessageGeneral3 }}`)' title="Click để sao chép">
-                                        {{ $quickMessageGeneral3 }}
-                                    </button>
+                                    @foreach($generalQuickMessageKeys as $messageKey)
+                                        @include('livewire.admin.partials.quick-message-item', [
+                                            'messageKey' => $messageKey,
+                                            'messageText' => $quickMessages[$messageKey],
+                                            'context' => 'general',
+                                        ])
+                                    @endforeach
+                                    @include('livewire.admin.partials.quick-message-create', ['context' => 'general'])
                                 </div>
                             </div>
                         @endif

@@ -203,7 +203,7 @@ Danh sách người dùng
                         $initials = mb_strtoupper(mb_substr($item->full_name ?: ($item->username ?: 'U'), 0, 2));
                         $isOnline = $item->isOnline();
                         @endphp
-                        <tr id="user-{{ $item->id }}" class="user-row">
+                        <tr id="user-{{ $item->id }}" class="user-row {{ $item->clone_account ? 'is-clone-account' : 'is-real-account' }}">
                             <!-- Col 1: STT -->
                             <td class="text-center">
                                 <span class="user-id-chip">#{{ $index + 1 }}</span>
@@ -350,6 +350,10 @@ Danh sách người dùng
                                     @if ($item->clone_account)
                                         <span class="tag-pill tag-clone" title="Tài khoản nhân bản">
                                             <i class="fas fa-clone"></i> Clone
+                                        </span>
+                                    @else
+                                        <span class="tag-pill tag-real" title="Tài khoản người dùng thật">
+                                            <i class="fas fa-user-check"></i> Tài khoản thật
                                         </span>
                                     @endif
                                 </div>

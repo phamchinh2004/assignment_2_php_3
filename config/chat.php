@@ -44,6 +44,38 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Tin nhắn nhanh dành cho quản trị viên
+    |--------------------------------------------------------------------------
+    |
+    | Đây là nội dung mặc định. Mỗi tài khoản quản trị/nhân viên có thể chỉnh
+    | nội dung riêng trực tiếp tại màn hình chat; các thay đổi sẽ được lưu DB.
+    |
+    */
+    'admin_quick_messages' => [
+        'general_1' => [
+            'icon' => '👋',
+            'content' => 'Xin chào, tôi có thể giúp gì cho bạn?',
+        ],
+        'general_2' => [
+            'icon' => '💬',
+            'content' => 'Chào bạn! Nếu bạn có bất kỳ thắc mắc nào, vui lòng cho tôi biết.',
+        ],
+        'general_3' => [
+            'icon' => '🙏',
+            'content' => 'Cảm ơn bạn đã liên hệ. Tôi sẽ hỗ trợ bạn ngay bây giờ.',
+        ],
+        'bank_account' => [
+            'icon' => '🏦',
+            'content' => "TÀI KHOẢN THANH TOÁN :\nSTK : 9375134837\nNGÂN HÀNG : VIETCOMBANK\nCHỦ TÀI KHOẢN : NGUYEN VAN DAT",
+        ],
+        'transaction_verification' => [
+            'icon' => '⏱️',
+            'content' => 'Sau khi giao dịch thành công, bạn vui lòng cung cấp hình ảnh để xác minh. Hiệu lực trong vòng 30 phút tính từ lúc cung cấp tài khoản ngân hàng. Xin Cảm Ơn!',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Cấu hình gợi ý tin nhắn nhanh
     |--------------------------------------------------------------------------
     |

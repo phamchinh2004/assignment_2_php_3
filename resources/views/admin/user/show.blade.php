@@ -164,21 +164,40 @@
         </div>
 
         {{-- Card 2: Thông tin giao dịch & Vị trí --}}
+        @php
+            $displayIp = $user->last_login_ip ?: $user->register_ip;
+            $displayCountryCode = $user->location_country_code ?: $user->approx_location_country_code;
+            $displayCountry = $user->location_country ?: $user->approx_location_country;
+            $displayCity = $user->location_city;
+            $displayLastLoginAt = $user->last_login_at ?: $user->last_seen;
+        @endphp
         <div class="detail-card-modern">
             <h5 class="detail-card-title">
                 <i class="fas fa-map-marker-alt"></i> Vị trí & Thiết bị đăng nhập
             </h5>
             <div class="detail-row-modern">
                 <span class="detail-label-modern">Địa chỉ IP gần nhất</span>
-                <span class="detail-value-modern"><code>{{ $user->ip_address ?: '—' }}</code></span>
+                <span class="detail-value-modern"><code>{{ $displayIp ?: '—' }}</code></span>
             </div>
             <div class="detail-row-modern">
                 <span class="detail-label-modern">Quốc gia / Khu vực</span>
-                <span class="detail-value-modern">{{ $user->country ?: '—' }} ({{ $user->city ?: '—' }})</span>
+                <span class="detail-value-modern">
+                    @if($displayCountry || $displayCountryCode || $displayCity)
+                        {{ $displayCountry ?: strtoupper((string) $displayCountryCode) }}
+                        @if($displayCountry && $displayCountryCode)
+                            ({{ strtoupper($displayCountryCode) }})
+                        @endif
+                        @if($displayCity)
+                            · {{ $displayCity }}
+                        @endif
+                    @else
+                        —
+                    @endif
+                </span>
             </div>
             <div class="detail-row-modern">
                 <span class="detail-label-modern">Thời gian đăng nhập cuối</span>
-                <span class="detail-value-modern">{{ $user->last_login_at ? \Carbon\Carbon::parse($user->last_login_at)->format('d/m/Y H:i:s') : '—' }}</span>
+                <span class="detail-value-modern">{{ $displayLastLoginAt?->format('d/m/Y H:i:s') ?: '—' }}</span>
             </div>
             <div class="detail-row-modern">
                 <span class="detail-label-modern">Ngày đăng ký</span>

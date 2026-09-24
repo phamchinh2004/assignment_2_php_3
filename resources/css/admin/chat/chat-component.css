@@ -348,6 +348,126 @@
     box-shadow: 0 2px 6px rgba(99, 102, 241, 0.12);
 }
 
+.quick-msg-item {
+    min-width: 0;
+}
+
+.quick-msg-row {
+    display: flex;
+    align-items: stretch;
+    gap: 5px;
+}
+
+.quick-msg-row .quick-msg-btn {
+    min-width: 0;
+}
+
+.quick-msg-icon {
+    display: inline-block;
+    margin-right: 4px;
+}
+
+.quick-msg-edit-btn {
+    flex: 0 0 32px;
+    width: 32px;
+    min-height: 32px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #fff;
+    color: #64748b;
+    font-size: 10px;
+    transition: all 0.2s ease;
+}
+
+.quick-msg-edit-btn:hover {
+    border-color: #6366f1;
+    color: #4f46e5;
+    background: #eef2ff;
+}
+
+.quick-msg-edit-btn.is-delete:hover {
+    border-color: #fecaca;
+    color: #dc2626;
+    background: #fef2f2;
+}
+
+.quick-msg-add-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    background: #fff;
+    color: #475569;
+    font-size: 9px;
+    transition: all 0.2s ease;
+}
+
+.quick-msg-add-btn:hover {
+    border-color: #6366f1;
+    background: #eef2ff;
+    color: #4f46e5;
+}
+
+.quick-msg-editor {
+    padding: 7px;
+    border: 1px solid #c7d2fe;
+    border-radius: 9px;
+    background: #f8fafc;
+}
+
+.quick-msg-editor--create {
+    border-style: dashed;
+}
+
+.quick-msg-editor__textarea {
+    min-height: 76px;
+    max-height: 180px;
+    resize: vertical;
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+.quick-msg-editor__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 5px;
+    color: #64748b;
+    font-size: 9px;
+}
+
+.quick-msg-editor__actions {
+    display: flex;
+    gap: 4px;
+}
+
+.quick-msg-editor__action {
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: 1px solid #e2e8f0;
+    border-radius: 7px;
+    background: #fff;
+    color: #64748b;
+}
+
+.quick-msg-editor__action.is-save {
+    border-color: #a7f3d0;
+    color: #047857;
+    background: #ecfdf5;
+}
+
+.quick-msg-editor__error {
+    margin-top: 4px;
+    color: #dc2626;
+    font-size: 9px;
+}
+
 /* Modals & Alerts */
 .editing-banner {
     animation: slideDown 0.3s ease-out;

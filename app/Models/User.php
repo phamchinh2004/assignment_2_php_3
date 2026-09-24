@@ -44,6 +44,7 @@ class User extends Authenticatable
         'rank_id',
         'referrer_id',
         'register_ip',
+        'last_login_ip',
         'clone_account',
         'warehouse_area',
         'warehouse_address',
@@ -58,7 +59,8 @@ class User extends Authenticatable
         'approx_location_country_code',
         'approx_location_country',
         'approx_location_updated_at',
-        'last_seen'
+        'last_seen',
+        'last_login_at',
     ];
 
     /**
@@ -79,6 +81,7 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'last_seen' => 'datetime',
+        'last_login_at' => 'datetime',
         'location_updated_at' => 'datetime',
         'approx_location_updated_at' => 'datetime',
         'location_latitude' => 'float',

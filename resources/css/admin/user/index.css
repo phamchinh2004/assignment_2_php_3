@@ -761,6 +761,34 @@
     border: 1px solid #e2e8f0;
 }
 
+.tag-pill.tag-real {
+    background: #ecfdf5;
+    color: #047857;
+    border: 1px solid #a7f3d0;
+    font-weight: 700;
+}
+
+.user-row.is-real-account > td {
+    background: #f8fffb;
+}
+
+.user-row.is-real-account > td:first-child {
+    box-shadow: inset 4px 0 0 #10b981;
+}
+
+.user-row.is-real-account .user-link {
+    color: #065f46;
+    font-weight: 800;
+}
+
+.user-row.is-real-account .user-avatar-circle {
+    box-shadow: 0 0 0 2px #a7f3d0, 0 4px 12px rgba(16, 185, 129, 0.12);
+}
+
+.table-modern tbody tr.user-row.is-real-account:hover > td {
+    background: #ecfdf5;
+}
+
 /* Timestamp Box */
 .time-box {
     display: flex;

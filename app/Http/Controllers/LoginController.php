@@ -52,6 +52,11 @@ class LoginController extends Controller
             if (Auth::attempt($credentials, $request->boolean('remember_password'))) {
                 if ($get_user_from_username->status == "activated") {
                     $request->session()->regenerate();
+                    $get_user_from_username->forceFill([
+                        'last_login_ip' => $request->ip(),
+                        'last_login_at' => now(),
+                    ])->save();
+
                     if ($get_user_from_username->role === User::ROLE_MEMBER) {
                         $approximateLocationService->refresh($get_user_from_username, $request, true);
                         return redirect()->route('home')->with('success', 'Đăng nhập thành công!');

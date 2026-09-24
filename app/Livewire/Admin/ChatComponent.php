@@ -13,6 +13,7 @@ use Livewire\Component;
 use App\Models\User;
 use App\Models\Conversation;
 use App\Models\ConversationNotificationMute;
+use App\Models\ChatQuickMessage;
 use App\Models\Message;
 use App\Services\AuthorizationService;
 use App\Services\ChatReadService;
@@ -50,6 +51,12 @@ class ChatComponent extends Component
     public $searchTerm = '';
     public $maxMessageLength = 1000;
     public $staffUsersUpdateKey = 0; // Key để force re-render
+    public array $quickMessages = [];
+    public array $customQuickMessageKeys = [];
+    public ?string $editingQuickMessageKey = null;
+    public string $editingQuickMessageText = '';
+    public bool $addingQuickMessage = false;
+    public string $newQuickMessageText = '';
 
     public $editingMessageId = null;
     public $editingMessageText = '';
@@ -250,6 +257,7 @@ class ChatComponent extends Component
 
     public function mount()
     {
+        $this->loadQuickMessages();
         $this->loadConversations();
         if ($this->canManageAllChats()) {
             $this->loadStaffUsersAlternative();
@@ -258,6 +266,200 @@ class ChatComponent extends Component
         if ($this->conversationPublicId) {
             $this->openConversationFromPublicId($this->conversationPublicId);
         }
+    }
+
+    private function quickMessageDefaults(): array
+    {
+        return collect(config('chat.admin_quick_messages', []))
+            ->mapWithKeys(fn ($message, $key) => [$key => (string) ($message['content'] ?? '')])
+            ->all();
+    }
+
+    private function ensureQuickMessageAccess(): void
+    {
+        abort_unless(
+            Auth::user() && in_array(Auth::user()->role, User::MANAGEMENT_ROLES, true),
+            403
+        );
+    }
+
+    private function loadQuickMessages(): void
+    {
+        $this->ensureQuickMessageAccess();
+
+        $defaults = $this->quickMessageDefaults();
+        $records = ChatQuickMessage::query()
+            ->where('user_id', Auth::id())
+            ->orderBy('id')
+            ->get(['message_key', 'content', 'is_deleted']);
+
+        $messages = $defaults;
+        $customKeys = [];
+
+        foreach ($records as $record) {
+            if ($record->is_deleted) {
+                unset($messages[$record->message_key]);
+                continue;
+            }
+
+            $messages[$record->message_key] = $record->content;
+            if (!array_key_exists($record->message_key, $defaults)) {
+                $customKeys[] = $record->message_key;
+            }
+        }
+
+        $this->quickMessages = $messages;
+        $this->customQuickMessageKeys = array_values(array_unique($customKeys));
+    }
+
+    private function quickMessageKeyBelongsToCurrentUser(string $key): bool
+    {
+        if (array_key_exists($key, $this->quickMessageDefaults())) {
+            return true;
+        }
+
+        return ChatQuickMessage::query()
+            ->where('user_id', Auth::id())
+            ->where('message_key', $key)
+            ->where('is_deleted', false)
+            ->exists();
+    }
+
+    public function startEditingQuickMessage(string $key): void
+    {
+        $this->ensureQuickMessageAccess();
+        abort_unless($this->quickMessageKeyBelongsToCurrentUser($key), 404);
+        abort_unless(array_key_exists($key, $this->quickMessages), 404);
+
+        $this->resetErrorBag('editingQuickMessageText');
+        $this->addingQuickMessage = false;
+        $this->newQuickMessageText = '';
+        $this->editingQuickMessageKey = $key;
+        $this->editingQuickMessageText = $this->quickMessages[$key];
+    }
+
+    public function saveQuickMessage(?string $content = null): void
+    {
+        $this->ensureQuickMessageAccess();
+        abort_unless(
+            $this->editingQuickMessageKey
+                && $this->quickMessageKeyBelongsToCurrentUser($this->editingQuickMessageKey),
+            404
+        );
+
+        if ($content !== null) {
+            $this->editingQuickMessageText = $content;
+        }
+
+        $this->validate([
+            'editingQuickMessageText' => ['required', 'string', 'max:2000'],
+        ], [
+            'editingQuickMessageText.required' => 'Tin nhắn nhanh không được để trống.',
+            'editingQuickMessageText.max' => 'Tin nhắn nhanh không được vượt quá 2000 ký tự.',
+        ]);
+
+        $messageKey = $this->editingQuickMessageKey;
+        $messageContent = trim($this->editingQuickMessageText);
+
+        ChatQuickMessage::updateOrCreate(
+            [
+                'user_id' => Auth::id(),
+                'message_key' => $messageKey,
+            ],
+            [
+                'content' => $messageContent,
+                'is_deleted' => false,
+            ]
+        );
+
+        $this->quickMessages[$messageKey] = $messageContent;
+        $this->editingQuickMessageKey = null;
+        $this->editingQuickMessageText = '';
+        $this->resetErrorBag('editingQuickMessageText');
+    }
+
+    public function startAddingQuickMessage(): void
+    {
+        $this->ensureQuickMessageAccess();
+        $this->editingQuickMessageKey = null;
+        $this->editingQuickMessageText = '';
+        $this->resetErrorBag(['editingQuickMessageText', 'newQuickMessageText']);
+        $this->addingQuickMessage = true;
+        $this->newQuickMessageText = '';
+    }
+
+    public function saveNewQuickMessage(?string $content = null): void
+    {
+        $this->ensureQuickMessageAccess();
+
+        if ($content !== null) {
+            $this->newQuickMessageText = $content;
+        }
+
+        $this->validate([
+            'newQuickMessageText' => ['required', 'string', 'max:2000'],
+        ], [
+            'newQuickMessageText.required' => 'Tin nhắn nhanh không được để trống.',
+            'newQuickMessageText.max' => 'Tin nhắn nhanh không được vượt quá 2000 ký tự.',
+        ]);
+
+        $message = ChatQuickMessage::create([
+            'user_id' => Auth::id(),
+            'message_key' => 'custom_' . Str::uuid(),
+            'content' => trim($this->newQuickMessageText),
+            'is_deleted' => false,
+        ]);
+
+        $this->quickMessages[$message->message_key] = $message->content;
+        $this->customQuickMessageKeys[] = $message->message_key;
+        $this->addingQuickMessage = false;
+        $this->newQuickMessageText = '';
+        $this->resetErrorBag('newQuickMessageText');
+    }
+
+    public function cancelQuickMessageAdd(): void
+    {
+        $this->addingQuickMessage = false;
+        $this->newQuickMessageText = '';
+        $this->resetErrorBag('newQuickMessageText');
+    }
+
+    public function deleteQuickMessage(string $key): void
+    {
+        $this->ensureQuickMessageAccess();
+        abort_unless($this->quickMessageKeyBelongsToCurrentUser($key), 404);
+
+        $defaults = $this->quickMessageDefaults();
+        if (array_key_exists($key, $defaults)) {
+            ChatQuickMessage::updateOrCreate(
+                [
+                    'user_id' => Auth::id(),
+                    'message_key' => $key,
+                ],
+                [
+                    'content' => $this->quickMessages[$key] ?? $defaults[$key],
+                    'is_deleted' => true,
+                ]
+            );
+        } else {
+            ChatQuickMessage::query()
+                ->where('user_id', Auth::id())
+                ->where('message_key', $key)
+                ->delete();
+        }
+
+        if ($this->editingQuickMessageKey === $key) {
+            $this->cancelQuickMessageEdit();
+        }
+
+        $this->loadQuickMessages();
+    }
+
+    public function cancelQuickMessageEdit(): void
+    {
+        $this->editingQuickMessageKey = null;
+        $this->editingQuickMessageText = '';
+        $this->resetErrorBag('editingQuickMessageText');
     }
 
     public function updatedConversationPublicId(?string $publicId): void
