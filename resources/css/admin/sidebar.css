@@ -350,6 +350,14 @@ body {
     color: #c7d2fe;
 }
 
+.admin-sidebar__submenu-link > .admin-sidebar__badge {
+    min-width: 18px;
+    height: 18px;
+    margin-left: auto;
+    padding: 0 5px;
+    font-size: 0.6rem;
+}
+
 #content-wrapper {
     margin-left: var(--admin-sidebar-expanded);
     width: calc(100% - var(--admin-sidebar-expanded));

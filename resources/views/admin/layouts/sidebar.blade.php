@@ -138,6 +138,7 @@
                         aria-controls="collapseOrder" data-sidebar-tooltip="Quản lý GDKH">
                         <span class="admin-sidebar__icon"><i class="fas fa-arrow-right-arrow-left" aria-hidden="true"></i></span>
                         <span class="admin-sidebar__label">Quản lý GDKH</span>
+                        <span id="adminSidebarTransactionBadge" class="admin-sidebar__badge" hidden aria-live="polite"></span>
                         <span class="admin-sidebar__chevron"><i class="fas fa-chevron-down" aria-hidden="true"></i></span>
                     </button>
                     <div id="collapseOrder" class="collapse admin-sidebar__submenu {{ $isTransactionActive ? 'show' : '' }}"
@@ -146,7 +147,10 @@
                             <span class="admin-sidebar__submenu-heading">Giao dịch khách hàng</span>
                             @if ($canWithdrawals)
                                 <a class="admin-sidebar__submenu-link {{ $isWithdrawActive ? 'is-active' : '' }}"
-                                    href="{{ route('withdraw_transaction') }}">Rút tiền</a>
+                                    href="{{ route('withdraw_transaction') }}">
+                                    Rút tiền
+                                    <span id="adminSidebarWithdrawBadge" class="admin-sidebar__badge" hidden aria-live="polite"></span>
+                                </a>
                             @endif
                             @if ($canDeposits)
                                 <a class="admin-sidebar__submenu-link {{ $isDepositActive ? 'is-active' : '' }}"
@@ -154,7 +158,10 @@
                             @endif
                             @if ($canManageRewards)
                                 <a class="admin-sidebar__submenu-link {{ $isRewardActive ? 'is-active' : '' }}"
-                                    href="{{ route('lucky_wheel_rewards.index') }}">Phần thưởng vòng quay</a>
+                                    href="{{ route('lucky_wheel_rewards.index') }}">
+                                    Phần thưởng vòng quay
+                                    <span id="adminSidebarRewardBadge" class="admin-sidebar__badge" hidden aria-live="polite"></span>
+                                </a>
                             @endif
                         </div>
                     </div>
@@ -193,6 +200,7 @@
                     @if(request()->routeIs('order_reports.*')) aria-current="page" @endif>
                     <span class="admin-sidebar__icon"><i class="fas fa-flag" aria-hidden="true"></i></span>
                     <span class="admin-sidebar__label">Đơn hàng bị báo cáo</span>
+                    <span id="adminSidebarOrderReportBadge" class="admin-sidebar__badge" hidden aria-live="polite"></span>
                 </a>
             </section>
 

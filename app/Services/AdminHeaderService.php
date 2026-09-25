@@ -3,8 +3,11 @@
 namespace App\Services;
 
 use App\Models\Conversation;
+use App\Models\LuckyWheelSpin;
 use App\Models\Message;
+use App\Models\OrderReport;
 use App\Models\User;
+use App\Models\Wallet_balance_history;
 use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Str;
 
@@ -19,6 +22,47 @@ class AdminHeaderService
         return [
             'notifications' => $this->notifications($user, $notificationLimit),
             'messages' => $this->messages($user, $messageLimit),
+            'sidebar_badges' => $this->sidebarBadges($user),
+        ];
+    }
+
+    private function sidebarBadges(User $user): array
+    {
+        $withdrawalCount = 0;
+        if ($this->authorization->can($user, config('authorization.capabilities.withdrawals_view'))) {
+            $withdrawals = Wallet_balance_history::query()
+                ->where('type', 'withdraw')
+                ->where('status', 'processing');
+
+            if (!$this->authorization->can($user, config('authorization.capabilities.withdrawals_view_all'))) {
+                $withdrawals->whereHas('user', fn ($query) => $query->where('referrer_id', $user->id));
+            }
+
+            $withdrawalCount = $withdrawals->count();
+        }
+
+        $rewardCount = $this->authorization->can(
+            $user,
+            config('authorization.capabilities.lucky_wheel_rewards_view')
+        )
+            ? LuckyWheelSpin::query()
+                ->where('reward_type', LuckyWheelSpin::REWARD_CASH)
+                ->where('reward_status', LuckyWheelSpin::STATUS_PENDING)
+                ->count()
+            : 0;
+
+        $orderReportCount = $this->authorization->can(
+            $user,
+            config('authorization.capabilities.order_reports_view')
+        )
+            ? OrderReport::query()->where('status', 'pending')->count()
+            : 0;
+
+        return [
+            'customer_transactions' => $withdrawalCount + $rewardCount,
+            'withdrawals' => $withdrawalCount,
+            'lucky_wheel_rewards' => $rewardCount,
+            'order_reports' => $orderReportCount,
         ];
     }
 

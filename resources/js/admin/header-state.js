@@ -6,6 +6,10 @@ if (headerRoot) {
     const notificationBadge = document.getElementById('adminNotificationBadge');
     const messageBadge = document.getElementById('adminMessageBadge');
     const sidebarMessageBadge = document.getElementById('adminSidebarMessageBadge');
+    const sidebarTransactionBadge = document.getElementById('adminSidebarTransactionBadge');
+    const sidebarWithdrawBadge = document.getElementById('adminSidebarWithdrawBadge');
+    const sidebarRewardBadge = document.getElementById('adminSidebarRewardBadge');
+    const sidebarOrderReportBadge = document.getElementById('adminSidebarOrderReportBadge');
     const readAllButton = document.getElementById('adminNotificationReadAll');
     const loadMoreButton = document.getElementById('adminNotificationLoadMore');
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
@@ -162,6 +166,23 @@ if (headerRoot) {
         });
     }
 
+    function renderSidebarBadges(data = {}) {
+        const badges = [
+            [sidebarTransactionBadge, data.customer_transactions, 'bản ghi giao dịch khách hàng mới'],
+            [sidebarWithdrawBadge, data.withdrawals, 'yêu cầu rút tiền mới'],
+            [sidebarRewardBadge, data.lucky_wheel_rewards, 'phần thưởng vòng quay chờ duyệt'],
+            [sidebarOrderReportBadge, data.order_reports, 'đơn hàng bị báo cáo chờ xử lý'],
+        ];
+
+        badges.forEach(([element, count, label]) => {
+            updateBadge(element, count);
+            if (!element) return;
+
+            const value = Number(count || 0);
+            element.setAttribute('aria-label', value > 0 ? value + ' ' + label : 'Không có ' + label);
+        });
+    }
+
     async function request(url, options = {}) {
         const response = await fetch(url, {
             credentials: 'same-origin',
@@ -186,6 +207,7 @@ if (headerRoot) {
             const state = await request(stateUrl + separator + 'notification_limit=' + notificationLimit);
             renderNotifications(state.notifications);
             renderMessages(state.messages);
+            renderSidebarBadges(state.sidebar_badges);
         } catch (error) {
             console.error('[Admin header] Unable to load state', error);
             notificationList.replaceChildren(stateNode('Không thể tải thông báo'));
