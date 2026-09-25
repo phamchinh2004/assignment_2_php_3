@@ -71,7 +71,7 @@
                         <dt>Đối tượng</dt>
                         <dd>
                             @if($featureAnnouncement->target_type === \App\Models\FeatureAnnouncement::TARGET_TYPE_USERS)
-                                <span class="badge badge-info mb-2">Chọn người cụ thể</span>
+                                <span class="badge-status-modern info mb-2">Chọn người cụ thể</span>
                                 @foreach($featureAnnouncement->targetedUsers as $targetUser)
                                     <div class="small mb-1">
                                         <strong>{{ $targetUser->full_name ?: $targetUser->username }}</strong>
@@ -80,7 +80,7 @@
                                 @endforeach
                             @else
                                 @foreach($featureAnnouncement->target_roles ?? [] as $role)
-                                    <span class="badge badge-light border">{{ $roleLabels[$role] ?? $role }}</span>
+                                    <span class="badge-status-modern secondary mr-1 mb-1">{{ $roleLabels[$role] ?? $role }}</span>
                                 @endforeach
                             @endif
                         </dd>
@@ -121,9 +121,9 @@
                             <td>{{ $roleLabels[$row['user']->role] ?? $row['user']->role }}</td>
                             <td>
                                 @if($row['acknowledged_at'])
-                                    <span class="badge badge-success">Đã nắm rõ</span>
+                                    <span class="badge-status-modern success">Đã nắm rõ</span>
                                 @else
-                                    <span class="badge badge-warning">Chưa xác nhận</span>
+                                    <span class="badge-status-modern warning">Chưa xác nhận</span>
                                 @endif
                             </td>
                             <td>{{ $row['acknowledged_at']?->format('d/m/Y H:i:s') ?? '—' }}</td>

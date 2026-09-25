@@ -87,7 +87,7 @@
                             </td>
                             <td>
                                 @if($announcement->target_type === \App\Models\FeatureAnnouncement::TARGET_TYPE_USERS)
-                                    <span class="badge badge-info">
+                                    <span class="badge-status-modern info">
                                         {{ $announcement->targetedUsers->count() }} tài khoản cụ thể
                                     </span>
                                     @if($announcement->targetedUsers->isNotEmpty())
@@ -100,7 +100,7 @@
                                     @endif
                                 @else
                                     @foreach($announcement->target_roles ?? [] as $role)
-                                        <span class="badge badge-light border">{{ $roleLabels[$role] ?? $role }}</span>
+                                        <span class="badge-status-modern secondary mr-1 mb-1">{{ $roleLabels[$role] ?? $role }}</span>
                                     @endforeach
                                 @endif
                             </td>
