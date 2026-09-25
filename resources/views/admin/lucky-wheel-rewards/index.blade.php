@@ -7,6 +7,13 @@
 @endsection
 
 @section('content')
+@php
+    $authorization = app(\App\Services\AuthorizationService::class);
+    $canConfigureAutoApproval = $authorization->can(auth()->user(), config('authorization.capabilities.lucky_wheel_rewards_configure_auto_approval'));
+    $canApproveReward = $authorization->can(auth()->user(), config('authorization.capabilities.lucky_wheel_rewards_approve'));
+    $canRejectReward = $authorization->can(auth()->user(), config('authorization.capabilities.lucky_wheel_rewards_reject'));
+    $canViewCustomerDetail = $authorization->can(auth()->user(), config('authorization.capabilities.customers_view_detail'));
+@endphp
 <div class="container-fluid px-4 pb-5 reward-page">
     <header class="reward-hero">
         <div>
@@ -14,6 +21,7 @@
             <h1>Quản lý phần thưởng</h1>
             <p>Duyệt phần thưởng tiền mặt và cộng vào tài khoản dưới dạng giao dịch tiền thưởng.</p>
         </div>
+        @if ($canConfigureAutoApproval)
         <form class="auto-approval-card" method="POST" action="{{ route('lucky_wheel_rewards.auto_approval') }}">
             @csrf
             <input type="hidden" name="enabled" value="{{ $setting->auto_approve_rewards ? 0 : 1 }}">
@@ -25,6 +33,7 @@
             <button type="submit" class="reward-switch {{ $setting->auto_approve_rewards ? 'is-on' : '' }}"
                 aria-label="{{ $setting->auto_approve_rewards ? 'Tắt tự động duyệt' : 'Bật tự động duyệt' }}"><span></span></button>
         </form>
+        @endif
     </header>
 
     @if(session('success'))
@@ -63,7 +72,13 @@
                         $initial = mb_strtoupper(mb_substr($displayName, 0, 1));
                     @endphp
                     <tr>
-                        <td data-label="Người dùng"><a class="reward-user" href="{{ $reward->user ? route('user.show', $reward->user) : '#' }}"><b>{{ $initial }}</b><span><strong>{{ $displayName }}</strong><small>#{{ $reward->user_id }}</small></span></a></td>
+                        <td data-label="Người dùng">
+                            @if ($reward->user && $canViewCustomerDetail)
+                                <a class="reward-user" href="{{ route('user.show', $reward->user) }}"><b>{{ $initial }}</b><span><strong>{{ $displayName }}</strong><small>#{{ $reward->user_id }}</small></span></a>
+                            @else
+                                <span class="reward-user"><b>{{ $initial }}</b><span><strong>{{ $displayName }}</strong><small>#{{ $reward->user_id }}</small></span></span>
+                            @endif
+                        </td>
                         <td data-label="Phần thưởng"><div class="reward-amount"><strong>+${{ number_format((float)$reward->reward_amount, 2) }}</strong><small>{{ $reward->prize }}</small></div></td>
                         <td data-label="Nguồn"><span class="reward-source"><i class="fas {{ $reward->spin_type === \App\Models\LuckyWheelSpin::TYPE_ADMIN_BONUS ? 'fa-ticket' : 'fa-rotate' }}"></i>{{ $reward->spin_type === \App\Models\LuckyWheelSpin::TYPE_ADMIN_BONUS ? 'Lượt admin cấp' : 'Hoàn thành hằng ngày' }}</span></td>
                         <td data-label="Trạng thái"><span class="reward-status is-{{ $reward->reward_status }}"><i class="fas {{ $reward->reward_status === 'approved' ? 'fa-circle-check' : ($reward->reward_status === 'rejected' ? 'fa-circle-xmark' : 'fa-clock') }}"></i>{{ $reward->rewardStatusLabel() }}</span></td>
@@ -76,10 +91,14 @@
                             @endif
                         </td>
                         <td data-label="Thao tác">
-                            @if($reward->reward_status === \App\Models\LuckyWheelSpin::STATUS_PENDING)
+                            @if($reward->reward_status === \App\Models\LuckyWheelSpin::STATUS_PENDING && ($canApproveReward || $canRejectReward))
                                 <div class="reward-actions">
-                                    <form method="POST" action="{{ route('lucky_wheel_rewards.approve', $reward) }}">@csrf<button class="reward-approve" type="submit"><i class="fas fa-check"></i>Duyệt & cộng ${{ number_format((float)$reward->reward_amount, 2) }}</button></form>
-                                    <form method="POST" action="{{ route('lucky_wheel_rewards.reject', $reward) }}">@csrf<button class="reward-reject" type="submit"><i class="fas fa-xmark"></i>Từ chối</button></form>
+                                    @if ($canApproveReward)
+                                        <form method="POST" action="{{ route('lucky_wheel_rewards.approve', $reward) }}">@csrf<button class="reward-approve" type="submit"><i class="fas fa-check"></i>Duyệt & cộng ${{ number_format((float)$reward->reward_amount, 2) }}</button></form>
+                                    @endif
+                                    @if ($canRejectReward)
+                                        <form method="POST" action="{{ route('lucky_wheel_rewards.reject', $reward) }}">@csrf<button class="reward-reject" type="submit"><i class="fas fa-xmark"></i>Từ chối</button></form>
+                                    @endif
                                 </div>
                             @else
                                 <span class="reward-done"><i class="fas {{ $reward->reward_status === 'rejected' ? 'fa-ban' : 'fa-check-double' }}"></i> Hoàn tất</span>

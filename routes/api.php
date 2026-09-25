@@ -23,7 +23,7 @@ Route::middleware([
     'web',
     'auth',
     'role:staff|admin|own',
-    'permission:' . config('authorization.capabilities.system_statistics'),
+    'permission:' . config('authorization.capabilities.statistics_view_overview'),
 ])->prefix('statistical')->name('api.statistical.')->group(function () {
     // API lấy dữ liệu thống kê doanh thu chính
     Route::get('revenue-data', [StatisticalController::class, 'getRevenueData'])->name('revenue');
@@ -35,26 +35,30 @@ Route::middleware([
     Route::get('transaction-status-stats', [StatisticalController::class, 'getTransactionStatusStats'])->name('transaction.status');
 
     // API export dữ liệu thống kê
-    Route::get('export-revenue-data', [StatisticalController::class, 'exportRevenueData'])->name('export.revenue');
+    Route::get('export-revenue-data', [StatisticalController::class, 'exportRevenueData'])
+        ->middleware('permission:' . config('authorization.capabilities.statistics_export'))
+        ->name('export.revenue');
 });
 
 // Middleware bảo vệ API (nếu cần)
 Route::middleware([
     'auth:sanctum',
     'role:staff|admin|own',
-    'permission:' . config('authorization.capabilities.system_statistics'),
+    'permission:' . config('authorization.capabilities.statistics_view_overview'),
 ])->prefix('admin/statistical')->name('api.admin.statistical.')->group(function () {
     // Các API chỉ dành cho admin
     Route::get('revenue-data', [StatisticalController::class, 'getRevenueData'])->name('revenue');
     Route::get('user-revenue-stats', [StatisticalController::class, 'getUserRevenueStats'])->name('user.revenue');
     Route::get('transaction-status-stats', [StatisticalController::class, 'getTransactionStatusStats'])->name('transaction.status');
-    Route::get('export-revenue-data', [StatisticalController::class, 'exportRevenueData'])->name('export.revenue');
+    Route::get('export-revenue-data', [StatisticalController::class, 'exportRevenueData'])
+        ->middleware('permission:' . config('authorization.capabilities.statistics_export'))
+        ->name('export.revenue');
 });
 Route::middleware([
     'web',
     'auth',
     'role:staff|admin|own',
-    'permission:' . config('authorization.capabilities.system_statistics'),
+    'permission:' . config('authorization.capabilities.statistics_view_customers'),
 ])->prefix('revenue')->group(function () {
     // Tổng quan doanh thu
     Route::get('overview', [StatisticalController::class, 'revenueOverview'])->name('api.revenue.overview');
@@ -87,7 +91,11 @@ Route::middleware([
     Route::get('hourly', [StatisticalController::class, 'hourlyStats'])->name('api.revenue.hourly');
 
     // Xuất báo cáo (nếu cần)
-    Route::get('export', [StatisticalController::class, 'exportRevenue'])->name('api.revenue.export');
+    Route::get('export', [StatisticalController::class, 'exportRevenue'])
+        ->withoutMiddleware('permission:' . config('authorization.capabilities.statistics_view_customers'))
+        ->middleware('permission:' . config('authorization.capabilities.statistics_view_staff'))
+        ->middleware('permission:' . config('authorization.capabilities.statistics_export'))
+        ->name('api.revenue.export');
 });
 
 // Routes tương thích với frontend JavaScript
@@ -95,7 +103,7 @@ Route::middleware([
     'web',
     'auth',
     'role:staff|admin|own',
-    'permission:' . config('authorization.capabilities.system_statistics'),
+    'permission:' . config('authorization.capabilities.statistics_view_customers'),
 ])->group(function () {
     Route::get('revenue-overview', [StatisticalController::class, 'revenueOverview']);
     Route::get('revenue-chart', [StatisticalController::class, 'revenueChart']);

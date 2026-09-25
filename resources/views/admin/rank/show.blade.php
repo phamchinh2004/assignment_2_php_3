@@ -9,6 +9,11 @@
 @endsection
 
 @section('content')
+@php
+    $authorization = app(\App\Services\AuthorizationService::class);
+    $canUpdateRank = $authorization->can(auth()->user(), config('authorization.capabilities.ranks_update'));
+    $canViewCustomerDetail = $authorization->can(auth()->user(), config('authorization.capabilities.customers_view_detail'));
+@endphp
 <div class="container-fluid px-4 pb-5">
 
     {{-- Back Link --}}
@@ -37,11 +42,13 @@
             </div>
         </div>
 
+        @if ($canUpdateRank)
         <div class="d-flex align-items-center gap-2">
             <a href="{{ route('rank.edit', ['rank' => $rank->id]) }}" class="btn-create-modern">
                 <i class="fas fa-pen mr-1"></i> Chỉnh sửa cấp độ
             </a>
         </div>
+        @endif
     </div>
 
     {{-- KPI Cards --}}
@@ -189,9 +196,13 @@
                             </td>
                             <td class="text-muted">{{ $u->created_at ? $u->created_at->format('d/m/Y') : '—' }}</td>
                             <td class="text-center">
+                                @if ($canViewCustomerDetail)
                                 <a href="{{ route('user.show', ['user' => $u->id]) }}" class="btn-action-icon view" title="Xem hồ sơ">
                                     <i class="fas fa-eye"></i>
                                 </a>
+                                @else
+                                    <span class="text-muted">—</span>
+                                @endif
                             </td>
                         </tr>
                     @empty

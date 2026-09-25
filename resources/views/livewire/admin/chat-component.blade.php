@@ -4,7 +4,7 @@
     $isManagementUser = in_array(auth()->user()->role, \App\Models\User::MANAGEMENT_ROLES, true);
     $canManageAllChats = app(\App\Services\AuthorizationService::class)->can(
         auth()->user(),
-        config('authorization.capabilities.manage_all_chats')
+        config('authorization.capabilities.chats_view_all')
     );
 @endphp
 

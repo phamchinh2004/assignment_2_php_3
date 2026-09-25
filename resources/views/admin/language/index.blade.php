@@ -16,6 +16,12 @@
 
 @section('content')
 @php
+    $authorization = app(\App\Services\AuthorizationService::class);
+    $canCreateLanguage = $authorization->can(auth()->user(), config('authorization.capabilities.languages_create'));
+    $canViewLanguageDetail = $authorization->can(auth()->user(), config('authorization.capabilities.languages_view_detail'));
+    $canUpdateLanguage = $authorization->can(auth()->user(), config('authorization.capabilities.languages_update'));
+@endphp
+@php
     $totalLanguages = !empty($list_languages) ? $list_languages->count() : 0;
 @endphp
 
@@ -30,12 +36,14 @@
             </h1>
             <p class="page-subtitle">Thiết lập các gói ngôn ngữ và đa ngữ hóa trên nền tảng</p>
         </div>
+        @if ($canCreateLanguage)
         <div class="d-flex align-items-center gap-2">
             <a href="{{ route('language.create') }}" class="btn-create-modern text-decoration-none">
                 <i class="fas fa-plus"></i>
                 <span>Thêm ngôn ngữ mới</span>
             </a>
         </div>
+        @endif
     </div>
 
     {{-- KPI Cards --}}
@@ -94,9 +102,13 @@
                                     </td>
 
                                     <td>
+                                        @if ($canViewLanguageDetail)
                                         <a class="entity-title font-weight-bold" href="{{ route('language.show', ['language' => $item->id]) }}">
                                             {{ $item->name }}
                                         </a>
+                                        @else
+                                            <span class="entity-title font-weight-bold">{{ $item->name }}</span>
+                                        @endif
                                     </td>
 
                                     <td>
@@ -113,15 +125,19 @@
 
                                     <td class="text-center">
                                         <div class="action-btn-group justify-content-center">
+                                            @if ($canViewLanguageDetail)
                                             <a href="{{ route('language.show', ['language' => $item->id]) }}"
                                                class="btn-action-icon view" title="Xem chi tiết">
                                                 <i class="fas fa-eye"></i>
                                             </a>
+                                            @endif
 
+                                            @if ($canUpdateLanguage)
                                             <a href="{{ route('language.edit', ['language' => $item->id]) }}"
                                                class="btn-action-icon edit" title="Chỉnh sửa">
                                                 <i class="fas fa-pen"></i>
                                             </a>
+                                            @endif
                                         </div>
                                     </td>
                                 </tr>

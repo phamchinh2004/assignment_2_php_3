@@ -9,6 +9,10 @@
 @endsection
 
 @section('content')
+@php
+    $authorization = app(\App\Services\AuthorizationService::class);
+    $canUpdateCustomer = $authorization->can(auth()->user(), config('authorization.capabilities.customers_update'));
+@endphp
 <div class="container-fluid px-4 pb-5">
 
     {{-- Back link --}}
@@ -45,16 +49,19 @@
                 </p>
             </div>
         </div>
+        @if ($canUpdateCustomer)
         <div class="d-flex align-items-center gap-2">
             <a href="{{ route('user.edit', ['user' => $user->id]) }}" class="btn-create-modern">
                 <i class="fas fa-pen-to-square"></i>
                 <span>Chỉnh sửa hồ sơ</span>
             </a>
         </div>
+        @endif
     </div>
 
     {{-- KPI Cards: Tài chính & Tiến độ --}}
     <div class="stats-grid">
+        @if ($canViewFinancials)
         <div class="stat-card-modern primary">
             <div class="stat-content">
                 <span class="stat-label">Số dư khả dụng</span>
@@ -80,6 +87,7 @@
                 <i class="fas fa-lock"></i>
             </div>
         </div>
+        @endif
 
         <div class="stat-card-modern warning">
             <div class="stat-content">
@@ -210,6 +218,7 @@
         </div>
     </div>
 
+    @if ($canViewFinancials)
     {{-- Card 3: Lịch sử biến động số dư gần nhất --}}
     <div class="card-modern">
         <div class="card-header-modern">
@@ -263,6 +272,7 @@
             </table>
         </div>
     </div>
+    @endif
 
 </div>
 @endsection

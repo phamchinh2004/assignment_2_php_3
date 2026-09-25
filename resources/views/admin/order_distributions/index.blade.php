@@ -8,6 +8,9 @@
 
 @section('content')
 @php
+    $canViewDistributionDetail = app(\App\Services\AuthorizationService::class)->can(auth()->user(), config('authorization.capabilities.order_distributions_view_detail'));
+@endphp
+@php
     $advancedKeys = ['user_id', 'assigned_by', 'order_id', 'source', 'from', 'to', 'updated_from', 'updated_to'];
     $advancedCount = collect(request()->only($advancedKeys))->filter(fn ($value) => $value !== null && $value !== '')->count();
     $hasAdvancedFilters = $advancedCount > 0
@@ -277,9 +280,13 @@
                                 </time>
                             </td>
                             <td data-label="Thao tác">
+                                @if ($canViewDistributionDetail)
                                 <a class="distribution-result-action" href="{{ route('order_distributions.show', array_merge(['frozenOrder' => $item->id], request()->query())) }}">
                                     Xem Audit <i class="fas fa-arrow-right" aria-hidden="true"></i>
                                 </a>
+                                @else
+                                    <span class="text-muted">—</span>
+                                @endif
                             </td>
                         </tr>
                     @empty

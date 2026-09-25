@@ -9,6 +9,9 @@
 @endsection
 
 @section('content')
+@php
+    $canUpdatePartner = app(\App\Services\AuthorizationService::class)->can(auth()->user(), config('authorization.capabilities.partners_update'));
+@endphp
 <div class="container-fluid px-4 pb-5">
 
     {{-- Back Link --}}
@@ -37,11 +40,13 @@
             </div>
         </div>
 
+        @if ($canUpdatePartner)
         <div class="d-flex align-items-center gap-2">
             <a href="{{ route('partner.edit', ['partner' => $partner->id]) }}" class="btn-create-modern">
                 <i class="fas fa-pen mr-1"></i> Chỉnh sửa đối tác
             </a>
         </div>
+        @endif
     </div>
 
     {{-- Detail Card --}}

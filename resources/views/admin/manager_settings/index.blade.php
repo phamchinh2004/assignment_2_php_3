@@ -4,20 +4,12 @@
 @endsection
 
 @section('style-libs')
-    <link href="{{ asset('theme/admin/vendor/datatables/dataTables.bootstrap4.min.css') }}" rel="stylesheet">
+    @include('admin.manager_settings.group-styles')
     @vite('resources/css/admin/common-modern.css')
 @endsection
 
-@section('script-libs')
-    <script src="{{ asset('theme/admin/vendor/datatables/jquery.dataTables.min.js') }}"></script>
-    <script src="{{ asset('theme/admin/vendor/datatables/dataTables.bootstrap4.min.js') }}"></script>
-    <script src="{{ asset('theme/admin/js/demo/datatables-demo.js') }}"></script>
-@endsection
-
 @section('content')
-@php
-    $totalSettings = !empty($list_manager_settings) ? $list_manager_settings->count() : 0;
-@endphp
+
 
 <div class="container-fluid px-4 pb-5">
 
@@ -62,68 +54,34 @@
             </h6>
         </div>
 
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-modern" id="dataTable" width="100%" cellspacing="0">
-                    <thead>
-                        <tr>
-                            <th class="text-center" style="width: 50px;">#</th>
-                            <th>Tên chức năng</th>
-                            <th>Mã chức năng (Permission Code)</th>
-                            <th>Ngày thiết lập</th>
-                            <th class="text-center" style="width: 120px;">Thao tác</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @if (!empty($list_manager_settings))
-                            @foreach ($list_manager_settings as $index => $item)
-                                <tr>
-                                    <td class="text-center">
-                                        <span class="id-chip">#{{ $index + 1 }}</span>
-                                    </td>
+        <div class="card-body p-4">
+            @forelse($permissionGroups as $group)
+                <section class="permission-module">
+                    <div class="permission-module__header">
+                        <h2 class="permission-module__title"><i class="fas fa-layer-group text-primary"></i> {{ $group['label'] }}</h2>
+                        @include('admin.manager_settings.item-actions', ['item' => $group['root']])
+                    </div>
+                    <div class="px-3 py-2 text-muted"><code>{{ $group['root']->manager_code }}</code> &middot; {{ $group['root']->created_at?->format('d/m/Y H:i') }}</div>
+                    @if($group['settings']->count() > 1)
+                        <div class="permission-module__body">
+                            @foreach($group['settings']->reject(fn ($setting) => $setting->id === $group['root']->id) as $item)
+                                <div class="border rounded p-3 d-flex justify-content-between align-items-center" style="gap: 1rem; min-width: 0;">
+                                    <div style="min-width: 0; overflow-wrap: anywhere;">
+                                        <a href="{{ route('manager_setting.show', $item) }}" class="entity-title font-weight-bold">{{ $item->manager_name }}</a>
 
-                                    <td>
-                                        <div class="d-flex align-items-center gap-2">
-                                            <i class="fas fa-shield text-teal" style="font-size: 13px;"></i>
-                                            <a class="entity-title font-weight-bold" href="{{ route('manager_setting.show', ['manager_setting' => $item->id]) }}">
-                                                {{ $item->manager_name }}
-                                            </a>
-                                        </div>
-                                    </td>
-
-                                    <td>
-                                        <code style="font-size: 0.85rem; background: #f1f5f9; padding: 3px 8px; border-radius: 4px; color: #0d9488; font-weight: 700;">
-                                            {{ $item->manager_code }}
-                                        </code>
-                                    </td>
-
-                                    <td>
-                                        <span class="text-muted" style="font-size: 0.8125rem;">
-                                            {{ $item->created_at ? $item->created_at->format('d/m/Y H:i') : '—' }}
-                                        </span>
-                                    </td>
-
-                                    <td class="text-center">
-                                        <div class="action-btn-group justify-content-center">
-                                            <a href="{{ route('manager_setting.show', ['manager_setting' => $item->id]) }}"
-                                               class="btn-action-icon view" title="Xem chi tiết">
-                                                <i class="fas fa-eye"></i>
-                                            </a>
-
-                                            <a href="{{ route('manager_setting.edit', ['manager_setting' => $item->id]) }}"
-                                               class="btn-action-icon edit" title="Chỉnh sửa">
-                                                <i class="fas fa-pen"></i>
-                                            </a>
-                                        </div>
-                                    </td>
-                                </tr>
+                                        <div><code>{{ $item->manager_code }}</code></div>
+                                        <small class="text-muted">{{ $item->created_at?->format('d/m/Y H:i') }}</small>
+                                    </div>
+                                    @include('admin.manager_settings.item-actions', ['item' => $item])
+                                </div>
                             @endforeach
-                        @endif
-                    </tbody>
-                </table>
-            </div>
+                        </div>
+                    @endif
+                </section>
+            @empty
+                <p class="text-muted text-center p-4">Chưa có chức năng phân quyền.</p>
+            @endforelse
         </div>
     </div>
-
 </div>
 @endsection

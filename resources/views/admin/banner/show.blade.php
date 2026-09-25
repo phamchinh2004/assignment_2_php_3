@@ -44,6 +44,9 @@
 @endsection
 
 @section('content')
+@php
+    $canUpdateBanner = app(\App\Services\AuthorizationService::class)->can(auth()->user(), config('authorization.capabilities.banners_update'));
+@endphp
 <div class="container-fluid px-4 pb-5">
 
     {{-- Back Link --}}
@@ -70,11 +73,13 @@
             </p>
         </div>
 
+        @if ($canUpdateBanner)
         <div class="d-flex align-items-center gap-2">
             <a href="{{ route('banner.edit', ['banner' => $banner->id]) }}" class="btn-create-modern">
                 <i class="fas fa-pen mr-1"></i> Chỉnh sửa bộ banner
             </a>
         </div>
+        @endif
     </div>
 
     {{-- Banner Gallery Card --}}
@@ -107,9 +112,11 @@
                     </div>
                     <h5 class="empty-state-title">Chưa có ảnh nào trong bộ này</h5>
                     <p class="empty-state-text">Hãy chỉnh sửa bộ banner để tải thêm hình ảnh slide.</p>
+                    @if ($canUpdateBanner)
                     <a href="{{ route('banner.edit', ['banner' => $banner->id]) }}" class="btn btn-primary btn-sm px-3" style="border-radius: 8px;">
                         <i class="fas fa-plus mr-1"></i> Thêm ảnh ngay
                     </a>
+                    @endif
                 </div>
             @endif
         </div>

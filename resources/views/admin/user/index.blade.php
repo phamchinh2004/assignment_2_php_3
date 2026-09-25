@@ -21,12 +21,21 @@ Danh sách người dùng
 
 @section('content')
 @php
+    $authorization = app(\App\Services\AuthorizationService::class);
+    $capabilities = config('authorization.capabilities');
+    $canCreateCustomer = $authorization->can(auth()->user(), $capabilities['customers_create']);
+    $canViewDetail = $authorization->can(auth()->user(), $capabilities['customers_view_detail']);
+    $canViewFinancials = $authorization->can(auth()->user(), $capabilities['customers_view_financials']);
+    $canAdjustBalance = $authorization->can(auth()->user(), $capabilities['customers_adjust_balance']);
+    $canChangeStatus = $authorization->can(auth()->user(), $capabilities['customers_change_status']);
+    $canManageFrozenOrders = $authorization->can(auth()->user(), $capabilities['customers_manage_frozen_orders']);
+    $canUpdateCustomer = $authorization->can(auth()->user(), $capabilities['customers_update']);
     $totalUsers = !empty($users) ? $users->count() : 0;
     $activeUsers = !empty($users) ? $users->where('status', 'activated')->count() : 0;
     $inactivatedUsers = !empty($users) ? $users->where('status', 'inactivated')->count() : 0;
     $lockedUsers = !empty($users) ? $users->whereNotIn('status', ['activated', 'inactivated'])->count() : 0;
-    $totalBalance = !empty($users) ? $users->sum('balance') : 0;
-    $totalFrozen = !empty($users) ? $users->sum('frozen_balance') : 0;
+    $totalBalance = $canViewFinancials && !empty($users) ? $users->sum('balance') : 0;
+    $totalFrozen = $canViewFinancials && !empty($users) ? $users->sum('frozen_balance') : 0;
     $frozenUsersCount = 0;
     $cloneUsersCount = 0;
 
@@ -59,12 +68,14 @@ Danh sách người dùng
             </h1>
             <p class="page-subtitle">Theo dõi tài khoản thành viên, số dư, định vị và quyền hạn hệ thống</p>
         </div>
+        @if ($canCreateCustomer)
         <div class="d-flex align-items-center gap-2" id="div_btn_create">
             <a id="btn_create" href="{{ route('user.create') }}" class="btn-create-modern text-decoration-none">
                 <i class="fas fa-user-plus"></i>
                 <span>Thêm thành viên mới</span>
             </a>
         </div>
+        @endif
     </div>
 
     <!-- KPI Summary Cards -->
@@ -111,6 +122,7 @@ Danh sách người dùng
             </div>
         </div>
 
+        @if ($canViewFinancials)
         <!-- Stat 4: Tổng số dư lưu hành -->
         <div class="stat-card-modern info">
             <div class="stat-content">
@@ -124,6 +136,7 @@ Danh sách người dùng
                 <i class="fas fa-wallet"></i>
             </div>
         </div>
+        @endif
     </div>
 
     <!-- Main Table Card -->
@@ -221,9 +234,15 @@ Danh sách người dùng
                                     </div>
                                     <div class="user-details">
                                         <div class="d-flex align-items-center gap-2">
-                                            <a class="user-link" href="{{ route('user.edit', ['user' => $item->id]) }}" title="{{ $item->full_name }}">
+                                            @if ($canViewDetail)
+                                            <a class="user-link" href="{{ route('user.show', ['user' => $item->id]) }}" title="{{ $item->full_name }}">
                                                 {{ Str::limit($item->full_name ?: 'Chưa đặt tên', 26, '...') }}
                                             </a>
+                                            @else
+                                            <span class="user-link" title="{{ $item->full_name }}">
+                                                {{ Str::limit($item->full_name ?: 'Chưa đặt tên', 26, '...') }}
+                                            </span>
+                                            @endif
                                             <span class="user-id-chip">ID: {{ $item->id }}</span>
                                         </div>
                                         <div class="user-meta-row">
@@ -268,6 +287,7 @@ Danh sách người dùng
 
                             <!-- Col 4: Số dư & Tài chính -->
                             <td>
+                                @if ($canViewFinancials)
                                 <div class="finance-box">
                                     <div>
                                         <span class="balance-highlight" title="Số dư khả dụng">
@@ -282,6 +302,9 @@ Danh sách người dùng
                                         </span>
                                     </div>
                                 </div>
+                                @else
+                                    <span class="text-muted">—</span>
+                                @endif
                             </td>
 
                             <!-- Col 5: Vị trí & Khu vực -->
@@ -377,6 +400,7 @@ Danh sách người dùng
                             <td>
                                 <div class="actions-wrapper">
                                     <!-- Nút Nạp tiền chính -->
+                                    @if ($canAdjustBalance)
                                     <button type="button" 
                                             class="btn-action-deposit btn_plus_money"
                                             id="{{ $item->id }}"
@@ -388,14 +412,17 @@ Danh sách người dùng
                                         <i class="fas fa-circle-plus"></i>
                                         <span>Nạp tiền</span>
                                     </button>
+                                    @endif
 
                                     <!-- Cụm nút icon hành động -->
                                     <div class="action-icon-group">
+                                        @if ($canViewDetail)
                                         <a href="{{ route('user.show', ['user' => $item->id]) }}"
                                            class="btn-icon-modern view"
                                            title="Xem chi tiết người dùng">
                                             <i class="fas fa-eye"></i>
                                         </a>
+                                        @endif
 
                                         <a href="{{ route('chat-panel') }}#user-{{ $item->id }}" 
                                            class="btn-icon-modern chat"
@@ -403,6 +430,7 @@ Danh sách người dùng
                                             <i class="fas fa-comment-dots"></i>
                                         </a>
 
+                                        @if ($canChangeStatus)
                                         @if($item->status == "activated")
                                         <a href="{{ route('user.change.status', ['user' => $item->id]) }}" 
                                            class="btn-icon-modern lock" 
@@ -422,18 +450,23 @@ Danh sách người dùng
                                             <i class="fas fa-lock-open"></i>
                                         </a>
                                         @endif
+                                        @endif
 
+                                        @if ($canManageFrozenOrders)
                                         <a href="{{ route('user.frozen.order.interface', ['user' => $item->id]) }}"
                                            class="btn-icon-modern freeze"
                                            title="Quản lý đóng băng đơn hàng">
                                             <i class="fas fa-snowflake"></i>
                                         </a>
+                                        @endif
 
+                                        @if ($canUpdateCustomer)
                                         <a href="{{ route('user.edit', ['user' => $item->id]) }}" 
                                            class="btn-icon-modern edit"
                                            title="Chỉnh sửa thông tin">
                                             <i class="fas fa-pen-to-square"></i>
                                         </a>
+                                        @endif
                                     </div>
                                 </div>
                             </td>

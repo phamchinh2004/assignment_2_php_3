@@ -35,7 +35,7 @@ class UserController extends Controller
         $query = User::with(['frozen_orders', 'referrer', 'rank'])->where('role', 'member');
         $actor = Auth::user();
 
-        if (!$authorization->can($actor, config('authorization.capabilities.manage_all_users'))) {
+        if (!$authorization->can($actor, config('authorization.capabilities.customers_view_all'))) {
             $query->where('referrer_id', $actor->id);
         }
 
@@ -52,7 +52,7 @@ class UserController extends Controller
             ->select('id', 'last_seen');
         $actor = Auth::user();
 
-        if (!$authorization->can($actor, config('authorization.capabilities.manage_all_users'))) {
+        if (!$authorization->can($actor, config('authorization.capabilities.customers_view_all'))) {
             $query->where('referrer_id', $actor->id);
         }
 
@@ -80,16 +80,23 @@ class UserController extends Controller
     {
         $this->authorizeMemberAccess($user, $authorization);
 
-        $user->load([
+        $relations = [
             'rank',
             'referrer',
             'user_spin_progress',
             'frozen_orders.order',
-            'transaction_histories' => fn ($query) => $query->latest()->limit(10),
-            'wallet_balance_histories' => fn ($query) => $query->latest()->limit(10),
-        ]);
+        ];
+        $canViewFinancials = $authorization->can(
+            Auth::user(),
+            config('authorization.capabilities.customers_view_financials')
+        );
+        if ($canViewFinancials) {
+            $relations['transaction_histories'] = fn ($query) => $query->latest()->limit(10);
+            $relations['wallet_balance_histories'] = fn ($query) => $query->latest()->limit(10);
+        }
+        $user->load($relations);
 
-        return view('admin.user.show', compact('user'));
+        return view('admin.user.show', compact('user', 'canViewFinancials'));
     }
 
     /**
@@ -284,24 +291,35 @@ class UserController extends Controller
             'username_bank',
             'bank_name',
             'account_number',
-            'balance',
-            'frozen_balance',
-            'status',
             'warehouse_area',
             'warehouse_address',
         ]);
+        $actor = Auth::user();
+        $capabilities = config('authorization.capabilities');
+
+        if ($authorization->can($actor, $capabilities['customers_adjust_balance'])) {
+            foreach (['balance', 'frozen_balance'] as $financialField) {
+                if ($request->has($financialField)) {
+                    $data[$financialField] = $request->input($financialField);
+                }
+            }
+        }
+        if ($authorization->can($actor, $capabilities['customers_change_status']) && $request->has('status')) {
+            $data['status'] = $request->input('status');
+        }
 
         // Only the owner may change account roles.
-        if ($authorization->isSuperuser(Auth::user()) && $request->filled('role')) {
+        if ($authorization->isSuperuser($actor) && $request->filled('role')) {
             $data['role'] = $request->role;
         }
-        if ($authorization->can(Auth::user(), config('authorization.capabilities.manage_all_users')) && $request->filled('lucky_wheel_bonus_spins')) {
+        $canManageSpin = $authorization->can($actor, $capabilities['customers_manage_spin']);
+        if ($canManageSpin && $request->filled('lucky_wheel_bonus_spins')) {
             $data['lucky_wheel_bonus_spins'] = (int) $request->lucky_wheel_bonus_spins;
         }
-        if ($request->filled('rank')) {
+        if ($canManageSpin && $request->filled('rank')) {
             $data['rank_id'] = $request->rank;
         }
-        $reset_progress = $request->has('reset_progress');
+        $reset_progress = $canManageSpin && $request->boolean('reset_progress');
         $clone_account = $request->has('clone_account');
         $progress = User_spin_progress::where('user_id', $user->id)->first();
         if ($reset_progress && $progress) {
@@ -313,14 +331,14 @@ class UserController extends Controller
         } else {
             $data['clone_account'] = false;
         }
-        if ($request->rank) {
+        if (array_key_exists('rank_id', $data)) {
             if ($progress) {
-                $progress->rank_id = $request->rank;
+                $progress->rank_id = $data['rank_id'];
                 $progress->save();
             } else {
                 User_spin_progress::create([
                     'user_id' => $user->id,
-                    'rank_id' => $request->rank
+                    'rank_id' => $data['rank_id']
                 ]);
             }
         } else if ($user->rank_id && !$progress) {
@@ -702,7 +720,7 @@ class UserController extends Controller
         $actor = Auth::user();
         $canManageAll = $authorization->can(
             $actor,
-            config('authorization.capabilities.manage_all_users')
+            config('authorization.capabilities.customers_view_all')
         );
 
         abort_unless(

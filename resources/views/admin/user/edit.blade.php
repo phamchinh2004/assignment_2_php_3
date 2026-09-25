@@ -14,6 +14,12 @@ Chỉnh sửa người dùng
 
 @section('content')
 @php
+    $authorization = app(\App\Services\AuthorizationService::class);
+    $capabilities = config('authorization.capabilities');
+    $canChangeStatus = $authorization->can(auth()->user(), $capabilities['customers_change_status']);
+    $canAdjustBalance = $authorization->can(auth()->user(), $capabilities['customers_adjust_balance']);
+    $canManageSpin = $authorization->can(auth()->user(), $capabilities['customers_manage_spin']);
+    $canManageLocation = $authorization->can(auth()->user(), $capabilities['customers_manage_location']);
     $displayName = $user->full_name ?: ($user->username ?: 'Người dùng');
     $initials = mb_strtoupper(mb_substr($displayName, 0, 2));
     $hasPreciseLocation = $user->location_latitude !== null || $user->location_longitude !== null
@@ -138,6 +144,7 @@ Chỉnh sửa người dùng
                         </div>
 
                         <div class="row row-cols-custom">
+                            @if ($canChangeStatus)
                             <div class="col-md-6">
                                 <div class="form-group-custom">
                                     <label for="status">Trạng thái tài khoản <span class="text-danger">*</span></label>
@@ -151,6 +158,7 @@ Chỉnh sửa người dùng
                                     @enderror
                                 </div>
                             </div>
+                            @endif
 
                             @if (auth()->user()->role === \App\Models\User::ROLE_OWNER)
                             <div class="col-md-6">
@@ -261,6 +269,7 @@ Chỉnh sửa người dùng
                         </div>
 
                         <div class="row row-cols-custom">
+                            @if ($canAdjustBalance)
                             <div class="col-md-6">
                                 <div class="form-group-custom">
                                     <label for="balance">Số dư</label>
@@ -289,6 +298,8 @@ Chỉnh sửa người dùng
                                 </div>
                             </div>
 
+                            @endif
+                            @if ($canManageSpin)
                             <div class="col-md-6">
                                 <div class="form-group-custom">
                                     <label for="rank">Cấp độ</label>
@@ -309,7 +320,6 @@ Chỉnh sửa người dùng
                                 </div>
                             </div>
 
-                            @if (app(\App\Services\AuthorizationService::class)->can(auth()->user(), config('authorization.capabilities.manage_all_users')))
                             <div class="col-md-6">
                                 <div class="form-group-custom">
                                     <label for="lucky_wheel_bonus_spins">Lượt quay may mắn được cấp còn lại</label>
@@ -325,6 +335,7 @@ Chỉnh sửa người dùng
                             @endif
                         </div>
 
+                        @if ($canManageSpin)
                         <div class="checkbox-card">
                             <div class="d-flex align-items-center">
                                 <input type="checkbox" name="reset_progress" id="reset_progress" value="1" class="form-check-input me-3">
@@ -333,6 +344,7 @@ Chỉnh sửa người dùng
                                 </label>
                             </div>
                         </div>
+                        @endif
 
                         <div class="checkbox-card">
                             <div class="d-flex align-items-center">
@@ -443,6 +455,7 @@ Chỉnh sửa người dùng
                     </div>
                 @endif
 
+                @if ($canManageLocation)
                 <div class="address-actions">
                     <form action="{{ route('user.location.refresh', ['user' => $user->id]) }}" method="post" id="refreshLocationForm">
                         @csrf
@@ -458,6 +471,7 @@ Chỉnh sửa người dùng
                         </button>
                     </form>
                 </div>
+                @endif
                 <p class="side-card-note">
                     <i class="fas {{ $isUserOnline ? 'fa-circle-check' : 'fa-circle-xmark' }}"></i>
                     {{ $isUserOnline

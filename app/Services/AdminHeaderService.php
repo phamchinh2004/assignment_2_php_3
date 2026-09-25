@@ -177,7 +177,7 @@ class AdminHeaderService
 
         if (
             $user->role === User::ROLE_ADMIN
-            && $this->authorization->can($user, config('authorization.capabilities.manage_all_chats'))
+            && $this->authorization->can($user, config('authorization.capabilities.chats_view_all'))
         ) {
             $query->where(function ($conversation) use ($user) {
                 $conversation->where('staff_id', $user->id)

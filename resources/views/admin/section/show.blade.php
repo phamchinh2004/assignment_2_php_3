@@ -27,6 +27,9 @@
 @endsection
 
 @section('content')
+@php
+    $canUpdateSection = app(\App\Services\AuthorizationService::class)->can(auth()->user(), config('authorization.capabilities.site_content_update'));
+@endphp
 <div class="container-fluid px-4 pb-5">
 
     {{-- Back Link --}}
@@ -53,11 +56,13 @@
             </p>
         </div>
 
+        @if ($canUpdateSection)
         <div class="d-flex align-items-center gap-2">
             <a href="{{ route('section.edit', ['section' => $section->id]) }}" class="btn-create-modern">
                 <i class="fas fa-pen mr-1"></i> Chỉnh sửa nội dung
             </a>
         </div>
+        @endif
     </div>
 
     {{-- Nội dung theo từng ngôn ngữ --}}

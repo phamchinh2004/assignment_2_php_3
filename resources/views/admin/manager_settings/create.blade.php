@@ -39,6 +39,7 @@
                                 <i class="fas fa-key"></i> Thông tin chức năng
                             </div>
 
+                            @include('admin.manager_settings.parent-field')
                             <div class="form-group-modern">
                                 <label class="form-label-modern" for="manager_name">
                                     Tên chức năng / Quyền hạn <span class="text-danger">*</span>

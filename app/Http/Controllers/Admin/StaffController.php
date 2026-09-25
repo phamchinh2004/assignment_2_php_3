@@ -10,6 +10,7 @@ use App\Models\Manager_setting;
 use App\Models\User;
 use App\Models\User_manager_setting;
 use App\Services\AuthorizationService;
+use App\Services\PermissionRegistry;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -91,35 +92,33 @@ class StaffController extends Controller
             return redirect()->route('staff.index')->with('error', 'Không tìm thấy nhân viên cần thay đổi trạng thái!');
         }
     }
-    public function edit_permissions($staff_id, AuthorizationService $authorization)
+    public function edit_permissions(
+        $staff_id,
+        AuthorizationService $authorization,
+        PermissionRegistry $registry
+    )
     {
         $get_user = User::find($staff_id);
         if (!$get_user) {
             return back()->with('error', 'Người dùng không xác định!');
         }
         abort_unless($authorization->canManageOperatorPermissions(Auth::user(), $get_user), 403);
-        $list_manager_settings = Manager_setting::get();
-        $get_user_manager_setting = User_manager_setting::where('user_id', $staff_id)->get();
-        $existing_permission_ids = $get_user_manager_setting->pluck('manager_setting_id')->toArray();
+        $this->syncRegistryAssignments($get_user, $registry);
+        $assignments = User_manager_setting::with('manager_setting')
+            ->where('user_id', $get_user->id)
+            ->whereHas('manager_setting', fn ($query) => $query->whereIn('manager_code', $registry->codes()))
+            ->get();
+        $permissionGroups = $registry->groups($assignments);
 
-        foreach ($list_manager_settings as $item_manager_setting) {
-            if (!in_array($item_manager_setting->id, $existing_permission_ids)) {
-                User_manager_setting::create([
-                    'user_id' => $staff_id,
-                    'manager_setting_id' => $item_manager_setting->id,
-                    'is_active' => false,
-                ]);
-            }
-        }
-
-        $get_user_manager_setting = User_manager_setting::where('user_id', $staff_id)->get();
-
-        return view('admin.staff.edit_permission', compact('list_manager_settings', 'get_user_manager_setting', 'get_user'));
+        return view('admin.staff.edit_permission', compact('permissionGroups', 'get_user'));
     }
-    public function change_status_permission(AuthorizationService $authorization)
+    public function change_status_permission(
+        AuthorizationService $authorization,
+        PermissionRegistry $registry
+    )
     {
         $id = request()->input('id');
-        $get_user_manager_setting = User_manager_setting::find($id);
+        $get_user_manager_setting = User_manager_setting::with('manager_setting')->find($id);
         if (!$get_user_manager_setting) {
             return response()->json([
                 'status' => 400,
@@ -128,6 +127,11 @@ class StaffController extends Controller
         }
         $target = User::find($get_user_manager_setting->user_id);
         abort_unless($target && $authorization->canManageOperatorPermissions(Auth::user(), $target), 403);
+        abort_unless(
+            $get_user_manager_setting->manager_setting
+                && $registry->contains($get_user_manager_setting->manager_setting->manager_code),
+            403
+        );
 
         $get_user_manager_setting->is_active = !$get_user_manager_setting->is_active;
         $get_user_manager_setting->save();
@@ -154,7 +158,11 @@ class StaffController extends Controller
             'is_active' => (bool) $get_user_manager_setting->is_active,
         ]);
     }
-    public function change_status_permissions(Request $request, AuthorizationService $authorization)
+    public function change_status_permissions(
+        Request $request,
+        AuthorizationService $authorization,
+        PermissionRegistry $registry
+    )
     {
         $data = $request->validate([
             'staff_id' => ['required', 'integer'],
@@ -176,9 +184,16 @@ class StaffController extends Controller
 
         $assignments = User_manager_setting::where('user_id', $staff->id)
             ->whereIn('id', $assignmentIds)
+            ->with('manager_setting')
             ->get();
 
-        if ($assignments->count() !== $assignmentIds->count()) {
+        if (
+            $assignments->count() !== $assignmentIds->count()
+            || $assignments->contains(
+                fn ($assignment) => !$assignment->manager_setting
+                    || !$registry->contains($assignment->manager_setting->manager_code)
+            )
+        ) {
             return back()->with('error', 'Danh sách quyền không hợp lệ hoặc không thuộc nhân viên này!');
         }
 
@@ -239,7 +254,11 @@ class StaffController extends Controller
         return $phone;
     }
 
-    public function store(Request $request, AuthorizationService $authorization)
+    public function store(
+        Request $request,
+        AuthorizationService $authorization,
+        PermissionRegistry $registry
+    )
     {
         $actor = Auth::user();
         $canChooseRole = $authorization->isSuperuser($actor);
@@ -263,16 +282,11 @@ class StaffController extends Controller
         $data['role'] = $requestedRole;
         $data['referral_code'] = $this->return_random_referral_code();
         $new_user = User::create($data);
-        $list_manager_settings = Manager_setting::get();
-        if ($list_manager_settings) {
-            foreach ($list_manager_settings as $item_manager_setting) {
-                User_manager_setting::create([
-                    'user_id' => $new_user->id,
-                    'manager_setting_id' => $item_manager_setting->id,
-                    'is_active' => 0,
-                ]);
-            }
-        }
+        $this->syncRegistryAssignments(
+            $new_user,
+            $registry,
+            $requestedRole === User::ROLE_ADMIN
+        );
         return redirect()->route('staff.index')->with('success', 'Tạo tài khoản quản trị thành công!');
     }
     public function show(string $id, AuthorizationService $authorization)
@@ -313,7 +327,12 @@ class StaffController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id, AuthorizationService $authorization)
+    public function update(
+        Request $request,
+        string $id,
+        AuthorizationService $authorization,
+        PermissionRegistry $registry
+    )
     {
         $get_user = User::find($id);
         $actor = Auth::user();
@@ -327,23 +346,13 @@ class StaffController extends Controller
                 ? ['required', Rule::in([User::ROLE_STAFF, User::ROLE_ADMIN])]
                 : ['prohibited'],
         ]);
-        $roleChanged = isset($data['role']) && $data['role'] !== $get_user->role;
+        $oldRole = $get_user->role;
+        $roleChanged = isset($data['role']) && $data['role'] !== $oldRole;
         $get_user->update($data);
-        $list_manager_settings = Manager_setting::get();
-        if ($list_manager_settings) {
-            foreach ($list_manager_settings as $item_manager_setting) {
-                $get_user_manager_setting = User_manager_setting::where('user_id', $get_user->id)
-                    ->where('manager_setting_id', $item_manager_setting->id)
-                    ->first();
-                if (!$get_user_manager_setting) {
-                    User_manager_setting::create([
-                        'user_id' => $get_user->id,
-                        'manager_setting_id' => $item_manager_setting->id,
-                        'is_active' => 0,
-                    ]);
-                }
-            }
-        }
+        $forcedPermissionState = $roleChanged
+            ? $get_user->role === User::ROLE_ADMIN
+            : null;
+        $this->syncRegistryAssignments($get_user, $registry, $forcedPermissionState);
         if ($roleChanged) {
             $get_user->unsetRelation('user_manager_settings');
             $state = $authorization->state($get_user);
@@ -359,5 +368,39 @@ class StaffController extends Controller
             }
         }
         return redirect()->route('staff.index')->with('success', 'Cập nhật tài khoản nhân viên thành công!');
+    }
+
+    private function syncRegistryAssignments(
+        User $user,
+        PermissionRegistry $registry,
+        ?bool $forceState = null
+    ): void {
+        foreach ($registry->permissions() as $permission) {
+            $managerSetting = Manager_setting::firstOrCreate(
+                ['manager_code' => $permission['code']],
+                ['manager_name' => $permission['label']]
+            );
+
+            if ($managerSetting->manager_name !== $permission['label']) {
+                $managerSetting->update(['manager_name' => $permission['label']]);
+            }
+
+            $assignment = User_manager_setting::firstOrNew([
+                'user_id' => $user->id,
+                'manager_setting_id' => $managerSetting->id,
+            ]);
+
+            if (!$assignment->exists) {
+                $assignment->is_active = $forceState
+                    ?? in_array($user->role, [User::ROLE_OWNER, User::ROLE_ADMIN], true);
+                $assignment->save();
+                continue;
+            }
+
+            if ($forceState !== null && (bool) $assignment->is_active !== $forceState) {
+                $assignment->is_active = $forceState;
+                $assignment->save();
+            }
+        }
     }
 }

@@ -168,7 +168,7 @@ class AuthorizationService
             }
 
             return $operator->role === User::ROLE_STAFF
-                && $this->can($actor, config('authorization.capabilities.manage_all_chats'));
+                && $this->can($actor, config('authorization.capabilities.chats_view_all'));
         }
 
         return $actor->role === User::ROLE_STAFF
@@ -212,7 +212,7 @@ class AuthorizationService
 
         if (
             $actor->role === User::ROLE_ADMIN
-            && $this->can($actor, config('authorization.capabilities.manage_all_chats'))
+            && $this->can($actor, config('authorization.capabilities.chats_view_all'))
         ) {
             return [User::ROLE_STAFF];
         }
@@ -227,19 +227,12 @@ class AuthorizationService
         }
 
         return $actor->role === User::ROLE_ADMIN
-            && $target->role === User::ROLE_STAFF
-            && $this->can($actor, config('authorization.capabilities.manage_staff'));
+            && $target->role === User::ROLE_STAFF;
     }
 
     public function canManageOperatorPermissions(User $actor, User $target): bool
     {
-        if ($this->isSuperuser($actor)) {
-            return in_array($target->role, [User::ROLE_ADMIN, User::ROLE_STAFF], true);
-        }
-
-        return $actor->role === User::ROLE_ADMIN
-            && $target->role === User::ROLE_STAFF
-            && $this->can($actor, config('authorization.capabilities.manage_staff_permissions'));
+        return $this->canManageOperator($actor, $target);
     }
 
     public function manageableOperatorRoles(User $actor): array

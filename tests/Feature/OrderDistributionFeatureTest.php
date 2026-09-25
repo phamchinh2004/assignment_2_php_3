@@ -174,11 +174,11 @@ class OrderDistributionFeatureTest extends TestCase
         $this->assertSame([$order->id], $view->getData()['frozenOrders']->pluck('id')->all());
     }
 
-    public function test_admin_with_audit_permission_but_without_order_permission_cannot_advance(): void
+    public function test_admin_with_view_detail_permission_but_without_transition_permission_cannot_advance(): void
     {
         $admin = $this->user(User::ROLE_ADMIN);
         $recipient = $this->user(User::ROLE_MEMBER);
-        $this->grant($admin, ['order_distributions']);
+        $this->grant($admin, ['order_distributions_view_detail']);
         $order = $this->frozenOrder($recipient);
 
         $this->actingAs($admin)->postJson(route('order_distributions.transition', $order), $this->payload($order))
@@ -242,10 +242,10 @@ class OrderDistributionFeatureTest extends TestCase
         $this->assertDatabaseCount('status_orders', 0);
     }
 
-    public function test_completion_requires_transaction_permission(): void
+    public function test_completion_requires_complete_permission(): void
     {
         $admin = $this->user(User::ROLE_ADMIN);
-        $this->grant($admin, ['order_distributions', 'orders']);
+        $this->grant($admin, ['order_distributions_transition']);
         $order = $this->frozenOrder($this->user(User::ROLE_MEMBER), [
             'status' => 'delivered', 'delivered_at' => now()->subDays(15),
         ]);

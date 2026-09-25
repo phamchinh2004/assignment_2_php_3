@@ -13,6 +13,9 @@ Thống kê tổng doanh thu
 @endsection
 
 @section('content')
+@php
+    $canExportStatistics = app(\App\Services\AuthorizationService::class)->can(auth()->user(), config('authorization.capabilities.statistics_export'));
+@endphp
 <div class="container-fluid py-3">
     <!-- Page Header & Action Bar -->
     <div class="page-header-wrapper d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
@@ -27,9 +30,11 @@ Thống kê tổng doanh thu
             <button id="refreshBtn" class="btn btn-light-modern" title="Tải lại số liệu">
                 <i class="fas fa-sync-alt"></i> Làm mới
             </button>
+            @if ($canExportStatistics)
             <button id="exportBtn" class="btn btn-create-modern" title="Xuất báo cáo CSV">
                 <i class="fas fa-file-export"></i> Xuất CSV
             </button>
+            @endif
         </div>
     </div>
 

@@ -24,12 +24,28 @@ class AuthorizationServiceTest extends TestCase
         Container::getInstance()->instance('config', new Repository([
             'authorization' => [
                 'capabilities' => [
-                    'manage_all_chats' => 'quan_ly_tat_ca_tin_nhan',
+                    'chats_view_all' => 'chats.view-all',
                 ],
             ],
         ]));
 
         $this->authorization = new AuthorizationService();
+    }
+
+    public function test_owner_can_manage_admin_permissions_without_allowing_admin_escalation(): void
+    {
+        $owner = new User(['role' => User::ROLE_OWNER]);
+        $admin = new User(['role' => User::ROLE_ADMIN]);
+        $staff = new User(['role' => User::ROLE_STAFF]);
+        $member = new User(['role' => User::ROLE_MEMBER]);
+        $this->assertTrue($this->authorization->canManageOperatorPermissions($owner, $admin));
+        $this->assertTrue($this->authorization->canManageOperatorPermissions($owner, $staff));
+        $this->assertTrue($this->authorization->canManageOperatorPermissions($admin, $staff));
+        $this->assertFalse($this->authorization->canManageOperatorPermissions($admin, $admin));
+        $this->assertFalse($this->authorization->canManageOperatorPermissions($admin, $owner));
+        $this->assertFalse($this->authorization->canManageOperatorPermissions($owner, $owner));
+        $this->assertFalse($this->authorization->canManageOperatorPermissions($owner, $member));
+        $this->assertFalse($this->authorization->canManageOperatorPermissions($staff, $admin));
     }
 
     public function test_staff_permissions_are_resolved_from_active_assignments(): void
@@ -75,11 +91,11 @@ class AuthorizationServiceTest extends TestCase
         $this->assertTrue($this->authorization->canDeleteChatMessages($owner));
     }
 
-    public function test_admin_with_manage_all_chats_can_view_staff_and_own_chats_but_not_other_admin_chats(): void
+    public function test_admin_with_chats_view_all_can_view_staff_and_own_chats_but_not_other_admin_chats(): void
     {
         $admin = $this->userWithPermissions(
             User::ROLE_ADMIN,
-            [config('authorization.capabilities.manage_all_chats')]
+            [config('authorization.capabilities.chats_view_all')]
         );
         $admin->id = 10;
 
@@ -124,7 +140,7 @@ class AuthorizationServiceTest extends TestCase
     {
         $staff = $this->staffWithPermissions([]);
         $staff->id = 20;
-        $admin = $this->userWithPermissions(User::ROLE_ADMIN, [config('authorization.capabilities.manage_all_chats')]);
+        $admin = $this->userWithPermissions(User::ROLE_ADMIN, [config('authorization.capabilities.chats_view_all')]);
         $admin->id = 10;
         $limitedAdmin = $this->userWithPermissions(User::ROLE_ADMIN, []);
         $limitedAdmin->id = 30;

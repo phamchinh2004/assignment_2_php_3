@@ -22,6 +22,7 @@ class UpdateManager_settingRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'parent_manager_setting_id' => ['nullable', 'integer', new \App\Rules\ManagerSettingParent($this->route('manager_setting'))],
             'manager_name' => 'required|string|max:255',
         ];
     }

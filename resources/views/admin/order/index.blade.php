@@ -55,6 +55,11 @@
 @endsection
 
 @section('content')
+@php
+    $authorization = app(\App\Services\AuthorizationService::class);
+    $canCreateOrder = $authorization->can(auth()->user(), config('authorization.capabilities.orders_create'));
+    $canMaintainOrders = $authorization->can(auth()->user(), config('authorization.capabilities.orders_maintenance'));
+@endphp
 <div class="container-fluid px-4 pb-5">
 
     {{-- Page Header --}}
@@ -67,12 +72,15 @@
             <p class="page-subtitle">Theo dõi kho đơn hàng mẫu, giá bán, hoa hồng và gán cho các vòng quay thành viên</p>
         </div>
         <div class="d-flex align-items-center gap-2">
+            @if ($canCreateOrder)
             <a id="btn_create" href="{{ route('order.create') }}" class="btn-create-modern text-decoration-none">
                 <i class="fas fa-plus"></i>
                 <span>Tạo đơn hàng mới</span>
             </a>
+            @endif
 
             {{-- Bulk actions dropdown --}}
+            @if ($canMaintainOrders)
             <div class="dropdown">
                 <button class="btn btn-light btn-sm border dropdown-toggle px-3 py-2 font-weight-bold" type="button"
                         id="orderActionsDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
@@ -99,6 +107,7 @@
                     </a>
                 </div>
             </div>
+            @endif
         </div>
     </div>
 

@@ -108,7 +108,8 @@
                             </td>
                             <td class="text-muted">{{ $item->updated_at ? $item->updated_at->format('d/m/Y H:i') : '—' }}</td>
                             <td class="text-center">
-                                @if($staffUser)
+                                @if($staffUser && app(\App\Services\AuthorizationService::class)->canManageOperatorPermissions(auth()->user(), $staffUser)
+                                    && app(\App\Services\AuthorizationService::class)->can(auth()->user(), config('authorization.capabilities.staff_permissions_view')))
                                     <a href="{{ route('staff.edit.permissions', ['id' => $staffUser->id]) }}" class="btn-action-icon edit" title="Chỉnh sửa quyền nhân viên này">
                                         <i class="fas fa-shield-halved"></i>
                                     </a>

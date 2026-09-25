@@ -14,6 +14,9 @@
 @endsection
 
 @section('content')
+@php
+    $canViewReportDetail = app(\App\Services\AuthorizationService::class)->can(auth()->user(), config('authorization.capabilities.order_reports_view_detail'));
+@endphp
     <div class="container-fluid">
         <div class="card shadow mb-4">
             <div class="card-header py-3 d-flex justify-content-between align-items-center">
@@ -86,10 +89,14 @@
                                     </td>
                                     <td>{{ $report->created_at?->format('d/m/Y H:i') }}</td>
                                     <td>
+                                        @if ($canViewReportDetail)
                                         <a class="btn btn-sm btn-primary"
                                             href="{{ route('order_reports.show', $report) }}">
                                             Xem
                                         </a>
+                                        @else
+                                            <span class="text-muted">—</span>
+                                        @endif
                                     </td>
                                 </tr>
                             @endforeach
@@ -104,4 +111,3 @@
         </div>
     </div>
 @endsection
-

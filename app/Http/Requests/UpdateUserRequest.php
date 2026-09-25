@@ -14,6 +14,39 @@ class UpdateUserRequest extends FormRequest
      */
     public function authorize(): bool
     {
+        $actor = auth()->user();
+        if (!$actor) {
+            return false;
+        }
+
+        $authorization = app(AuthorizationService::class);
+        $capabilities = config('authorization.capabilities');
+
+        if (
+            $this->hasAny(['balance', 'frozen_balance'])
+            && !$authorization->can($actor, $capabilities['customers_adjust_balance'])
+        ) {
+            return false;
+        }
+
+        if (
+            $this->has('status')
+            && !$authorization->can($actor, $capabilities['customers_change_status'])
+        ) {
+            return false;
+        }
+
+        if (
+            $this->hasAny(['rank', 'lucky_wheel_bonus_spins', 'reset_progress'])
+            && !$authorization->can($actor, $capabilities['customers_manage_spin'])
+        ) {
+            return false;
+        }
+
+        if ($this->has('role') && !$authorization->isSuperuser($actor)) {
+            return false;
+        }
+
         return true;
     }
 
@@ -52,19 +85,21 @@ class UpdateUserRequest extends FormRequest
             'username_bank' => ['nullable', 'string', 'max:255'],
             'bank_name' => ['nullable', 'string', 'max:255'],
             'account_number' => ['nullable', 'string', 'max:100'],
-            'balance'=>'numeric|min:0',
-            'frozen_balance'=>'numeric|min:0',
+            'balance' => ['sometimes', 'numeric', 'min:0'],
+            'frozen_balance' => ['sometimes', 'numeric', 'min:0'],
             'rank' => ['nullable', 'integer', Rule::exists('ranks', 'id')],
-            'status' => ['required', Rule::in(['inactivated', 'activated', 'banned'])],
+            'status' => ['sometimes', Rule::in(['inactivated', 'activated', 'banned'])],
             'warehouse_area' => ['nullable', 'string', 'max:191'],
             'warehouse_address' => ['nullable', 'string', 'max:1000'],
             'lucky_wheel_bonus_spins' => [
-                Rule::prohibitedIf(fn () => $actor === null || !$authorization->can($actor, config('authorization.capabilities.manage_all_users'))),
+                Rule::prohibitedIf(fn () => $actor === null || !$authorization->can($actor, config('authorization.capabilities.customers_manage_spin'))),
                 'nullable',
                 'integer',
                 'min:0',
                 'max:100000',
             ],
+            'reset_progress' => ['sometimes', 'boolean'],
+            'clone_account' => ['sometimes', 'boolean'],
             'role' => [
                 Rule::prohibitedIf(fn () => $actor === null || !$authorization->isSuperuser($actor)),
                 'nullable',

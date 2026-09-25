@@ -13,6 +13,7 @@
     $currentUser = auth()->user();
     $canCreate = $authorization->can($currentUser, $capabilities['feature_announcements_create']);
     $canUpdate = $authorization->can($currentUser, $capabilities['feature_announcements_update']);
+    $canToggle = $authorization->can($currentUser, $capabilities['feature_announcements_toggle']);
     $canDelete = $authorization->can($currentUser, $capabilities['feature_announcements_delete']);
     $canReport = $authorization->can($currentUser, $capabilities['feature_announcements_view_report']);
     $roleLabels = ['own' => 'Chủ hệ thống', 'admin' => 'Admin', 'staff' => 'Nhân viên'];
@@ -122,6 +123,8 @@
                                         class="btn btn-sm btn-outline-primary" title="Chỉnh sửa">
                                         <i class="fas fa-pen"></i>
                                     </a>
+                                @endif
+                                @if($canToggle)
                                     <form action="{{ route('feature_announcements.toggle', $announcement) }}" method="POST" class="d-inline">
                                         @csrf
                                         <button type="submit" class="btn btn-sm btn-outline-secondary"

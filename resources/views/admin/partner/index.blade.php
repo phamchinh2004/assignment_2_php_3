@@ -16,6 +16,13 @@
 
 @section('content')
 @php
+    $authorization = app(\App\Services\AuthorizationService::class);
+    $canCreatePartner = $authorization->can(auth()->user(), config('authorization.capabilities.partners_create'));
+    $canViewPartnerDetail = $authorization->can(auth()->user(), config('authorization.capabilities.partners_view_detail'));
+    $canUpdatePartner = $authorization->can(auth()->user(), config('authorization.capabilities.partners_update'));
+    $canDeletePartner = $authorization->can(auth()->user(), config('authorization.capabilities.partners_delete'));
+@endphp
+@php
     $totalPartners = !empty($list_partners) ? $list_partners->count() : 0;
 @endphp
 
@@ -30,12 +37,14 @@
             </h1>
             <p class="page-subtitle">Quản lý các thương hiệu, sàn thương mại điện tử và đối tác liên kết</p>
         </div>
+        @if ($canCreatePartner)
         <div class="d-flex align-items-center gap-2">
             <a href="{{ route('partner.create') }}" class="btn-create-modern text-decoration-none">
                 <i class="fas fa-plus"></i>
                 <span>Thêm đối tác mới</span>
             </a>
         </div>
+        @endif
     </div>
 
     {{-- KPI Cards --}}
@@ -92,9 +101,13 @@
                                                 @endif
                                             </div>
                                             <div class="entity-details">
+                                                @if ($canViewPartnerDetail)
                                                 <a class="entity-title font-weight-bold" href="{{ route('partner.show', ['partner' => $item->id]) }}">
                                                     {{ $item->name }}
                                                 </a>
+                                                @else
+                                                    <span class="entity-title font-weight-bold">{{ $item->name }}</span>
+                                                @endif
                                                 <span class="entity-subtitle">Mã: #{{ $item->id }}</span>
                                             </div>
                                         </div>
@@ -118,16 +131,21 @@
 
                                     <td class="text-center">
                                         <div class="action-btn-group justify-content-center">
+                                            @if ($canViewPartnerDetail)
                                             <a href="{{ route('partner.show', ['partner' => $item->id]) }}"
                                                class="btn-action-icon view" title="Xem chi tiết">
                                                 <i class="fas fa-eye"></i>
                                             </a>
+                                            @endif
 
+                                            @if ($canUpdatePartner)
                                             <a href="{{ route('partner.edit', ['partner' => $item->id]) }}"
                                                class="btn-action-icon edit" title="Chỉnh sửa">
                                                 <i class="fas fa-pen"></i>
                                             </a>
+                                            @endif
 
+                                            @if ($canDeletePartner)
                                             <form action="{{ route('partner.destroy', ['partner' => $item->id]) }}" method="POST" class="d-inline"
                                                   onsubmit="return confirm('Bạn có chắc chắn muốn xóa đối tác này?');">
                                                 @csrf
@@ -136,6 +154,7 @@
                                                     <i class="fas fa-trash-alt"></i>
                                                 </button>
                                             </form>
+                                            @endif
                                         </div>
                                     </td>
                                 </tr>

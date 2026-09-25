@@ -11,8 +11,12 @@
 @section('content')
 @php
     $activePermissions = $staff->user_manager_settings ? $staff->user_manager_settings->where('is_active', true) : collect();
-    $canManagePermissions = app(\App\Services\AuthorizationService::class)
-        ->canManageOperatorPermissions(auth()->user(), $staff);
+    $authorization = app(\App\Services\AuthorizationService::class);
+    $canManagePermissions = $authorization->can(auth()->user(), config('authorization.capabilities.staff_permissions_view'))
+        && $authorization->canManageOperatorPermissions(auth()->user(), $staff);
+    $canUpdateStaff = $authorization->can(auth()->user(), config('authorization.capabilities.staff_update'))
+        && $authorization->canManageOperator(auth()->user(), $staff);
+    $canViewCustomerDetail = $authorization->can(auth()->user(), config('authorization.capabilities.customers_view_detail'));
 @endphp
 
 <div class="container-fluid px-4 pb-5">
@@ -66,9 +70,11 @@
                     <i class="fas fa-shield-halved mr-1"></i> Phân quyền
                 </a>
             @endif
+            @if ($canUpdateStaff)
             <a href="{{ route('staff.edit', ['staff' => $staff->id]) }}" class="btn-create-modern">
                 <i class="fas fa-pen mr-1"></i> Chỉnh sửa
             </a>
+            @endif
         </div>
     </div>
 
@@ -265,9 +271,13 @@
                             </td>
                             <td class="text-muted">{{ $ref->created_at ? $ref->created_at->format('d/m/Y') : '—' }}</td>
                             <td class="text-center">
+                                @if ($canViewCustomerDetail)
                                 <a href="{{ route('user.show', ['user' => $ref->id]) }}" class="btn-action-icon view" title="Xem người dùng">
                                     <i class="fas fa-eye"></i>
                                 </a>
+                                @else
+                                    <span class="text-muted">—</span>
+                                @endif
                             </td>
                         </tr>
                     @empty

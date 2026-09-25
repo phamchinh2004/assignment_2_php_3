@@ -33,6 +33,12 @@
 
 @section('content')
 @php
+    $authorization = app(\App\Services\AuthorizationService::class);
+    $canConfirmWithdrawal = $authorization->can(auth()->user(), config('authorization.capabilities.withdrawals_confirm'));
+    $canCancelWithdrawal = $authorization->can(auth()->user(), config('authorization.capabilities.withdrawals_cancel'));
+    $canViewCustomerDetail = $authorization->can(auth()->user(), config('authorization.capabilities.customers_view_detail'));
+@endphp
+@php
     $totalWithdraws = !empty($list_withdraw_transactions) ? $list_withdraw_transactions->count() : 0;
     $pendingWithdraws = !empty($list_withdraw_transactions) ? $list_withdraw_transactions->where('status', 'processing') : collect();
     $completedWithdraws = !empty($list_withdraw_transactions) ? $list_withdraw_transactions->where('status', 'completed') : collect();
@@ -174,9 +180,13 @@
                                                     <span>{{ mb_strtoupper(mb_substr($transactionUser->full_name ?: ($transactionUser->username ?: 'U'), 0, 2)) }}</span>
                                                 </div>
                                                 <div class="entity-details">
+                                                    @if ($canViewCustomerDetail)
                                                     <a class="entity-title" href="{{ route('user.show', ['user' => $transactionUser->id]) }}" title="{{ $transactionUser->full_name }}">
                                                         {{ Str::limit($transactionUser->full_name ?: 'Chưa đặt tên', 22, '...') }}
                                                     </a>
+                                                    @else
+                                                    <span class="entity-title" title="{{ $transactionUser->full_name }}">{{ Str::limit($transactionUser->full_name ?: 'Chưa đặt tên', 22, '...') }}</span>
+                                                    @endif
                                                     <span class="entity-subtitle">
                                                         <span>@<span>{{ $transactionUser->username }}</span></span> • {{ $transactionUser->phone ?: '—' }}
                                                     </span>
@@ -260,18 +270,22 @@
 
                                     {{-- Thao tác --}}
                                     <td class="text-center">
-                                        @if($item->status === 'processing')
+                                        @if($item->status === 'processing' && ($canConfirmWithdrawal || $canCancelWithdrawal))
                                             <div class="action-btn-group justify-content-center">
+                                                @if ($canConfirmWithdrawal)
                                                 <button class="btn-action-icon view btn_confirm_transaction"
                                                         data-url="{{ route('confirm.withdraw', ['transaction' => $item->id]) }}"
                                                         title="Xác nhận duyệt rút tiền">
                                                     <i class="fas fa-check"></i>
                                                 </button>
+                                                @endif
+                                                @if ($canCancelWithdrawal)
                                                 <button class="btn-action-icon delete btn_cancel_transaction"
                                                         data-url="{{ route('cancel.withdraw', ['transaction' => $item->id]) }}"
                                                         title="Từ chối và hoàn tiền">
                                                     <i class="fas fa-times"></i>
                                                 </button>
+                                                @endif
                                             </div>
                                         @else
                                             <span class="text-muted" style="font-size: 0.75rem;">Đã xử lý</span>

@@ -1,6 +1,6 @@
 <aside class="admin-sidebar sidebar sidebar-dark" id="accordionSidebar" aria-label="Điều hướng quản trị">
     <div class="admin-sidebar-header">
-        <a class="admin-sidebar-brand" href="{{ app(\App\Services\AuthorizationService::class)->can(Auth::user(), config('authorization.capabilities.system_statistics')) ? route('tong.doanh.thu') : route('chat-panel') }}">
+        <a class="admin-sidebar-brand" href="{{ app(\App\Services\AuthorizationService::class)->can(Auth::user(), config('authorization.capabilities.statistics_view_overview')) ? route('tong.doanh.thu') : route('chat-panel') }}">
             <span class="admin-sidebar-brand-mark" aria-hidden="true"><i class="fas fa-layer-group"></i></span>
             <span class="admin-sidebar-brand-copy">
                 <strong>Hệ thống</strong>

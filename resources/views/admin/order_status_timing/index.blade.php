@@ -8,6 +8,9 @@
 @endsection
 
 @section('content')
+@php
+    $canUpdateOrderTiming = app(\App\Services\AuthorizationService::class)->can(auth()->user(), config('authorization.capabilities.order_timing_update'));
+@endphp
 <div class="container-fluid px-4 pb-5">
 
     {{-- Page Header --}}
@@ -101,7 +104,8 @@
                                                class="form-control-modern"
                                                style="height: 36px;"
                                                min="0"
-                                               required>
+                                               required
+                                               @disabled(!$canUpdateOrderTiming)>
                                         <input type="hidden" name="timings[{{ $timing->id }}][id]" value="{{ $timing->id }}">
                                     </td>
 
@@ -113,12 +117,13 @@
                                                class="form-control-modern"
                                                style="height: 36px;"
                                                min="0"
-                                               required>
+                                               required
+                                               @disabled(!$canUpdateOrderTiming)>
                                     </td>
 
                                     {{-- Đơn vị --}}
                                     <td>
-                                        <select name="timings[{{ $timing->id }}][time_unit]" class="form-select-modern" style="height: 36px; padding: 0.25rem 0.5rem;" required>
+                                        <select name="timings[{{ $timing->id }}][time_unit]" class="form-select-modern" style="height: 36px; padding: 0.25rem 0.5rem;" required @disabled(!$canUpdateOrderTiming)>
                                             <option value="minutes" {{ $timing->time_unit == 'minutes' ? 'selected' : '' }}>Phút</option>
                                             <option value="hours" {{ $timing->time_unit == 'hours' ? 'selected' : '' }}>Giờ</option>
                                             <option value="days" {{ $timing->time_unit == 'days' ? 'selected' : '' }}>Ngày</option>
@@ -132,7 +137,8 @@
                                                value="{{ $timing->description }}"
                                                class="form-control-modern"
                                                style="height: 36px;"
-                                               placeholder="Mô tả cấu hình">
+                                               placeholder="Mô tả cấu hình"
+                                               @disabled(!$canUpdateOrderTiming)>
                                     </td>
 
                                     {{-- Kích hoạt --}}
@@ -142,7 +148,8 @@
                                                    class="custom-control-input"
                                                    id="is_active_{{ $timing->id }}"
                                                    name="timings[{{ $timing->id }}][is_active]"
-                                                   {{ $timing->is_active ? 'checked' : '' }}>
+                                                   {{ $timing->is_active ? 'checked' : '' }}
+                                                   @disabled(!$canUpdateOrderTiming)>
                                             <label class="custom-control-label font-weight-bold" for="is_active_{{ $timing->id }}" style="font-size: 0.78125rem; cursor: pointer;">
                                                 {{ $timing->is_active ? 'Bật' : 'Tắt' }}
                                             </label>
@@ -151,10 +158,14 @@
 
                                     {{-- Sửa lẻ --}}
                                     <td class="text-center">
+                                        @if ($canUpdateOrderTiming)
                                         <a href="{{ route('admin.order_status_timing.edit', $timing->id) }}"
                                            class="btn-action-icon edit" title="Chỉnh sửa chi tiết">
                                             <i class="fas fa-pen"></i>
                                         </a>
+                                        @else
+                                            <span class="text-muted">—</span>
+                                        @endif
                                     </td>
                                 </tr>
                             @endforeach
@@ -162,11 +173,13 @@
                     </table>
                 </div>
 
+                @if ($canUpdateOrderTiming)
                 <div class="form-actions-bar">
                     <button type="submit" class="btn-submit-modern">
                         <i class="fas fa-save"></i> Lưu toàn bộ cấu hình
                     </button>
                 </div>
+                @endif
             </form>
         </div>
     @endif

@@ -73,13 +73,18 @@ class OrderDistributionController extends Controller
         ]);
         $transition = $workflow->describe($frozenOrder);
         $actor = Auth::user();
-        $canViewOrder = $authorization->can($actor, config('authorization.capabilities.orders'));
-        $canAdvance = $canViewOrder
+        $canAdvance = $authorization->can(
+            $actor,
+            config('authorization.capabilities.order_distributions_transition')
+        )
             && ($transition['next'] !== 'completed'
-                || $authorization->can($actor, config('authorization.capabilities.manage_all_user_transactions')));
+                || $authorization->can(
+                    $actor,
+                    config('authorization.capabilities.order_distributions_complete')
+                ));
         $statusLabels = Status::query()->pluck('display_name', 'name');
 
-        return view('admin.order_distributions.show', compact('frozenOrder', 'transition', 'canAdvance', 'canViewOrder', 'statusLabels'));
+        return view('admin.order_distributions.show', compact('frozenOrder', 'transition', 'canAdvance', 'statusLabels'));
     }
 
     public function transition(
@@ -93,9 +98,21 @@ class OrderDistributionController extends Controller
             'expected_updated_at' => ['required', 'string', 'max:50'],
         ]);
 
-        abort_unless($authorization->can(Auth::user(), config('authorization.capabilities.orders')), 403);
+        abort_unless(
+            $authorization->can(
+                Auth::user(),
+                config('authorization.capabilities.order_distributions_transition')
+            ),
+            403
+        );
         if ($data['expected_status'] === 'delivered') {
-            abort_unless($authorization->can(Auth::user(), config('authorization.capabilities.manage_all_user_transactions')), 403);
+            abort_unless(
+                $authorization->can(
+                    Auth::user(),
+                    config('authorization.capabilities.order_distributions_complete')
+                ),
+                403
+            );
         }
 
         try {

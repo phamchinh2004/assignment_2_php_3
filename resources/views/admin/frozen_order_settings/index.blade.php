@@ -5,6 +5,9 @@ Cấu hình Frozen Order
 @endsection
 
 @section('content')
+@php
+    $canUpdateFrozenSettings = app(\App\Services\AuthorizationService::class)->can(auth()->user(), config('authorization.capabilities.frozen_order_settings_update'));
+@endphp
 <div class="container-fluid">
     <div class="card shadow mb-4">
         <div class="card-header py-3">
@@ -24,19 +27,19 @@ Cấu hình Frozen Order
                     <div class="col-md-4">
                         <div class="form-group">
                             <label>Thời hạn xử lý tổng (giờ)</label>
-                            <input type="number" name="processing_time_limit" class="form-control" min="1" value="{{ old('processing_time_limit', $settings->processing_time_limit ?? 24) }}" required>
+                            <input type="number" name="processing_time_limit" class="form-control" min="1" value="{{ old('processing_time_limit', $settings->processing_time_limit ?? 24) }}" required @disabled(!$canUpdateFrozenSettings)>
                         </div>
                     </div>
                     <div class="col-md-4">
                         <div class="form-group">
                             <label>Gửi mail cảnh báo lần 1 khi còn (giờ)</label>
-                            <input type="number" name="notification_1_remaining_time" class="form-control" min="1" value="{{ old('notification_1_remaining_time', $settings->notification_1_remaining_time ?? 12) }}" required>
+                            <input type="number" name="notification_1_remaining_time" class="form-control" min="1" value="{{ old('notification_1_remaining_time', $settings->notification_1_remaining_time ?? 12) }}" required @disabled(!$canUpdateFrozenSettings)>
                         </div>
                     </div>
                     <div class="col-md-4">
                         <div class="form-group">
                             <label>Gửi mail cảnh báo lần 2 khi còn (giờ)</label>
-                            <input type="number" name="notification_2_remaining_time" class="form-control" min="1" value="{{ old('notification_2_remaining_time', $settings->notification_2_remaining_time ?? 1) }}" required>
+                            <input type="number" name="notification_2_remaining_time" class="form-control" min="1" value="{{ old('notification_2_remaining_time', $settings->notification_2_remaining_time ?? 1) }}" required @disabled(!$canUpdateFrozenSettings)>
                         </div>
                     </div>
                 </div>
@@ -45,7 +48,9 @@ Cấu hình Frozen Order
                     <strong>Lưu ý:</strong> Các giá trị này là mặc định khi user nhận đơn hàng mới. Mỗi đơn hàng sẽ lưu cấu hình riêng để không bị ảnh hưởng khi admin thay đổi cấu hình toàn cục sau đó.
                 </div>
 
-                <button type="submit" class="btn btn-primary">Lưu cấu hình</button>
+                @if ($canUpdateFrozenSettings)
+                    <button type="submit" class="btn btn-primary">Lưu cấu hình</button>
+                @endif
             </form>
         </div>
     </div>

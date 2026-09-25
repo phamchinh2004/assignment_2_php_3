@@ -320,18 +320,25 @@ document.addEventListener("DOMContentLoaded", async function () {
                 </div>`;
 
                 // Col 7: Thao tác (action-icon-group style)
-                const toggleBtn = item.status == 1
-                    ? `<a href="/admin/order/change-status-order/${item.id}" class="btn-icon-modern lock" title="Khóa đơn hàng"><i class="fas fa-lock"></i></a>`
-                    : `<a href="/admin/order/change-status-order/${item.id}" class="btn-icon-modern unlock" title="Kích hoạt đơn hàng"><i class="fas fa-lock-open"></i></a>`;
+                const canViewDetail = window.authorization?.can('orders.view-detail') ?? false;
+                const canUpdate = window.authorization?.can('orders.update') ?? false;
+                const canChangeStatus = window.authorization?.can('orders.change-status') ?? false;
+                const toggleBtn = canChangeStatus
+                    ? (item.status == 1
+                        ? `<a href="/admin/order/change-status-order/${item.id}" class="btn-icon-modern lock" title="Khóa đơn hàng"><i class="fas fa-lock"></i></a>`
+                        : `<a href="/admin/order/change-status-order/${item.id}" class="btn-icon-modern unlock" title="Kích hoạt đơn hàng"><i class="fas fa-lock-open"></i></a>`)
+                    : '';
+                const viewBtn = canViewDetail
+                    ? `<a href="/admin/order/${item.id}" class="btn-icon-modern view" title="Xem chi tiết đơn hàng"><i class="fas fa-eye"></i></a>`
+                    : '';
+                const editBtn = canUpdate
+                    ? `<a href="/admin/order/${item.id}/edit" class="btn-icon-modern edit" title="Chỉnh sửa đơn hàng"><i class="fas fa-pen-to-square"></i></a>`
+                    : '';
 
                 const colActions = `
                 <div class="action-icon-group justify-content-center">
-                    <a href="/admin/order/${item.id}" class="btn-icon-modern view" title="Xem chi tiết đơn hàng">
-                        <i class="fas fa-eye"></i>
-                    </a>
-                    <a href="/admin/order/${item.id}/edit" class="btn-icon-modern edit" title="Chỉnh sửa đơn hàng">
-                        <i class="fas fa-pen-to-square"></i>
-                    </a>
+                    ${viewBtn}
+                    ${editBtn}
                     ${toggleBtn}
                 </div>`;
 

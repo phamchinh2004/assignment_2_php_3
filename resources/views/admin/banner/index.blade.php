@@ -16,6 +16,14 @@
 
 @section('content')
 @php
+    $authorization = app(\App\Services\AuthorizationService::class);
+    $canCreateBanner = $authorization->can(auth()->user(), config('authorization.capabilities.banners_create'));
+    $canViewBannerDetail = $authorization->can(auth()->user(), config('authorization.capabilities.banners_view_detail'));
+    $canUpdateBanner = $authorization->can(auth()->user(), config('authorization.capabilities.banners_update'));
+    $canDeleteBanner = $authorization->can(auth()->user(), config('authorization.capabilities.banners_delete'));
+    $canChangeBannerStatus = $authorization->can(auth()->user(), config('authorization.capabilities.banners_change_status'));
+@endphp
+@php
     $totalBanners = !empty($list_banners) ? $list_banners->count() : 0;
     $activeBanners = !empty($list_banners) ? $list_banners->where('status', 1)->count() : 0;
     $totalImages = 0;
@@ -37,12 +45,14 @@
             </h1>
             <p class="page-subtitle">Quản lý các slide banner hiển thị tại trang chủ và ứng dụng thành viên</p>
         </div>
+        @if ($canCreateBanner)
         <div class="d-flex align-items-center gap-2">
             <a href="{{ route('banner.create') }}" class="btn-create-modern text-decoration-none">
                 <i class="fas fa-plus"></i>
                 <span>Thêm banner mới</span>
             </a>
         </div>
+        @endif
     </div>
 
     {{-- KPI Cards --}}
@@ -119,9 +129,13 @@
 
                                     <td>
                                         <div class="d-flex flex-column">
+                                            @if ($canViewBannerDetail)
                                             <a class="entity-title font-weight-bold" href="{{ route('banner.show', ['banner' => $item->id]) }}">
                                                 {{ $item->name }}
                                             </a>
+                                            @else
+                                                <span class="entity-title font-weight-bold">{{ $item->name }}</span>
+                                            @endif
                                             <span class="text-muted" style="font-size: 0.75rem;">Mã banner: #{{ $item->id }}</span>
                                         </div>
                                     </td>
@@ -158,16 +172,21 @@
 
                                     <td class="text-center">
                                         <div class="action-btn-group justify-content-center">
+                                            @if ($canViewBannerDetail)
                                             <a href="{{ route('banner.show', ['banner' => $item->id]) }}"
                                                class="btn-action-icon view" title="Xem slide preview">
                                                 <i class="fas fa-eye"></i>
                                             </a>
+                                            @endif
 
+                                            @if ($canUpdateBanner)
                                             <a href="{{ route('banner.edit', ['banner' => $item->id]) }}"
                                                class="btn-action-icon edit" title="Chỉnh sửa banner">
                                                 <i class="fas fa-pen"></i>
                                             </a>
+                                            @endif
 
+                                            @if ($canChangeBannerStatus)
                                             @if($item->status == 1)
                                                 <a href="{{ route('banner.change.status', ['banner' => $item->id]) }}"
                                                    class="btn-action-icon lock" title="Tắt hiển thị"
@@ -181,7 +200,9 @@
                                                     <i class="fas fa-circle-check"></i>
                                                 </a>
                                             @endif
+                                            @endif
 
+                                            @if ($canDeleteBanner)
                                             <form action="{{ route('banner.destroy', ['banner' => $item->id]) }}" method="POST" class="d-inline"
                                                   onsubmit="return confirm('Bạn có chắc chắn muốn xóa bộ banner này?');">
                                                 @csrf
@@ -190,6 +211,7 @@
                                                     <i class="fas fa-trash-alt"></i>
                                                 </button>
                                             </form>
+                                            @endif
                                         </div>
                                     </td>
                                 </tr>

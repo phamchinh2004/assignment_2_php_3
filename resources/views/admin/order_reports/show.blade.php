@@ -170,6 +170,11 @@
 @endsection
 
 @section('content')
+@php
+    $authorization = app(\App\Services\AuthorizationService::class);
+    $canConfirmReport = $authorization->can(auth()->user(), config('authorization.capabilities.order_reports_confirm'));
+    $canCancelReport = $authorization->can(auth()->user(), config('authorization.capabilities.order_reports_cancel'));
+@endphp
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h1 class="h4 mb-0 text-gray-800">Chi tiết báo cáo đơn hàng</h1>
@@ -231,6 +236,7 @@
                             </ul>
                         </div>
 
+                        @if ($canConfirmReport)
                         <form method="POST" action="{{ route('order_reports.confirm', $orderReport) }}" class="mb-3"
                             onsubmit="return confirm('Xác nhận đơn này là đơn thật?');">
                             @csrf
@@ -243,7 +249,9 @@
                                 <i class="fas fa-check mr-1"></i> Xác nhận đơn (bác báo cáo)
                             </button>
                         </form>
+                        @endif
 
+                        @if ($canCancelReport)
                         <form method="POST" action="{{ route('order_reports.cancel', $orderReport) }}"
                             onsubmit="return confirm('Hủy đơn này (xác nhận báo cáo đúng)?');">
                             @csrf
@@ -256,6 +264,7 @@
                                 <i class="fas fa-times mr-1"></i> Hủy đơn (xác nhận báo cáo đúng)
                             </button>
                         </form>
+                        @endif
                     @endif
                 </div>
             </div>

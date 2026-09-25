@@ -2,13 +2,16 @@
     $currentUser = Auth::user();
     $authorization = app(\App\Services\AuthorizationService::class);
     $capabilities = config('authorization.capabilities');
-    $canSystemStatistics = $authorization->can($currentUser, $capabilities['system_statistics']);
+    $canSystemStatistics = $authorization->can($currentUser, $capabilities['statistics_view_overview']);
     $canManageStaff = in_array($currentUser->role, [\App\Models\User::ROLE_ADMIN, \App\Models\User::ROLE_OWNER], true)
-        && $authorization->can($currentUser, $capabilities['manage_staff']);
-    $canOrderDistributions = $authorization->can($currentUser, $capabilities['order_distributions']);
-    $canOrderTimingSettings = $authorization->can($currentUser, $capabilities['order_timing_settings']);
-    $canManageRewards = in_array($currentUser->role, [\App\Models\User::ROLE_ADMIN, \App\Models\User::ROLE_OWNER], true)
-        && $authorization->can($currentUser, $capabilities['manage_all_user_transactions']);
+        && $authorization->can($currentUser, $capabilities['staff_view']);
+    $canOrderDistributions = $authorization->can($currentUser, $capabilities['order_distributions_view']);
+    $canOrderTimingSettings = $authorization->can($currentUser, $capabilities['order_timing_view']);
+    $canManageRewards = $authorization->can($currentUser, $capabilities['lucky_wheel_rewards_view']);
+    $canCustomers = $authorization->can($currentUser, $capabilities['customers_view']);
+    $canWithdrawals = $authorization->can($currentUser, $capabilities['withdrawals_view']);
+    $canDeposits = $authorization->can($currentUser, $capabilities['deposits_view']);
+    $canTransactions = $canWithdrawals || $canDeposits || $canManageRewards;
     $canFeatureAnnouncements = $authorization->can($currentUser, $capabilities['feature_announcements_view']);
     $isOwner = $authorization->isSuperuser($currentUser);
     $isDashboardActive = request()->routeIs('admin.dashboard', 'tong.doanh.thu');
@@ -72,6 +75,8 @@
                         <span class="admin-sidebar__label">Dashboard</span>
                     </a>
 
+                @endif
+                @if($authorization->canAny($currentUser, ['statistics.view-staff', 'statistics.view-customers', 'statistics.view-personal']))
                     <div class="admin-sidebar__item {{ $isStatisticsActive ? 'is-active' : '' }}">
                         <button type="button"
                             class="admin-sidebar__link admin-sidebar__submenu-trigger {{ $isStatisticsActive ? '' : 'collapsed' }}"
@@ -86,22 +91,21 @@
                             data-parent="#accordionSidebar">
                             <div class="admin-sidebar__submenu-panel">
                                 <span class="admin-sidebar__submenu-heading">Thống kê</span>
-                                <a class="admin-sidebar__submenu-link {{ request()->routeIs('doanh.thu.theo.nhan.vien') ? 'is-active' : '' }}"
+                                @if(app(\App\Services\AuthorizationService::class)->can(Auth::user(), config('authorization.capabilities.statistics_view_staff')))
+<a class="admin-sidebar__submenu-link {{ request()->routeIs('doanh.thu.theo.nhan.vien') ? 'is-active' : '' }}"
                                     href="{{ route('doanh.thu.theo.nhan.vien') }}">Doanh thu nhân viên</a>
-                                <a class="admin-sidebar__submenu-link {{ request()->routeIs('doanh.thu.tu.khach.hang') ? 'is-active' : '' }}"
+@endif
+                                @if(app(\App\Services\AuthorizationService::class)->can(Auth::user(), config('authorization.capabilities.statistics_view_customers')))
+<a class="admin-sidebar__submenu-link {{ request()->routeIs('doanh.thu.tu.khach.hang') ? 'is-active' : '' }}"
                                     href="{{ route('doanh.thu.tu.khach.hang') }}">Doanh thu từ khách hàng</a>
-                                <a class="admin-sidebar__submenu-link {{ request()->routeIs('doanh.thu.ban.than') ? 'is-active' : '' }}"
+@endif
+                                @if(app(\App\Services\AuthorizationService::class)->can(Auth::user(), config('authorization.capabilities.statistics_view_personal')))
+<a class="admin-sidebar__submenu-link {{ request()->routeIs('doanh.thu.ban.than') ? 'is-active' : '' }}"
                                     href="{{ route('doanh.thu.ban.than') }}">Doanh thu bản thân</a>
+@endif
                             </div>
                         </div>
                     </div>
-                @else
-                    <a class="admin-sidebar__link {{ request()->routeIs('doanh.thu.ban.than') ? 'is-active' : '' }}"
-                        href="{{ route('doanh.thu.ban.than') }}" data-sidebar-tooltip="Thống kê"
-                        @if(request()->routeIs('doanh.thu.ban.than')) aria-current="page" @endif>
-                        <span class="admin-sidebar__icon"><i class="fas fa-chart-line" aria-hidden="true"></i></span>
-                        <span class="admin-sidebar__label">Thống kê</span>
-                    </a>
                 @endif
             </section>
 
@@ -116,13 +120,16 @@
                     <span id="adminSidebarMessageBadge" class="admin-sidebar__badge" hidden aria-live="polite"></span>
                 </a>
 
-                <a class="admin-sidebar__link {{ request()->routeIs('user.*') ? 'is-active' : '' }}"
-                    href="{{ route('user.index') }}" data-sidebar-tooltip="Quản lý khách hàng"
-                    @if(request()->routeIs('user.*')) aria-current="page" @endif>
-                    <span class="admin-sidebar__icon"><i class="fas fa-users" aria-hidden="true"></i></span>
-                    <span class="admin-sidebar__label">Quản lý khách hàng</span>
-                </a>
+                @if ($canCustomers)
+                    <a class="admin-sidebar__link {{ request()->routeIs('user.*') ? 'is-active' : '' }}"
+                        href="{{ route('user.index') }}" data-sidebar-tooltip="Quản lý khách hàng"
+                        @if(request()->routeIs('user.*')) aria-current="page" @endif>
+                        <span class="admin-sidebar__icon"><i class="fas fa-users" aria-hidden="true"></i></span>
+                        <span class="admin-sidebar__label">Quản lý khách hàng</span>
+                    </a>
+                @endif
 
+                @if ($canTransactions)
                 <div class="admin-sidebar__item {{ $isTransactionActive ? 'is-active' : '' }}">
                     <button type="button"
                         class="admin-sidebar__link admin-sidebar__submenu-trigger {{ $isTransactionActive ? '' : 'collapsed' }}"
@@ -137,10 +144,14 @@
                         data-parent="#accordionSidebar">
                         <div class="admin-sidebar__submenu-panel">
                             <span class="admin-sidebar__submenu-heading">Giao dịch khách hàng</span>
-                            <a class="admin-sidebar__submenu-link {{ $isWithdrawActive ? 'is-active' : '' }}"
-                                href="{{ route('withdraw_transaction') }}">Rút tiền</a>
-                            <a class="admin-sidebar__submenu-link {{ $isDepositActive ? 'is-active' : '' }}"
-                                href="{{ route('deposit_transaction') }}">Nạp tiền</a>
+                            @if ($canWithdrawals)
+                                <a class="admin-sidebar__submenu-link {{ $isWithdrawActive ? 'is-active' : '' }}"
+                                    href="{{ route('withdraw_transaction') }}">Rút tiền</a>
+                            @endif
+                            @if ($canDeposits)
+                                <a class="admin-sidebar__submenu-link {{ $isDepositActive ? 'is-active' : '' }}"
+                                    href="{{ route('deposit_transaction') }}">Nạp tiền</a>
+                            @endif
                             @if ($canManageRewards)
                                 <a class="admin-sidebar__submenu-link {{ $isRewardActive ? 'is-active' : '' }}"
                                     href="{{ route('lucky_wheel_rewards.index') }}">Phần thưởng vòng quay</a>
@@ -148,6 +159,7 @@
                         </div>
                     </div>
                 </div>
+                @endif
 
                 @if ($canManageStaff)
                     <a class="admin-sidebar__link {{ request()->routeIs('staff.*') ? 'is-active' : '' }}"
@@ -160,7 +172,7 @@
 
                 <a class="admin-sidebar__link {{ request()->routeIs('order.*') ? 'is-active' : '' }}"
                     href="{{ route('order.index') }}" data-sidebar-tooltip="Quản lý đơn hàng"
-                    data-permission="{{ config('authorization.capabilities.orders') }}" hidden
+                    data-permission="{{ $capabilities['orders_view'] }}" hidden
                     @if(request()->routeIs('order.*')) aria-current="page" @endif>
                     <span class="admin-sidebar__icon"><i class="fas fa-box-open" aria-hidden="true"></i></span>
                     <span class="admin-sidebar__label">Quản lý đơn hàng</span>
@@ -177,7 +189,7 @@
 
                 <a class="admin-sidebar__link {{ request()->routeIs('order_reports.*') ? 'is-active' : '' }}"
                     href="{{ route('order_reports.index') }}" data-sidebar-tooltip="Đơn hàng bị báo cáo"
-                    data-permission="{{ config('authorization.capabilities.orders') }}" hidden
+                    data-permission="{{ $capabilities['order_reports_view'] }}" hidden
                     @if(request()->routeIs('order_reports.*')) aria-current="page" @endif>
                     <span class="admin-sidebar__icon"><i class="fas fa-flag" aria-hidden="true"></i></span>
                     <span class="admin-sidebar__label">Đơn hàng bị báo cáo</span>
@@ -207,7 +219,7 @@
 
                 <a class="admin-sidebar__link {{ request()->routeIs('frozen_order_settings.*') ? 'is-active' : '' }}"
                     href="{{ route('frozen_order_settings.index') }}" data-sidebar-tooltip="Frozen Order mặc định"
-                    data-permission="{{ config('authorization.capabilities.order_processing_time_alert_settings') }}" hidden
+                    data-permission="{{ $capabilities['frozen_order_settings_view'] }}" hidden
                     @if(request()->routeIs('frozen_order_settings.*')) aria-current="page" @endif>
                     <span class="admin-sidebar__icon"><i class="fas fa-snowflake" aria-hidden="true"></i></span>
                     <span class="admin-sidebar__label">Thời gian xử lý đơn hàng</span>
@@ -215,7 +227,7 @@
 
                 <a class="admin-sidebar__link {{ request()->routeIs('rank.*') ? 'is-active' : '' }}"
                     href="{{ route('rank.index') }}" data-sidebar-tooltip="Quản lý cấp độ"
-                    data-permission="{{ config('authorization.capabilities.ranks') }}" hidden
+                    data-permission="{{ $capabilities['ranks_view'] }}" hidden
                     @if(request()->routeIs('rank.*')) aria-current="page" @endif>
                     <span class="admin-sidebar__icon"><i class="fas fa-ranking-star" aria-hidden="true"></i></span>
                     <span class="admin-sidebar__label">Quản lý cấp độ</span>
@@ -223,7 +235,7 @@
 
                 <a class="admin-sidebar__link {{ request()->routeIs('banner.*') ? 'is-active' : '' }}"
                     href="{{ route("banner.index") }}" data-sidebar-tooltip="Quản lý banner"
-                    data-permission="{{ config('authorization.capabilities.banners') }}" hidden
+                    data-permission="{{ $capabilities['banners_view'] }}" hidden
                     @if(request()->routeIs('banner.*')) aria-current="page" @endif>
                     <span class="admin-sidebar__icon"><i class="fas fa-images" aria-hidden="true"></i></span>
                     <span class="admin-sidebar__label">Quản lý banner</span>
@@ -231,7 +243,7 @@
 
                 <a class="admin-sidebar__link {{ request()->routeIs('section.*') ? 'is-active' : '' }}"
                     href="{{ route('section.index') }}" data-sidebar-tooltip="Nội dung website"
-                    data-permission="{{ config('authorization.capabilities.site_content') }}" hidden
+                    data-permission="{{ $capabilities['site_content_view'] }}" hidden
                     @if(request()->routeIs('section.*')) aria-current="page" @endif>
                     <span class="admin-sidebar__icon"><i class="fas fa-table-columns" aria-hidden="true"></i></span>
                     <span class="admin-sidebar__label">Nội dung website</span>
@@ -239,7 +251,7 @@
 
                 <a class="admin-sidebar__link {{ request()->routeIs('partner.*') ? 'is-active' : '' }}"
                     href="{{ route('partner.index') }}" data-sidebar-tooltip="Quản lý đối tác"
-                    data-permission="{{ config('authorization.capabilities.partners') }}" hidden
+                    data-permission="{{ $capabilities['partners_view'] }}" hidden
                     @if(request()->routeIs('partner.*')) aria-current="page" @endif>
                     <span class="admin-sidebar__icon"><i class="fas fa-handshake" aria-hidden="true"></i></span>
                     <span class="admin-sidebar__label">Quản lý đối tác</span>
@@ -247,7 +259,7 @@
 
                 <a class="admin-sidebar__link {{ request()->routeIs('language.*') ? 'is-active' : '' }}"
                     href="{{ route('language.index') }}" data-sidebar-tooltip="Quản lý ngôn ngữ"
-                    data-permission="{{ config('authorization.capabilities.languages') }}" hidden
+                    data-permission="{{ $capabilities['languages_view'] }}" hidden
                     @if(request()->routeIs('language.*')) aria-current="page" @endif>
                     <span class="admin-sidebar__icon"><i class="fas fa-language" aria-hidden="true"></i></span>
                     <span class="admin-sidebar__label">Quản lý ngôn ngữ</span>

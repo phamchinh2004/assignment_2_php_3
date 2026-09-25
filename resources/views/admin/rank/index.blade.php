@@ -16,6 +16,13 @@
 
 @section('content')
 @php
+    $authorization = app(\App\Services\AuthorizationService::class);
+    $canCreateRank = $authorization->can(auth()->user(), config('authorization.capabilities.ranks_create'));
+    $canViewRankDetail = $authorization->can(auth()->user(), config('authorization.capabilities.ranks_view_detail'));
+    $canUpdateRank = $authorization->can(auth()->user(), config('authorization.capabilities.ranks_update'));
+    $canDeleteRank = $authorization->can(auth()->user(), config('authorization.capabilities.ranks_delete'));
+@endphp
+@php
     $totalRanks = !empty($rank) ? $rank->count() : 0;
     $maxCommission = !empty($rank) ? $rank->max('commission_percentage') : 0;
     $totalOrdersCreated = !empty($rank) ? $rank->sum('orders_count') : 0;
@@ -32,12 +39,14 @@
             </h1>
             <p class="page-subtitle">Thiết lập các bậc thành viên, phí nâng cấp, hoa hồng và hạn mức quay đơn/rút tiền</p>
         </div>
+        @if ($canCreateRank)
         <div class="d-flex align-items-center gap-2">
             <a href="{{ route('rank.create') }}" class="btn-create-modern text-decoration-none">
                 <i class="fas fa-plus"></i>
                 <span>Thêm cấp độ mới</span>
             </a>
         </div>
+        @endif
     </div>
 
     @if(session('success'))
@@ -141,9 +150,13 @@
                                                 @endif
                                             </div>
                                             <div class="entity-details">
+                                                @if ($canViewRankDetail)
                                                 <a class="entity-title font-weight-bold" href="{{ route('rank.show', ['rank' => $item->id]) }}">
                                                     {{ $item->name }}
                                                 </a>
+                                                @else
+                                                    <span class="entity-title font-weight-bold">{{ $item->name }}</span>
+                                                @endif
                                                 <span class="entity-subtitle">Cấp ID: {{ $item->id }}</span>
                                             </div>
                                         </div>
@@ -181,14 +194,19 @@
 
                                     <td class="text-center">
                                         <div class="action-btn-group justify-content-center">
+                                            @if ($canViewRankDetail)
                                             <a href="{{ route('rank.show', ['rank' => $item->id]) }}"
                                                class="btn-action-icon view" title="Xem chi tiết">
                                                 <i class="fas fa-eye"></i>
                                             </a>
+                                            @endif
+                                            @if ($canUpdateRank)
                                             <a href="{{ route('rank.edit', ['rank' => $item->id]) }}"
                                                class="btn-action-icon edit" title="Chỉnh sửa cấp độ">
                                                 <i class="fas fa-pen"></i>
                                             </a>
+                                            @endif
+                                            @if ($canDeleteRank)
                                             <form action="{{ route('rank.destroy', ['rank' => $item->id]) }}" method="POST"
                                                   onsubmit="return confirm('Bạn có chắc chắn muốn xóa cấp độ này?');">
                                                 @csrf
@@ -197,6 +215,7 @@
                                                     <i class="fas fa-trash-alt"></i>
                                                 </button>
                                             </form>
+                                            @endif
                                         </div>
                                     </td>
                                 </tr>

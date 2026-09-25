@@ -68,7 +68,7 @@ class ChatComponent extends Component
     {
         return app(AuthorizationService::class)->can(
             Auth::user(),
-            config('authorization.capabilities.manage_all_chats')
+            config('authorization.capabilities.chats_view_all')
         );
     }
 

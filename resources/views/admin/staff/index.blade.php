@@ -92,6 +92,12 @@
     $bannedStaff = !empty($list_staffs) ? $list_staffs->where('status', 'banned')->count() : 0;
     $totalRevenue = !empty($list_staffs) ? $list_staffs->sum('total_deposit') : 0;
     $authorization = app(\App\Services\AuthorizationService::class);
+    $capabilities = config('authorization.capabilities');
+    $canCreateStaff = $authorization->can(auth()->user(), $capabilities['staff_create']);
+    $canViewStaffDetail = $authorization->can(auth()->user(), $capabilities['staff_view_detail']);
+    $canUpdateStaff = $authorization->can(auth()->user(), $capabilities['staff_update']);
+    $canChangeStaffStatus = $authorization->can(auth()->user(), $capabilities['staff_change_status']);
+    $canViewStaffPermissions = $authorization->can(auth()->user(), $capabilities['staff_permissions_view']);
 @endphp
 
 <div class="container-fluid px-4 pb-5">
@@ -105,12 +111,14 @@
             </h1>
             <p class="page-subtitle">Owner quản lý admin và staff; admin chỉ quản lý staff khi có permission tương ứng.</p>
         </div>
+        @if ($canCreateStaff)
         <div class="d-flex align-items-center gap-2">
             <a href="{{ route('staff.create') }}" class="btn-create-modern text-decoration-none">
                 <i class="fas fa-user-plus"></i>
                 <span>Thêm tài khoản mới</span>
             </a>
         </div>
+        @endif
     </div>
 
     {{-- KPI Cards --}}
@@ -250,9 +258,13 @@
                                                 <span>{{ mb_strtoupper(mb_substr($item->full_name ?: ($item->username ?: 'S'), 0, 2)) }}</span>
                                             </div>
                                             <div class="entity-details">
+                                                @if ($canViewStaffDetail)
                                                 <a class="entity-title" href="{{ route('staff.show', ['staff' => $item->id]) }}">
                                                     {{ $item->full_name ?: 'Chưa đặt tên' }}
                                                 </a>
+                                                @else
+                                                    <span class="entity-title">{{ $item->full_name ?: 'Chưa đặt tên' }}</span>
+                                                @endif
                                                 <span class="entity-subtitle">
                                                     <span>@<span>{{ $item->username }}</span></span> • {{ $item->phone ?: 'Chưa có SĐT' }}
                                                 </span>
@@ -296,12 +308,14 @@
                                     <td class="text-center">
                                         <div class="action-btn-group justify-content-center">
                                             {{-- Xem chi tiết --}}
+                                            @if ($canViewStaffDetail)
                                             <a href="{{ route('staff.show', ['staff' => $item->id]) }}"
                                                class="btn-action-icon view" title="Xem chi tiết nhân viên">
                                                 <i class="fas fa-eye"></i>
                                             </a>
+                                            @endif
 
-                                            @if($authorization->canManageOperatorPermissions(auth()->user(), $item))
+                                            @if($canViewStaffPermissions && $authorization->canManageOperatorPermissions(auth()->user(), $item))
                                                 {{-- Phân quyền --}}
                                                 <a href="{{ route('staff.edit.permissions', ['id' => $item->id]) }}"
                                                    class="btn-action-icon edit" title="Chỉnh sửa quyền hạn" style="color: #4f46e5;">
@@ -310,12 +324,15 @@
                                             @endif
 
                                             {{-- Sửa tài khoản --}}
+                                            @if ($canUpdateStaff && $authorization->canManageOperator(auth()->user(), $item))
                                             <a href="{{ route('staff.edit', ['staff' => $item->id]) }}"
                                                class="btn-action-icon edit" title="Sửa thông tin">
                                                 <i class="fas fa-pen"></i>
                                             </a>
+                                            @endif
 
                                             {{-- Khóa / Mở khóa --}}
+                                            @if ($canChangeStaffStatus && $authorization->canManageOperator(auth()->user(), $item))
                                             @if($item->status === 'activated')
                                                 <a href="{{ route('staff.change.status', ['id' => $item->id]) }}"
                                                    class="btn-action-icon delete" title="Khóa tài khoản"
@@ -328,6 +345,7 @@
                                                    onclick="return confirm('Mở khóa tài khoản nhân viên này?');">
                                                     <i class="fas fa-lock-open"></i>
                                                 </a>
+                                            @endif
                                             @endif
                                         </div>
                                     </td>

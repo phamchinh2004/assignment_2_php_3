@@ -16,6 +16,13 @@
 
 @section('content')
 @php
+    $authorization = app(\App\Services\AuthorizationService::class);
+    $canCreateSection = $authorization->can(auth()->user(), config('authorization.capabilities.site_content_create'));
+    $canViewSectionDetail = $authorization->can(auth()->user(), config('authorization.capabilities.site_content_view_detail'));
+    $canUpdateSection = $authorization->can(auth()->user(), config('authorization.capabilities.site_content_update'));
+    $canChangeSectionStatus = $authorization->can(auth()->user(), config('authorization.capabilities.site_content_change_status'));
+@endphp
+@php
     $totalSections = !empty($list_sections) ? $list_sections->count() : 0;
     $activeSections = !empty($list_sections) ? $list_sections->where('status', 1)->count() : 0;
     $inactiveSections = $totalSections - $activeSections;
@@ -32,12 +39,14 @@
             </h1>
             <p class="page-subtitle">Quản lý các khối nội dung tĩnh, quy chế, điều khoản và thông tin trang web</p>
         </div>
+        @if ($canCreateSection)
         <div class="d-flex align-items-center gap-2">
             <a href="{{ route('section.create') }}" class="btn-create-modern text-decoration-none">
                 <i class="fas fa-plus"></i>
                 <span>Thêm section mới</span>
             </a>
         </div>
+        @endif
     </div>
 
     {{-- KPI Cards --}}
@@ -113,9 +122,13 @@
                                     </td>
 
                                     <td>
+                                        @if ($canViewSectionDetail)
                                         <a class="entity-title font-weight-bold" href="{{ route('section.show', ['section' => $item->id]) }}">
                                             {{ $item->name }}
                                         </a>
+                                        @else
+                                            <span class="entity-title font-weight-bold">{{ $item->name }}</span>
+                                        @endif
                                     </td>
 
                                     <td>
@@ -144,16 +157,21 @@
 
                                     <td class="text-center">
                                         <div class="action-btn-group justify-content-center">
+                                            @if ($canViewSectionDetail)
                                             <a href="{{ route('section.show', ['section' => $item->id]) }}"
                                                class="btn-action-icon view" title="Xem nội dung chi tiết">
                                                 <i class="fas fa-eye"></i>
                                             </a>
+                                            @endif
 
+                                            @if ($canUpdateSection)
                                             <a href="{{ route('section.edit', ['section' => $item->id]) }}"
                                                class="btn-action-icon edit" title="Chỉnh sửa">
                                                 <i class="fas fa-pen"></i>
                                             </a>
+                                            @endif
 
+                                            @if ($canChangeSectionStatus)
                                             @if($item->status)
                                                 <a href="{{ route('section.change.status', ['section' => $item->id]) }}"
                                                    class="btn-action-icon lock" title="Tắt kích hoạt"
@@ -166,6 +184,7 @@
                                                    onclick="return confirm('Kích hoạt lại section này?');">
                                                     <i class="fas fa-lock-open"></i>
                                                 </a>
+                                            @endif
                                             @endif
                                         </div>
                                     </td>

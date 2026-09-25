@@ -9,6 +9,9 @@
 @endsection
 
 @section('content')
+@php
+    $canUpdateLanguage = app(\App\Services\AuthorizationService::class)->can(auth()->user(), config('authorization.capabilities.languages_update'));
+@endphp
 <div class="container-fluid px-4 pb-5">
 
     {{-- Back Link --}}
@@ -37,11 +40,13 @@
             </div>
         </div>
 
+        @if ($canUpdateLanguage)
         <div class="d-flex align-items-center gap-2">
             <a href="{{ route('language.edit', ['language' => $language->id]) }}" class="btn-create-modern">
                 <i class="fas fa-pen mr-1"></i> Chỉnh sửa ngôn ngữ
             </a>
         </div>
+        @endif
     </div>
 
     {{-- Detail Card --}}

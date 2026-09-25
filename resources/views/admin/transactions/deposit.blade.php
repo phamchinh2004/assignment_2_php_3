@@ -32,6 +32,12 @@
 
 @section('content')
 @php
+    $authorization = app(\App\Services\AuthorizationService::class);
+    $canChangeDepositType = $authorization->can(auth()->user(), config('authorization.capabilities.deposits_change_type'));
+    $canDeleteDeposit = $authorization->can(auth()->user(), config('authorization.capabilities.deposits_delete'));
+    $canViewCustomerDetail = $authorization->can(auth()->user(), config('authorization.capabilities.customers_view_detail'));
+@endphp
+@php
     $totalDeposits = !empty($list_deposit_transactions) ? $list_deposit_transactions->count() : 0;
     $normalDeposits = !empty($list_deposit_transactions) ? $list_deposit_transactions->where('transaction_type', 'normal') : collect();
     $bonusDeposits = !empty($list_deposit_transactions) ? $list_deposit_transactions->where('transaction_type', 'bonus') : collect();
@@ -153,9 +159,13 @@
                                                     <span>{{ mb_strtoupper(mb_substr($transactionUser->full_name ?: ($transactionUser->username ?: 'U'), 0, 2)) }}</span>
                                                 </div>
                                                 <div class="entity-details">
+                                                    @if ($canViewCustomerDetail)
                                                     <a class="entity-title" href="{{ route('user.show', ['user' => $transactionUser->id]) }}" title="{{ $transactionUser->full_name }}">
                                                         {{ Str::limit($transactionUser->full_name ?: 'Chưa đặt tên', 24, '...') }}
                                                     </a>
+                                                    @else
+                                                    <span class="entity-title" title="{{ $transactionUser->full_name }}">{{ Str::limit($transactionUser->full_name ?: 'Chưa đặt tên', 24, '...') }}</span>
+                                                    @endif
                                                     <span class="entity-subtitle">
                                                         <span>@<span>{{ $transactionUser->username }}</span></span> • {{ $transactionUser->phone ?: '—' }}
                                                     </span>
@@ -214,14 +224,14 @@
                                     {{-- Thao tác --}}
                                     <td class="text-center">
                                         <div class="action-btn-group justify-content-center">
-                                            @if($item->transaction_type === 'normal')
+                                            @if($canChangeDepositType && $item->transaction_type === 'normal')
                                                 <a href="{{ route('change.deposit.transaction.type', ['transaction' => $item->id]) }}"
                                                    class="btn btn-sm btn-outline-warning"
                                                    style="font-size: 11px; padding: 3px 8px; border-radius: 6px;"
                                                    title="Đổi thành GD Thưởng">
                                                     <i class="fas fa-gift mr-1"></i> Sang Thưởng
                                                 </a>
-                                            @elseif($item->transaction_type === 'bonus')
+                                            @elseif($canChangeDepositType && $item->transaction_type === 'bonus')
                                                 <a href="{{ route('change.deposit.transaction.type', ['transaction' => $item->id]) }}"
                                                    class="btn btn-sm btn-outline-success"
                                                    style="font-size: 11px; padding: 3px 8px; border-radius: 6px;"
@@ -230,6 +240,7 @@
                                                 </a>
                                             @endif
 
+                                            @if ($canDeleteDeposit)
                                             <form action="{{ route('destroy.deposit', ['transaction' => $item->id]) }}" method="POST" class="d-inline"
                                                   onsubmit="return confirm('CẢNH BÁO: Xóa giao dịch này sẽ trừ thẳng số tiền khỏi tài khoản người dùng. Tiếp tục?');">
                                                 @csrf
@@ -238,6 +249,7 @@
                                                     <i class="fas fa-trash-alt"></i>
                                                 </button>
                                             </form>
+                                            @endif
                                         </div>
                                     </td>
                                 </tr>

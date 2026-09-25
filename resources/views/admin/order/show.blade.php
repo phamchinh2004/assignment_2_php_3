@@ -48,6 +48,11 @@
 @endsection
 
 @section('content')
+@php
+    $authorization = app(\App\Services\AuthorizationService::class);
+    $canUpdateOrder = $authorization->can(auth()->user(), config('authorization.capabilities.orders_update'));
+    $canViewCustomerDetail = $authorization->can(auth()->user(), config('authorization.capabilities.customers_view_detail'));
+@endphp
 <div class="container-fluid px-4 pb-5">
 
     {{-- Back Link --}}
@@ -93,11 +98,13 @@
             </div>
         </div>
 
+        @if ($canUpdateOrder)
         <div class="d-flex align-items-center gap-2">
             <a href="{{ route('order.edit', ['order' => $order->id]) }}" class="btn-create-modern">
                 <i class="fas fa-pen mr-1"></i> Chỉnh sửa đơn hàng
             </a>
         </div>
+        @endif
     </div>
 
     {{-- KPI Summary Cards --}}
@@ -224,11 +231,13 @@
                                     <tr>
                                         <td>#{{ $fo->id }}</td>
                                         <td>
-                                            @if($fo->user)
-                                                <a href="{{ route('user.edit', ['user' => $fo->user->id]) }}" class="user-tag text-decoration-none">
+                                            @if($fo->user && $canViewCustomerDetail)
+                                                <a href="{{ route('user.show', ['user' => $fo->user->id]) }}" class="user-tag text-decoration-none">
                                                     <i class="fas fa-user-circle text-primary"></i>
                                                     {{ $fo->user->name ?? $fo->user->phone_number }}
                                                 </a>
+                                            @elseif($fo->user)
+                                                <span class="user-tag"><i class="fas fa-user-circle text-primary"></i> {{ $fo->user->name ?? $fo->user->phone_number }}</span>
                                             @else
                                                 <span class="text-muted">N/A</span>
                                             @endif
