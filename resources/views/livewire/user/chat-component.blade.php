@@ -127,7 +127,6 @@
                             $imagePath = is_array($msg) ? $msg['image_path'] : $msg->image_path;
                             $createdAt = is_array($msg) ? $msg['created_at'] : $msg->created_at;
                             $messageId = is_array($msg) ? $msg['id'] : $msg->id;
-                            $isRead = is_array($msg) ? ($msg['is_read'] ?? false) : ($msg->is_read ?? false);
                             $senderName = is_array($msg)
                                 ? ($msg['sender']['full_name'] ?? 'User')
                                 : ($msg->sender->full_name ?? 'User');
@@ -168,16 +167,6 @@
                                         <div class="text-end mt-1 d-flex align-items-center justify-content-end gap-1"
                                             style="font-size: 10px; color: #6c757d;">
                                             <span>{{ \Carbon\Carbon::parse($createdAt)->setTimezone('Asia/Ho_Chi_Minh')->format('H:i') }}</span>
-                                            <span data-message-id="{{ $messageId }}"
-                                                data-seen-status="{{ $isRead ? 'true' : 'false' }}">
-                                                @if($isRead)
-                                                    <i class="fas fa-check-double text-info" style="font-size: 10px;"
-                                                        title="Đã xem"></i>
-                                                @else
-                                                    <i class="fas fa-check" style="font-size: 10px; color: #6c757d;"
-                                                        title="Đã gửi"></i>
-                                                @endif
-                                            </span>
                                         </div>
                                     </div>
                                     <img src="https://ui-avatars.com/api/?name={{ urlencode($senderName) }}&background=667eea&color=ffffff&size=28&rounded=true"
@@ -995,16 +984,6 @@
                     } else {
                         console.log('Ignoring own message - không phát âm thanh');
                     }
-                })
-                .listen('.MessageRead', (e) => {
-                    if (Number(e.user_id) === currentUserId) return;
-                    const root = document.getElementById('chat-root');
-                    if (root) Livewire.find(root.getAttribute('wire:id')).call('refreshReadReceipts');
-                })
-                .listen('.ConversationRead', (e) => {
-                    if (Number(e.user_id) === currentUserId) return;
-                    const root = document.getElementById('chat-root');
-                    if (root) Livewire.find(root.getAttribute('wire:id')).call('refreshReadReceipts');
                 })
                 .listen('.MessageUpdated', (e) => {
                     const root = document.getElementById('chat-root');

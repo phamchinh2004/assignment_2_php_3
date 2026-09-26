@@ -35,7 +35,6 @@ $modules = [
             'create' => ['code' => 'orders.create', 'label' => 'Tạo đơn hàng'],
             'update' => ['code' => 'orders.update', 'label' => 'Cập nhật đơn hàng'],
             'change_status' => ['code' => 'orders.change-status', 'label' => 'Thay đổi trạng thái'],
-            'maintenance' => ['code' => 'orders.maintenance', 'label' => 'Chạy tác vụ bảo trì dữ liệu đơn hàng'],
         ],
     ],
     'order_reports' => [
@@ -192,6 +191,8 @@ foreach ($modules as $moduleKey => $module) {
 }
 
 return [
+    // Keep historical assignments in the database, but omit retired features from permission screens.
+    'retired_permissions' => ['orders.maintenance'],
     'fallback_route' => 'chat-panel',
     'modules' => $modules,
     'capabilities' => $capabilities,

@@ -42,6 +42,32 @@ class ManagerSettingHierarchyTest extends TestCase
             'parent_manager_setting_id' => $parent?->id]);
     }
 
+    public function test_retired_order_maintenance_is_hidden_without_changing_grants(): void
+    {
+        $root = $this->setting('permission-group.orders');
+        $retired = $this->setting('orders.maintenance', $root);
+        $visible = $this->setting('orders.view', $root);
+        foreach ([true, false] as $index => $active) {
+            DB::table('user_manager_settings')->insert([
+                'user_id' => $index + 1,
+                'manager_setting_id' => $retired->id,
+                'is_active' => $active,
+            ]);
+        }
+        DB::table('user_manager_settings')->insert([
+            'user_id' => 1, 'manager_setting_id' => $visible->id, 'is_active' => true,
+        ]);
+        $before = DB::table('user_manager_settings')->orderBy('id')->get()->toJson();
+        $registry = app(PermissionRegistry::class);
+
+        $this->assertFalse($registry->contains('orders.maintenance'));
+        $this->assertSame(['permission-group.orders', 'orders.view'], $registry->settingGroups()[0]['settings']->pluck('manager_code')->all());
+        $groups = $registry->groups(User_manager_setting::with('manager_setting')->where('user_id', 1)->get());
+        $this->assertSame(['orders.view'], array_column($groups[0]['permissions'], 'code'));
+        $this->assertSame($before, DB::table('user_manager_settings')->orderBy('id')->get()->toJson());
+        $this->assertNotNull($retired->fresh());
+    }
+
     public function test_statistics_migration_preserves_grants_and_existing_denials(): void
     {
         Schema::create('users', function (Blueprint $table) {

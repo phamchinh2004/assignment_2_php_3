@@ -31,6 +31,7 @@ class UserDepositService
         $operation = function () use ($user, $amount, $transactionType, $actor, $actorName): array {
             $lockedUser = User::whereKey($user->getKey())->lockForUpdate()->firstOrFail();
             $initialBalance = (float) ($lockedUser->balance ?? 0);
+            $balanceBefore = $initialBalance + (float) ($lockedUser->frozen_balance ?? 0);
 
             $hasFrozenBalance = (float) ($lockedUser->frozen_balance ?? 0) > 0;
             $hasUnconfirmedHighValueOrder = Frozen_order::where('user_id', $lockedUser->id)
@@ -53,11 +54,15 @@ class UserDepositService
             }
 
             $lockedUser->save();
+            $balanceAfter = (float) ($lockedUser->balance ?? 0)
+                + (float) ($lockedUser->frozen_balance ?? 0);
 
             $history = Wallet_balance_history::create([
                 'user_id' => $lockedUser->id,
                 'value' => $amount,
                 'initial_balance' => $initialBalance,
+                'balance_before' => $balanceBefore,
+                'balance_after' => $balanceAfter,
                 'type' => 'deposit',
                 'status' => 'completed',
                 'by_user_id' => $actor?->id,

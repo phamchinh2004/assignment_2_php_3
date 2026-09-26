@@ -379,12 +379,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         });
     }
 
-    // ---------- Bulk action spinner ----------
-    const add_customer_info = document.getElementById("add_customer_info");
-    if (add_customer_info) {
-        add_customer_info.addEventListener("click", () => { spinner.hidden = false; });
-    }
-
     // ---------- Initial load ----------
     spinner.hidden = false;
     await updateListOrders(status, rank);

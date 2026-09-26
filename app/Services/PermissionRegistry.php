@@ -42,8 +42,11 @@ class PermissionRegistry
 
     public function settingGroups(): array
     {
+        $retired = config('authorization.retired_permissions', []);
         $groups = \App\Models\Manager_setting::whereNull('parent_manager_setting_id')
-            ->with('children')->orderBy('id')->get()->map(fn ($root) => [
+            ->whereNotIn('manager_code', $retired)
+            ->with(['children' => fn ($query) => $query->whereNotIn('manager_code', $retired)])
+            ->orderBy('id')->get()->map(fn ($root) => [
                 'key' => 'setting-'.$root->id,
                 'label' => $root->manager_name,
                 'root' => $root,

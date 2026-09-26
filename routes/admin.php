@@ -64,18 +64,6 @@ Route::middleware(['role:staff|admin|own', 'checkBanned', 'auth'])->group(functi
     Route::post('/feature-announcements/{feature_announcement}/acknowledge', [FeatureAnnouncementController::class, 'acknowledge'])
         ->name('feature_announcements.acknowledge');
 
-    Route::get('/order/add-customer-info', [OrderController::class, 'addCustomerInfoToOrders'])
-        ->middleware('permission:' . $capabilities['orders_maintenance'])
-        ->name('order.add.customer.info');
-    Route::get('/order/update-status-history', [OrderController::class, 'updateOrderStatusHistory'])
-        ->middleware('permission:' . $capabilities['orders_maintenance'])
-        ->name('order.update.status.history');
-    Route::get('/order/update-commission-paid', [OrderController::class, 'updateCommissionPaid'])
-        ->middleware('permission:' . $capabilities['orders_maintenance'])
-        ->name('order.update.commission.paid');
-    Route::get('/order/update-frozen-commission-percentage', [OrderController::class, 'updateFrozenCommissionPercentage'])
-        ->middleware('permission:' . $capabilities['orders_maintenance'])
-        ->name('order.update.frozen.commission.percentage');
     Route::get('/order/change-status-order/{order}', [OrderController::class, 'changeStatusOrder'])
         ->middleware('permission:' . $capabilities['orders_change_status'])
         ->name('order.change.status');
@@ -92,9 +80,11 @@ Route::middleware(['role:staff|admin|own', 'checkBanned', 'auth'])->group(functi
         ->middleware('permission:' . $capabilities['orders_update'])
         ->name('order.edit');
     Route::match(['put', 'patch'], '/order/{order}', [OrderController::class, 'update'])
+        ->whereNumber('order')
         ->middleware('permission:' . $capabilities['orders_update'])
         ->name('order.update');
     Route::get('/order/{order}', [OrderController::class, 'show'])
+        ->whereNumber('order')
         ->middleware('permission:' . $capabilities['orders_view_detail'])
         ->name('order.show');
 
@@ -219,10 +209,10 @@ Route::middleware(['role:staff|admin|own', 'checkBanned', 'auth'])->group(functi
         Route::get('/withdraw-transaction', [TransactionHistoryController::class, 'index_withdraw'])
             ->middleware('permission:' . $capabilities['withdrawals_view'])
             ->name('withdraw_transaction');
-        Route::get('/confirm-withdraw/{transaction}', [TransactionHistoryController::class, 'confirm_withdraw'])
+        Route::post('/confirm-withdraw/{transaction}', [TransactionHistoryController::class, 'confirm_withdraw'])
             ->middleware('permission:' . $capabilities['withdrawals_confirm'])
             ->name('confirm.withdraw');
-        Route::get('/cancel-withdraw/{transaction}', [TransactionHistoryController::class, 'cancel_withdraw'])
+        Route::post('/cancel-withdraw/{transaction}', [TransactionHistoryController::class, 'cancel_withdraw'])
             ->middleware('permission:' . $capabilities['withdrawals_cancel'])
             ->name('cancel.withdraw');
         Route::get('/change-withdraw-transaction-type/{transaction}', [TransactionHistoryController::class, 'change_withdraw_transaction_type'])

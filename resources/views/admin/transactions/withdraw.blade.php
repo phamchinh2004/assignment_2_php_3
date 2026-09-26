@@ -154,7 +154,8 @@
                             <th>Khách hàng</th>
                             <th>Ngân hàng nhận tiền</th>
                             <th>Số tiền rút</th>
-                            <th>Số dư hiện tại</th>
+                            <th>Số dư trước</th>
+                            <th>Số dư sau</th>
                             <th class="text-center">Trạng thái</th>
                             <th class="text-center">Loại GD</th>
                             <th>Duyệt bởi</th>
@@ -218,17 +219,25 @@
                                             <span class="font-weight-bold text-danger" style="font-size: 1rem;">
                                                 -{{ format_money($item->value, 2) }}$
                                             </span>
-                                            <span class="text-muted" style="font-size: 0.75rem;">
-                                                Trước rút: {{ format_money($item->initial_balance, 2) }}$
-                                            </span>
                                         </div>
                                     </td>
 
-                                    {{-- Số dư hiện tại --}}
+                                    {{-- Số dư trước giao dịch --}}
                                     <td>
-                                        <strong class="text-primary" style="font-size: 0.95rem;">
-                                            {{ format_money($transactionUser->balance ?? 0, 2) }}$
-                                        </strong>
+                                        @if(!is_null($item->balance_before))
+                                            <strong>{{ format_money($item->balance_before, 2) }}$</strong>
+                                        @else
+                                            <span class="text-muted" title="Giao dịch cũ chưa có snapshot số dư">—</span>
+                                        @endif
+                                    </td>
+
+                                    {{-- Số dư sau giao dịch --}}
+                                    <td>
+                                        @if(!is_null($item->balance_after))
+                                            <strong class="text-primary">{{ format_money($item->balance_after, 2) }}$</strong>
+                                        @else
+                                            <span class="text-muted" title="Giao dịch cũ chưa có snapshot số dư">—</span>
+                                        @endif
                                     </td>
 
                                     {{-- Trạng thái --}}

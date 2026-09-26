@@ -256,8 +256,12 @@
                                     {{ $history->value >= 0 ? '+' : '' }}{{ format_money($history->value, 2) }}$
                                 </strong>
                             </td>
-                            <td>{{ format_money($history->initial_balance, 2) }}$</td>
-                            <td><strong>{{ format_money($history->final_balance, 2) }}$</strong></td>
+                            <td>
+                                {{ !is_null($history->balance_before) ? format_money($history->balance_before, 2).'$' : '—' }}
+                            </td>
+                            <td>
+                                <strong>{{ !is_null($history->balance_after) ? format_money($history->balance_after, 2).'$' : '—' }}</strong>
+                            </td>
                             <td class="text-muted">{{ $history->created_at ? $history->created_at->format('d/m/Y H:i') : '—' }}</td>
                         </tr>
                     @empty

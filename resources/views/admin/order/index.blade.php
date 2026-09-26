@@ -14,51 +14,12 @@
     <script src="{{ asset('theme/admin/vendor/datatables/dataTables.bootstrap4.min.js') }}"></script>
     <script src="{{ asset('theme/admin/js/demo/datatables-demo.js') }}"></script>
     @vite('resources/js/admin/order/index.js')
-    <script>
-        function handleUpdateStatusHistory(event, element) {
-            event.preventDefault();
-            const confirmed = confirm('Bạn có chắc chắn muốn cập nhật trạng thái đơn hàng? Hành động này sẽ thêm tất cả các trạng thái từ nhận đơn đến hoàn thành cho các đơn hàng chưa có lịch sử trạng thái.');
-            if (confirmed) {
-                const spinner = document.getElementById('spinner');
-                if (spinner) spinner.hidden = false;
-                element.style.pointerEvents = 'none';
-                element.style.opacity = '0.6';
-                window.location.href = element.href;
-            }
-            return false;
-        }
-        function handleUpdateCommissionPaid(event, element) {
-            event.preventDefault();
-            const confirmed = confirm('Bạn có chắc chắn muốn cập nhật trạng thái đã thanh toán hoa hồng? Hành động này sẽ cập nhật commission_paid = 1 cho tất cả các đơn hàng đã completed trong bảng frozen_orders.');
-            if (confirmed) {
-                const spinner = document.getElementById('spinner');
-                if (spinner) spinner.hidden = false;
-                element.style.pointerEvents = 'none';
-                element.style.opacity = '0.6';
-                window.location.href = element.href;
-            }
-            return false;
-        }
-        function handleUpdateFrozenCommissionPercentage(event, element) {
-            event.preventDefault();
-            const confirmed = confirm('Bạn có chắc chắn muốn cập nhật hoa hồng đơn hàng đóng băng? Hành động này sẽ set commission_percentage = 10 (10%) cho các đơn hàng đóng băng có custom_price != null và commission_percentage = null.');
-            if (confirmed) {
-                const spinner = document.getElementById('spinner');
-                if (spinner) spinner.hidden = false;
-                element.style.pointerEvents = 'none';
-                element.style.opacity = '0.6';
-                window.location.href = element.href;
-            }
-            return false;
-        }
-    </script>
 @endsection
 
 @section('content')
 @php
     $authorization = app(\App\Services\AuthorizationService::class);
     $canCreateOrder = $authorization->can(auth()->user(), config('authorization.capabilities.orders_create'));
-    $canMaintainOrders = $authorization->can(auth()->user(), config('authorization.capabilities.orders_maintenance'));
 @endphp
 <div class="container-fluid px-4 pb-5">
 
@@ -79,35 +40,6 @@
             </a>
             @endif
 
-            {{-- Bulk actions dropdown --}}
-            @if ($canMaintainOrders)
-            <div class="dropdown">
-                <button class="btn btn-light btn-sm border dropdown-toggle px-3 py-2 font-weight-bold" type="button"
-                        id="orderActionsDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
-                        style="border-radius: 10px; height: 40px;">
-                    <i class="fas fa-gear mr-1 text-muted"></i> Thao tác
-                </button>
-                <div class="dropdown-menu dropdown-menu-right shadow-sm border-0" aria-labelledby="orderActionsDropdown" style="border-radius: 10px; font-size: 13px;">
-                    <h6 class="dropdown-header text-uppercase font-weight-bold" style="font-size: 10px; letter-spacing: 0.05em;">Cập nhật hàng loạt</h6>
-                    <a class="dropdown-item py-2" href="{{ route('order.add.customer.info') }}" id="add_customer_info">
-                        <i class="fas fa-user-plus text-info mr-2"></i> Thêm thông tin khách hàng
-                    </a>
-                    <div class="dropdown-divider"></div>
-                    <a class="dropdown-item py-2 text-warning" href="{{ route('order.update.status.history') }}"
-                       id="update_status_history" onclick="return handleUpdateStatusHistory(event, this);">
-                        <i class="fas fa-history mr-2"></i> Cập nhật lịch sử trạng thái
-                    </a>
-                    <a class="dropdown-item py-2 text-success" href="{{ route('order.update.commission.paid') }}"
-                       id="update_commission_paid" onclick="return handleUpdateCommissionPaid(event, this);">
-                        <i class="fas fa-check-circle mr-2"></i> Đánh dấu đã thanh toán hoa hồng
-                    </a>
-                    <a class="dropdown-item py-2 text-info" href="{{ route('order.update.frozen.commission.percentage') }}"
-                       id="update_frozen_commission_percentage" onclick="return handleUpdateFrozenCommissionPercentage(event, this);">
-                        <i class="fas fa-snowflake mr-2"></i> Cập nhật hoa hồng đóng băng
-                    </a>
-                </div>
-            </div>
-            @endif
         </div>
     </div>
 

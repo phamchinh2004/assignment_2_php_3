@@ -556,6 +556,7 @@ class HomeController extends Controller
                     'message' => __('home.SoDuKhongDu')
                 ]);
             }
+            $balance_before = (float) $user->balance + (float) ($user->frozen_balance ?? 0);
             $user->balance -= $amount;
             if ($amount > $rank->maximum_withdrawal_amount) {
                 return response()->json([
@@ -599,7 +600,8 @@ class HomeController extends Controller
                     ]);
                 }
             }
-            $initial_balance = $user->balance;
+            $balance_after = (float) $user->balance + (float) ($user->frozen_balance ?? 0);
+            $initial_balance = $balance_before;
             $user->username_bank = $username_bank;
             $user->bank_name = $bank_name;
             $user->account_number = $account_number;
@@ -609,6 +611,8 @@ class HomeController extends Controller
                 'user_id' => $user->id,
                 'value' => $amount,
                 'initial_balance' => $initial_balance,
+                'balance_before' => $balance_before,
+                'balance_after' => $balance_after,
                 'type' => "withdraw",
                 'username_bank' => $username_bank,
                 'bank_name' => $bank_name,

@@ -825,6 +825,7 @@ class ChatComponent extends Component
         }
 
         $updatedCount = app(ChatReadService::class)->markConversationRead($conversation, Auth::id());
+        $this->refreshReadReceipts();
 
         if ($updatedCount > 0) {
             // Gửi 1 broadcast duy nhất cho toàn bộ cuộc hội thoại
@@ -1413,6 +1414,7 @@ class ChatComponent extends Component
                     $tempMessages = $this->messages;
                     array_unshift($tempMessages, $message); // Tin nhắn mới lên đầu
                     $this->messages = $tempMessages;
+                    $this->refreshReadReceipts();
 
                     logger('📜 Dispatching scroll-to-bottom event', [
                         'new_messages_count' => count($this->messages)

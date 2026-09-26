@@ -12,6 +12,8 @@ class Wallet_balance_history extends Model
         'user_id',
         'value',
         'initial_balance',
+        'balance_before',
+        'balance_after',
         'type',
         'status',
         'by_user_id',
@@ -19,6 +21,11 @@ class Wallet_balance_history extends Model
         'bank_name',
         'account_number',
         'transaction_type'
+    ];
+
+    protected $casts = [
+        'balance_before' => 'float',
+        'balance_after' => 'float',
     ];
     public function user()
     {

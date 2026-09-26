@@ -2,6 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Events\ConversationRead;
+use App\Events\MessageRead;
+use App\Livewire\Admin\ChatComponent;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
@@ -12,7 +15,9 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Testing\TestCase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Schema;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class ChatReadStateTest extends TestCase
 {
@@ -54,6 +59,16 @@ class ChatReadStateTest extends TestCase
             $table->uuid('public_id');
             $table->timestamps();
         });
+        Schema::create('manager_settings', function (Blueprint $table) {
+            $table->id();
+            $table->string('manager_code');
+        });
+        Schema::create('user_manager_settings', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('user_id');
+            $table->unsignedBigInteger('manager_setting_id');
+            $table->boolean('is_active');
+        });
         Schema::create('messages', function (Blueprint $table) {
             $table->id();
             $table->foreignId('conversation_id')->constrained();
@@ -61,6 +76,10 @@ class ChatReadStateTest extends TestCase
             $table->text('message');
             $table->string('type')->default('text');
             $table->string('kind')->default('text');
+            $table->string('image_path')->nullable();
+            $table->string('reference_type')->nullable();
+            $table->unsignedBigInteger('reference_id')->nullable();
+            $table->json('reference_payload')->nullable();
             $table->boolean('is_read')->default(false);
             $table->timestamps();
         });
@@ -71,6 +90,20 @@ class ChatReadStateTest extends TestCase
             $table->text('data');
             $table->timestamp('read_at')->nullable();
             $table->timestamps();
+        });
+        Schema::create('wallet_balance_histories', function (Blueprint $table) {
+            $table->id();
+            $table->string('type');
+            $table->string('status');
+        });
+        Schema::create('lucky_wheel_spins', function (Blueprint $table) {
+            $table->id();
+            $table->string('reward_type');
+            $table->string('reward_status');
+        });
+        Schema::create('order_reports', function (Blueprint $table) {
+            $table->id();
+            $table->string('status');
         });
 
         (require __DIR__ . '/../../database/migrations/2026_09_23_140000_create_message_reads_table.php')->up();
@@ -204,5 +237,74 @@ class ChatReadStateTest extends TestCase
         $reads->markConversationRead($this->conversation, 5);
         $this->assertSame(0, Message::unreadFor(5)->count());
         $this->assertTrue($reads->sentReadStatuses(collect([$message]), $this->conversation)[10]);
+    }
+
+    public function test_opening_chat_updates_visible_receipts_immediately(): void
+    {
+        Event::fake([ConversationRead::class, MessageRead::class]);
+        $this->actingAs(User::findOrFail(2));
+        $component = $this->chatComponent();
+        $component->conversations = collect([$this->conversation]);
+
+        $component->selectConversation(1);
+
+        $this->assertTrue($component->messages[0]['is_read']);
+        $this->assertDatabaseHas('message_reads', ['message_id' => 10, 'user_id' => 2]);
+    }
+
+    public function test_new_customer_message_is_shown_as_read_by_assigned_staff(): void
+    {
+        Event::fake([ConversationRead::class, MessageRead::class]);
+        $this->actingAs(User::findOrFail(2));
+        $component = $this->chatComponent();
+        $component->conversations = collect([$this->conversation]);
+        $component->selectedConversationId = 1;
+
+        $component->messageReceived(Message::with('sender')->findOrFail(10)->toArray());
+
+        $this->assertTrue($component->messages[0]['is_read']);
+        $this->assertDatabaseHas('message_reads', ['message_id' => 10, 'user_id' => 2]);
+    }
+
+    public function test_observer_opening_chat_does_not_show_customer_message_as_read_by_staff(): void
+    {
+        Event::fake([ConversationRead::class, MessageRead::class]);
+        $this->actingAs(User::findOrFail(4));
+        $component = $this->chatComponent();
+        $component->conversations = collect([$this->conversation]);
+
+        $component->selectConversation(1);
+
+        $this->assertFalse($component->messages[0]['is_read']);
+        $this->assertDatabaseMissing('message_reads', ['message_id' => 10, 'user_id' => 2]);
+    }
+
+    public function test_unassigned_staff_cannot_open_chat_or_mark_messages_read(): void
+    {
+        $this->actingAs(User::findOrFail(5));
+        $component = $this->chatComponent();
+        $component->conversations = collect();
+
+        foreach (['selectConversation' => [1], 'markSingleMessageAsRead' => [10, 1]] as $method => $arguments) {
+            try {
+                $component->$method(...$arguments);
+                $this->fail('Unassigned staff should be denied access.');
+            } catch (HttpException $exception) {
+                $this->assertSame(403, $exception->getStatusCode());
+            }
+        }
+
+        $this->assertSame([], $component->messages);
+        $this->assertDatabaseMissing('message_reads', ['message_id' => 10, 'user_id' => 5]);
+    }
+
+    private function chatComponent(): ChatComponent
+    {
+        $component = new ChatComponent;
+        $component->getAttributes()
+            ->whereInstanceOf(\Livewire\Attributes\Computed::class)
+            ->each(fn ($attribute) => $attribute->boot());
+
+        return $component;
     }
 }

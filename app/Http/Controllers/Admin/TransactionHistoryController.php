@@ -9,7 +9,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Transaction_history;
 use App\Models\User;
 use App\Services\AuthorizationService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class TransactionHistoryController extends Controller
 {
@@ -32,47 +35,74 @@ class TransactionHistoryController extends Controller
         $list_withdraw_transactions = $query->orderByDesc("wallet_balance_histories.id")->get();
         return view('admin.transactions.withdraw', compact('list_withdraw_transactions'));
     }
-    public function confirm_withdraw(Wallet_balance_history $transaction, AuthorizationService $authorization)
-    {
-        $this->authorizeTransactionAccess($transaction, $authorization, 'withdraw');
-        $transaction_type = isset($_GET['transaction_type']) && $_GET['transaction_type'] === "true";
-        if ($transaction) {
-            if ($transaction->status === "completed") {
-                return back()->with('error', 'Giao dịch đã được xác nhận!');
-            } else if ($transaction->status === "cancelled") {
-                return back()->with('error', 'Giao dịch đã bị từ chối!');
-            } else {
-                $transaction->status = "completed";
-                $transaction->transaction_type = $transaction_type ? "normal" : "virtual_withdraw";
-                $transaction->by_user_id = Auth::user()->id;
-                $transaction->save();
-                return back()->with('success', 'Đã xác nhận giao dịch thành công!');
+    public function confirm_withdraw(
+        Request $request,
+        Wallet_balance_history $transaction,
+        AuthorizationService $authorization
+    ) {
+        $validated = $request->validate([
+            'transaction_type' => ['required', Rule::in(['normal', 'virtual_withdraw'])],
+        ]);
+
+        $result = DB::transaction(function () use ($transaction, $authorization, $validated) {
+            $lockedTransaction = Wallet_balance_history::query()
+                ->lockForUpdate()
+                ->findOrFail($transaction->id);
+
+            $this->authorizeTransactionAccess($lockedTransaction, $authorization, 'withdraw');
+
+            if ($lockedTransaction->status === 'completed') {
+                return ['error', 'Giao dịch đã được xác nhận!'];
             }
-        }
-        return back()->with('error', 'Giao dịch không xác định!');
+
+            if ($lockedTransaction->status === 'cancelled') {
+                return ['error', 'Giao dịch đã bị từ chối!'];
+            }
+
+            $lockedTransaction->status = 'completed';
+            $lockedTransaction->transaction_type = $validated['transaction_type'];
+            $lockedTransaction->by_user_id = Auth::id();
+            $lockedTransaction->save();
+
+            return ['success', 'Đã xác nhận giao dịch thành công!'];
+        });
+
+        return back()->with($result[0], $result[1]);
     }
+
     public function cancel_withdraw(Wallet_balance_history $transaction, AuthorizationService $authorization)
     {
-        $this->authorizeTransactionAccess($transaction, $authorization, 'withdraw');
-        if ($transaction) {
-            if ($transaction->status === "completed") {
-                return back()->with('error', value: 'Giao dịch đã được xác nhận!');
-            } else if ($transaction->status === "cancelled") {
-                return back()->with('error', 'Giao dịch đã bị từ chối!');
-            } else {
-                $get_user = User::find($transaction->user_id);
-                if (!$get_user) {
-                    return back()->with('error', 'Không thể hủy giao dịch vì tài khoản khách hàng không còn tồn tại.');
-                }
-                $get_user->balance += $transaction->value;
-                $get_user->save();
-                $transaction->status = "cancelled";
-                $transaction->by_user_id = Auth::user()->id;
-                $transaction->save();
-                return back()->with('success', 'Đã hủy giao dịch thành công!');
+        $result = DB::transaction(function () use ($transaction, $authorization) {
+            $lockedTransaction = Wallet_balance_history::query()
+                ->lockForUpdate()
+                ->findOrFail($transaction->id);
+
+            $this->authorizeTransactionAccess($lockedTransaction, $authorization, 'withdraw');
+
+            if ($lockedTransaction->status === 'completed') {
+                return ['error', 'Giao dịch đã được xác nhận!'];
             }
-        }
-        return back()->with('error', 'Giao dịch không xác định!');
+
+            if ($lockedTransaction->status === 'cancelled') {
+                return ['error', 'Giao dịch đã bị từ chối!'];
+            }
+
+            $user = User::query()->lockForUpdate()->find($lockedTransaction->user_id);
+            if (!$user) {
+                return ['error', 'Không thể hủy giao dịch vì tài khoản khách hàng không còn tồn tại.'];
+            }
+
+            $user->balance += $lockedTransaction->value;
+            $user->save();
+
+            $lockedTransaction->status = 'cancelled';
+            $lockedTransaction->by_user_id = Auth::id();
+            $lockedTransaction->save();
+
+            return ['success', 'Đã hủy giao dịch thành công!'];
+        });
+
+        return back()->with($result[0], $result[1]);
     }
     public function index_deposit(AuthorizationService $authorization)
     {

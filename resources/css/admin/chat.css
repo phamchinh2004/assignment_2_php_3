@@ -156,6 +156,9 @@
 #chat-root .sent-message .chat-message-meta { color: #e0e7ff; }
 #chat-root .sent-message [data-seen-status] i { color: #e0e7ff !important; }
 #chat-root .sent-message [data-seen-status="true"] i { color: #a5f3fc !important; }
+#chat-root .chat-read-status { display: inline-flex; align-items: center; gap: 4px; padding: 1px 6px; border-radius: 6px; background: #f1f5f9; color: #475569; font-size: 11px; white-space: nowrap; }
+#chat-root .chat-read-status[data-seen-status="true"] { background: #ecfdf5; color: #047857; }
+#chat-root .chat-read-status[data-seen-status] i { color: inherit !important; }
 #chat-root .message-actions { position: absolute; top: 0; left: calc(100% + 6px); gap: 1px; padding: 2px; border: 1px solid var(--chat-border); border-radius: 9px; background: #fff; box-shadow: 0 2px 6px #0f172a08; opacity: 0; transition: opacity .15s; backdrop-filter: none; }
 #chat-root .sent-message .message-actions { left: auto; right: calc(100% + 6px); }
 #chat-root .message-actions .btn { width: 30px; height: 30px; padding: 0; border-radius: 6px; font-size: 12px; }

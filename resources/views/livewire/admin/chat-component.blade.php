@@ -681,20 +681,16 @@
                                     @endif
 
                                     <!-- Thời gian và trạng thái -->
-                                    <div class="chat-message-meta d-flex align-items-center justify-content-end gap-2">
+                                    <div class="chat-message-meta d-flex flex-wrap align-items-center justify-content-end gap-2">
                                         <time datetime="{{ \Carbon\Carbon::parse($message['created_at'])->toIso8601String() }}">
                                             {{ \Carbon\Carbon::parse($message['created_at'])->setTimezone('Asia/Ho_Chi_Minh')->format('d/m/Y H:i') }}
                                         </time>
-                                        @if($isCurrentUser)
-                                            <div class="ms-2" data-message-id="{{ $message['id'] }}"
-                                                data-seen-status="{{ $message['is_read'] ? 'true' : 'false' }}">
-                                                @if($message['is_read'] ?? false)
-                                                    <i class="fas fa-check-double text-info" style="font-size: 10px;" title="Đã xem"></i>
-                                                @else
-                                                    <i class="fas fa-check text-white-50" style="font-size: 10px;" title="Đã gửi"></i>
-                                                @endif
-                                            </div>
-                                        @endif
+                                        <span class="chat-read-status" data-message-id="{{ $message['id'] }}"
+                                            data-seen-status="{{ ($message['is_read'] ?? false) ? 'true' : 'false' }}"
+                                            title="{{ (int) $message['sender_id'] === (int) $this->selectedConversation->user_id ? 'Trạng thái đọc của nhân viên phụ trách' : 'Trạng thái đọc của khách hàng' }}">
+                                            <i class="fas {{ ($message['is_read'] ?? false) ? 'fa-check-double' : 'fa-check' }}" aria-hidden="true"></i>
+                                            <span>{{ ($message['is_read'] ?? false) ? 'Đã đọc' : 'Chưa đọc' }}</span>
+                                        </span>
                                     </div>
 
                                     <!-- Message tail -->
