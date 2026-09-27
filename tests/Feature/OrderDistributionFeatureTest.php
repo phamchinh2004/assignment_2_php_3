@@ -5,6 +5,8 @@ namespace Tests\Feature;
 use App\Http\Controllers\Admin\OrderDistributionController;
 use App\Models\Frozen_order;
 use App\Models\User;
+use App\Services\AdminOrderTransitionService;
+use App\Services\AuthorizationService;
 use App\Services\OrderStatusService;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\Request;
@@ -185,6 +187,28 @@ class OrderDistributionFeatureTest extends TestCase
             ->assertForbidden();
         $this->assertSame('confirmed', $order->fresh()->status);
         $this->assertDatabaseCount('status_orders', 0);
+    }
+
+    public function test_show_exposes_source_order_link_when_admin_can_view_order_detail(): void
+    {
+        $admin = $this->user(User::ROLE_ADMIN);
+        $recipient = $this->user(User::ROLE_MEMBER);
+        $this->grant($admin, ['order_distributions_view_detail', 'orders_view_detail']);
+        $orderId = DB::table('orders')->insertGetId([
+            'order_code' => 'SOURCE-001',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $distribution = $this->frozenOrder($recipient, ['order_id' => $orderId]);
+
+        $this->actingAs($admin);
+        $view = app(OrderDistributionController::class)->show(
+            $distribution,
+            app(AdminOrderTransitionService::class),
+            app(AuthorizationService::class)
+        );
+
+        $this->assertTrue($view->getData()['canViewOrder']);
     }
 
     public function test_transition_advances_only_one_step_and_records_the_admin(): void

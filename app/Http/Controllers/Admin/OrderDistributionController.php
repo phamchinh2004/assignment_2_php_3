@@ -82,9 +82,13 @@ class OrderDistributionController extends Controller
                     $actor,
                     config('authorization.capabilities.order_distributions_complete')
                 ));
+        $canViewOrder = $authorization->can(
+            $actor,
+            config('authorization.capabilities.orders_view_detail')
+        );
         $statusLabels = Status::query()->pluck('display_name', 'name');
 
-        return view('admin.order_distributions.show', compact('frozenOrder', 'transition', 'canAdvance', 'statusLabels'));
+        return view('admin.order_distributions.show', compact('frozenOrder', 'transition', 'canAdvance', 'canViewOrder', 'statusLabels'));
     }
 
     public function transition(
