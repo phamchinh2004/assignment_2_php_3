@@ -391,8 +391,7 @@ class StaffController extends Controller
             ]);
 
             if (!$assignment->exists) {
-                $assignment->is_active = $forceState
-                    ?? in_array($user->role, [User::ROLE_OWNER, User::ROLE_ADMIN], true);
+                $assignment->is_active = $forceState ?? false;
                 $assignment->save();
                 continue;
             }

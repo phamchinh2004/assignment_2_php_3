@@ -37,6 +37,13 @@ class UpdateUserRequest extends FormRequest
         }
 
         if (
+            $this->has('referrer_id')
+            && !$authorization->can($actor, $capabilities['customers_change_referrer'])
+        ) {
+            return false;
+        }
+
+        if (
             $this->hasAny(['rank', 'lucky_wheel_bonus_spins', 'reset_progress'])
             && !$authorization->can($actor, $capabilities['customers_manage_spin'])
         ) {
@@ -91,6 +98,12 @@ class UpdateUserRequest extends FormRequest
             'status' => ['sometimes', Rule::in(['inactivated', 'activated', 'banned'])],
             'warehouse_area' => ['nullable', 'string', 'max:191'],
             'warehouse_address' => ['nullable', 'string', 'max:1000'],
+            'referrer_id' => [
+                Rule::prohibitedIf(fn () => $actor === null || !$authorization->can($actor, config('authorization.capabilities.customers_change_referrer'))),
+                'nullable',
+                'integer',
+                Rule::exists('users', 'id')->where(fn ($query) => $query->whereIn('role', User::MANAGEMENT_ROLES)),
+            ],
             'lucky_wheel_bonus_spins' => [
                 Rule::prohibitedIf(fn () => $actor === null || !$authorization->can($actor, config('authorization.capabilities.customers_manage_spin'))),
                 'nullable',

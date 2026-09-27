@@ -20,6 +20,7 @@ $modules = [
             'view_financials' => ['code' => 'customers.view-financials', 'label' => 'Xem số dư và lịch sử tài chính'],
             'create' => ['code' => 'customers.create', 'label' => 'Tạo khách hàng'],
             'update' => ['code' => 'customers.update', 'label' => 'Cập nhật thông tin'],
+            'change_referrer' => ['code' => 'customers.change-referrer', 'label' => 'Thay đổi người giới thiệu'],
             'change_status' => ['code' => 'customers.change-status', 'label' => 'Khóa, mở khóa và đổi trạng thái'],
             'manage_location' => ['code' => 'customers.manage-location', 'label' => 'Quản lý dữ liệu vị trí'],
             'manage_frozen_orders' => ['code' => 'customers.manage-frozen-orders', 'label' => 'Quản lý đơn hàng đóng băng'],

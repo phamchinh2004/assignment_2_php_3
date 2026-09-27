@@ -159,7 +159,19 @@ class UserController extends Controller
     public function edit(User $user, AuthorizationService $authorization)
     {
         $this->authorizeMemberAccess($user, $authorization);
+        $user->loadMissing('referrer:id,full_name,username,role,status');
         $list_ranks = Rank::get();
+        $canChangeReferrer = $authorization->can(
+            Auth::user(),
+            config('authorization.capabilities.customers_change_referrer')
+        );
+        $referrerCandidates = $canChangeReferrer
+            ? User::query()
+                ->whereIn('role', User::MANAGEMENT_ROLES)
+                ->orderBy('full_name')
+                ->orderBy('id')
+                ->get(['id', 'full_name', 'username', 'role', 'status'])
+            : collect();
         $banks = [
             'Ngân hàng Việt Nam' => [
                 'VPBank',
@@ -273,7 +285,7 @@ class UserController extends Controller
                 'Banco Popular Español',
             ],
         ];
-        return view('admin.user.edit', compact('user', 'list_ranks', 'banks'));
+        return view('admin.user.edit', compact('user', 'list_ranks', 'banks', 'referrerCandidates'));
     }
 
     /**
@@ -306,6 +318,11 @@ class UserController extends Controller
         }
         if ($authorization->can($actor, $capabilities['customers_change_status']) && $request->has('status')) {
             $data['status'] = $request->input('status');
+        }
+        if ($authorization->can($actor, $capabilities['customers_change_referrer']) && $request->has('referrer_id')) {
+            $data['referrer_id'] = $request->filled('referrer_id')
+                ? (int) $request->input('referrer_id')
+                : null;
         }
 
         // Only the owner may change account roles.

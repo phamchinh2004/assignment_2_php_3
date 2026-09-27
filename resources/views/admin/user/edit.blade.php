@@ -17,6 +17,7 @@ Chỉnh sửa người dùng
     $authorization = app(\App\Services\AuthorizationService::class);
     $capabilities = config('authorization.capabilities');
     $canChangeStatus = $authorization->can(auth()->user(), $capabilities['customers_change_status']);
+    $canChangeReferrer = $authorization->can(auth()->user(), $capabilities['customers_change_referrer']);
     $canAdjustBalance = $authorization->can(auth()->user(), $capabilities['customers_adjust_balance']);
     $canManageSpin = $authorization->can(auth()->user(), $capabilities['customers_manage_spin']);
     $canManageLocation = $authorization->can(auth()->user(), $capabilities['customers_manage_location']);
@@ -176,6 +177,38 @@ Chỉnh sửa người dùng
                             </div>
                             @endif
                         </div>
+
+                        @if ($canChangeReferrer)
+                        <div class="form-group-custom mb-0">
+                            <label for="referrer_id">Người giới thiệu</label>
+                            <select name="referrer_id" id="referrer_id" class="form-control form-select-custom @error('referrer_id') is-invalid @enderror">
+                                <option value="">--- Không có người giới thiệu ---</option>
+                                @foreach ($referrerCandidates as $referrerCandidate)
+                                    @php
+                                        $referrerRoleLabel = match ($referrerCandidate->role) {
+                                            \App\Models\User::ROLE_OWNER => 'Chủ sở hữu',
+                                            \App\Models\User::ROLE_ADMIN => 'Quản trị viên',
+                                            default => 'Nhân viên',
+                                        };
+                                    @endphp
+                                    <option value="{{ $referrerCandidate->id }}"
+                                        @selected((string) old('referrer_id', $user->referrer_id) === (string) $referrerCandidate->id)>
+                                        {{ $referrerCandidate->full_name ?: $referrerCandidate->username }}
+                                        @if ($referrerCandidate->username)
+                                            ({{ '@'.$referrerCandidate->username }})
+                                        @endif
+                                        · {{ $referrerRoleLabel }}
+                                        @if ($referrerCandidate->status !== 'activated')
+                                            · {{ $referrerCandidate->status === 'banned' ? 'Đã khóa' : 'Chưa kích hoạt' }}
+                                        @endif
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('referrer_id')
+                            <small class="error-message">{{ $message }}</small>
+                            @enderror
+                        </div>
+                        @endif
                     </div>
 
                     <!-- Thông tin kho -->
@@ -490,6 +523,19 @@ Chỉnh sửa người dùng
                 </div>
                 <dl class="account-facts">
                     <div><dt>Mã giới thiệu</dt><dd>{{ $user->referral_code ?: 'Chưa có' }}</dd></div>
+                    <div>
+                        <dt>Người giới thiệu</dt>
+                        <dd>
+                            @if ($user->referrer)
+                                {{ $user->referrer->full_name ?: $user->referrer->username }}
+                                @if ($user->referrer->username)
+                                    ({{ '@'.$user->referrer->username }})
+                                @endif
+                            @else
+                                Chưa có
+                            @endif
+                        </dd>
+                    </div>
                     <div><dt>Ngày tạo</dt><dd>{{ $user->created_at?->format('d/m/Y H:i') ?: 'Không xác định' }}</dd></div>
                     <div><dt>Hoạt động gần nhất</dt><dd>{{ $user->last_seen?->format('d/m/Y H:i') ?: 'Chưa ghi nhận' }}</dd></div>
                     <div><dt>IP đăng ký</dt><dd class="account-fact-code">{{ $user->register_ip ?: 'Chưa ghi nhận' }}</dd></div>
