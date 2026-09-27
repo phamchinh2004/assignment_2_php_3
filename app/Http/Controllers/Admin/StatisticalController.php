@@ -495,7 +495,7 @@ class StatisticalController extends Controller
 
             // Query cơ bản
             $query = User::where('role', User::ROLE_STAFF)
-                ->with(['invitedUsers' => function ($q) use ($dateFrom, $dateTo) {
+                ->with(['managedMembers' => function ($q) use ($dateFrom, $dateTo) {
                     $q->with(['wallet_balance_histories' => function ($wq) use ($dateFrom, $dateTo) {
                         $wq->where('type', 'deposit')
                             ->where('status', 'completed')
@@ -519,7 +519,7 @@ class StatisticalController extends Controller
             $totalTransactions = 0;
 
             foreach ($staffList as $staff) {
-                $invitedUsers = $staff->invitedUsers;
+                $invitedUsers = $staff->managedMembers;
                 $staffRevenue = 0;
                 $staffTransactions = 0;
 
@@ -625,7 +625,11 @@ class StatisticalController extends Controller
             }
 
             // Lấy danh sách người dùng được mời bởi nhân viên này
-            $invitedUsers = User::where('referrer_id', $staffId)->where('clone_account', 0)->get();
+            $invitedUsers = User::query()
+                ->managedBy((int) $staffId)
+                ->where('role', User::ROLE_MEMBER)
+                ->where('clone_account', 0)
+                ->get();
 
             // Lấy giao dịch của những người dùng được nhân viên giới thiệu
             $transactions = Wallet_balance_history::whereIn('user_id', $invitedUsers->pluck('id'))
@@ -682,6 +686,7 @@ class StatisticalController extends Controller
                 ->join('users as u', 'wbh.user_id', '=', 'u.id')
                 ->join('users as staff', 'u.referrer_id', '=', 'staff.id')
                 ->where('u.clone_account', 0)
+                ->where('u.role', User::ROLE_MEMBER)
                 ->where('wbh.type', 'deposit')
                 ->where('wbh.status', 'completed')
                 ->where('wbh.transaction_type', 'normal')
@@ -1025,7 +1030,7 @@ class StatisticalController extends Controller
             $dateToParsed = Carbon::parse($dateTo)->endOfDay();
 
             $query = User::where('role', User::ROLE_STAFF)
-                ->with(['invitedUsers' => function ($q) use ($dateFromParsed, $dateToParsed) {
+                ->with(['managedMembers' => function ($q) use ($dateFromParsed, $dateToParsed) {
                     $q->with(['wallet_balance_histories' => function ($wq) use ($dateFromParsed, $dateToParsed) {
                         $wq->where('type', 'deposit')
                             ->where('status', 'completed')
@@ -1043,7 +1048,7 @@ class StatisticalController extends Controller
             $totalAllRevenue = 0;
 
             foreach ($staffList as $staff) {
-                $invitedUsers = $staff->invitedUsers;
+                $invitedUsers = $staff->managedMembers;
                 $staffRevenue = 0;
                 $staffTransactions = 0;
 
@@ -1425,7 +1430,8 @@ class StatisticalController extends Controller
     private function getDailyRevenue($userId, $startDate, $endDate)
     {
         $data = Wallet_balance_history::whereHas('user', function ($q) use ($userId) {
-                $q->where('referrer_id', $userId)
+                $q->managedBy((int) $userId)
+                    ->where('role', User::ROLE_MEMBER)
                     ->where('clone_account', 0);
             })
             ->where('status', 'completed')
@@ -1461,7 +1467,8 @@ class StatisticalController extends Controller
     private function getMonthlyRevenue($userId, $startDate, $endDate)
     {
         $data = Wallet_balance_history::whereHas('user', function ($q) use ($userId) {
-                $q->where('referrer_id', $userId)
+                $q->managedBy((int) $userId)
+                    ->where('role', User::ROLE_MEMBER)
                     ->where('clone_account', 0);
             })
             ->where('status', 'completed')
@@ -1491,7 +1498,8 @@ class StatisticalController extends Controller
     private function getOverviewStats($userId, $startDate, $endDate)
     {
         $stats = Wallet_balance_history::whereHas('user', function ($q) use ($userId) {
-                $q->where('referrer_id', $userId)
+                $q->managedBy((int) $userId)
+                    ->where('role', User::ROLE_MEMBER)
                     ->where('clone_account', 0);
             })
             ->where('status', 'completed')
@@ -1514,7 +1522,8 @@ class StatisticalController extends Controller
         $prevEndDate = $startDate->copy()->subDay();
 
         $prevStats = Wallet_balance_history::whereHas('user', function ($q) use ($userId) {
-                $q->where('referrer_id', $userId)
+                $q->managedBy((int) $userId)
+                    ->where('role', User::ROLE_MEMBER)
                     ->where('clone_account', 0);
             })
             ->where('status', 'completed')
@@ -1544,7 +1553,8 @@ class StatisticalController extends Controller
     private function getTransactionTypeStats($userId, $startDate, $endDate)
     {
         $stats = Wallet_balance_history::whereHas('user', function ($q) use ($userId) {
-                $q->where('referrer_id', $userId)
+                $q->managedBy((int) $userId)
+                    ->where('role', User::ROLE_MEMBER)
                     ->where('clone_account', 0);
             })
             ->where('status', 'completed')
@@ -1578,7 +1588,8 @@ class StatisticalController extends Controller
         $status = $request->get('status'); // processing, completed, cancelled
 
         $query = Wallet_balance_history::whereHas('user', function ($q) use ($userId) {
-                $q->where('referrer_id', $userId)
+                $q->managedBy((int) $userId)
+                    ->where('role', User::ROLE_MEMBER)
                     ->where('clone_account', 0);
             })
             ->with(['user:id,full_name,username'])

@@ -97,15 +97,17 @@ class RegisterController extends Controller
 
         $request->session()->put('registration_data', $data);
         $user = new User();
+        $referralManager = null;
         if ($request->referral_code) {
-            $get_user = User::where('referral_code', $request->referral_code)
-                ->whereIn('role', ['admin', 'staff'])
+            $referralOwner = User::where('referral_code', $request->referral_code)
+                ->with('referrer')
                 ->first();
+            $referralManager = $referralOwner?->referralManager();
 
-            if (!$get_user) {
+            if (!$referralManager) {
                 return back()->with('error', 'Mã mời không hợp lệ, vui lòng thử lại!');
             }
-            $user->referrer_id = $get_user->id;
+            $user->referrer_id = $referralManager->id;
             $user->status = "activated";
         }
         $user->full_name = $request->full_name ? $request->full_name : 'Chưa đặt tên';
@@ -131,9 +133,8 @@ class RegisterController extends Controller
         $approximateLocationService->refresh($user, $request, true);
         session()->forget('registration_data');
         if ($user->referrer_id) {
-            $get_user = User::where('referral_code', $request->referral_code)->first();
             Conversation::create([
-                'staff_id' => $get_user->id,
+                'staff_id' => $referralManager->id,
                 'user_id' => $user->id
             ]);
             Auth::login($user);
@@ -155,8 +156,10 @@ class RegisterController extends Controller
     {
         $referral_code = request()->input('referral_code');
         if ($referral_code) {
-            $get_user_by_referral_code = User::where('referral_code', $referral_code)->whereIn('role', ['admin', 'staff'])->first();
-            if ($get_user_by_referral_code) {
+            $referralOwner = User::where('referral_code', $referral_code)
+                ->with('referrer')
+                ->first();
+            if ($referralOwner?->referralManager()) {
                 $response = [
                     'success' => true,
                     'message' => 'Lấy được dữ liệu người dùng!',

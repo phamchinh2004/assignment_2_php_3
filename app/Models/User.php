@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -119,6 +120,30 @@ class User extends Authenticatable
     public function invitedUsers()
     {
         return $this->hasMany(User::class, 'referrer_id');
+    }
+
+    public function managedMembers()
+    {
+        return $this->hasMany(User::class, 'referrer_id')
+            ->where('role', self::ROLE_MEMBER);
+    }
+
+    public function scopeManagedBy(Builder $query, int $managerId): Builder
+    {
+        return $query->where('referrer_id', $managerId);
+    }
+
+    public function referralManager(): ?self
+    {
+        if (in_array($this->role, self::MANAGEMENT_ROLES, true)) {
+            return $this;
+        }
+
+        $manager = $this->referrer;
+
+        return $manager && in_array($manager->role, self::MANAGEMENT_ROLES, true)
+            ? $manager
+            : null;
     }
     /**
      * Tính số tiền hoa hồng tạm tính (từ các đơn hàng chưa completed)
