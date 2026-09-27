@@ -7,11 +7,16 @@ use App\Http\Requests\StoreManager_settingRequest;
 use App\Http\Requests\UpdateManager_settingRequest;
 use App\Models\Manager_setting;
 use App\Services\PermissionRegistry;
+use App\Services\ReactPageService;
 use Illuminate\Support\Facades\DB;
 use Str;
 
 class ManagerSettingController extends Controller
 {
+    public function __construct(private readonly ReactPageService $reactPage)
+    {
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -20,7 +25,20 @@ class ManagerSettingController extends Controller
         $permissionGroups = app(PermissionRegistry::class)->settingGroups();
         $totalSettings = Manager_setting::count();
 
-        return view('admin.manager_settings.index', compact('permissionGroups', 'totalSettings'));
+        return $this->reactPage->admin('admin.manager-settings.index', [
+            'permissionGroups' => collect($permissionGroups)->map(fn ($group) => [
+                'key' => $group['key'],
+                'label' => $group['label'],
+                'settings' => collect($group['settings'])->values(),
+            ])->values(),
+            'totalSettings' => $totalSettings,
+            'routes' => [
+                'create' => route('manager_setting.create'),
+                'show' => route('manager_setting.show', ['manager_setting' => '__SETTING_ID__']),
+                'edit' => route('manager_setting.edit', ['manager_setting' => '__SETTING_ID__']),
+                'destroy' => route('manager_setting.destroy', ['manager_setting' => '__SETTING_ID__']),
+            ],
+        ], 'Danh sách chức năng phân quyền');
     }
 
     /**
@@ -30,7 +48,10 @@ class ManagerSettingController extends Controller
     {
         $parents = Manager_setting::whereNull('parent_manager_setting_id')->orderBy('id')->get();
 
-        return view('admin.manager_settings.create', compact('parents'));
+        return $this->reactPage->admin('admin.manager-settings.create', [
+            'parents' => $parents,
+            'routes' => ['index' => route('manager_setting.index'), 'store' => route('manager_setting.store')],
+        ], 'Thêm chức năng quản lý');
     }
 
     /**
@@ -64,7 +85,16 @@ class ManagerSettingController extends Controller
             ->where('is_active', true)
             ->get();
 
-        return view('admin.manager_settings.show', compact('manager_setting', 'users_with_permission'));
+        return $this->reactPage->admin('admin.manager-settings.show', [
+            'setting' => $manager_setting,
+            'assignments' => $users_with_permission,
+            'routes' => [
+                'index' => route('manager_setting.index'),
+                'edit' => route('manager_setting.edit', $manager_setting),
+                'staffShow' => route('staff.show', ['staff' => '__STAFF_ID__']),
+                'staffPermissions' => route('staff.edit.permissions', ['id' => '__STAFF_ID__']),
+            ],
+        ], "Chi tiết chức năng — {$manager_setting->manager_name}");
     }
 
     /**
@@ -77,7 +107,11 @@ class ManagerSettingController extends Controller
             $parents = collect();
         }
 
-        return view('admin.manager_settings.edit', compact('manager_setting', 'parents'));
+        return $this->reactPage->admin('admin.manager-settings.edit', [
+            'setting' => $manager_setting,
+            'parents' => $parents,
+            'routes' => ['index' => route('manager_setting.index'), 'update' => route('manager_setting.update', $manager_setting)],
+        ], "Chỉnh sửa chức năng — {$manager_setting->manager_name}");
     }
 
     /**

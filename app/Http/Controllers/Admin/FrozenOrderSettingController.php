@@ -4,15 +4,27 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\FrozenOrderSetting;
+use App\Services\AuthorizationService;
+use App\Services\ReactPageService;
 use Illuminate\Http\Request;
 
 class FrozenOrderSettingController extends Controller
 {
+    public function __construct(private readonly ReactPageService $reactPage, private readonly AuthorizationService $authorization)
+    {
+    }
+
     public function index()
     {
         $settings = FrozenOrderSetting::query()->first() ?? FrozenOrderSetting::defaults();
 
-        return view('admin.frozen_order_settings.index', compact('settings'));
+        return $this->reactPage->admin('admin.frozen-order-settings.index', [
+            'settings' => $settings,
+            'routes' => ['store' => route('frozen_order_settings.store')],
+            'permissions' => [
+                'update' => $this->authorization->can(auth()->user(), config('authorization.capabilities.frozen_order_settings_update')),
+            ],
+        ], 'Cấu hình Frozen Order');
     }
 
     public function store(Request $request)

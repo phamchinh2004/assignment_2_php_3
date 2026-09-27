@@ -1,6 +1,8 @@
-document.addEventListener("DOMContentLoaded", () => {
+function initHomePage() {
     const root = document.querySelector("[data-home-page]");
-    if (!root) return;
+    if (!root || root.dataset.homePageInitialized === '1') return () => {};
+    root.dataset.homePageInitialized = '1';
+    const cleanupFns = [];
 
     const config = window.homePageConfig || {};
     const messages = config.messages || {};
@@ -184,12 +186,16 @@ document.addEventListener("DOMContentLoaded", () => {
             activityInterval = window.setInterval(pushActivity, 5000);
         };
 
+        const handleActivityVisibility = () => document.hidden ? stopActivity() : startActivity();
         seedActivity();
         startActivity();
-        document.addEventListener("visibilitychange", () =>
-            document.hidden ? stopActivity() : startActivity(),
-        );
-        window.addEventListener("pagehide", stopActivity, { once: true });
+        document.addEventListener("visibilitychange", handleActivityVisibility);
+        window.addEventListener("pagehide", stopActivity);
+        cleanupFns.push(() => {
+            stopActivity();
+            document.removeEventListener("visibilitychange", handleActivityVisibility);
+            window.removeEventListener("pagehide", stopActivity);
+        });
     }
 
     const testimonials = root.querySelector("[data-testimonials]");
@@ -293,12 +299,23 @@ document.addEventListener("DOMContentLoaded", () => {
             { passive: true },
         );
 
-        document.addEventListener("visibilitychange", () =>
-            document.hidden ? stopTestimonials() : startTestimonials(),
-        );
-        window.addEventListener("pagehide", stopTestimonials, { once: true });
+        const handleTestimonialVisibility = () => document.hidden ? stopTestimonials() : startTestimonials();
+        document.addEventListener("visibilitychange", handleTestimonialVisibility);
+        window.addEventListener("pagehide", stopTestimonials);
+        cleanupFns.push(() => {
+            stopTestimonials();
+            document.removeEventListener("visibilitychange", handleTestimonialVisibility);
+            window.removeEventListener("pagehide", stopTestimonials);
+        });
 
         showTestimonial(0);
         startTestimonials();
     }
-});
+
+    return () => {
+        cleanupFns.reverse().forEach((cleanup) => cleanup());
+        delete root.dataset.homePageInitialized;
+    };
+}
+
+window.__initHomePage = initHomePage;

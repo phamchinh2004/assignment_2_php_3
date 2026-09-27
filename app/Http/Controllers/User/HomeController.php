@@ -16,6 +16,7 @@ use App\Models\User;
 use App\Models\User_spin_progress;
 use App\Models\Wallet_balance_history;
 use App\Services\LuckyWheelRewardService;
+use App\Services\ReactPageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -27,7 +28,7 @@ class HomeController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(ReactPageService $reactPageService)
     {
         $list_sections = Section::get();
         $list_partners = Partner::get();
@@ -53,7 +54,7 @@ class HomeController extends Controller
             ->limit(6)
             ->get();
 
-        return view('user.home', compact(
+        $viewData = compact(
             'list_sections',
             'list_partners',
             'get_banner',
@@ -62,7 +63,26 @@ class HomeController extends Controller
             'has_spun_today',
             'bonus_spins_remaining',
             'reward_history'
-        ));
+        );
+
+        return $reactPageService->user('user.home', [
+            'legacyPage' => 'home',
+            'html' => view('user.partials.home-content', $viewData)->render(),
+            'globals' => [
+                'homePageConfig' => [
+                    'messages' => [
+                        'depositUnavailableTitle' => __('home.HeThongDangQuaTai'),
+                        'depositUnavailableText' => __('home.VuiLongLienHeCskhDeNapTien'),
+                    ],
+                    'decorativeSocialProof' => [
+                        'justNow' => __('home.VuaXong'),
+                        'secondsAgo' => __('home.GiayTruoc'),
+                        'minutesAgo' => __('home.PhutTruoc'),
+                        'successText' => __('home.successText'),
+                    ],
+                ],
+            ],
+        ]);
         // return view('info');
     }
 
@@ -347,7 +367,7 @@ class HomeController extends Controller
                 ]);
             }
     }
-    public function distribution()
+    public function distribution(ReactPageService $reactPageService)
     {
         $user = Auth::user();
         $section_mo_ta = Section::where('code', 'mo_ta')->first();
@@ -419,9 +439,33 @@ class HomeController extends Controller
                 ->sum('value');
         }
 
-        return view('user.distribution', compact('user', 'frozen_price', 'section_mo_ta', 'user_rank', 'total_orders', 'current_order', 'todays_discount', 'todays_expected_refund', 'today_commission_added'));
+        $viewData = compact('user', 'frozen_price', 'section_mo_ta', 'user_rank', 'total_orders', 'current_order', 'todays_discount', 'todays_expected_refund', 'today_commission_added');
+
+        return $reactPageService->user('user.distribution', [
+            'legacyPage' => 'distribution',
+            'html' => view('user.partials.distribution-content', $viewData)->render(),
+            'globals' => [
+                'trans' => [
+                    'coLoiXayRa' => __('home.CoLoiXayRa'),
+                    'donHangChuaXuLy' => __('home.DonHangChuaXuLy'),
+                    'DonHangDangBiDongBang' => __('home.DonHangDangBiDongBang'),
+                    'HetLuotQuay' => __('home.HetLuotQuay'),
+                    'QuayLaiNhaBan' => __('home.QuayLaiNhaBan'),
+                    'LoiDanhSachDonHang' => __('home.LoiDanhSachDonHang'),
+                    'ThoiGianDatPhanPhoi' => __('home.ThoiGianDatPhanPhoi'),
+                    'CanhBao' => __('home.CanhBao'),
+                    'Loi' => __('home.Loi'),
+                    'ChoXuLy' => __('home.ChoXuLy'),
+                    'DangPhanPhoi' => __('home.DangPhanPhoi'),
+                    'ThanhCong' => __('home.ThanhCong'),
+                    'PhanPhoiThanhCong2' => __('home.PhanPhoiThanhCong2'),
+                ],
+                'route_update_location' => route('location.update'),
+                'route_update_approximate_location' => route('location.approximate.update'),
+            ],
+        ]);
     }
-    public function withdraw_money()
+    public function withdraw_money(ReactPageService $reactPageService)
     {
         $user = Auth::user();
         $rank = Rank::find($user->rank_id);
@@ -454,7 +498,7 @@ class HomeController extends Controller
         $has_bank_account = filled($user->username_bank) && filled($user->bank_name) && filled($user->account_number);
         $order_progress_ready = $user_spin_progress && $current_orders >= $total_orders;
         $banks = config('banks', []);
-        return view('user.withdraw_money', compact(
+        $viewData = compact(
             'user',
             'maximum_number_of_withdrawals',
             'maximum_withdrawal_amount',
@@ -470,7 +514,26 @@ class HomeController extends Controller
             'has_processing_withdrawal',
             'has_bank_account',
             'order_progress_ready'
-        ));
+        );
+
+        return $reactPageService->user('user.withdraw_money', [
+            'legacyPage' => 'withdraw_money',
+            'html' => view('user.partials.withdraw_money-content', $viewData)->render(),
+            'globals' => [
+                'trans' => [
+                    'VuiLongNhapSoTienRut' => __('withdraw_money.VuiLongNhapSoTienRut'),
+                    'CanhBao' => __('withdraw_money.CanhBao'),
+                    'VuiLongNhapDayDuThongTinNganHang' => __('withdraw_money.VuiLongNhapDayDuThongTinNganHang'),
+                    'XacNhanMatKhauGiaoDichKhongKhop' => __('withdraw_money.XacNhanMatKhauGiaoDichKhongKhop'),
+                    'ThanhCong' => __('withdraw_money.ThanhCong'),
+                    'XacNhanRutTien' => 'Xác nhận rút tiền',
+                    'Huy' => 'Hủy',
+                    'XacNhan' => 'Xác nhận rút',
+                    'DangXuLy' => 'Đang xử lý...',
+                    'LoiKetNoi' => 'Không thể gửi yêu cầu lúc này. Vui lòng thử lại.',
+                ],
+            ],
+        ]);
     }
 
     private function withdrawalLockedByFrozenBalance(User $user): bool

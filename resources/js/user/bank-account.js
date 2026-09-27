@@ -346,6 +346,13 @@ const initBankAccount = (root) => {
 
 };
 
-document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('[data-bank-account]').forEach(initBankAccount);
-});
+window.__initBankAccounts = function initBankAccounts() {
+    const roots = Array.from(document.querySelectorAll('[data-bank-account]'));
+    roots.forEach(initBankAccount);
+
+    return () => {
+        roots.forEach((root) => {
+            delete root.dataset.bankAccountReady;
+        });
+    };
+};

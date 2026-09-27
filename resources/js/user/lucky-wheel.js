@@ -1,8 +1,9 @@
 // ======================= LUCKY WHEEL - VÒNG QUAY MAY MẮN ======================= 
 
-document.addEventListener('DOMContentLoaded', function() {
+function initLuckyWheel() {
     const root = document.querySelector('[data-home-page]');
-    if (!root) return;
+    if (!root || root.dataset.luckyWheelInitialized === '1') return () => {};
+    root.dataset.luckyWheelInitialized = '1';
 
     const prizeWheel = root.querySelector('#prizeWheel');
     const spinButton = root.querySelector('#wheelSpinButton');
@@ -128,7 +129,7 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     
     // Thêm event listener cho nút quay
-    spinButton.addEventListener('click', spinWheel);
+    spinButton.addEventListener('click', window.spinWheel);
     
     // Hàm hiển thị modal giải thưởng
     function showPrizeModal(prize, data) {
@@ -207,13 +208,14 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Reload trang để cập nhật trạng thái
         setTimeout(() => {
-            window.location.reload();
+            if (typeof window.__spaRefresh === 'function') window.__spaRefresh();
+            else window.location.reload();
         }, 300);
     };
 
     window.viewPrizeStatus = function() {
         window.location.hash = 'reward-history';
-        window.location.reload();
+        root.querySelector('#reward-history')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     };
     
     // Hàm tạo confetti
@@ -243,15 +245,27 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 6000);
     }
 
-    root.querySelector('#prizeModalOverlay')?.addEventListener('click', function(event) {
+    const prizeModalOverlay = root.querySelector('#prizeModalOverlay');
+    const handleOverlayClick = function(event) {
         if (event.target === this) {
             window.closePrizeModal();
         }
-    });
+    };
+    prizeModalOverlay?.addEventListener('click', handleOverlayClick);
 
-    document.addEventListener('keydown', function(event) {
+    const handleKeydown = function(event) {
         if (event.key === 'Escape' && root.querySelector('#prizeModalOverlay.show')) {
             window.closePrizeModal();
         }
-    });
-});
+    };
+    document.addEventListener('keydown', handleKeydown);
+
+    return () => {
+        spinButton.removeEventListener('click', window.spinWheel);
+        prizeModalOverlay?.removeEventListener('click', handleOverlayClick);
+        document.removeEventListener('keydown', handleKeydown);
+        delete root.dataset.luckyWheelInitialized;
+    };
+}
+
+window.__initLuckyWheel = initLuckyWheel;

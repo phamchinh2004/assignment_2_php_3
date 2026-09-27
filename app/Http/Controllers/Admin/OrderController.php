@@ -8,11 +8,19 @@ use App\Http\Requests\StoreOrderRequest;
 use App\Http\Requests\UpdateOrderRequest;
 use App\Models\Rank;
 use App\Models\Partner;
+use App\Services\AuthorizationService;
 use App\Services\OrderStatusService;
+use App\Services\ReactPageService;
 use Illuminate\Support\Facades\Storage;
 
 class OrderController extends Controller
 {
+    public function __construct(
+        private readonly ReactPageService $reactPage,
+        private readonly AuthorizationService $authorization,
+    ) {
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -47,13 +55,35 @@ class OrderController extends Controller
             $active_orders_count = Order::where('status', '1')->count();
             $inactive_orders_count = Order::where('status', '0')->count();
             $total_orders_value = Order::sum('price');
-            return view('admin.order.index', compact(
-                'list_ranks',
-                'total_orders_count',
-                'active_orders_count',
-                'inactive_orders_count',
-                'total_orders_value'
-            ));
+            $user = auth()->user();
+
+            return $this->reactPage->admin('admin.orders.index', [
+                'routes' => [
+                    'index' => route('order.index'),
+                    'create' => route('order.create'),
+                    'show' => route('order.show', ['order' => '__ORDER_ID__']),
+                    'edit' => route('order.edit', ['order' => '__ORDER_ID__']),
+                    'toggleStatus' => route('order.change.status', ['order' => '__ORDER_ID__']),
+                ],
+                'storageBaseUrl' => asset('storage'),
+                'stats' => [
+                    'total' => $total_orders_count,
+                    'active' => $active_orders_count,
+                    'inactive' => $inactive_orders_count,
+                    'totalValue' => $total_orders_value,
+                ],
+                'ranks' => $list_ranks->map(fn ($rank) => [
+                    'id' => $rank->id,
+                    'name' => $rank->name,
+                    'orders_count' => $rank->orders_count ?? 0,
+                ])->values(),
+                'permissions' => [
+                    'create' => $this->authorization->can($user, config('authorization.capabilities.orders_create')),
+                    'viewDetail' => $this->authorization->can($user, config('authorization.capabilities.orders_view_detail')),
+                    'update' => $this->authorization->can($user, config('authorization.capabilities.orders_update')),
+                    'changeStatus' => $this->authorization->can($user, config('authorization.capabilities.orders_change_status')),
+                ],
+            ], 'Quản lý đơn hàng');
         }
     }
     public function changeStatusOrder(Order $order)
@@ -95,7 +125,13 @@ class OrderController extends Controller
             $rank_item['start'] = count($get_orders_by_vip);
             $list_ranks[] = $rank_item;
         }
-        return view('admin.order.create', compact('list_ranks'));
+        return $this->reactPage->admin('admin.orders.create', [
+            'routes' => [
+                'index' => route('order.index'),
+                'store' => route('order.store'),
+            ],
+            'ranks' => $list_ranks,
+        ], 'Thêm mới đơn hàng');
     }
 
     /**
@@ -461,7 +497,21 @@ class OrderController extends Controller
     public function show(Order $order)
     {
         $order->load(['partner', 'rank', 'frozen_orders.user']);
-        return view('admin.order.show', compact('order'));
+        $user = auth()->user();
+
+        return $this->reactPage->admin('admin.orders.show', [
+            'routes' => [
+                'index' => route('order.index'),
+                'edit' => route('order.edit', ['order' => $order->id]),
+                'userShow' => route('user.show', ['user' => '__USER_ID__']),
+            ],
+            'order' => $order,
+            'imageUrl' => $order->image ? Storage::url($order->image) : null,
+            'permissions' => [
+                'update' => $this->authorization->can($user, config('authorization.capabilities.orders_update')),
+                'viewCustomerDetail' => $this->authorization->can($user, config('authorization.capabilities.customers_view_detail')),
+            ],
+        ], "Chi tiết đơn hàng #{$order->order_code}");
     }
 
     /**
@@ -469,9 +519,22 @@ class OrderController extends Controller
      */
     public function edit(Order $order)
     {
-        $order->load('partner');
+        $order->load(['partner', 'rank']);
         $partners = Partner::all();
-        return view('admin.order.edit', compact('order', 'partners'));
+
+        return $this->reactPage->admin('admin.orders.edit', [
+            'routes' => [
+                'index' => route('order.index'),
+                'update' => route('order.update', ['order' => $order->id]),
+            ],
+            'order' => $order,
+            'partners' => $partners->map(fn ($partner) => [
+                'id' => $partner->id,
+                'name' => $partner->name,
+            ])->values(),
+            'imageUrl' => $order->image ? Storage::url($order->image) : null,
+            'createdAt' => optional($order->created_at)->format('d/m/Y H:i'),
+        ], "Chỉnh sửa đơn hàng — {$order->order_code}");
     }
 
     /**
@@ -513,6 +576,15 @@ class OrderController extends Controller
         }
         
         $order->update($data);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'status' => 200,
+                'message' => 'Cập nhật đơn hàng thành công!',
+                'redirect_url' => route('order.index'),
+            ]);
+        }
+
         return redirect()->route('order.index')->with('success', 'Cập nhật đơn hàng thành công!');
     }
 }

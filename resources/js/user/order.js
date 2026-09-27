@@ -479,7 +479,11 @@
         }
     };
 
-    document.addEventListener('DOMContentLoaded', () => {
+    const initOrderHistory = () => {
+        const root = document.querySelector('[data-order-history]');
+        if (!root || root.dataset.orderHistoryInitialized === '1') return () => {};
+        root.dataset.orderHistoryInitialized = '1';
+
         const savedTab = localStorage.getItem('tab_order') || 'tat-ca';
         const initialButton = Array.from(document.querySelectorAll('.history-filter-chip'))
             .find((button) => button.dataset.tab === savedTab)
@@ -490,19 +494,28 @@
             loadOrders(activeFilterId);
         }
 
-        document.querySelectorAll('.history-filter-chip').forEach((button) => {
-            button.addEventListener('click', () => {
+        const handleClick = (event) => {
+            const button = event.target.closest('.history-filter-chip');
+            if (button && root.contains(button)) {
                 if (button.classList.contains('is-active')) return;
                 setActiveFilter(button);
                 loadOrders(activeFilterId);
-            });
-        });
+                return;
+            }
 
-        document.getElementById('list_orders')?.addEventListener('click', (event) => {
-            if (!event.target.closest('[data-history-retry]')) return;
-            loadOrders(activeFilterId);
-        });
+            if (event.target.closest('[data-history-retry]')) loadOrders(activeFilterId);
+        };
 
-        window.setInterval(updateCountdowns, 1000);
-    });
+        root.addEventListener('click', handleClick);
+        const countdownInterval = window.setInterval(updateCountdowns, 1000);
+
+        return () => {
+            activeRequest?.abort();
+            root.removeEventListener('click', handleClick);
+            window.clearInterval(countdownInterval);
+            delete root.dataset.orderHistoryInitialized;
+        };
+    };
+
+    window.__initOrderHistory = initOrderHistory;
 })();

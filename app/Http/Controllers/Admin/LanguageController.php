@@ -7,16 +7,36 @@ use App\Models\Language;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use App\Services\AuthorizationService;
+use App\Services\ReactPageService;
 
 class LanguageController extends Controller
 {
+    public function __construct(private readonly ReactPageService $reactPage, private readonly AuthorizationService $authorization)
+    {
+    }
+
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
         $list_languages = Language::get();
-        return view('admin.language.index', compact('list_languages'));
+        $user = auth()->user();
+        return $this->reactPage->admin('admin.languages.index', [
+            'items' => $list_languages,
+            'storageBaseUrl' => asset('storage'),
+            'routes' => [
+                'create' => route('language.create'),
+                'show' => route('language.show', ['language' => '__LANGUAGE_ID__']),
+                'edit' => route('language.edit', ['language' => '__LANGUAGE_ID__']),
+            ],
+            'permissions' => [
+                'create' => $this->authorization->can($user, config('authorization.capabilities.languages_create')),
+                'viewDetail' => $this->authorization->can($user, config('authorization.capabilities.languages_view_detail')),
+                'update' => $this->authorization->can($user, config('authorization.capabilities.languages_update')),
+            ],
+        ], 'Danh sách ngôn ngữ');
     }
     public function change(Request $request)
     {
@@ -29,7 +49,7 @@ class LanguageController extends Controller
      */
     public function create()
     {
-        return view('admin.language.create');
+        return $this->reactPage->admin('admin.languages.create', ['routes' => ['index' => route('language.index'), 'store' => route('language.store')]], 'Thêm mới ngôn ngữ');
     }
 
     /**
@@ -56,7 +76,12 @@ class LanguageController extends Controller
 
     public function show(Language $language)
     {
-        return view('admin.language.show', compact('language'));
+        return $this->reactPage->admin('admin.languages.show', [
+            'item' => $language,
+            'storageBaseUrl' => asset('storage'),
+            'routes' => ['index' => route('language.index'), 'edit' => route('language.edit', $language)],
+            'permissions' => ['update' => $this->authorization->can(auth()->user(), config('authorization.capabilities.languages_update'))],
+        ], "Chi tiết ngôn ngữ — {$language->name}");
     }
 
     /**
@@ -64,7 +89,11 @@ class LanguageController extends Controller
      */
     public function edit(Language $language)
     {
-        return view('admin.language.edit', compact('language'));
+        return $this->reactPage->admin('admin.languages.edit', [
+            'item' => $language,
+            'storageBaseUrl' => asset('storage'),
+            'routes' => ['index' => route('language.index'), 'update' => route('language.update', $language)],
+        ], "Chỉnh sửa ngôn ngữ — {$language->name}");
     }
 
     /**

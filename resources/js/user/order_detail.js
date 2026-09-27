@@ -12,6 +12,7 @@ function getGlobalVar(name, defaultValue = null) {
 // Lấy config từ DOM (được render từ Blade)
 function getOrderDetailConfig() {
     try {
+        if (window.orderDetailPageConfig) return window.orderDetailPageConfig;
         const el = document.getElementById('order-detail-config');
         if (!el) return {};
         const raw = el.getAttribute('data-config') || '{}';
@@ -21,6 +22,27 @@ function getOrderDetailConfig() {
         return {};
     }
 }
+
+function initOrderDetailPage() {
+const pageRoot = document.querySelector('.od-page');
+if (!pageRoot || pageRoot.dataset.orderDetailInitialized === '1') return () => {};
+pageRoot.dataset.orderDetailInitialized = '1';
+
+const handleCopyApiClick = async (event) => {
+    const button = event.target.closest?.('.btn-copy-api');
+    if (!button || !pageRoot.contains(button)) return;
+
+    try {
+        await navigator.clipboard.writeText(button.dataset.api || '');
+        button.innerHTML = '<i class="fas fa-check"></i>';
+        window.setTimeout(() => {
+            if (button.isConnected) button.innerHTML = '<i class="fas fa-copy"></i>';
+        }, 1600);
+    } catch (error) {
+        console.error(error);
+    }
+};
+pageRoot.addEventListener('click', handleCopyApiClick);
 
 const pageConfig = getOrderDetailConfig();
 
@@ -54,7 +76,6 @@ console.log('Variables loaded:', {
     csrf: csrf ? 'CSRF token exists' : 'No CSRF token'
 });
 
-document.addEventListener('DOMContentLoaded', function() {
     console.log('Order detail script loaded');
     
     const btnConfirm = document.getElementById('btn_confirm_order');
@@ -140,7 +161,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     // Quay lại trang phân phối để nhận đơn hàng tiếp theo.
                     setTimeout(() => {
-                        window.location.href = route_distribution || '/distribution';
+                        const redirectUrl = route_distribution || '/distribution';
+                        if (typeof window.__spaNavigate === 'function') window.__spaNavigate(redirectUrl);
+                        else window.location.href = redirectUrl;
                     }, 1500);
                 } else {
                     // Ẩn spinner
@@ -283,9 +306,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Redirect về trang danh sách đơn hàng sau 1.5 giây
                     setTimeout(() => {
                         if (route_order) {
-                            window.location.href = route_order;
+                            if (typeof window.__spaNavigate === 'function') window.__spaNavigate(route_order);
+                            else window.location.href = route_order;
                         } else {
-                            window.location.reload();
+                            if (typeof window.__spaRefresh === 'function') window.__spaRefresh();
+                            else window.location.reload();
                         }
                     }, 1500);
                 } else {
@@ -395,7 +420,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     setTimeout(() => {
                         // Reload để cập nhật trạng thái nút "đã báo cáo"
-                        window.location.reload();
+                        if (typeof window.__spaRefresh === 'function') window.__spaRefresh();
+                        else window.location.reload();
                     }, 1200);
                 } else {
                     if (spinner) {
@@ -435,4 +461,10 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-});
+    return () => {
+        pageRoot.removeEventListener('click', handleCopyApiClick);
+        delete pageRoot.dataset.orderDetailInitialized;
+    };
+}
+
+window.__initOrderDetailPage = initOrderDetailPage;

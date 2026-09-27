@@ -11,18 +11,24 @@ use App\Models\User;
 use App\Models\User_manager_setting;
 use App\Services\AuthorizationService;
 use App\Services\PermissionRegistry;
+use App\Services\ReactPageService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\View\View;
 
 class StaffController extends Controller
 {
+    public function __construct(private readonly ReactPageService $reactPage)
+    {
+    }
+
     /**
      * Display a listing of the resource.
      */
-    public function index(AuthorizationService $authorization)
+    public function index(AuthorizationService $authorization): View
     {
         $list_staffs = User::with('referrer')
             ->withSum(['deposits_made as total_deposit' => function ($q) {
@@ -36,7 +42,37 @@ class StaffController extends Controller
         $onlineStaffCount = $list_staffs->filter(fn($u) => $u->isOnline())->count();
         $offlineStaffCount = $list_staffs->count() - $onlineStaffCount;
 
-        return view('admin.staff.index', compact('list_staffs', 'onlineStaffCount', 'offlineStaffCount'));
+        $actor = Auth::user();
+        $list_staffs->each(function (User $staff) use ($authorization, $actor) {
+            $staff->setAttribute('is_online', $staff->isOnline());
+            $staff->setAttribute('last_seen_text', $staff->last_seen_text);
+            $staff->setAttribute('last_seen_formatted', $staff->last_seen_formatted);
+            $staff->setAttribute('can_manage', $authorization->canManageOperator($actor, $staff));
+            $staff->setAttribute('can_manage_permissions', $authorization->canManageOperatorPermissions($actor, $staff));
+        });
+
+        $capabilities = config('authorization.capabilities');
+
+        return $this->reactPage->admin('admin.staff.index', [
+            'staffs' => $list_staffs,
+            'onlineStaffCount' => $onlineStaffCount,
+            'offlineStaffCount' => $offlineStaffCount,
+            'routes' => [
+                'create' => route('staff.create'),
+                'show' => route('staff.show', ['staff' => '__STAFF_ID__']),
+                'edit' => route('staff.edit', ['staff' => '__STAFF_ID__']),
+                'permissions' => route('staff.edit.permissions', ['id' => '__STAFF_ID__']),
+                'changeStatus' => route('staff.change.status', ['id' => '__STAFF_ID__']),
+                'onlineStatuses' => route('staff.online.statuses'),
+            ],
+            'permissions' => [
+                'create' => $authorization->can($actor, $capabilities['staff_create']),
+                'viewDetail' => $authorization->can($actor, $capabilities['staff_view_detail']),
+                'update' => $authorization->can($actor, $capabilities['staff_update']),
+                'changeStatus' => $authorization->can($actor, $capabilities['staff_change_status']),
+                'viewPermissions' => $authorization->can($actor, $capabilities['staff_permissions_view']),
+            ],
+        ], 'Danh sách nhân sự quản trị');
     }
 
     /**
@@ -96,7 +132,7 @@ class StaffController extends Controller
         $staff_id,
         AuthorizationService $authorization,
         PermissionRegistry $registry
-    )
+    ): View
     {
         $get_user = User::find($staff_id);
         if (!$get_user) {
@@ -110,7 +146,15 @@ class StaffController extends Controller
             ->get();
         $permissionGroups = $registry->groups($assignments);
 
-        return view('admin.staff.edit_permission', compact('permissionGroups', 'get_user'));
+        return $this->reactPage->admin('admin.staff.permissions', [
+            'permissionGroups' => $permissionGroups,
+            'staff' => $get_user,
+            'routes' => [
+                'index' => route('staff.index'),
+                'toggle' => route('staff.change.status.permission'),
+                'bulk' => route('staff.change.status.permissions'),
+            ],
+        ], 'Phân quyền nhân viên — ' . ($get_user->full_name ?: $get_user->username));
     }
     public function change_status_permission(
         AuthorizationService $authorization,
@@ -225,11 +269,15 @@ class StaffController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create(AuthorizationService $authorization)
+    public function create(AuthorizationService $authorization): View
     {
-        return view('admin.staff.create', [
+        return $this->reactPage->admin('admin.staff.create', [
             'canChooseRole' => $authorization->isSuperuser(Auth::user()),
-        ]);
+            'routes' => [
+                'index' => route('staff.index'),
+                'store' => route('staff.store'),
+            ],
+        ], 'Thêm tài khoản nội bộ');
     }
 
     /**
@@ -289,7 +337,7 @@ class StaffController extends Controller
         );
         return redirect()->route('staff.index')->with('success', 'Tạo tài khoản quản trị thành công!');
     }
-    public function show(string $id, AuthorizationService $authorization)
+    public function show(string $id, AuthorizationService $authorization): View
     {
         $staff = User::with([
             'referrer',
@@ -302,15 +350,45 @@ class StaffController extends Controller
 
         abort_unless($authorization->canManageOperator(Auth::user(), $staff), 403);
 
-        $referrals = User::where('referrer_id', $staff->id)->latest()->paginate(10);
+        $referrals = User::with('rank')->where('referrer_id', $staff->id)->latest()->paginate(10);
 
-        return view('admin.staff.show', compact('staff', 'referrals'));
+        $staff->setAttribute('is_online', $staff->isOnline());
+        $staff->setAttribute('last_seen_text', $staff->last_seen_text);
+        $staff->setAttribute('last_seen_formatted', $staff->last_seen_formatted);
+        $activePermissions = $staff->user_manager_settings
+            ->where('is_active', true)
+            ->map(fn ($assignment) => [
+                'id' => $assignment->id,
+                'label' => $assignment->manager_setting?->manager_name ?? (string) $assignment->manager_setting_id,
+                'code' => $assignment->manager_setting?->manager_code,
+            ])->values();
+        $actor = Auth::user();
+        $capabilities = config('authorization.capabilities');
+
+        return $this->reactPage->admin('admin.staff.show', [
+            'staff' => $staff,
+            'referrals' => $referrals,
+            'activePermissions' => $activePermissions,
+            'routes' => [
+                'index' => route('staff.index'),
+                'edit' => route('staff.edit', ['staff' => $staff]),
+                'permissions' => route('staff.edit.permissions', ['id' => $staff->id]),
+                'customerShow' => route('user.show', ['user' => '__USER_ID__']),
+            ],
+            'permissions' => [
+                'managePermissions' => $authorization->can($actor, $capabilities['staff_permissions_view'])
+                    && $authorization->canManageOperatorPermissions($actor, $staff),
+                'update' => $authorization->can($actor, $capabilities['staff_update'])
+                    && $authorization->canManageOperator($actor, $staff),
+                'viewCustomerDetail' => $authorization->can($actor, $capabilities['customers_view_detail']),
+            ],
+        ], 'Chi tiết nhân viên — ' . ($staff->full_name ?: $staff->username));
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id, AuthorizationService $authorization)
+    public function edit(string $id, AuthorizationService $authorization): View
     {
         $get_staff_old = User::find($id);
         if (!$get_staff_old) {
@@ -318,10 +396,14 @@ class StaffController extends Controller
         }
         abort_unless($authorization->canManageOperator(Auth::user(), $get_staff_old), 403);
 
-        return view('admin.staff.edit', [
-            'get_staff_old' => $get_staff_old,
+        return $this->reactPage->admin('admin.staff.edit', [
+            'staff' => $get_staff_old,
             'canChooseRole' => $authorization->isSuperuser(Auth::user()),
-        ]);
+            'routes' => [
+                'index' => route('staff.index'),
+                'update' => route('staff.update', ['staff' => $get_staff_old]),
+            ],
+        ], 'Chỉnh sửa tài khoản nội bộ');
     }
 
     /**

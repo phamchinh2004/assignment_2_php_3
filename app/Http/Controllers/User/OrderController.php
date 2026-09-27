@@ -14,6 +14,7 @@ use App\Services\OrderStatusService;
 use App\Services\FrozenOrderSettlementService;
 use App\Services\OverdueOrderPenaltyService;
 use App\Services\ApproximateLocationService;
+use App\Services\ReactPageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -30,10 +31,40 @@ class OrderController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(ReactPageService $reactPageService)
     {
         $user = User::find(Auth::user()->id);
-        return view('user.order', compact('user'));
+        return $reactPageService->user('user.order', [
+            'userBalance' => (float) ($user->balance ?? 0),
+            'userBalanceFormatted' => format_money($user->balance ?? 0, 7),
+            'routes' => [
+                'list' => route('get_list_orders_by_tab'),
+                'order' => route('order'),
+                'distribution' => route('distribution'),
+            ],
+            'labels' => [
+                'empty' => __('order.KhongCoDuLieu'),
+                'noData' => __('order.KhongTimThayDuLieuDonHang'),
+                'time' => __('order.ThoiGianDatPhanPhoi'),
+                'orderCode' => __('order.MaDonHang'),
+                'orderTotal' => __('order.TongTienDonHang'),
+                'commission' => __('order.ChietKhau'),
+                'refund' => __('order.SoTienHoanNhap'),
+                'historyTitle' => __('order.LichSuPhanPhoi'),
+                'currentBalance' => __('order.SoDuHienTai'),
+                'description' => __('order.DuLieuNayDuocCungCap'),
+                'all' => __('order.TatCa'),
+                'pending' => __('order.ChoXuLy'),
+                'confirmed' => __('order.DaXacNhan'),
+                'preparing' => __('order.DangChuanBi'),
+                'transit' => __('order.DangTrungChuyen'),
+                'shipping' => __('order.DangVanChuyen'),
+                'delivered' => __('order.DaGiaoHang'),
+                'completed' => __('order.HoanThanh'),
+                'cancelled' => __('order.DaHuy'),
+                'highValue' => __('order.GiaTriCao'),
+            ],
+        ]);
     }
     public function get_list_orders_by_tab()
     {
@@ -197,7 +228,7 @@ class OrderController extends Controller
     /**
      * Hiển thị trang chi tiết đơn hàng
      */
-    public function show(Frozen_order $frozen_order)
+    public function show(Frozen_order $frozen_order, ReactPageService $reactPageService)
     {
         // Kiểm tra quyền truy cập
         if ($frozen_order->user_id !== Auth::id()) {
@@ -273,7 +304,7 @@ class OrderController extends Controller
         $cancellation = $statusHistory
             ->first(fn ($item) => in_array($item->status?->name, ['cancelled', 'canceled'], true));
 
-        return view('user.order_detail', compact(
+        $viewData = compact(
             'frozen_order',
             'statusHistory',
             'currentStatus',
@@ -282,7 +313,32 @@ class OrderController extends Controller
             'apiUrl',
             'financial',
             'cancellation'
-        ));
+        );
+
+        return $reactPageService->user('user.order_detail', [
+            'legacyPage' => 'order_detail',
+            'html' => view('user.partials.order_detail-content', $viewData)->render(),
+            'globals' => [
+                'orderDetailPageConfig' => [
+                    'trans' => [
+                        'XacNhanDonHang' => 'Xác nhận đơn hàng',
+                        'HuyDonHang' => 'Hủy đơn hàng',
+                        'ThanhCong' => 'Thành công',
+                        'Loi' => 'Lỗi',
+                        'CanhBao' => 'Cảnh báo',
+                    ],
+                    'routes' => [
+                        'confirm' => route('order.confirm', $frozen_order->id),
+                        'cancel' => route('order.cancel', $frozen_order->id),
+                        'report' => route('order.report', $frozen_order->id),
+                        'order' => route('order'),
+                        'distribution' => route('distribution'),
+                    ],
+                    'csrf' => csrf_token(),
+                    'frozen_order_id' => $frozen_order->id,
+                ],
+            ],
+        ]);
     }
 
     /**

@@ -39,7 +39,7 @@
             $link = route('order.show', $payload['id']);
         } elseif (auth()->user() && app(\App\Services\AuthorizationService::class)->can(
             auth()->user(),
-            config('authorization.capabilities.order_distributions')
+            config('authorization.capabilities.order_distributions_view_detail')
         )) {
             $link = route('order_distributions.show', $payload['id']);
         }

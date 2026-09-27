@@ -1,4 +1,7 @@
-document.addEventListener('DOMContentLoaded', function () {
+function initWithdrawPage() {
+    const page = document.querySelector('.withdraw-page');
+    if (!page || page.dataset.withdrawInitialized === '1') return () => {};
+    page.dataset.withdrawInitialized = '1';
     const config = document.getElementById('withdrawal-config');
     const amountInput = document.getElementById('amount_input_field');
     const maxButton = document.getElementById('withdraw_all');
@@ -173,7 +176,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     icon: 'success',
                     button: 'OK',
                 });
-                if (acknowledged) location.reload();
+                if (acknowledged) {
+                    if (typeof window.__spaRefresh === 'function') window.__spaRefresh();
+                    else location.reload();
+                }
                 return;
             }
             notification('warning', result.message || trans.LoiKetNoi, trans.CanhBao);
@@ -187,4 +193,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     submitButton.disabled = submitBlocked;
     updateReview();
-});
+    return () => {
+        delete page.dataset.withdrawInitialized;
+    };
+}
+
+window.__initWithdrawPage = initWithdrawPage;

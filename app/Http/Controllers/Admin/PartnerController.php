@@ -6,18 +6,40 @@ use App\Http\Controllers\Controller;
 use App\Models\Partner;
 use App\Http\Requests\StorePartnerRequest;
 use App\Http\Requests\UpdatePartnerRequest;
+use App\Services\AuthorizationService;
+use App\Services\ReactPageService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class PartnerController extends Controller
 {
+    public function __construct(private readonly ReactPageService $reactPage, private readonly AuthorizationService $authorization)
+    {
+    }
+
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
         $list_partners = Partner::get();
-        return view('admin.partner.index', compact('list_partners'));
+        $user = auth()->user();
+        return $this->reactPage->admin('admin.partners.index', [
+            'items' => $list_partners,
+            'storageBaseUrl' => asset('storage'),
+            'routes' => [
+                'create' => route('partner.create'),
+                'show' => route('partner.show', ['partner' => '__PARTNER_ID__']),
+                'edit' => route('partner.edit', ['partner' => '__PARTNER_ID__']),
+                'destroy' => route('partner.destroy', ['partner' => '__PARTNER_ID__']),
+            ],
+            'permissions' => [
+                'create' => $this->authorization->can($user, config('authorization.capabilities.partners_create')),
+                'viewDetail' => $this->authorization->can($user, config('authorization.capabilities.partners_view_detail')),
+                'update' => $this->authorization->can($user, config('authorization.capabilities.partners_update')),
+                'delete' => $this->authorization->can($user, config('authorization.capabilities.partners_delete')),
+            ],
+        ], 'Danh sách đối tác');
     }
 
     /**
@@ -25,7 +47,7 @@ class PartnerController extends Controller
      */
     public function create()
     {
-        return view('admin.partner.create');
+        return $this->reactPage->admin('admin.partners.create', ['routes' => ['index' => route('partner.index'), 'store' => route('partner.store')]], 'Thêm mới đối tác');
     }
 
     /**
@@ -52,7 +74,12 @@ class PartnerController extends Controller
 
     public function show(Partner $partner)
     {
-        return view('admin.partner.show', compact('partner'));
+        return $this->reactPage->admin('admin.partners.show', [
+            'item' => $partner,
+            'storageBaseUrl' => asset('storage'),
+            'routes' => ['index' => route('partner.index'), 'edit' => route('partner.edit', $partner)],
+            'permissions' => ['update' => $this->authorization->can(auth()->user(), config('authorization.capabilities.partners_update'))],
+        ], "Chi tiết đối tác — {$partner->name}");
     }
 
     /**
@@ -60,7 +87,11 @@ class PartnerController extends Controller
      */
     public function edit(Partner $partner)
     {
-        return view('admin.partner.edit', compact('partner'));
+        return $this->reactPage->admin('admin.partners.edit', [
+            'item' => $partner,
+            'storageBaseUrl' => asset('storage'),
+            'routes' => ['index' => route('partner.index'), 'update' => route('partner.update', $partner)],
+        ], "Chỉnh sửa đối tác — {$partner->name}");
     }
 
     /**

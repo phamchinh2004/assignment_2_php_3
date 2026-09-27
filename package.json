@@ -17,9 +17,14 @@
         "vite": "^6.3.5"
     },
     "dependencies": {
+        "@ant-design/icons": "^5.6.1",
+        "antd": "^5.29.3",
         "apexcharts": "^5.16.0",
         "autonumeric": "^4.10.9",
         "fireworks-js": "^2.10.8",
+        "react": "^18.3.1",
+        "react-dom": "^18.3.1",
+        "react-router-dom": "^7.18.4",
         "slim-select": "^3.0.0"
     }
 }

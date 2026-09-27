@@ -7,6 +7,8 @@ use App\Http\Requests\FeatureAnnouncementRequest;
 use App\Models\FeatureAnnouncement;
 use App\Models\User;
 use App\Services\FeatureAnnouncementService;
+use App\Services\AuthorizationService;
+use App\Services\ReactPageService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
@@ -17,6 +19,12 @@ use Throwable;
 
 class FeatureAnnouncementController extends Controller
 {
+    public function __construct(
+        private readonly ReactPageService $reactPage,
+        private readonly AuthorizationService $authorization,
+    ) {
+    }
+
     public function unread(FeatureAnnouncementService $service): JsonResponse
     {
         $announcements = $service->getUnreadAnnouncements(request()->user())
@@ -51,15 +59,46 @@ class FeatureAnnouncementController extends Controller
 
         $announcementStats = $service->getStatsForAnnouncements($announcements->getCollection());
 
-        return view('admin.feature_announcements.index', compact('announcements', 'announcementStats'));
+        $user = auth()->user();
+        $capabilities = config('authorization.capabilities');
+
+        return $this->reactPage->admin('admin.feature-announcements.index', [
+            'announcements' => $announcements,
+            'announcementStats' => $announcementStats,
+            'roleLabels' => $this->roleOptions(),
+            'routes' => [
+                'create' => route('feature_announcements.create'),
+                'show' => route('feature_announcements.show', ['feature_announcement' => '__ANNOUNCEMENT_ID__']),
+                'edit' => route('feature_announcements.edit', ['feature_announcement' => '__ANNOUNCEMENT_ID__']),
+                'toggle' => route('feature_announcements.toggle', ['feature_announcement' => '__ANNOUNCEMENT_ID__']),
+                'destroy' => route('feature_announcements.destroy', ['feature_announcement' => '__ANNOUNCEMENT_ID__']),
+            ],
+            'permissions' => [
+                'create' => $this->authorization->can($user, $capabilities['feature_announcements_create']),
+                'update' => $this->authorization->can($user, $capabilities['feature_announcements_update']),
+                'toggle' => $this->authorization->can($user, $capabilities['feature_announcements_toggle']),
+                'delete' => $this->authorization->can($user, $capabilities['feature_announcements_delete']),
+                'report' => $this->authorization->can($user, $capabilities['feature_announcements_view_report']),
+            ],
+        ], 'Thông báo tính năng');
     }
 
     public function create(): View
     {
-        return view('admin.feature_announcements.create', [
+        return $this->reactPage->admin('admin.feature-announcements.create', [
             'roleOptions' => $this->roleOptions(),
             'targetUsers' => $this->targetUserOptions(),
-        ]);
+            'values' => [
+                'priority' => FeatureAnnouncement::PRIORITY_NORMAL,
+                'target_type' => FeatureAnnouncement::TARGET_TYPE_ROLES,
+                'target_roles' => array_keys($this->roleOptions()),
+                'target_user_ids' => [],
+                'starts_at' => now()->format('Y-m-d\TH:i'),
+                'ends_at' => '',
+                'is_active' => true,
+            ],
+            'routes' => ['index' => route('feature_announcements.index'), 'store' => route('feature_announcements.store')],
+        ], 'Tạo thông báo tính năng');
     }
 
     public function store(FeatureAnnouncementRequest $request): RedirectResponse
@@ -105,18 +144,41 @@ class FeatureAnnouncementController extends Controller
         ]);
         $stats = $service->getAnnouncementStats($featureAnnouncement);
 
-        return view('admin.feature_announcements.show', compact('featureAnnouncement', 'stats'));
+        return $this->reactPage->admin('admin.feature-announcements.show', [
+            'announcement' => $featureAnnouncement,
+            'stats' => $stats,
+            'roleLabels' => $this->roleOptions(),
+            'storageBaseUrl' => asset('storage'),
+            'routes' => [
+                'index' => route('feature_announcements.index'),
+                'edit' => route('feature_announcements.edit', $featureAnnouncement),
+            ],
+            'permissions' => [
+                'update' => $this->authorization->can(auth()->user(), config('authorization.capabilities.feature_announcements_update')),
+            ],
+        ], "Chi tiết thông báo — {$featureAnnouncement->title}");
     }
 
     public function edit(FeatureAnnouncement $featureAnnouncement): View
     {
         $featureAnnouncement->load('targetedUsers:id');
 
-        return view('admin.feature_announcements.edit', [
-            'featureAnnouncement' => $featureAnnouncement,
+        return $this->reactPage->admin('admin.feature-announcements.edit', [
+            'announcement' => $featureAnnouncement,
             'roleOptions' => $this->roleOptions(),
             'targetUsers' => $this->targetUserOptions(),
-        ]);
+            'storageBaseUrl' => asset('storage'),
+            'values' => [
+                'priority' => $featureAnnouncement->priority,
+                'target_type' => $featureAnnouncement->target_type,
+                'target_roles' => $featureAnnouncement->target_roles ?? [],
+                'target_user_ids' => $featureAnnouncement->targetedUsers->pluck('id')->map(fn ($id) => (int) $id)->values(),
+                'starts_at' => $featureAnnouncement->starts_at?->format('Y-m-d\TH:i'),
+                'ends_at' => $featureAnnouncement->ends_at?->format('Y-m-d\TH:i') ?? '',
+                'is_active' => (bool) $featureAnnouncement->is_active,
+            ],
+            'routes' => ['index' => route('feature_announcements.index'), 'update' => route('feature_announcements.update', $featureAnnouncement)],
+        ], 'Chỉnh sửa thông báo tính năng');
     }
 
     public function update(

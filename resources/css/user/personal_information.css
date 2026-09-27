@@ -1467,10 +1467,16 @@ body.personal-information-active .account-security-modal__button.is-primary {
 
     .bank-account--profile .bank-account-card__side {
         grid-column: 2;
-        justify-items: start;
-        grid-template-columns: auto auto;
-        align-items: center;
+        justify-items: end;
+        grid-template-columns: 1fr;
+        align-items: end;
         gap: 7px;
+        justify-self: end;
+    }
+
+    .bank-account--profile .bank-account-card__status,
+    .bank-account--profile .bank-account-card__action {
+        justify-self: end;
     }
 
     .profile-modal .modal-dialog,

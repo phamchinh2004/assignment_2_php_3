@@ -7,16 +7,30 @@ use App\Models\Rank;
 use App\Models\User;
 use App\Models\User_spin_progress;
 use App\Services\ApproximateLocationService;
+use App\Services\ReactPageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
 class RegisterController extends Controller
 {
-    public function index()
+    public function index(ReactPageService $reactPage)
     {
-        //View trang đăng ký
-        return view('register');
+        return $reactPage->guest('auth.register', [
+            'routes' => [
+                'register' => route('register'),
+                'submit' => route('registerdone'),
+                'login' => route('login'),
+                'checkReferral' => route('check_referral_code'),
+                'checkEmail' => route('check_email'),
+            ],
+            'assets' => [
+                'background' => asset('images/login_and_register/background.png'),
+                'logo' => asset('images/login_and_register/tta.webp'),
+                'facebook' => asset('images/login_and_register/fb-logo.png'),
+                'google' => asset('images/login_and_register/gg-logo.png'),
+            ],
+        ], 'Đăng ký');
     }
     public function return_random_referral_code()
     {

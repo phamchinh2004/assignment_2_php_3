@@ -17,6 +17,7 @@ use App\Models\Order;
 use App\Models\Rank;
 use App\Models\User_spin_progress;
 use App\Services\AuthorizationService;
+use App\Services\ReactPageService;
 use App\Services\UserDepositService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -27,6 +28,10 @@ use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
+    public function __construct(private readonly ReactPageService $reactPage)
+    {
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -34,13 +39,88 @@ class UserController extends Controller
     {
         $query = User::with(['frozen_orders', 'referrer', 'rank'])->where('role', 'member');
         $actor = Auth::user();
+        $capabilities = config('authorization.capabilities');
 
-        if (!$authorization->can($actor, config('authorization.capabilities.customers_view_all'))) {
+        if (!$authorization->can($actor, $capabilities['customers_view_all'])) {
             $query->where('referrer_id', $actor->id);
         }
 
         $users = $query->latest('id')->get();
-        return view('admin.user.index', compact('users'));
+        $canViewFinancials = $authorization->can($actor, $capabilities['customers_view_financials']);
+
+        $items = $users->values()->map(function (User $user, int $index) use ($canViewFinancials) {
+            $hasFrozenOrder = $user->frozen_orders->contains(
+                fn ($frozenOrder) => $frozenOrder->custom_price !== null && (bool) $frozenOrder->is_frozen
+            );
+
+            $item = [
+                'id' => $user->id,
+                'position' => $index + 1,
+                'full_name' => $user->full_name,
+                'username' => $user->username,
+                'phone' => $user->phone,
+                'status' => $user->status,
+                'clone_account' => (bool) $user->clone_account,
+                'rank' => $user->rank ? [
+                    'id' => $user->rank->id,
+                    'name' => $user->rank->name,
+                ] : null,
+                'referrer' => $user->referrer ? [
+                    'id' => $user->referrer->id,
+                    'full_name' => $user->referrer->full_name,
+                    'username' => $user->referrer->username,
+                ] : null,
+                'avatar_url' => get_user_avatar($user),
+                'is_online' => $user->isOnline(),
+                'last_seen_formatted' => $user->last_seen_formatted,
+                'last_seen_diff' => $user->last_seen ? $user->last_seen->diffForHumans() : 'Chưa từng online',
+                'location_country_code' => $user->location_country_code ?: $user->approx_location_country_code,
+                'location_country' => $user->location_country ?: $user->approx_location_country,
+                'location_city' => $user->location_city,
+                'warehouse_area' => $user->warehouse_area,
+                'created_at' => $user->created_at?->toISOString(),
+                'has_frozen_order' => $hasFrozenOrder,
+            ];
+
+            if ($canViewFinancials) {
+                $item['balance'] = (float) ($user->balance ?? 0);
+                $item['frozen_balance'] = (float) ($user->frozen_balance ?? 0);
+            }
+
+            return $item;
+        });
+
+        return $this->reactPage->admin('admin.users.index', [
+            'users' => $items,
+            'stats' => [
+                'total' => $users->count(),
+                'active' => $users->where('status', 'activated')->count(),
+                'inactive' => $users->where('status', 'inactivated')->count(),
+                'locked' => $users->whereNotIn('status', ['activated', 'inactivated'])->count(),
+                'frozen' => $items->where('has_frozen_order', true)->count(),
+                'clones' => $items->where('clone_account', true)->count(),
+                'total_balance' => $canViewFinancials ? (float) $users->sum('balance') : null,
+                'total_frozen_balance' => $canViewFinancials ? (float) $users->sum('frozen_balance') : null,
+            ],
+            'permissions' => [
+                'create' => $authorization->can($actor, $capabilities['customers_create']),
+                'viewDetail' => $authorization->can($actor, $capabilities['customers_view_detail']),
+                'viewFinancials' => $canViewFinancials,
+                'adjustBalance' => $authorization->can($actor, $capabilities['customers_adjust_balance']),
+                'changeStatus' => $authorization->can($actor, $capabilities['customers_change_status']),
+                'manageFrozenOrders' => $authorization->can($actor, $capabilities['customers_manage_frozen_orders']),
+                'update' => $authorization->can($actor, $capabilities['customers_update']),
+            ],
+            'routes' => [
+                'create' => route('user.create'),
+                'show' => route('user.show', ['user' => '__USER_ID__']),
+                'edit' => route('user.edit', ['user' => '__USER_ID__']),
+                'changeStatus' => route('user.change.status', ['user' => '__USER_ID__']),
+                'frozenOrders' => route('user.frozen.order.interface', ['user' => '__USER_ID__']),
+                'onlineStatuses' => route('user.online.statuses'),
+                'plusMoney' => route('plus_money'),
+            ],
+        ], 'Danh sách người dùng');
     }
 
     /**
@@ -96,7 +176,31 @@ class UserController extends Controller
         }
         $user->load($relations);
 
-        return view('admin.user.show', compact('user', 'canViewFinancials'));
+        $payload = $user->toArray();
+        $payload['avatar_url'] = get_user_avatar($user);
+        $payload['is_online'] = $user->isOnline();
+        $payload['last_seen_formatted'] = $user->last_seen_formatted;
+
+        if (!$canViewFinancials) {
+            unset(
+                $payload['balance'],
+                $payload['frozen_balance'],
+                $payload['transaction_histories'],
+                $payload['wallet_balance_histories']
+            );
+        }
+
+        return $this->reactPage->admin('admin.users.show', [
+            'user' => $payload,
+            'permissions' => [
+                'viewFinancials' => $canViewFinancials,
+                'update' => $authorization->can(Auth::user(), config('authorization.capabilities.customers_update')),
+            ],
+            'routes' => [
+                'index' => route('user.index'),
+                'edit' => route('user.edit', ['user' => $user->id]),
+            ],
+        ], 'Chi tiết người dùng');
     }
 
     /**
@@ -105,7 +209,15 @@ class UserController extends Controller
     public function create()
     {
         $list_ranks = Rank::get();
-        return view('admin.user.create', compact('list_ranks'));
+        return $this->reactPage->admin('admin.users.create', [
+            'ranks' => $list_ranks,
+            'routes' => [
+                'index' => route('user.index'),
+                'store' => route('user.store'),
+                'checkUsername' => route('check_username'),
+                'checkPhone' => route('check_phone'),
+            ],
+        ], 'Thêm người dùng');
     }
 
     /**
@@ -285,7 +397,73 @@ class UserController extends Controller
                 'Banco Popular Español',
             ],
         ];
-        return view('admin.user.edit', compact('user', 'list_ranks', 'banks', 'referrerCandidates'));
+        $actor = Auth::user();
+        $capabilities = config('authorization.capabilities');
+        $canAdjustBalance = $authorization->can($actor, $capabilities['customers_adjust_balance']);
+        $canChangeStatus = $authorization->can($actor, $capabilities['customers_change_status']);
+        $canChangeReferrer = $authorization->can($actor, $capabilities['customers_change_referrer']);
+        $canManageSpin = $authorization->can($actor, $capabilities['customers_manage_spin']);
+        $canManageLocation = $authorization->can($actor, $capabilities['customers_manage_location']);
+
+        $userPayload = [
+            'id' => $user->id,
+            'full_name' => $user->full_name,
+            'username' => $user->username,
+            'email' => $user->email,
+            'phone' => $user->phone,
+            'username_bank' => $user->username_bank,
+            'bank_name' => $user->bank_name,
+            'account_number' => $user->account_number,
+            'warehouse_area' => $user->warehouse_area,
+            'warehouse_address' => $user->warehouse_address,
+            'rank_id' => $user->rank_id,
+            'status' => $user->status,
+            'role' => $user->role,
+            'clone_account' => (bool) $user->clone_account,
+            'lucky_wheel_bonus_spins' => (int) ($user->lucky_wheel_bonus_spins ?? 0),
+            'referral_code' => $user->referral_code,
+            'referrer_id' => $user->referrer_id,
+            'referrer' => $user->referrer,
+            'register_ip' => $user->register_ip,
+            'created_at' => $user->created_at?->toISOString(),
+            'last_seen' => $user->last_seen?->toISOString(),
+            'is_online' => $user->isOnline(),
+            'location_latitude' => $user->location_latitude,
+            'location_longitude' => $user->location_longitude,
+            'location_accuracy' => $user->location_accuracy,
+            'location_country_code' => $user->location_country_code,
+            'location_country' => $user->location_country,
+            'location_city' => $user->location_city,
+            'location_updated_at' => $user->location_updated_at?->toISOString(),
+            'approx_location_country_code' => $user->approx_location_country_code,
+            'approx_location_country' => $user->approx_location_country,
+            'approx_location_updated_at' => $user->approx_location_updated_at?->toISOString(),
+        ];
+        if ($canAdjustBalance) {
+            $userPayload['balance'] = (float) ($user->balance ?? 0);
+            $userPayload['frozen_balance'] = (float) ($user->frozen_balance ?? 0);
+        }
+
+        return $this->reactPage->admin('admin.users.edit', [
+            'user' => $userPayload,
+            'ranks' => $list_ranks,
+            'banks' => $banks,
+            'referrerCandidates' => $referrerCandidates,
+            'permissions' => [
+                'adjustBalance' => $canAdjustBalance,
+                'changeStatus' => $canChangeStatus,
+                'changeReferrer' => $canChangeReferrer,
+                'manageSpin' => $canManageSpin,
+                'manageLocation' => $canManageLocation,
+                'chooseRole' => $authorization->isSuperuser($actor),
+            ],
+            'routes' => [
+                'index' => route('user.index'),
+                'update' => route('user.update', ['user' => $user->id]),
+                'locationRefresh' => route('user.location.refresh', ['user' => $user->id]),
+                'locationDestroy' => route('user.location.destroy', ['user' => $user->id]),
+            ],
+        ], 'Chỉnh sửa người dùng');
     }
 
     /**
@@ -447,14 +625,6 @@ class UserController extends Controller
             return redirect()->route('user.index')->with('error', 'Không tìm thấy người dùng cần thay đổi trạng thái!');
         }
     }
-    public function editFrozenOrderInterface(User $user, $id, AuthorizationService $authorization)
-    {
-        $this->authorizeMemberAccess($user, $authorization);
-        $list_orders = Order::where('rank_id', $user->rank_id)->get();
-        $progress = User_spin_progress::where('user_id', $user->id)->where('rank_id', $user->rank_id)->first();
-        $frozen_order_old = Frozen_order::where('id', $id)->first();
-        return view('admin.user.edit_frozen_order', compact('list_orders', 'progress', 'user', 'frozen_order_old'));
-    }
     public function frozenOrderInterface(?User $user, AuthorizationService $authorization)
     {
         if (!$user) {
@@ -483,7 +653,41 @@ class UserController extends Controller
         $frozen_orders = $frozen_orders_detail->pluck('order_id')->toArray();
         $defaultFrozenOrderSettings = FrozenOrderSetting::query()->first() ?? FrozenOrderSetting::defaults();
 
-        return view('admin.user.frozen_order', compact('list_orders', 'progress', 'user', 'frozen_orders', 'frozen_orders_detail', 'defaultFrozenOrderSettings'));
+        return $this->reactPage->admin('admin.users.frozen-orders', [
+            'user' => [
+                'id' => $user->id,
+                'full_name' => $user->full_name,
+                'username' => $user->username,
+                'rank_id' => $user->rank_id,
+            ],
+            'orders' => $list_orders->map(fn (Order $order) => [
+                ...$order->toArray(),
+                'image_url' => $order->image ? Storage::url($order->image) : null,
+            ]),
+            'progress' => $progress,
+            'frozenOrderIds' => $frozen_orders,
+            'frozenOrders' => $frozen_orders_detail->map(fn (Frozen_order $frozenOrder) => [
+                ...$frozenOrder->toArray(),
+                'image_url' => $frozenOrder->snapshot_image ? Storage::url($frozenOrder->snapshot_image) : null,
+            ]),
+            'defaultSettings' => $defaultFrozenOrderSettings,
+            'routes' => [
+                'index' => route('user.index'),
+                'store' => route('user.frozen.order', ['user' => $user->id]),
+                'update' => route('user.update.frozen.order', [
+                    'user' => $user->id,
+                    'frozenOrder' => '__FROZEN_ID__',
+                ]),
+                'destroy' => route('user.unfrozen.order', [
+                    'user' => $user->id,
+                    'frozenOrder' => '__FROZEN_ID__',
+                ]),
+                'updateImage' => route('user.update.frozen.order.image', [
+                    'user' => $user->id,
+                    'frozenOrder' => '__FROZEN_ID__',
+                ]),
+            ],
+        ], 'Đóng băng đơn hàng');
     }
 
 

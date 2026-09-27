@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Wallet_balance_history;
+use App\Services\AuthorizationService;
+use App\Services\ReactPageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -12,9 +14,22 @@ use Illuminate\Support\Facades\DB;
 
 class StatisticalController extends Controller
 {
-    public function tongDoanhThu()
+    public function __construct(private readonly ReactPageService $reactPage)
     {
-        return view('admin.statistical.tongDoanhThu');
+    }
+
+    public function tongDoanhThu(AuthorizationService $authorization)
+    {
+        return $this->reactPage->admin('admin.statistics.overview', [
+            'routes' => [
+                'revenueData' => route('api.statistical.revenue'),
+                'statusStats' => route('api.statistical.transaction.status'),
+                'export' => route('api.statistical.export.revenue'),
+            ],
+            'permissions' => [
+                'export' => $authorization->can(Auth::user(), config('authorization.capabilities.statistics_export')),
+            ],
+        ], 'Thống kê tổng doanh thu');
     }
 
     public function getRevenueData(Request $request)
@@ -455,9 +470,20 @@ class StatisticalController extends Controller
         }
     }
 
-    public function doanhThuTheoNhanVien()
+    public function doanhThuTheoNhanVien(AuthorizationService $authorization)
     {
-        return view('admin.statistical.doanhThuTheoNhanVien');
+        return $this->reactPage->admin('admin.statistics.staff', [
+            'routes' => [
+                'staffList' => route('api.staff.list'),
+                'revenueByStaff' => route('api.revenue.by.staff'),
+                'detail' => route('api.revenue.detail'),
+                'chart' => route('admin.revenue.chart'),
+                'export' => route('admin.revenue.export'),
+            ],
+            'permissions' => [
+                'export' => $authorization->can(Auth::user(), config('authorization.capabilities.statistics_export')),
+            ],
+        ], 'Thống kê doanh thu theo nhân viên');
     }
     public function getStaffList()
     {
@@ -722,7 +748,15 @@ class StatisticalController extends Controller
      */
     public function doanhThuTuKhachHang()
     {
-        return view('admin.statistical.doanhThuTuKhachHang');
+        return $this->reactPage->admin('admin.statistics.customers', [
+            'routes' => [
+                'overview' => route('api.revenue.overview'),
+                'chart' => route('api.revenue.chart'),
+                'topCustomers' => route('api.revenue.top-customers'),
+                'distribution' => route('api.revenue.distribution'),
+                'customerDetail' => route('api.revenue.customer-detail'),
+            ],
+        ], 'Thống kê doanh thu từ khách hàng');
     }
 
     /**
@@ -1365,7 +1399,12 @@ class StatisticalController extends Controller
     }
     public function doanhThuBanThan()
     {
-        return view('admin.statistical.doanhThuBanThan');
+        return $this->reactPage->admin('admin.statistics.personal', [
+            'routes' => [
+                'stats' => route('admin.personal.revenue.stats'),
+                'transactions' => route('admin.personal.transactions'),
+            ],
+        ], 'Thống kê doanh thu cá nhân');
     }
 
     /**

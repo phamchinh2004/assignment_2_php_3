@@ -329,8 +329,8 @@ Route::middleware(['role:staff|admin|own', 'checkBanned', 'auth'])->group(functi
         ->name('admin.revenue.export');
 
     Route::middleware(['permission:' . $capabilities['statistics_view_personal']])->group(function () {
-    Route::get('doanh-thu-ban-than', [StatisticalController::class, 'doanhThuBanThan'])->name('doanh.thu.ban.than');
-    Route::get('/personal-revenue-stats', [StatisticalController::class, 'getPersonalRevenueStats']);
-    Route::get('/personal-transactions', [StatisticalController::class, 'getPersonalTransactions']);
+        Route::get('doanh-thu-ban-than', [StatisticalController::class, 'doanhThuBanThan'])->name('doanh.thu.ban.than');
+        Route::get('/personal-revenue-stats', [StatisticalController::class, 'getPersonalRevenueStats'])->name('admin.personal.revenue.stats');
+        Route::get('/personal-transactions', [StatisticalController::class, 'getPersonalTransactions'])->name('admin.personal.transactions');
     });
 });

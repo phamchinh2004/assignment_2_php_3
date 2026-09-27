@@ -7,18 +7,45 @@ use App\Http\Requests\StoreBannerRequest;
 use App\Http\Requests\UpdateBannerRequest;
 use App\Http\Controllers\Controller;
 use App\Models\Banner_image;
+use App\Services\AuthorizationService;
+use App\Services\ReactPageService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class BannerController extends Controller
 {
+    public function __construct(
+        private readonly ReactPageService $reactPage,
+        private readonly AuthorizationService $authorization,
+    ) {
+    }
+
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
         $list_banners = Banner::with('banner_images')->get();
-        return view('admin.banner.index', compact('list_banners'));
+        $user = auth()->user();
+
+        return $this->reactPage->admin('admin.banners.index', [
+            'banners' => $list_banners,
+            'storageBaseUrl' => asset('storage'),
+            'routes' => [
+                'create' => route('banner.create'),
+                'show' => route('banner.show', ['banner' => '__BANNER_ID__']),
+                'edit' => route('banner.edit', ['banner' => '__BANNER_ID__']),
+                'destroy' => route('banner.destroy', ['banner' => '__BANNER_ID__']),
+                'changeStatus' => route('banner.change.status', ['banner' => '__BANNER_ID__']),
+            ],
+            'permissions' => [
+                'create' => $this->authorization->can($user, config('authorization.capabilities.banners_create')),
+                'viewDetail' => $this->authorization->can($user, config('authorization.capabilities.banners_view_detail')),
+                'update' => $this->authorization->can($user, config('authorization.capabilities.banners_update')),
+                'delete' => $this->authorization->can($user, config('authorization.capabilities.banners_delete')),
+                'changeStatus' => $this->authorization->can($user, config('authorization.capabilities.banners_change_status')),
+            ],
+        ], 'Danh sách banner');
     }
 
     /**
@@ -26,7 +53,12 @@ class BannerController extends Controller
      */
     public function create()
     {
-        return view('admin.banner.create');
+        return $this->reactPage->admin('admin.banners.create', [
+            'routes' => [
+                'index' => route('banner.index'),
+                'store' => route('banner.store'),
+            ],
+        ], 'Thêm mới banner');
     }
 
     /**
@@ -103,7 +135,19 @@ class BannerController extends Controller
     public function show(Banner $banner)
     {
         $banner->load('banner_images');
-        return view('admin.banner.show', compact('banner'));
+        $user = auth()->user();
+
+        return $this->reactPage->admin('admin.banners.show', [
+            'banner' => $banner,
+            'storageBaseUrl' => asset('storage'),
+            'routes' => [
+                'index' => route('banner.index'),
+                'edit' => route('banner.edit', ['banner' => $banner->id]),
+            ],
+            'permissions' => [
+                'update' => $this->authorization->can($user, config('authorization.capabilities.banners_update')),
+            ],
+        ], "Chi tiết banner — {$banner->name}");
     }
 
     /**
@@ -113,7 +157,14 @@ class BannerController extends Controller
     {
         // Load relationship để lấy các ảnh của banner
         $banner->load('banner_images');
-        return view('admin.banner.edit', compact('banner'));
+        return $this->reactPage->admin('admin.banners.edit', [
+            'banner' => $banner,
+            'storageBaseUrl' => asset('storage'),
+            'routes' => [
+                'index' => route('banner.index'),
+                'update' => route('banner.update', ['banner' => $banner->id]),
+            ],
+        ], "Chỉnh sửa banner — {$banner->name}");
     }
 
     /**

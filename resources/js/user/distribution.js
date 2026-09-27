@@ -21,7 +21,11 @@ function finiteNumberOrNull(value) {
     return Number.isFinite(number) ? number : null;
 }
 
-document.addEventListener('DOMContentLoaded', function () {
+function initDistributionPage() {
+    const root = document.querySelector('.distribution-page');
+    if (!root || root.dataset.distributionInitialized === '1') return () => {};
+    root.dataset.distributionInitialized = '1';
+
     // ==================================================Pháo hoa===================================================
     const container = document.getElementById('fireworks-container');
     const fireworks = new Fireworks(container, {
@@ -210,7 +214,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 dangerMode: true,
             });
             if (acknowledged && check_frozen.redirect) {
-                window.location.href = check_frozen.redirect;
+                if (typeof window.__spaNavigate === 'function') window.__spaNavigate(check_frozen.redirect);
+                else window.location.href = check_frozen.redirect;
             }
         } else if (check_frozen.status == 200 && check_frozen.is_frozen == true && responseIsHighValueOrder == true && check_frozen.is_new_order == false) {
             spinner.hidden = true;
@@ -222,7 +227,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 dangerMode: true,
             });
             if (acknowledged && check_frozen.redirect) {
-                window.location.href = check_frozen.redirect;
+                if (typeof window.__spaNavigate === 'function') window.__spaNavigate(check_frozen.redirect);
+                else window.location.href = check_frozen.redirect;
             }
         } else if (check_frozen.status == 200 && check_frozen.is_frozen == true && responseIsHighValueOrder == true && check_frozen.is_new_order == true) {
             is_high_value_order = true;
@@ -400,7 +406,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 
                 // Redirect đến trang order sau 1 giây
                 setTimeout(() => {
-                    window.location.href = result.redirect || route_order;
+                    const redirectUrl = result.redirect || route_order;
+                    if (typeof window.__spaNavigate === 'function') window.__spaNavigate(redirectUrl);
+                    else window.location.href = redirectUrl;
                 }, 1000);
             } else {
                 notification('error', result.message || 'Có lỗi xảy ra', trans.Loi);
@@ -668,4 +676,14 @@ document.addEventListener('DOMContentLoaded', function () {
         })
     }
 
-})
+    return () => {
+        try {
+            fireworks.stop();
+        } catch (_) {
+            // The animation may already be stopped.
+        }
+        delete root.dataset.distributionInitialized;
+    };
+}
+
+window.__initDistributionPage = initDistributionPage;

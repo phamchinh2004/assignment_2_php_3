@@ -1,8 +1,10 @@
 import Modal from 'bootstrap/js/dist/modal';
+import { spaSubmitForm } from '../react/navigation';
 
-const page = document.querySelector('[data-personal-profile-page]');
-
-if (page) {
+function initPersonalInformationPage() {
+    const page = document.querySelector('[data-personal-profile-page]');
+    if (!page || page.dataset.personalInformationInitialized === '1') return () => {};
+    page.dataset.personalInformationInitialized = '1';
     document.body.classList.add('personal-information-active');
 
     const notify = (type, message, title = 'Thông báo') => {
@@ -251,9 +253,11 @@ if (page) {
         window.setTimeout(() => bankRoot?.querySelector('[data-bank-account-open]')?.click(), 280);
     });
 
+    let bankObserver = null;
     if (bankRoot) {
         syncBankLinkedState();
-        new MutationObserver(syncBankLinkedState).observe(bankRoot, {
+        bankObserver = new MutationObserver(syncBankLinkedState);
+        bankObserver.observe(bankRoot, {
             attributes: true,
             attributeFilter: ['data-linked'],
         });
@@ -266,18 +270,40 @@ if (page) {
         Modal.getOrCreateInstance(warehouseModalElement).show();
     }
 
-    warehouseForm?.addEventListener('submit', () => {
+    const handleWarehouseSubmit = async (event) => {
         if (!warehouseForm.checkValidity()) return;
+
+        if (typeof window.__spaCommitBootstrap !== 'function') return;
+        event.preventDefault();
 
         const submitButton = warehouseForm.querySelector('button[type="submit"]');
         if (!submitButton || submitButton.disabled) return;
 
+        const originalHtml = submitButton.innerHTML;
         submitButton.disabled = true;
         submitButton.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin" aria-hidden="true"></i><span>Đang lưu...</span>';
-    });
+        try {
+            await spaSubmitForm(warehouseForm, event.submitter || null);
+        } catch (error) {
+            console.error('Unable to update warehouse address.', error);
+            submitButton.disabled = false;
+            submitButton.innerHTML = originalHtml;
+            notify('error', 'Không thể lưu địa chỉ lúc này. Vui lòng thử lại.', 'Có lỗi xảy ra');
+        }
+    };
+    warehouseForm?.addEventListener('submit', handleWarehouseSubmit);
 
     const flashSuccess = page.dataset.flashSuccess?.trim();
     if (flashSuccess) {
         notify('success', flashSuccess, 'Đã cập nhật');
     }
+
+    return () => {
+        bankObserver?.disconnect();
+        warehouseForm?.removeEventListener('submit', handleWarehouseSubmit);
+        document.body.classList.remove('personal-information-active');
+        delete page.dataset.personalInformationInitialized;
+    };
 }
+
+window.__initPersonalInformationPage = initPersonalInformationPage;
