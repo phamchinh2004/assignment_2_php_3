@@ -5,8 +5,8 @@ export const initTransactionCharts = () => {
     const charts = [];
     const observers = [];
     let disposed = false;
-    const money = value => `${new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 5 }).format(value)}$`;
-    const axisMoney = value => `${new Intl.NumberFormat('vi-VN', { notation: 'compact', maximumFractionDigits: 2 }).format(value)}$`;
+    const money = value => `${new Intl.NumberFormat('en-US', { maximumFractionDigits: 5 }).format(value)}$`;
+    const axisMoney = value => `${new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 2 }).format(value)}$`;
     const signedMoney = value => `${value > 0 ? '+' : ''}${money(value)}`;
     const dateTime = value => new Intl.DateTimeFormat('vi-VN', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value));
     const escapeHtml = value => String(value ?? '').replace(/[&<>'"]/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#039;', '"': '&quot;' })[character]);

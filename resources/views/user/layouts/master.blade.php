@@ -312,6 +312,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
     @vite('resources/js/general.js')
+    @vite('resources/js/user/loading-animation.js')
     @vite('resources/js/user/footer-active.js')
 
     <script>
