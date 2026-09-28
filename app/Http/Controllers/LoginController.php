@@ -9,14 +9,35 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\SendMail;
+use App\Services\ReactPageService;
 use Str;
 
 class LoginController extends Controller
 {
-    public function index()
+    public function index(ReactPageService $reactPage)
     {
-        return response()->view('login')
-            ->header('Cache-Control', 'no-store, private');
+        $page = $reactPage->guest('auth.login', [
+            'routes' => [
+                'login' => route('login'),
+                'submit' => route('login_done'),
+                'register' => route('register'),
+                'forgot' => route('forgot_password'),
+                'checkUsername' => route('check_username'),
+            ],
+            'assets' => [
+                'background' => asset('images/login_and_register/background.png'),
+                'logo' => asset('images/login_and_register/tta.webp'),
+                'facebook' => asset('images/login_and_register/fb-logo.png'),
+                'google' => asset('images/login_and_register/gg-logo.png'),
+            ],
+            'clearLoginForm' => (bool) session('clear_login_form'),
+        ], 'Đăng nhập');
+
+        if ($page instanceof \Illuminate\Http\JsonResponse) {
+            return $page->header('Cache-Control', 'no-store, private');
+        }
+
+        return response($page->render())->header('Cache-Control', 'no-store, private');
     }
     public function login(Request $request, ApproximateLocationService $approximateLocationService)
     {
@@ -246,9 +267,18 @@ class LoginController extends Controller
             ]);
         }
     }
-    public function forgot_password()
+    public function forgot_password(ReactPageService $reactPage)
     {
-        return view('forgot_password');
+        return $reactPage->guest('auth.forgot-password', [
+            'routes' => [
+                'submit' => route('send_new_password'),
+                'login' => route('login'),
+            ],
+            'assets' => [
+                'background' => asset('images/login_and_register/background.png'),
+                'logo' => asset('images/login_and_register/tta.webp'),
+            ],
+        ], 'Quên mật khẩu');
     }
     public function send_new_password(Request $request)
     {

@@ -4,11 +4,17 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\OrderStatusTiming;
+use App\Services\AuthorizationService;
+use App\Services\ReactPageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
 class OrderStatusTimingController extends Controller
 {
+    public function __construct(private readonly ReactPageService $reactPage, private readonly AuthorizationService $authorization)
+    {
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -24,7 +30,16 @@ class OrderStatusTimingController extends Controller
             $timings = collect([]);
         }
         
-        return view('admin.order_status_timing.index', compact('timings'));
+        return $this->reactPage->admin('admin.order-status-timing.index', [
+            'timings' => $timings,
+            'routes' => [
+                'edit' => route('admin.order_status_timing.edit', ['orderStatusTiming' => '__TIMING_ID__']),
+                'updateMultiple' => route('admin.order_status_timing.update_multiple'),
+            ],
+            'permissions' => [
+                'update' => $this->authorization->can(auth()->user(), config('authorization.capabilities.order_timing_update')),
+            ],
+        ], 'Cấu hình thời gian chuyển trạng thái');
     }
 
     /**
@@ -32,7 +47,13 @@ class OrderStatusTimingController extends Controller
      */
     public function edit(OrderStatusTiming $orderStatusTiming)
     {
-        return view('admin.order_status_timing.edit', compact('orderStatusTiming'));
+        return $this->reactPage->admin('admin.order-status-timing.edit', [
+            'timing' => $orderStatusTiming,
+            'routes' => [
+                'index' => route('admin.order_status_timing.index'),
+                'update' => route('admin.order_status_timing.update', $orderStatusTiming),
+            ],
+        ], 'Sửa cấu hình thời gian');
     }
 
     /**

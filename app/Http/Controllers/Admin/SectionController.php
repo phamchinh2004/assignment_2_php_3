@@ -8,18 +8,40 @@ use App\Http\Requests\StoreSectionRequest;
 use App\Http\Requests\UpdateSectionRequest;
 use App\Models\Language;
 use App\Models\SectionLanguage;
+use App\Services\AuthorizationService;
+use App\Services\ReactPageService;
 use Illuminate\Support\Facades\DB;
 use Str;
 
 class SectionController extends Controller
 {
+    public function __construct(private readonly ReactPageService $reactPage, private readonly AuthorizationService $authorization)
+    {
+    }
+
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
         $list_sections = Section::with('sectionLanguages')->get();
-        return view('admin.section.index', compact('list_sections'));
+        $user = auth()->user();
+
+        return $this->reactPage->admin('admin.sections.index', [
+            'sections' => $list_sections,
+            'routes' => [
+                'create' => route('section.create'),
+                'show' => route('section.show', ['section' => '__SECTION_ID__']),
+                'edit' => route('section.edit', ['section' => '__SECTION_ID__']),
+                'changeStatus' => route('section.change.status', ['section' => '__SECTION_ID__']),
+            ],
+            'permissions' => [
+                'create' => $this->authorization->can($user, config('authorization.capabilities.site_content_create')),
+                'viewDetail' => $this->authorization->can($user, config('authorization.capabilities.site_content_view_detail')),
+                'update' => $this->authorization->can($user, config('authorization.capabilities.site_content_update')),
+                'changeStatus' => $this->authorization->can($user, config('authorization.capabilities.site_content_change_status')),
+            ],
+        ], 'Danh sách nội dung website');
     }
 
     /**
@@ -28,7 +50,11 @@ class SectionController extends Controller
     public function create()
     {
         $languages = Language::get();
-        return view('admin.section.create', compact('languages'));
+        return $this->reactPage->admin('admin.sections.create', [
+            'languages' => $languages,
+            'storageBaseUrl' => asset('storage'),
+            'routes' => ['index' => route('section.index'), 'store' => route('section.store')],
+        ], 'Thêm mới section');
     }
 
     /**
@@ -92,7 +118,13 @@ class SectionController extends Controller
     {
         $languages = Language::get();
         $section->load('sectionLanguages');
-        return view('admin.section.show', compact('section', 'languages'));
+        return $this->reactPage->admin('admin.sections.show', [
+            'section' => $section,
+            'languages' => $languages,
+            'storageBaseUrl' => asset('storage'),
+            'routes' => ['index' => route('section.index'), 'edit' => route('section.edit', $section)],
+            'permissions' => ['update' => $this->authorization->can(auth()->user(), config('authorization.capabilities.site_content_update'))],
+        ], "Chi tiết section — {$section->name}");
     }
 
     /**
@@ -102,7 +134,12 @@ class SectionController extends Controller
     {
         $languages = Language::get();
         $section->load('sectionLanguages');
-        return view('admin.section.edit', compact('section', 'languages'));
+        return $this->reactPage->admin('admin.sections.edit', [
+            'section' => $section,
+            'languages' => $languages,
+            'storageBaseUrl' => asset('storage'),
+            'routes' => ['index' => route('section.index'), 'update' => route('section.update', $section)],
+        ], "Chỉnh sửa section — {$section->name}");
     }
 
     /**

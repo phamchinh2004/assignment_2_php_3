@@ -1,0 +1,126 @@
+.react-auth-notice {
+    margin-bottom: 18px;
+}
+
+.react-auth-error {
+    display: block;
+    margin-top: 6px;
+    color: #ff8d9d;
+    font-size: 12px;
+}
+
+.forgot-page {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 16px;
+}
+
+.forgot-card {
+    width: min(100%, 460px);
+    padding: 38px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 24px;
+    background: rgba(18, 18, 22, 0.82);
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.42);
+    backdrop-filter: blur(18px);
+}
+
+.forgot-logo {
+    width: min(170px, 65vw);
+    margin: 0 auto 28px;
+}
+
+.forgot-icon {
+    width: 58px;
+    height: 58px;
+    display: grid;
+    place-items: center;
+    margin: 0 auto 18px;
+    border-radius: 18px;
+    color: #fff;
+    background: linear-gradient(135deg, #fe2c55, #ff7a59);
+    box-shadow: 0 10px 24px rgba(254, 44, 85, 0.28);
+    font-size: 24px;
+}
+
+.forgot-title {
+    margin: 0;
+    color: #fff;
+    font-size: clamp(26px, 6vw, 34px);
+    font-weight: 700;
+    text-align: center;
+}
+
+.forgot-description {
+    max-width: 340px;
+    margin: 10px auto 28px;
+    color: rgba(255, 255, 255, 0.68);
+    font-size: 14px;
+    line-height: 1.6;
+    text-align: center;
+}
+
+.forgot-label {
+    display: block;
+    margin-bottom: 8px;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.forgot-input-wrap { position: relative; }
+.forgot-input-wrap i {
+    position: absolute;
+    top: 50%;
+    left: 16px;
+    z-index: 1;
+    color: #fe2c55;
+    transform: translateY(-50%);
+}
+
+.forgot-input {
+    min-height: 52px;
+    padding-left: 46px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 12px;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.09);
+}
+
+.forgot-input::placeholder { color: rgba(255, 255, 255, 0.45); }
+.forgot-input:focus {
+    border-color: #fe2c55;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.12);
+    box-shadow: 0 0 0 4px rgba(254, 44, 85, 0.16);
+}
+
+.forgot-submit {
+    min-height: 52px;
+    border: 0;
+    border-radius: 12px;
+    color: #fff;
+    background: linear-gradient(135deg, #fe2c55, #ff5c70);
+    font-weight: 700;
+    box-shadow: 0 10px 24px rgba(254, 44, 85, 0.25);
+}
+
+.forgot-submit:hover { color: #fff; }
+.forgot-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 24px;
+    color: rgba(255, 255, 255, 0.72);
+    font-size: 13px;
+    text-decoration: none;
+}
+.forgot-back:hover { color: #fff; }
+
+@media (max-width: 480px) {
+    .forgot-card { padding: 30px 22px; border-radius: 20px; }
+}

@@ -6,18 +6,41 @@ use App\Http\Controllers\Controller;
 use App\Models\Rank;
 use App\Http\Requests\StoreRankRequest;
 use App\Http\Requests\UpdateRankRequest;
+use App\Services\AuthorizationService;
+use App\Services\ReactPageService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class RankController extends Controller
 {
+    public function __construct(private readonly ReactPageService $reactPage, private readonly AuthorizationService $authorization)
+    {
+    }
+
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
         $rank = Rank::withCount('orders')->get();
-        return view('admin.rank.index', compact('rank'));
+        $user = auth()->user();
+
+        return $this->reactPage->admin('admin.ranks.index', [
+            'ranks' => $rank,
+            'storageBaseUrl' => asset('storage'),
+            'routes' => [
+                'create' => route('rank.create'),
+                'show' => route('rank.show', ['rank' => '__RANK_ID__']),
+                'edit' => route('rank.edit', ['rank' => '__RANK_ID__']),
+                'destroy' => route('rank.destroy', ['rank' => '__RANK_ID__']),
+            ],
+            'permissions' => [
+                'create' => $this->authorization->can($user, config('authorization.capabilities.ranks_create')),
+                'viewDetail' => $this->authorization->can($user, config('authorization.capabilities.ranks_view_detail')),
+                'update' => $this->authorization->can($user, config('authorization.capabilities.ranks_update')),
+                'delete' => $this->authorization->can($user, config('authorization.capabilities.ranks_delete')),
+            ],
+        ], 'Danh sách cấp độ');
     }
 
     /**
@@ -25,7 +48,9 @@ class RankController extends Controller
      */
     public function create()
     {
-        return view('admin.rank.create');
+        return $this->reactPage->admin('admin.ranks.create', [
+            'routes' => ['index' => route('rank.index'), 'store' => route('rank.store')],
+        ], 'Thêm mới cấp độ');
     }
 
     /**
@@ -47,7 +72,22 @@ class RankController extends Controller
     {
         $rank->loadCount('orders');
         $users = \App\Models\User::where('rank_id', $rank->id)->latest()->paginate(10);
-        return view('admin.rank.show', compact('rank', 'users'));
+        $user = auth()->user();
+
+        return $this->reactPage->admin('admin.ranks.show', [
+            'rank' => $rank,
+            'users' => $users,
+            'storageBaseUrl' => asset('storage'),
+            'routes' => [
+                'index' => route('rank.index'),
+                'edit' => route('rank.edit', $rank),
+                'userShow' => route('user.show', ['user' => '__USER_ID__']),
+            ],
+            'permissions' => [
+                'update' => $this->authorization->can($user, config('authorization.capabilities.ranks_update')),
+                'viewCustomerDetail' => $this->authorization->can($user, config('authorization.capabilities.customers_view_detail')),
+            ],
+        ], "Chi tiết cấp độ — {$rank->name}");
     }
 
     /**
@@ -55,7 +95,11 @@ class RankController extends Controller
      */
     public function edit(Rank $rank)
     {
-        return view('admin.rank.edit', compact('rank'));
+        return $this->reactPage->admin('admin.ranks.edit', [
+            'rank' => $rank,
+            'storageBaseUrl' => asset('storage'),
+            'routes' => ['index' => route('rank.index'), 'update' => route('rank.update', $rank)],
+        ], "Chỉnh sửa cấp độ — {$rank->name}");
     }
 
     /**

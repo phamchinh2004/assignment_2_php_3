@@ -7,13 +7,24 @@ use App\Jobs\PrepareOrder;
 use App\Models\OrderReport;
 use App\Models\OrderStatusTiming;
 use App\Models\Status;
+use App\Services\AuthorizationService;
 use App\Services\OrderStatusService;
+use App\Services\ReactPageService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\View\View;
 
 class OrderReportController extends Controller
 {
-    public function index(Request $request)
+    public function __construct(
+        private readonly ReactPageService $reactPage,
+        private readonly AuthorizationService $authorization,
+    ) {
+    }
+
+    public function index(Request $request): View|JsonResponse
     {
         $status = $request->input('status', 'pending');
 
@@ -29,10 +40,24 @@ class OrderReportController extends Controller
             ->paginate(20)
             ->withQueryString();
 
-        return view('admin.order_reports.index', compact('reports', 'status'));
+        $reports->getCollection()->each(function (OrderReport $report) {
+            $report->setAttribute('order_code', $report->frozenOrder?->display_order_code ?? 'N/A');
+        });
+
+        return $this->reactPage->admin('admin.order-reports.index', [
+            'reports' => $reports,
+            'status' => $status,
+            'routes' => [
+                'index' => route('order_reports.index'),
+                'show' => route('order_reports.show', ['orderReport' => '__REPORT_ID__']),
+            ],
+            'permissions' => [
+                'viewDetail' => $this->authorization->can($request->user(), config('authorization.capabilities.order_reports_view_detail')),
+            ],
+        ], 'Đơn hàng bị báo cáo');
     }
 
-    public function show(OrderReport $orderReport)
+    public function show(OrderReport $orderReport): View|JsonResponse
     {
         $orderReport->load([
             'frozenOrder.order.partner',
@@ -101,13 +126,53 @@ class OrderReportController extends Controller
             }
         }
 
-        return view('admin.order_reports.show', compact(
-            'orderReport', 
-            'frozenOrder', 
-            'statusHistory', 
-            'currentStatus', 
-            'allStatusesWithHistory'
-        ));
+        $frozenDisplay = null;
+        if ($frozenOrder) {
+            $frozenDisplay = [
+                'order_code' => $frozenOrder->display_order_code,
+                'uses_snapshot_fallback' => (bool) $frozenOrder->uses_snapshot_fallback,
+                'name' => $frozenOrder->display_name,
+                'image_url' => $frozenOrder->display_image ? Storage::url($frozenOrder->display_image) : null,
+                'unit_price' => $frozenOrder->display_unit_price,
+                'quantity' => $frozenOrder->display_quantity,
+                'commission_percentage' => $frozenOrder->display_commission_percentage,
+                'order_amount' => $frozenOrder->display_order_amount,
+                'commission_amount' => $frozenOrder->display_commission_amount,
+                'penalty_amount' => $frozenOrder->penalty_amount,
+                'custom_price' => $frozenOrder->custom_price,
+                'customer_name' => $frozenOrder->display_customer_name,
+                'customer_phone' => $frozenOrder->display_customer_phone,
+                'customer_address' => $frozenOrder->display_customer_address,
+                'customer_note' => $frozenOrder->display_customer_note,
+                'partner_name' => $frozenOrder->display_partner_name,
+                'order_date' => $frozenOrder->order_date,
+                'payment_method' => $frozenOrder->display_payment_method,
+                'is_paid' => (bool) $frozenOrder->display_is_paid,
+                'tracking_number' => $frozenOrder->tracking_number,
+                'shipping_carrier' => $frozenOrder->shipping_carrier,
+                'api' => $frozenOrder->display_api,
+                'status' => $frozenOrder->status,
+            ];
+        }
+
+        $user = auth()->user();
+
+        return $this->reactPage->admin('admin.order-reports.show', [
+            'orderReport' => $orderReport,
+            'frozenOrder' => $frozenOrder,
+            'frozenDisplay' => $frozenDisplay,
+            'currentStatus' => $currentStatus,
+            'timeline' => $allStatusesWithHistory,
+            'routes' => [
+                'index' => route('order_reports.index'),
+                'confirm' => route('order_reports.confirm', $orderReport),
+                'cancel' => route('order_reports.cancel', $orderReport),
+            ],
+            'permissions' => [
+                'confirm' => $this->authorization->can($user, config('authorization.capabilities.order_reports_confirm')),
+                'cancel' => $this->authorization->can($user, config('authorization.capabilities.order_reports_cancel')),
+            ],
+        ], 'Chi tiết báo cáo đơn hàng');
     }
 
     /**
@@ -216,4 +281,3 @@ class OrderReportController extends Controller
         return redirect()->route('order_reports.show', $orderReport)->with('success', 'Đã hủy đơn hàng (xác nhận báo cáo đúng).');
     }
 }
-

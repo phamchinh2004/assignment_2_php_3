@@ -79,7 +79,7 @@
     <div class="chat-main flex-grow-1 d-flex flex-column position-relative">
         <!-- Loading Spinner Overlay: Tự động hiện khi chọn cuộc hội thoại -->
         <div id="chat-loading-spinner"
-            wire:loading.delay
+            wire:loading
             wire:target="selectConversation, selectUserForChat, openConversationFromNotification"
             class="chat-loading-overlay position-absolute w-100 h-100 d-none align-items-center justify-content-center"
             role="status" aria-live="polite"
@@ -937,8 +937,6 @@
         }
     }
 
-    // Loading Spinner is now handled natively by Livewire wire:loading on #chat-loading-spinner
-
     document.addEventListener('livewire:initialized', () => {
         // Kiểm tra nếu đã khởi tạo rồi thì bỏ qua
         if (window.chatComponentInitialized) {
@@ -980,7 +978,6 @@
                 showMethod: "fadeIn",
                 hideMethod: "fadeOut",
                 onclick: function () {
-                    // Click để mở conversation với logic expand staff - wire:loading will now handle this
                     component.call('openConversationFromNotification', conversationId, userId, staffId);
                 }
             };

@@ -22,6 +22,142 @@ if (headerRoot) {
     let realtimeBound = false;
     let livewireBound = false;
 
+    const quickSearch = document.getElementById('adminQuickSearch');
+    const quickSearchInput = document.getElementById('adminQuickSearchInput');
+    const quickSearchResults = document.getElementById('adminQuickSearchResults');
+    let quickSearchActiveIndex = -1;
+
+    const normalizeSearchText = (value) => String(value || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/đ/g, 'd')
+        .replace(/Đ/g, 'D')
+        .toLowerCase();
+
+    function getQuickSearchItems() {
+        const seen = new Set();
+
+        return Array.from(document.querySelectorAll('.admin-sidebar__link[href], .admin-sidebar__submenu-link[href]'))
+            .filter((link) => !link.hidden && link.getAttribute('href') && link.getAttribute('href') !== '#')
+            .map((link) => {
+                const label = link.querySelector('.admin-sidebar__label')?.textContent?.trim()
+                    || link.textContent?.trim()
+                    || '';
+                const section = link.closest('.admin-sidebar__section')
+                    ?.querySelector('.admin-sidebar__section-title')
+                    ?.textContent
+                    ?.trim() || 'Quản trị';
+
+                return { label, section, href: link.href };
+            })
+            .filter((item) => {
+                if (!item.label || seen.has(item.href)) return false;
+                seen.add(item.href);
+                return true;
+            });
+    }
+
+    function closeQuickSearch() {
+        if (!quickSearchResults || !quickSearchInput) return;
+        quickSearchResults.hidden = true;
+        quickSearchResults.replaceChildren();
+        quickSearchInput.setAttribute('aria-expanded', 'false');
+        quickSearchActiveIndex = -1;
+    }
+
+    function setQuickSearchActive(index) {
+        if (!quickSearchResults) return;
+        const options = Array.from(quickSearchResults.querySelectorAll('.admin-quick-search__result'));
+        if (!options.length) {
+            quickSearchActiveIndex = -1;
+            return;
+        }
+
+        quickSearchActiveIndex = Math.max(0, Math.min(index, options.length - 1));
+        options.forEach((option, optionIndex) => {
+            const active = optionIndex === quickSearchActiveIndex;
+            option.classList.toggle('is-active', active);
+            option.setAttribute('aria-selected', active ? 'true' : 'false');
+            if (active) option.scrollIntoView({ block: 'nearest' });
+        });
+    }
+
+    function renderQuickSearch(value = '') {
+        if (!quickSearchResults || !quickSearchInput) return;
+
+        const needle = normalizeSearchText(value.trim());
+        const items = getQuickSearchItems()
+            .filter((item) => !needle || normalizeSearchText(`${item.label} ${item.section}`).includes(needle))
+            .slice(0, 8);
+
+        quickSearchResults.replaceChildren();
+        quickSearchActiveIndex = -1;
+
+        if (!items.length) {
+            const empty = document.createElement('div');
+            empty.className = 'admin-quick-search__empty';
+            empty.textContent = 'Không tìm thấy chức năng phù hợp';
+            quickSearchResults.appendChild(empty);
+        } else {
+            items.forEach((item) => {
+                const link = document.createElement('a');
+                link.className = 'admin-quick-search__result';
+                link.href = item.href;
+                link.setAttribute('role', 'option');
+                link.setAttribute('aria-selected', 'false');
+
+                const label = document.createElement('strong');
+                label.textContent = item.label;
+                const section = document.createElement('span');
+                section.textContent = item.section;
+
+                link.append(label, section);
+                quickSearchResults.appendChild(link);
+            });
+        }
+
+        quickSearchResults.hidden = false;
+        quickSearchInput.setAttribute('aria-expanded', 'true');
+    }
+
+    quickSearchInput?.setAttribute('aria-controls', 'adminQuickSearchResults');
+    quickSearchInput?.setAttribute('aria-expanded', 'false');
+    quickSearchInput?.addEventListener('focus', () => renderQuickSearch(quickSearchInput.value));
+    quickSearchInput?.addEventListener('input', () => renderQuickSearch(quickSearchInput.value));
+    quickSearchInput?.addEventListener('keydown', (event) => {
+        const options = quickSearchResults
+            ? Array.from(quickSearchResults.querySelectorAll('.admin-quick-search__result'))
+            : [];
+
+        if (event.key === 'ArrowDown' && options.length) {
+            event.preventDefault();
+            setQuickSearchActive(quickSearchActiveIndex < options.length - 1 ? quickSearchActiveIndex + 1 : 0);
+        } else if (event.key === 'ArrowUp' && options.length) {
+            event.preventDefault();
+            setQuickSearchActive(quickSearchActiveIndex > 0 ? quickSearchActiveIndex - 1 : options.length - 1);
+        } else if (event.key === 'Enter' && options.length) {
+            event.preventDefault();
+            options[Math.max(quickSearchActiveIndex, 0)]?.click();
+        } else if (event.key === 'Escape') {
+            closeQuickSearch();
+            quickSearchInput.blur();
+        }
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+            if (!quickSearchInput || !quickSearch || quickSearch.offsetParent === null) return;
+            event.preventDefault();
+            quickSearchInput.focus();
+            quickSearchInput.select();
+            renderQuickSearch(quickSearchInput.value);
+        }
+    });
+
+    document.addEventListener('mousedown', (event) => {
+        if (quickSearch && !quickSearch.contains(event.target)) closeQuickSearch();
+    });
+
     const badgeText = (count) => count > 99 ? '99+' : String(count);
 
     function updateBadge(element, count) {

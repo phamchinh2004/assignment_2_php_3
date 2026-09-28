@@ -5,14 +5,24 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\LuckyWheelSetting;
 use App\Models\LuckyWheelSpin;
+use App\Services\AuthorizationService;
 use App\Services\LuckyWheelRewardService;
+use App\Services\ReactPageService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use Illuminate\View\View;
 
 class LuckyWheelRewardController extends Controller
 {
-    public function index(Request $request)
+    public function __construct(
+        private readonly ReactPageService $reactPage,
+        private readonly AuthorizationService $authorization,
+    ) {
+    }
+
+    public function index(Request $request): View|JsonResponse
     {
         $validated = $request->validate([
             'status' => ['nullable', Rule::in([
@@ -50,12 +60,28 @@ class LuckyWheelRewardController extends Controller
             'paid_amount' => (float) (clone $baseQuery)->where('reward_status', LuckyWheelSpin::STATUS_APPROVED)->sum('reward_amount'),
         ];
 
-        return view('admin.lucky-wheel-rewards.index', [
+        $user = $request->user();
+        $capabilities = config('authorization.capabilities');
+
+        return $this->reactPage->admin('admin.lucky-wheel-rewards.index', [
             'rewards' => $rewards,
             'counts' => $counts,
             'setting' => LuckyWheelSetting::current(),
             'selectedStatus' => $validated['status'] ?? null,
-        ]);
+            'routes' => [
+                'index' => route('lucky_wheel_rewards.index'),
+                'approve' => route('lucky_wheel_rewards.approve', ['spin' => '__SPIN_ID__']),
+                'reject' => route('lucky_wheel_rewards.reject', ['spin' => '__SPIN_ID__']),
+                'autoApproval' => route('lucky_wheel_rewards.auto_approval'),
+                'customerShow' => route('user.show', ['user' => '__USER_ID__']),
+            ],
+            'permissions' => [
+                'configureAutoApproval' => $this->authorization->can($user, $capabilities['lucky_wheel_rewards_configure_auto_approval']),
+                'approve' => $this->authorization->can($user, $capabilities['lucky_wheel_rewards_approve']),
+                'reject' => $this->authorization->can($user, $capabilities['lucky_wheel_rewards_reject']),
+                'viewCustomerDetail' => $this->authorization->can($user, $capabilities['customers_view_detail']),
+            ],
+        ], 'Phần thưởng vòng quay');
     }
 
     public function approve(LuckyWheelSpin $spin, LuckyWheelRewardService $rewardService)

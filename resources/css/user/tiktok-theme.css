@@ -706,6 +706,18 @@ textarea:focus-visible {
     border-color: var(--shop-line) !important;
 }
 
+.order_item:not(.high-value-order) .order_code {
+    color: var(--shop-muted) !important;
+}
+
+.order_item:not(.high-value-order) .order_code i {
+    color: var(--shop-muted) !important;
+}
+
+.order_item:not(.high-value-order) .order_code strong {
+    color: var(--shop-ink) !important;
+}
+
 .order-history-live i {
     background: var(--shop-cyan) !important;
 }

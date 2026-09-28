@@ -9,17 +9,24 @@ use App\Http\Controllers\Controller;
 use App\Models\Transaction_history;
 use App\Models\User;
 use App\Services\AuthorizationService;
+use App\Services\ReactPageService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\View\View;
 
 class TransactionHistoryController extends Controller
 {
+    public function __construct(private readonly ReactPageService $reactPage)
+    {
+    }
+
     /**
      * Display a listing of the resource.
      */
-    public function index_withdraw(AuthorizationService $authorization)
+    public function index_withdraw(AuthorizationService $authorization): View|JsonResponse
     {
         $query = Wallet_balance_history::with('user', 'byUser')
             // ->whereHas('user', function ($q) {
@@ -33,7 +40,19 @@ class TransactionHistoryController extends Controller
             });
         }
         $list_withdraw_transactions = $query->orderByDesc("wallet_balance_histories.id")->get();
-        return view('admin.transactions.withdraw', compact('list_withdraw_transactions'));
+        return $this->reactPage->admin('admin.transactions.withdraw', [
+            'transactions' => $list_withdraw_transactions,
+            'routes' => [
+                'confirm' => route('confirm.withdraw', ['transaction' => '__TRANSACTION_ID__']),
+                'cancel' => route('cancel.withdraw', ['transaction' => '__TRANSACTION_ID__']),
+                'customerShow' => route('user.show', ['user' => '__USER_ID__']),
+            ],
+            'permissions' => [
+                'confirm' => $authorization->can($actor, config('authorization.capabilities.withdrawals_confirm')),
+                'cancel' => $authorization->can($actor, config('authorization.capabilities.withdrawals_cancel')),
+                'viewCustomerDetail' => $authorization->can($actor, config('authorization.capabilities.customers_view_detail')),
+            ],
+        ], 'Quản lý rút tiền');
     }
     public function confirm_withdraw(
         Request $request,
@@ -104,7 +123,7 @@ class TransactionHistoryController extends Controller
 
         return back()->with($result[0], $result[1]);
     }
-    public function index_deposit(AuthorizationService $authorization)
+    public function index_deposit(AuthorizationService $authorization): View|JsonResponse
     {
         $query = Wallet_balance_history::with('user', 'byUser')
             // ->whereHas('user', function ($q) {
@@ -116,7 +135,19 @@ class TransactionHistoryController extends Controller
             $query->where('by_user_id', $actor->id);
         }
         $list_deposit_transactions = $query->orderByDesc('id')->get();
-        return view('admin.transactions.deposit', compact('list_deposit_transactions'));
+        return $this->reactPage->admin('admin.transactions.deposit', [
+            'transactions' => $list_deposit_transactions,
+            'routes' => [
+                'changeType' => route('change.deposit.transaction.type', ['transaction' => '__TRANSACTION_ID__']),
+                'destroy' => route('destroy.deposit', ['transaction' => '__TRANSACTION_ID__']),
+                'customerShow' => route('user.show', ['user' => '__USER_ID__']),
+            ],
+            'permissions' => [
+                'changeType' => $authorization->can($actor, config('authorization.capabilities.deposits_change_type')),
+                'delete' => $authorization->can($actor, config('authorization.capabilities.deposits_delete')),
+                'viewCustomerDetail' => $authorization->can($actor, config('authorization.capabilities.customers_view_detail')),
+            ],
+        ], 'Lịch sử nạp tiền');
     }
     public function destroy_deposit(Wallet_balance_history $transaction, AuthorizationService $authorization)
     {

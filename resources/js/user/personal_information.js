@@ -1,9 +1,13 @@
 import Modal from 'bootstrap/js/dist/modal';
+import { spaSubmitForm } from '../react/navigation';
 
-const page = document.querySelector('[data-personal-profile-page]');
-
-if (page) {
+function initPersonalInformationPage() {
+    const page = document.querySelector('[data-personal-profile-page]');
+    if (!page || page.dataset.personalInformationInitialized === '1') return () => {};
+    page.dataset.personalInformationInitialized = '1';
     document.body.classList.add('personal-information-active');
+    const controller = new AbortController();
+    const listenerOptions = { signal: controller.signal };
 
     const notify = (type, message, title = 'Thông báo') => {
         if (!message) return;
@@ -40,6 +44,9 @@ if (page) {
     let previewObjectUrl = null;
     let avatarUploading = false;
     let currentAvatarUrl = avatarPreview?.getAttribute('src') || '';
+    let activeAvatarXhr = null;
+    let avatarHideTimeout = null;
+    let bankOpenTimeout = null;
 
     const setAvatarMessage = (message = '', type = '') => {
         if (!avatarMessage) return;
@@ -94,7 +101,7 @@ if (page) {
         button.addEventListener('click', () => {
             resetAvatarSelection();
             avatarModal?.show();
-        });
+        }, listenerOptions);
     });
 
     avatarFileInput?.addEventListener('change', () => {
@@ -115,7 +122,7 @@ if (page) {
         if (avatarPreviewState) avatarPreviewState.textContent = 'Xem trước ảnh mới';
         if (avatarSubmit) avatarSubmit.disabled = false;
         setAvatarMessage();
-    });
+    }, listenerOptions);
 
     avatarSubmit?.addEventListener('click', () => {
         if (avatarUploading) return;
@@ -144,6 +151,7 @@ if (page) {
         formData.append('_token', csrfToken);
 
         const xhr = new XMLHttpRequest();
+        activeAvatarXhr = xhr;
 
         xhr.upload.addEventListener('progress', (event) => {
             if (!event.lengthComputable) return;
@@ -178,7 +186,10 @@ if (page) {
 
                 selectedAvatar = null;
                 if (avatarFileInput) avatarFileInput.value = '';
-                window.setTimeout(() => avatarModal?.hide(), 550);
+                avatarHideTimeout = window.setTimeout(() => {
+                    avatarHideTimeout = null;
+                    avatarModal?.hide();
+                }, 550);
                 return;
             }
 
@@ -195,6 +206,7 @@ if (page) {
         });
 
         xhr.addEventListener('loadend', () => {
+            if (activeAvatarXhr === xhr) activeAvatarXhr = null;
             avatarUploading = false;
             setAvatarProgress(false);
 
@@ -209,11 +221,11 @@ if (page) {
         xhr.open('POST', avatarEndpoint);
         xhr.setRequestHeader('Accept', 'application/json');
         xhr.send(formData);
-    });
+    }, listenerOptions);
 
     avatarModalElement?.addEventListener('hidden.bs.modal', () => {
         if (!avatarUploading) resetAvatarSelection();
-    });
+    }, listenerOptions);
 
     const bankRoot = page.querySelector('[data-bank-account]');
     const bankStatus = page.querySelector('[data-bank-hero-status]');
@@ -248,12 +260,17 @@ if (page) {
         }
 
         paymentPanel?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        window.setTimeout(() => bankRoot?.querySelector('[data-bank-account-open]')?.click(), 280);
-    });
+        bankOpenTimeout = window.setTimeout(() => {
+            bankOpenTimeout = null;
+            bankRoot?.querySelector('[data-bank-account-open]')?.click();
+        }, 280);
+    }, listenerOptions);
 
+    let bankObserver = null;
     if (bankRoot) {
         syncBankLinkedState();
-        new MutationObserver(syncBankLinkedState).observe(bankRoot, {
+        bankObserver = new MutationObserver(syncBankLinkedState);
+        bankObserver.observe(bankRoot, {
             attributes: true,
             attributeFilter: ['data-linked'],
         });
@@ -266,18 +283,43 @@ if (page) {
         Modal.getOrCreateInstance(warehouseModalElement).show();
     }
 
-    warehouseForm?.addEventListener('submit', () => {
+    const handleWarehouseSubmit = async (event) => {
         if (!warehouseForm.checkValidity()) return;
+
+        if (typeof window.__spaCommitBootstrap !== 'function') return;
+        event.preventDefault();
 
         const submitButton = warehouseForm.querySelector('button[type="submit"]');
         if (!submitButton || submitButton.disabled) return;
 
+        const originalHtml = submitButton.innerHTML;
         submitButton.disabled = true;
         submitButton.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin" aria-hidden="true"></i><span>Đang lưu...</span>';
-    });
+        try {
+            await spaSubmitForm(warehouseForm, event.submitter || null);
+        } catch (error) {
+            console.error('Unable to update warehouse address.', error);
+            submitButton.disabled = false;
+            submitButton.innerHTML = originalHtml;
+            notify('error', 'Không thể lưu địa chỉ lúc này. Vui lòng thử lại.', 'Có lỗi xảy ra');
+        }
+    };
+    warehouseForm?.addEventListener('submit', handleWarehouseSubmit, listenerOptions);
 
-    const flashSuccess = page.dataset.flashSuccess?.trim();
-    if (flashSuccess) {
-        notify('success', flashSuccess, 'Đã cập nhật');
-    }
+    return () => {
+        controller.abort();
+        bankObserver?.disconnect();
+        if (avatarHideTimeout) window.clearTimeout(avatarHideTimeout);
+        if (bankOpenTimeout) window.clearTimeout(bankOpenTimeout);
+        if (activeAvatarXhr && activeAvatarXhr.readyState !== XMLHttpRequest.DONE) {
+            activeAvatarXhr.abort();
+        }
+        if (previewObjectUrl) URL.revokeObjectURL(previewObjectUrl);
+        avatarModal?.hide();
+        avatarModal?.dispose?.();
+        document.body.classList.remove('personal-information-active');
+        delete page.dataset.personalInformationInitialized;
+    };
 }
+
+window.__initPersonalInformationPage = initPersonalInformationPage;

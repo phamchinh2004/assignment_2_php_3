@@ -1,0 +1,34 @@
+.order-create-react-page {
+    padding: 1.5rem;
+}
+
+.order-create-back {
+    margin-bottom: 1rem;
+}
+
+.order-create-react-page > .ant-card {
+    max-width: 920px;
+    margin: 0 auto;
+}
+
+.order-create-heading {
+    margin-bottom: 1.5rem;
+}
+
+.order-create-heading .ant-typography {
+    margin: 0;
+}
+
+.order-create-alert {
+    margin-bottom: 1rem;
+}
+
+.order-create-form {
+    max-width: 720px;
+}
+
+@media (max-width: 767px) {
+    .order-create-react-page {
+        padding: 1rem 0.75rem 1.5rem;
+    }
+}

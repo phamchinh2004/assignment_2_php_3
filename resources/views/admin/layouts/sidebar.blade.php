@@ -14,8 +14,9 @@
     $canTransactions = $canWithdrawals || $canDeposits || $canManageRewards;
     $canFeatureAnnouncements = $authorization->can($currentUser, $capabilities['feature_announcements_view']);
     $isOwner = $authorization->isSuperuser($currentUser);
-    $isDashboardActive = request()->routeIs('admin.dashboard', 'tong.doanh.thu');
+    $isDashboardActive = request()->routeIs('admin.dashboard');
     $isStatisticsActive = request()->routeIs(
+        'tong.doanh.thu',
         'doanh.thu.theo.nhan.vien',
         'doanh.thu.tu.khach.hang',
         'doanh.thu.ban.than',
@@ -41,7 +42,7 @@
 <aside class="admin-sidebar" id="accordionSidebar" aria-label="Điều hướng quản trị">
     <div class="admin-sidebar__header">
         <a class="admin-sidebar__brand"
-            href="{{ $canSystemStatistics ? route('tong.doanh.thu') : route('chat-panel') }}">
+            href="{{ route('admin.dashboard') }}">
             <span class="admin-sidebar__brand-mark" aria-hidden="true">
                 <i class="fas fa-layer-group"></i>
             </span>
@@ -67,16 +68,14 @@
             <section class="admin-sidebar__section" aria-labelledby="sidebar-overview-title">
                 <h2 class="admin-sidebar__section-title" id="sidebar-overview-title">Tổng quan</h2>
 
-                @if ($canSystemStatistics)
-                    <a class="admin-sidebar__link {{ $isDashboardActive ? 'is-active' : '' }}"
-                        href="{{ route('tong.doanh.thu') }}" data-sidebar-tooltip="Dashboard"
-                        @if($isDashboardActive) aria-current="page" @endif>
-                        <span class="admin-sidebar__icon"><i class="fas fa-chart-pie" aria-hidden="true"></i></span>
-                        <span class="admin-sidebar__label">Dashboard</span>
-                    </a>
+                <a class="admin-sidebar__link {{ $isDashboardActive ? 'is-active' : '' }}"
+                    href="{{ route('admin.dashboard') }}" data-sidebar-tooltip="Dashboard"
+                    @if($isDashboardActive) aria-current="page" @endif>
+                    <span class="admin-sidebar__icon"><i class="fas fa-chart-pie" aria-hidden="true"></i></span>
+                    <span class="admin-sidebar__label">Dashboard</span>
+                </a>
 
-                @endif
-                @if($authorization->canAny($currentUser, ['statistics.view-staff', 'statistics.view-customers', 'statistics.view-personal']))
+                @if($canSystemStatistics || $authorization->canAny($currentUser, ['statistics.view-staff', 'statistics.view-customers', 'statistics.view-personal']))
                     <div class="admin-sidebar__item {{ $isStatisticsActive ? 'is-active' : '' }}">
                         <button type="button"
                             class="admin-sidebar__link admin-sidebar__submenu-trigger {{ $isStatisticsActive ? '' : 'collapsed' }}"
@@ -91,6 +90,10 @@
                             data-parent="#accordionSidebar">
                             <div class="admin-sidebar__submenu-panel">
                                 <span class="admin-sidebar__submenu-heading">Thống kê</span>
+                                @if($canSystemStatistics)
+                                    <a class="admin-sidebar__submenu-link {{ request()->routeIs('tong.doanh.thu') ? 'is-active' : '' }}"
+                                        href="{{ route('tong.doanh.thu') }}">Tổng doanh thu</a>
+                                @endif
                                 @if(app(\App\Services\AuthorizationService::class)->can(Auth::user(), config('authorization.capabilities.statistics_view_staff')))
 <a class="admin-sidebar__submenu-link {{ request()->routeIs('doanh.thu.theo.nhan.vien') ? 'is-active' : '' }}"
                                     href="{{ route('doanh.thu.theo.nhan.vien') }}">Doanh thu nhân viên</a>

@@ -21,7 +21,26 @@ function finiteNumberOrNull(value) {
     return Number.isFinite(number) ? number : null;
 }
 
-document.addEventListener('DOMContentLoaded', function () {
+function initDistributionPage() {
+    const root = document.querySelector('.distribution-page');
+    if (!root || root.dataset.distributionInitialized === '1') return () => {};
+    root.dataset.distributionInitialized = '1';
+    const listenerController = new AbortController();
+    const listenerOptions = { signal: listenerController.signal };
+    const timeoutIds = new Set();
+    const previousGlobals = {
+        distribution: window.distribution,
+        closeSuccessModal: window.closeSuccessModal,
+    };
+    const schedule = (callback, delay) => {
+        const timeoutId = window.setTimeout(() => {
+            timeoutIds.delete(timeoutId);
+            callback();
+        }, delay);
+        timeoutIds.add(timeoutId);
+        return timeoutId;
+    };
+
     // ==================================================Pháo hoa===================================================
     const container = document.getElementById('fireworks-container');
     const fireworks = new Fireworks(container, {
@@ -76,6 +95,8 @@ document.addEventListener('DOMContentLoaded', function () {
     // =============================================================Phân phối=============================================================
     let orders = [];
     let currentIndex = 0;
+    let ordersLoaded = false;
+    let ordersLoadPromise = null;
     const order_award = document.getElementById('order_award');
 
     async function updateApproximateLocation() {
@@ -88,6 +109,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     'Accept': 'application/json',
                 },
                 body: JSON.stringify({}),
+                signal: listenerController.signal,
             });
             const result = await response.json();
             return response.ok && result.status === 200 && !!result.country_code;
@@ -102,18 +124,14 @@ document.addEventListener('DOMContentLoaded', function () {
             await fetch(route_update_location, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
-                body: JSON.stringify({ permission: 'denied' })
+                body: JSON.stringify({ permission: 'denied' }),
+                signal: listenerController.signal,
             });
         } catch (error) {
             console.warn('Không thể lưu trạng thái quyền vị trí.', error);
         }
 
-        const approximateReady = await updateApproximateLocation();
-        if (!approximateReady) {
-            notification('warning', 'Không thể xác định quốc gia hiện tại. Vui lòng thử lại hoặc cấp quyền vị trí.', trans.CanhBao);
-        }
-
-        return approximateReady;
+        return updateApproximateLocation();
     }
 
     async function updateCurrentLocation() {
@@ -135,7 +153,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 try {
                     const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${locationData.latitude}&lon=${locationData.longitude}&zoom=10`, {
-                        headers: { 'Accept-Language': document.documentElement.lang || 'vi' }
+                        headers: { 'Accept-Language': document.documentElement.lang || 'vi' },
+                        signal: listenerController.signal,
                     });
                     const address = (await response.json()).address || {};
                     locationData.country_code = (address.country_code || '').toUpperCase();
@@ -149,7 +168,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     const response = await fetch(route_update_location, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
-                        body: JSON.stringify(locationData)
+                        body: JSON.stringify(locationData),
+                        signal: listenerController.signal,
                     });
                     const result = await response.json();
                     if (!response.ok || result.status !== 200) {
@@ -159,6 +179,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
                     resolve(true);
                 } catch (error) {
+                    if (error?.name === 'AbortError') {
+                        resolve(false);
+                        return;
+                    }
                     notification('error', 'Không thể cập nhật vị trí hiện tại.', trans.Loi);
                     resolve(false);
                 }
@@ -169,31 +193,68 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function loadOrders() {
-        fetch(route_get_10_orders_next)
-            .then(response => response.json())
+        if (ordersLoaded) return Promise.resolve(true);
+        if (ordersLoadPromise) return ordersLoadPromise;
+
+        ordersLoadPromise = fetch(route_get_10_orders_next, { signal: listenerController.signal })
+            .then(response => {
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                return response.json();
+            })
             .then(data => {
                 if (data.status === 404) {
-                    notification('error', trans.coLoiXayRa);
+                    return false;
                 } else if (data.status === 200) {
-                    orders = data.orders;
+                    orders = Array.isArray(data.orders) ? data.orders : [];
                     currentIndex = data.order_next;
+                    ordersLoaded = true;
+                    return true;
                 }
+
+                return false;
+            })
+            .catch(error => {
+                if (error?.name === 'AbortError') return false;
+                console.error('Không thể tải danh sách đơn hàng.', error);
+                return false;
+            })
+            .finally(() => {
+                ordersLoadPromise = null;
             });
+
+        return ordersLoadPromise;
     }
 
-    window.onload = loadOrders;
+    // Trang distribution có thể được mount sau khi window.onload đã chạy (React SPA),
+    // vì vậy phải tải danh sách ngay khi khởi tạo thay vì chờ sự kiện load của window.
+    loadOrders();
     async function distribution() {
         spinner.hidden = false;
-        if (!await updateCurrentLocation()) {
+
+        // Bảo đảm danh sách đơn đã sẵn sàng trước khi backend tăng current_spin
+        // và tạo frozen order mới.
+        if (!await loadOrders()) {
             spinner.hidden = true;
+            notification('error', trans.LoiDanhSachDonHang || trans.coLoiXayRa || 'Không thể tải danh sách đơn hàng.', trans.Loi);
             return;
         }
+
+        updateCurrentLocation();
         let fake_price = null;
         let is_high_value_order = false;
         let order_id = null;
         let frozen_id = null;
         let frozen_updated_at = null;
-        const check_frozen = await check_frozen_order();
+        let check_frozen;
+        try {
+            check_frozen = await check_frozen_order();
+        } catch (error) {
+            spinner.hidden = true;
+            if (error?.name === 'AbortError') return;
+            console.error('Không thể kiểm tra đơn đang đóng băng.', error);
+            notification('error', trans.coLoiXayRa || 'Có lỗi xảy ra, vui lòng thử lại.', trans.Loi);
+            return;
+        }
         const snapshotOrderAmount = finiteNumberOrNull(check_frozen.order_amount);
         const snapshotCommissionPercentage = finiteNumberOrNull(check_frozen.commission_percentage);
         const snapshotCommissionAmount = finiteNumberOrNull(check_frozen.commission_amount);
@@ -210,7 +271,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 dangerMode: true,
             });
             if (acknowledged && check_frozen.redirect) {
-                window.location.href = check_frozen.redirect;
+                if (typeof window.__spaNavigate === 'function') window.__spaNavigate(check_frozen.redirect);
+                else window.location.href = check_frozen.redirect;
             }
         } else if (check_frozen.status == 200 && check_frozen.is_frozen == true && responseIsHighValueOrder == true && check_frozen.is_new_order == false) {
             spinner.hidden = true;
@@ -222,7 +284,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 dangerMode: true,
             });
             if (acknowledged && check_frozen.redirect) {
-                window.location.href = check_frozen.redirect;
+                if (typeof window.__spaNavigate === 'function') window.__spaNavigate(check_frozen.redirect);
+                else window.location.href = check_frozen.redirect;
             }
         } else if (check_frozen.status == 200 && check_frozen.is_frozen == true && responseIsHighValueOrder == true && check_frozen.is_new_order == true) {
             is_high_value_order = true;
@@ -277,6 +340,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             if (selectedOrder === null) {
                 loadOrders();
+                spinner.hidden = true;
                 notification('error', trans.QuayLaiNhaBan, trans.LoiDanhSachDonHang);
                 return; // Dừng lại nếu không tìm thấy order
             }
@@ -284,7 +348,7 @@ document.addEventListener('DOMContentLoaded', function () {
             // Hiển thị loading modal cho tìm kiếm
             showSearchingModal();
             
-            setTimeout(() => {
+            schedule(() => {
                 spinner.hidden = true;
                 closeSearchingModal();
                 
@@ -356,7 +420,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
                 order_award.hidden = false;
                 // Dừng hiệu ứng pháo hoa sau 5 giây
-                setTimeout(() => fireworks.stop(), 5000);
+                schedule(() => fireworks.stop(), 5000);
             }, 1000);
             currentIndex += 1;
         } else {
@@ -368,11 +432,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const later = document.getElementById('later');
     later.addEventListener('click', function () {
         order_award.hidden = true;
-    })
+    }, listenerOptions)
     // Kiểm tra đơn hàng trước khi quay
     function check_frozen_order() {
         return new Promise((resolve, reject) => {
-            fetch(route_check_frozen_order)
+            fetch(route_check_frozen_order, { signal: listenerController.signal })
                 .then(response => response.json())
                 .then(data => {
                     console.log(data);
@@ -386,27 +450,42 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     // ==================================================Xử lý bấm nút nhận đơn==================================================
     const btn_phan_phoi_ngay = document.getElementById('btn_phan_phoi_ngay');
+    let isAcceptingOrder = false;
     if (btn_phan_phoi_ngay) {
         btn_phan_phoi_ngay.addEventListener('click', async function () {
+            if (isAcceptingOrder) return;
+            isAcceptingOrder = true;
+            this.disabled = true;
             spinner.hidden = false;
             let frozen_id = this.dataset.frozenId;
-            
-            // Gọi API nhận đơn
-            let result = await handle_accept_order(frozen_id);
-            
-            if (result.status === 200) {
-                // Hiển thị thông báo thành công
-                notification('success', result.message, trans.ThanhCong);
-                
-                // Redirect đến trang order sau 1 giây
-                setTimeout(() => {
-                    window.location.href = result.redirect || route_order;
-                }, 1000);
-            } else {
+
+            try {
+                const result = await handle_accept_order(frozen_id);
+
+                if (result.status === 200) {
+                    spinner.hidden = true;
+                    notification('success', result.message, trans.ThanhCong);
+
+                    schedule(() => {
+                        const redirectUrl = result.redirect || route_order;
+                        if (typeof window.__spaNavigate === 'function') window.__spaNavigate(redirectUrl);
+                        else window.location.href = redirectUrl;
+                    }, 1000);
+                    return;
+                }
+
                 notification('error', result.message || 'Có lỗi xảy ra', trans.Loi);
+            } catch (error) {
+                if (error?.name !== 'AbortError') {
+                    console.error('Không thể nhận đơn hàng.', error);
+                    notification('error', trans.coLoiXayRa || 'Có lỗi xảy ra, vui lòng thử lại.', trans.Loi);
+                }
+            } finally {
                 spinner.hidden = true;
+                isAcceptingOrder = false;
+                this.disabled = false;
             }
-        });
+        }, listenerOptions);
     }
     
     // Hàm xử lý nhận đơn
@@ -420,7 +499,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 },
                 body: JSON.stringify({
                     frozen_id: frozen_id
-                })
+                }),
+                signal: listenerController.signal,
             })
                 .then(response => response.json())
                 .then(data => {
@@ -467,12 +547,13 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     
     // Hàm đóng modal thành công
-    window.closeSuccessModal = function() {
+    const closeSuccessModal = function() {
         const modal = document.getElementById('successModalOverlay');
         if (modal) {
             modal.classList.remove('show');
         }
-    }
+    };
+    window.closeSuccessModal = closeSuccessModal;
     
     // Hàm hiển thị loading modal cho tìm kiếm đơn hàng
     function showSearchingModal() {
@@ -487,16 +568,16 @@ document.addEventListener('DOMContentLoaded', function () {
         // Hiển thị modal
         modal.classList.add('show');
         
-        setTimeout(() => {
+        schedule(() => {
             document.getElementById('search-progress-bar').style.width = '33%';
             
-            setTimeout(() => {
+            schedule(() => {
                 document.getElementById('search-step-1').classList.remove('active');
                 document.getElementById('search-step-1').classList.add('completed');
                 document.getElementById('search-step-2').classList.add('active');
                 document.getElementById('search-progress-bar').style.width = '66%';
                 
-                setTimeout(() => {
+                schedule(() => {
                     document.getElementById('search-step-2').classList.remove('active');
                     document.getElementById('search-step-2').classList.add('completed');
                     document.getElementById('search-step-3').classList.add('active');
@@ -527,16 +608,16 @@ document.addEventListener('DOMContentLoaded', function () {
         // Hiển thị modal
         modal.classList.add('show');
         
-        setTimeout(() => {
+        schedule(() => {
             document.getElementById('dist-progress-bar').style.width = '33%';
             
-            setTimeout(() => {
+            schedule(() => {
                 document.getElementById('dist-step-1').classList.remove('active');
                 document.getElementById('dist-step-1').classList.add('completed');
                 document.getElementById('dist-step-2').classList.add('active');
                 document.getElementById('dist-progress-bar').style.width = '66%';
                 
-                setTimeout(() => {
+                schedule(() => {
                     document.getElementById('dist-step-2').classList.remove('active');
                     document.getElementById('dist-step-2').classList.add('completed');
                     document.getElementById('dist-step-3').classList.add('active');
@@ -584,7 +665,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // Animation cho số current
         currentElement.style.transform = 'scale(1.2)';
         currentElement.style.color = '#10b981';
-        setTimeout(() => {
+        schedule(() => {
             currentElement.style.transform = 'scale(1)';
             currentElement.style.color = '';
         }, 300);
@@ -599,7 +680,7 @@ document.addEventListener('DOMContentLoaded', function () {
             // Animation
             balanceElement.style.transform = 'scale(1.1)';
             balanceElement.style.color = '#10b981';
-            setTimeout(() => {
+            schedule(() => {
                 balanceElement.style.transform = 'scale(1)';
                 balanceElement.style.color = '';
             }, 500);
@@ -612,7 +693,7 @@ document.addEventListener('DOMContentLoaded', function () {
             // Animation
             distributionElement.style.transform = 'scale(1.1)';
             distributionElement.style.color = '#3b82f6';
-            setTimeout(() => {
+            schedule(() => {
                 distributionElement.style.transform = 'scale(1)';
                 distributionElement.style.color = '';
             }, 500);
@@ -625,7 +706,7 @@ document.addEventListener('DOMContentLoaded', function () {
             // Animation
             commissionElement.style.transform = 'scale(1.1)';
             commissionElement.style.color = '#f59e0b';
-            setTimeout(() => {
+            schedule(() => {
                 commissionElement.style.transform = 'scale(1)';
                 commissionElement.style.color = '';
             }, 500);
@@ -638,7 +719,7 @@ document.addEventListener('DOMContentLoaded', function () {
             // Animation
             frozenElement.style.transform = 'scale(1.1)';
             frozenElement.style.color = '#8b5cf6';
-            setTimeout(() => {
+            schedule(() => {
                 frozenElement.style.transform = 'scale(1)';
                 frozenElement.style.color = '';
             }, 500);
@@ -655,7 +736,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 },
                 body: JSON.stringify({
                     frozen_id: frozen_id
-                })
+                }),
+                signal: listenerController.signal,
             })
                 .then(response => response.json())
                 .then(data => {
@@ -668,4 +750,29 @@ document.addEventListener('DOMContentLoaded', function () {
         })
     }
 
-})
+    return () => {
+        listenerController.abort();
+        timeoutIds.forEach((timeoutId) => window.clearTimeout(timeoutId));
+        timeoutIds.clear();
+        if (spinner) spinner.hidden = true;
+        document.getElementById('searchingModalOverlay')?.classList.remove('show');
+        document.getElementById('distributionModalOverlay')?.classList.remove('show');
+        document.getElementById('successModalOverlay')?.classList.remove('show');
+        if (window.distribution === distribution) {
+            if (previousGlobals.distribution === undefined) delete window.distribution;
+            else window.distribution = previousGlobals.distribution;
+        }
+        if (window.closeSuccessModal === closeSuccessModal) {
+            if (previousGlobals.closeSuccessModal === undefined) delete window.closeSuccessModal;
+            else window.closeSuccessModal = previousGlobals.closeSuccessModal;
+        }
+        try {
+            fireworks.stop();
+        } catch (_) {
+            // The animation may already be stopped.
+        }
+        delete root.dataset.distributionInitialized;
+    };
+}
+
+window.__initDistributionPage = initDistributionPage;

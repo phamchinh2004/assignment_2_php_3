@@ -3,9 +3,12 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
+use App\Models\Language;
 use App\Models\Rank;
 use App\Services\ApproximateLocationService;
+use App\Services\ReactPageService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
@@ -15,7 +18,7 @@ class MeController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(ReactPageService $reactPageService)
     {
         $user = Auth::user();
         $rank = Rank::find($user->rank_id);
@@ -29,15 +32,97 @@ class MeController extends Controller
                 ->count(),
         ];
 
-        return view('user.me', compact('user', 'rank', 'accountSummary'));
+        $statusClass = match ($user->status) {
+            'activated' => 'is-active',
+            'banned' => 'is-banned',
+            default => 'is-inactive',
+        };
+        $statusLabel = match ($user->status) {
+            'activated' => __('me.HoatDong'),
+            'banned' => __('me.BiCam'),
+            'inactivated' => __('me.ChuaKichHoat'),
+            default => __('me.KhongHoatDong'),
+        };
+
+        return $reactPageService->user('user.me', [
+            'user' => [
+                'fullName' => $user->full_name,
+                'username' => $user->username,
+                'referralCode' => $user->referral_code,
+                'avatarUrl' => get_user_avatar($user),
+                'balanceFormatted' => format_money($user->balance),
+                'frozenBalanceFormatted' => format_money($user->frozen_balance ?? 0),
+                'warehouseArea' => $user->warehouse_area,
+                'warehouseAddress' => $user->warehouse_address,
+                'hasBankAccount' => filled($user->bank_name) && filled($user->account_number),
+                'hasWarehouse' => filled($user->warehouse_area) && filled($user->warehouse_address),
+                'hasTransactionPassword' => filled($user->transaction_password),
+                'statusClass' => $statusClass,
+                'statusLabel' => $statusLabel,
+            ],
+            'rank' => $rank ? ['name' => $rank->name] : null,
+            'accountSummary' => [
+                'receivedCommissionFormatted' => format_money($accountSummary['received_commission']),
+                'todayTransactions' => $accountSummary['today_transactions'],
+            ],
+            'routes' => [
+                'personalInformation' => route('personal_information'),
+                'balanceFluctuation' => route('balance_fluctuation'),
+                'withdrawMoney' => route('withdraw_money'),
+                'distribution' => route('distribution'),
+                'order' => route('order'),
+                'vip' => route('vip'),
+                'warehouseAddressUpdate' => route('warehouse_address.update'),
+                'languageChange' => route('language.change'),
+            ],
+            'languages' => Language::query()->get()->map(fn (Language $language) => [
+                'code' => $language->code,
+                'name' => $language->name,
+                'imageUrl' => Storage::url($language->image),
+            ])->values()->all(),
+            'locale' => App::getLocale(),
+            'assets' => [
+                'defaultAvatar' => asset('images/default-avatar-gray.svg'),
+            ],
+            'labels' => [
+                'inviteCode' => __('me.MaMoi'),
+                'accountBalance' => __('me.SoDuTaiKhoan'),
+                'currentBalance' => __('me.SoDuHienTai'),
+                'todayTransactions' => __('me.GiaoDichHomNay'),
+                'deposit' => __('me.Nap'),
+                'withdraw' => __('me.Rut'),
+                'distribution' => __('me.PhanPhoi'),
+                'balanceMovement' => __('me.BienDong'),
+                'vip' => __('me.Vip'),
+                'information' => __('me.ThongTin'),
+                'warehouseAddress' => __('me.DiaChiKho'),
+                'depositHistory' => __('me.LichSuNap'),
+                'withdrawHistory' => __('me.LichSuRut'),
+                'language' => __('me.NgonNgu'),
+                'logout' => __('me.DangXuat'),
+                'warehouseModalTitle' => __('me.TieuDeModalDiaChiKho'),
+                'area' => __('me.KhuVuc'),
+                'areaPlaceholder' => __('me.NhapKhuVuc'),
+                'currentAddress' => __('me.DiaChiHienTai'),
+                'addressPlaceholder' => __('me.NhapDiaChiHienTai'),
+                'close' => __('me.Dong'),
+                'save' => __('me.Luu'),
+                'contactSupport' => __('me.VuiLongLienHeCskh'),
+                'notificationTitle' => __('me.ThongBao'),
+            ],
+        ]);
     }
-    public function personal_information()
+    public function personal_information(ReactPageService $reactPageService)
     {
         $user = Auth::user();
         $banks = config('banks', []);
-        return view('user.personal_information', compact('user','banks'));
+        return $reactPageService->user('user.personal_information', [
+            'legacyPage' => 'personal_information',
+            'html' => view('user.partials.personal_information-content', compact('user', 'banks'))->render(),
+            'globals' => [],
+        ]);
     }
-    public function vip()
+    public function vip(ReactPageService $reactPageService)
     {
         $user = Auth::user();
         $rank = Rank::find($user->rank_id);
@@ -52,7 +137,43 @@ class MeController extends Controller
             ? $list_ranks->get($currentRankIndex + 1)
             : $list_ranks->first();
 
-        return view('user.vip', compact('user', 'rank', 'list_ranks', 'nextRank', 'currentRankIndex'));
+        $serializeRank = static fn (Rank $item) => [
+            'id' => $item->id,
+            'name' => $item->name,
+            'imageUrl' => $item->image ? Storage::url($item->image) : null,
+            'upgradeFee' => (float) $item->upgrade_fee,
+            'upgradeFeeFormatted' => format_money($item->upgrade_fee),
+            'commissionPercentage' => (float) $item->commission_percentage,
+            'commissionPercentageFormatted' => format_money($item->commission_percentage),
+            'spinCount' => (int) $item->spin_count,
+            'maximumNumberOfWithdrawals' => (int) $item->maximum_number_of_withdrawals,
+            'maximumWithdrawalAmount' => (float) $item->maximum_withdrawal_amount,
+            'maximumWithdrawalAmountFormatted' => format_money($item->maximum_withdrawal_amount),
+            'value' => (float) $item->value,
+            'valueFormatted' => format_money($item->value),
+        ];
+
+        return $reactPageService->user('user.vip', [
+            'user' => [
+                'fullName' => $user->full_name,
+                'username' => $user->username,
+                'avatarUrl' => get_user_avatar($user),
+            ],
+            'rank' => $rank ? $serializeRank($rank) : null,
+            'ranks' => $list_ranks->map($serializeRank)->values()->all(),
+            'currentRankIndex' => $currentRankIndex === false ? null : $currentRankIndex,
+            'nextRankId' => $nextRank?->id,
+            'routes' => [
+                'me' => route('me'),
+            ],
+            'assets' => [
+                'defaultAvatar' => asset('images/default-avatar-gray.svg'),
+            ],
+            'labels' => [
+                'title' => __('vip.CapDoThanhVien'),
+                'noRank' => __('vip.BanChuaCoGianHang'),
+            ],
+        ], __('vip.CapDoThanhVien'));
     }
 
     public function upload_avatar(Request $request)

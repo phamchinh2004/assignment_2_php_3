@@ -337,29 +337,35 @@
             csrf: @json(csrf_token()),
             intervalMs: 600000,
         };
+        @auth
+            window.preciseLocationConfig = {
+                endpoint: @json(route('location.update')),
+                csrf: @json(csrf_token()),
+                userId: @json(auth()->id()),
+                loginAt: @json(auth()->user()->last_login_at?->timestamp),
+            };
+        @endauth
 
         function notification(type, data, title, timeOut = "10000") {
-            $(document).ready();
-            $(function () {
-                Command: toastr[type](data, title);
-                toastr.options = {
-                    closeButton: true,
-                    debug: false,
-                    newestOnTop: true,
-                    progressBar: true,
-                    positionClass: "toast-top-right",
-                    preventDuplicates: true,
-                    onclick: null,
-                    showDuration: "300",
-                    hideDuration: "1000",
-                    timeOut: timeOut,
-                    extendedTimeOut: "1000",
-                    showEasing: "swing",
-                    hideEasing: "linear",
-                    showMethod: "fadeIn",
-                    hideMethod: "fadeOut",
-                };
-            });
+            if (!toastr[type]) return;
+            toastr.options = {
+                closeButton: true,
+                debug: false,
+                newestOnTop: true,
+                progressBar: true,
+                positionClass: "toast-top-right",
+                preventDuplicates: true,
+                onclick: null,
+                showDuration: "300",
+                hideDuration: "1000",
+                timeOut: timeOut,
+                extendedTimeOut: "1000",
+                showEasing: "swing",
+                hideEasing: "linear",
+                showMethod: "fadeIn",
+                hideMethod: "fadeOut",
+            };
+            toastr[type](data, title);
         };
         // Không ép làm tròn theo 2 chữ số cố định; giữ giá trị thực với tối đa 8 chữ số thập phân
         function format_currency(currency, min = 0, max = 8) {
@@ -434,6 +440,7 @@
         });
     </script>
     @vite('resources/js/user/approximate-location.js')
+    @vite('resources/js/user/precise-location.js')
     @yield('script-libs')
     @stack('scripts')
     @vite('resources/js/user/notification.js')

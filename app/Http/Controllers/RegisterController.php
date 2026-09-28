@@ -7,16 +7,30 @@ use App\Models\Rank;
 use App\Models\User;
 use App\Models\User_spin_progress;
 use App\Services\ApproximateLocationService;
+use App\Services\ReactPageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
 class RegisterController extends Controller
 {
-    public function index()
+    public function index(ReactPageService $reactPage)
     {
-        //View trang đăng ký
-        return view('register');
+        return $reactPage->guest('auth.register', [
+            'routes' => [
+                'register' => route('register'),
+                'submit' => route('registerdone'),
+                'login' => route('login'),
+                'checkReferral' => route('check_referral_code'),
+                'checkEmail' => route('check_email'),
+            ],
+            'assets' => [
+                'background' => asset('images/login_and_register/background.png'),
+                'logo' => asset('images/login_and_register/tta.webp'),
+                'facebook' => asset('images/login_and_register/fb-logo.png'),
+                'google' => asset('images/login_and_register/gg-logo.png'),
+            ],
+        ], 'Đăng ký');
     }
     public function return_random_referral_code()
     {
@@ -37,6 +51,9 @@ class RegisterController extends Controller
             ->count();
 
         if ($count >= 3) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Bạn đã tạo quá nhiều tài khoản trong thời gian ngắn.'], 422);
+            }
             return back()->with('error', 'Bạn đã tạo quá nhiều tài khoản trong thời gian ngắn. Vui lòng thử lại sau!');
         }
 
@@ -105,6 +122,12 @@ class RegisterController extends Controller
             $referralManager = $referralOwner?->referralManager();
 
             if (!$referralManager) {
+                if ($request->expectsJson()) {
+                    return response()->json([
+                        'message' => 'Mã mời không hợp lệ, vui lòng thử lại!',
+                        'errors' => ['referral_code' => ['Mã mời không hợp lệ, vui lòng thử lại!']],
+                    ], 422);
+                }
                 return back()->with('error', 'Mã mời không hợp lệ, vui lòng thử lại!');
             }
             $user->referrer_id = $referralManager->id;
@@ -139,7 +162,11 @@ class RegisterController extends Controller
             ]);
             Auth::login($user);
             $request->session()->regenerate();
-            return redirect()->route('home')->with('success', 'Đăng nhập thành công!');
+            if ($request->expectsJson()) {
+                $request->session()->flash('success', 'Tạo tài khoản thành công!');
+                return response()->json(['redirect' => route('home')]);
+            }
+            return redirect()->route('home')->with('success', 'Tạo tài khoản thành công!');
         } else {
             $get_admin = User::where('role', 'admin')->first();
             if($get_admin){
@@ -147,6 +174,10 @@ class RegisterController extends Controller
                     'staff_id' => $get_admin->id,
                     'user_id' => $user->id
                 ]);
+            }
+            if ($request->expectsJson()) {
+                $request->session()->flash('success', 'Tạo tài khoản thành công, vui lòng liên hệ CSKH để kích hoạt tài khoản!');
+                return response()->json(['redirect' => route('login')]);
             }
             return redirect()->route('login')->with('success', 'Tạo tài khoản thành công, vui lòng liên hệ CSKH để kích hoạt tài khoản!');
         }

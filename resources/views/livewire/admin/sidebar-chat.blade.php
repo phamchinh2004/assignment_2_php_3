@@ -162,7 +162,9 @@
                     <div wire:key="{{ $keyPrefix }}{{ $operatorSection['key'] }}-section-{{ $staff['id'] }}" class="sidebar-staff-group">
                         <button type="button" class="staff-header {{ $isExpanded ? 'is-expanded' : '' }} {{ $staffUnreadCount > 0 ? 'has-unread' : '' }}"
                             aria-expanded="{{ $isExpanded ? 'true' : 'false' }}" aria-controls="{{ $keyPrefix }}{{ $operatorSection['key'] }}-users-{{ $staff['id'] }}"
-                            wire:click="toggleStaffExpansion({{ $staff['id'] }})">
+                            wire:click="toggleStaffExpansion({{ $staff['id'] }})"
+                            wire:loading.attr="disabled"
+                            wire:target="toggleStaffExpansion({{ $staff['id'] }})">
                             <span class="staff-avatar" aria-hidden="true">{{ mb_strtoupper(mb_substr($staff['full_name'], 0, 1)) }}</span>
                             <span class="staff-details">
                                 <span class="staff-name" title="{{ $staff['full_name'] }}">{{ $staff['full_name'] }}</span>
@@ -174,7 +176,17 @@
                                     {{ $staffUnreadCount > 99 ? '99+' : $staffUnreadCount }}
                                 </span>
                             @endif
-                            <i class="fas fa-chevron-down staff-chevron {{ $isExpanded ? 'rotated' : '' }}" aria-hidden="true"></i>
+                            <span class="staff-inline-loading"
+                                wire:loading.flex
+                                wire:target="toggleStaffExpansion({{ $staff['id'] }})"
+                                role="status" aria-label="Đang tải danh sách khách hàng">
+                                <i class="fas fa-circle-notch fa-spin" aria-hidden="true"></i>
+                                <span class="visually-hidden">Đang tải danh sách khách hàng...</span>
+                            </span>
+                            <i class="fas fa-chevron-down staff-chevron {{ $isExpanded ? 'rotated' : '' }}"
+                                wire:loading.remove
+                                wire:target="toggleStaffExpansion({{ $staff['id'] }})"
+                                aria-hidden="true"></i>
                         </button>
 
                         <div id="{{ $keyPrefix }}{{ $operatorSection['key'] }}-users-{{ $staff['id'] }}" class="staff-users-list {{ $isExpanded ? 'expanded' : 'collapsed' }}">

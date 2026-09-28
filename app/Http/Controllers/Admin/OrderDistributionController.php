@@ -8,15 +8,25 @@ use App\Models\Status;
 use App\Models\User;
 use App\Services\AdminOrderTransitionService;
 use App\Services\AuthorizationService;
+use App\Services\ReactPageService;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Illuminate\View\View;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class OrderDistributionController extends Controller
 {
-    public function index(Request $request)
+    public function __construct(
+        private readonly ReactPageService $reactPage,
+        private readonly AuthorizationService $authorization,
+    ) {
+    }
+
+    public function index(Request $request): View|JsonResponse
     {
         $filters = $request->validate([
             'q' => ['nullable', 'string', 'max:120'],
@@ -46,6 +56,10 @@ class OrderDistributionController extends Controller
             ->when($sort !== 'id', fn (Builder $q) => $q->orderByDesc('id'))
             ->paginate(25)->withQueryString();
 
+        $frozenOrders->getCollection()->each(function (Frozen_order $item) {
+            $item->setAttribute('snapshot_image_url', $item->snapshot_image ? Storage::url($item->snapshot_image) : null);
+        });
+
         $base = Frozen_order::query();
         $stats = [
             'total' => (clone $base)->count(),
@@ -59,10 +73,23 @@ class OrderDistributionController extends Controller
         $assigners = User::query()->whereIn('id', Frozen_order::query()->select('assigned_by')->whereNotNull('assigned_by'))
             ->orderBy('full_name')->get(['id', 'full_name', 'username']);
 
-        return view('admin.order_distributions.index', compact('frozenOrders', 'stats', 'statuses', 'assigners'));
+        return $this->reactPage->admin('admin.order-distributions.index', [
+            'frozenOrders' => $frozenOrders,
+            'stats' => $stats,
+            'statuses' => $statuses,
+            'assigners' => $assigners,
+            'filters' => $filters,
+            'routes' => [
+                'index' => route('order_distributions.index'),
+                'show' => route('order_distributions.show', ['frozenOrder' => '__FROZEN_ID__']),
+            ],
+            'permissions' => [
+                'viewDetail' => $this->authorization->can($request->user(), config('authorization.capabilities.order_distributions_view_detail')),
+            ],
+        ], 'Phân phối đơn hàng');
     }
 
-    public function show(Frozen_order $frozenOrder, AdminOrderTransitionService $workflow, AuthorizationService $authorization)
+    public function show(Frozen_order $frozenOrder, AdminOrderTransitionService $workflow): View|JsonResponse
     {
         $frozenOrder->load([
             'user:id,full_name,username',
@@ -73,22 +100,37 @@ class OrderDistributionController extends Controller
         ]);
         $transition = $workflow->describe($frozenOrder);
         $actor = Auth::user();
-        $canAdvance = $authorization->can(
+        $canAdvance = $this->authorization->can(
             $actor,
             config('authorization.capabilities.order_distributions_transition')
         )
             && ($transition['next'] !== 'completed'
-                || $authorization->can(
+                || $this->authorization->can(
                     $actor,
                     config('authorization.capabilities.order_distributions_complete')
                 ));
-        $canViewOrder = $authorization->can(
+        $canViewOrder = $this->authorization->can(
             $actor,
             config('authorization.capabilities.orders_view_detail')
         );
         $statusLabels = Status::query()->pluck('display_name', 'name');
 
-        return view('admin.order_distributions.show', compact('frozenOrder', 'transition', 'canAdvance', 'canViewOrder', 'statusLabels'));
+        $frozenOrder->setAttribute('snapshot_image_url', $frozenOrder->snapshot_image ? Storage::url($frozenOrder->snapshot_image) : null);
+
+        return $this->reactPage->admin('admin.order-distributions.show', [
+            'frozenOrder' => $frozenOrder,
+            'transition' => $transition,
+            'statusLabels' => $statusLabels,
+            'permissions' => [
+                'advance' => $canAdvance,
+                'viewOrder' => $canViewOrder,
+            ],
+            'routes' => [
+                'index' => route('order_distributions.index'),
+                'transition' => route('order_distributions.transition', ['frozenOrder' => $frozenOrder]),
+                'orderShow' => route('order.show', ['order' => '__ORDER_ID__']),
+            ],
+        ], 'Audit phân phối #' . $frozenOrder->id);
     }
 
     public function transition(

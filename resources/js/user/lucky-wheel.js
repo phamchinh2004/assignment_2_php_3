@@ -1,14 +1,33 @@
 // ======================= LUCKY WHEEL - VÒNG QUAY MAY MẮN ======================= 
 
-document.addEventListener('DOMContentLoaded', function() {
+function initLuckyWheel() {
     const root = document.querySelector('[data-home-page]');
-    if (!root) return;
+    if (!root || root.dataset.luckyWheelInitialized === '1') return () => {};
+    root.dataset.luckyWheelInitialized = '1';
+    const controller = new AbortController();
+    const timeoutIds = new Set();
+    const previousGlobals = {
+        spinWheel: window.spinWheel,
+        closePrizeModal: window.closePrizeModal,
+        viewPrizeStatus: window.viewPrizeStatus,
+    };
+    const schedule = (callback, delay) => {
+        const timeoutId = window.setTimeout(() => {
+            timeoutIds.delete(timeoutId);
+            callback();
+        }, delay);
+        timeoutIds.add(timeoutId);
+        return timeoutId;
+    };
 
     const prizeWheel = root.querySelector('#prizeWheel');
     const spinButton = root.querySelector('#wheelSpinButton');
     const wheelSpinSound = root.querySelector('#wheelSpinSound');
     const applauseSound = root.querySelector('#applauseSound');
-    if (!prizeWheel || !spinButton) return;
+    if (!prizeWheel || !spinButton) {
+        delete root.dataset.luckyWheelInitialized;
+        return () => {};
+    }
     
     let isSpinning = false;
     let currentRotation = 0;
@@ -27,7 +46,7 @@ document.addEventListener('DOMContentLoaded', function() {
     ];
     
     // Hàm quay vòng
-    window.spinWheel = async function() {
+    const spinWheel = async function() {
         if (isSpinning) return;
         
         isSpinning = true;
@@ -47,7 +66,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
                     'Accept': 'application/json'
                 },
-                body: JSON.stringify({})
+                body: JSON.stringify({}),
+                signal: controller.signal,
             });
             
             const data = await response.json();
@@ -95,7 +115,7 @@ document.addEventListener('DOMContentLoaded', function() {
             currentRotation = finalRotation;
             
             // Sau khi quay xong
-            setTimeout(() => {
+            schedule(() => {
                 isSpinning = false;
                 spinButton.classList.remove('spinning');
                 
@@ -113,6 +133,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 4000);
             
         } catch (error) {
+            if (error?.name === 'AbortError') return;
             console.error('Error spinning wheel:', error);
             AppDialog.alert({
                 icon: 'error',
@@ -126,6 +147,7 @@ document.addEventListener('DOMContentLoaded', function() {
             spinButton.disabled = false;
         }
     };
+    window.spinWheel = spinWheel;
     
     // Thêm event listener cho nút quay
     spinButton.addEventListener('click', spinWheel);
@@ -191,7 +213,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Hàm đóng modal
-    window.closePrizeModal = function() {
+    const closePrizeModal = function() {
         const modal = root.querySelector('#prizeModalOverlay');
         if (!modal) return;
         modal.classList.remove('show');
@@ -206,15 +228,18 @@ document.addEventListener('DOMContentLoaded', function() {
         lastFocusedElement?.focus?.();
         
         // Reload trang để cập nhật trạng thái
-        setTimeout(() => {
-            window.location.reload();
+        schedule(() => {
+            if (typeof window.__spaRefresh === 'function') window.__spaRefresh();
+            else window.location.reload();
         }, 300);
     };
+    window.closePrizeModal = closePrizeModal;
 
-    window.viewPrizeStatus = function() {
+    const viewPrizeStatus = function() {
         window.location.hash = 'reward-history';
-        window.location.reload();
+        root.querySelector('#reward-history')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     };
+    window.viewPrizeStatus = viewPrizeStatus;
     
     // Hàm tạo confetti
     function createConfetti(container) {
@@ -238,20 +263,52 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // Xóa confetti sau khi animation kết thúc
-        setTimeout(() => {
+        schedule(() => {
             container.innerHTML = '';
         }, 6000);
     }
 
-    root.querySelector('#prizeModalOverlay')?.addEventListener('click', function(event) {
+    const prizeModalOverlay = root.querySelector('#prizeModalOverlay');
+    const handleOverlayClick = function(event) {
         if (event.target === this) {
-            window.closePrizeModal();
+            closePrizeModal();
         }
-    });
+    };
+    prizeModalOverlay?.addEventListener('click', handleOverlayClick);
 
-    document.addEventListener('keydown', function(event) {
+    const handleKeydown = function(event) {
         if (event.key === 'Escape' && root.querySelector('#prizeModalOverlay.show')) {
-            window.closePrizeModal();
+            closePrizeModal();
         }
-    });
-});
+    };
+    document.addEventListener('keydown', handleKeydown);
+
+    return () => {
+        controller.abort();
+        timeoutIds.forEach((timeoutId) => window.clearTimeout(timeoutId));
+        timeoutIds.clear();
+        spinButton.removeEventListener('click', spinWheel);
+        prizeModalOverlay?.removeEventListener('click', handleOverlayClick);
+        document.removeEventListener('keydown', handleKeydown);
+        wheelSpinSound?.pause?.();
+        applauseSound?.pause?.();
+        root.querySelector('#prizeConfetti')?.replaceChildren();
+        root.querySelector('#prizeModalOverlay')?.classList.remove('show');
+        document.body.classList.remove('prize-modal-open');
+        if (window.spinWheel === spinWheel) {
+            if (previousGlobals.spinWheel === undefined) delete window.spinWheel;
+            else window.spinWheel = previousGlobals.spinWheel;
+        }
+        if (window.closePrizeModal === closePrizeModal) {
+            if (previousGlobals.closePrizeModal === undefined) delete window.closePrizeModal;
+            else window.closePrizeModal = previousGlobals.closePrizeModal;
+        }
+        if (window.viewPrizeStatus === viewPrizeStatus) {
+            if (previousGlobals.viewPrizeStatus === undefined) delete window.viewPrizeStatus;
+            else window.viewPrizeStatus = previousGlobals.viewPrizeStatus;
+        }
+        delete root.dataset.luckyWheelInitialized;
+    };
+}
+
+window.__initLuckyWheel = initLuckyWheel;

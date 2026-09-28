@@ -4,7 +4,7 @@
     --chat-text: #0f172a;
     --chat-muted: #64748b;
     --chat-border: #e2e8f0;
-    --chat-topbar-height: 0px;
+    --chat-topbar-height: var(--admin-topbar-height, 64px);
     height: calc(100vh - var(--chat-topbar-height));
     height: calc(100dvh - var(--chat-topbar-height));
     min-height: 0;
@@ -196,7 +196,12 @@
 #chat-root .chat-empty-action { margin-top: 24px; padding: 11px 16px; color: #fff; background: var(--chat-accent); border-radius: 10px; font-size: 13px; }
 #chat-root .chat-loading-overlay { inset: 0; z-index: 10; background: #f8fafcd9; backdrop-filter: blur(3px); }
 #chat-root .chat-loading-card { padding: 24px 32px; border: 1px solid var(--chat-border); border-radius: 16px; background: #fff; box-shadow: 0 8px 30px #0f172a08; }
-#chat-root .chat-loading-card .spinner-border { width: 28px; height: 28px; border-width: 3px; }
+#chat-root .chat-loading-card .spinner-border {
+    width: 28px;
+    height: 28px;
+    border-width: 3px;
+    animation-duration: .55s;
+}
 #chat-root .spinner-border-sm { width: 16px; height: 16px; border-width: 2px; }
 #chat-root #mobileSidebar { width: min(360px, 92vw); border-right: 0; }
 #chat-root #mobileSidebar .offcanvas-header { border-bottom: 1px solid var(--chat-border); }
@@ -224,12 +229,6 @@
     #chat-root .chat-context-panel { padding-inline: 18px; }
     #chat-root #messages-container { padding-inline: 24px; }
     #chat-root .message-input { padding-inline: 18px; }
-}
-
-/* The admin topbar is visible on this page at <=768px. */
-@media (max-width: 768px) {
-    .arround_topbar .topbar { margin-bottom: 0 !important; }
-    #chat-root { --chat-topbar-height: 4.375rem; }
 }
 
 @media (max-width: 991.98px) {
@@ -261,4 +260,9 @@
 
 @media (prefers-reduced-motion: reduce) {
     #chat-root *, #chat-root *::before, #chat-root *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+    #chat-root .spinner-border,
+    #chat-root .spinner-grow {
+        animation-duration: 1.5s !important;
+        animation-iteration-count: infinite !important;
+    }
 }

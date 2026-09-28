@@ -323,6 +323,16 @@
 }
 #chat-root .staff-chevron { flex-shrink: 0; color: #64748b; font-size: 10px; transition: transform .16s ease; }
 #chat-root .staff-chevron.rotated { transform: rotate(180deg); }
+#chat-root .staff-inline-loading {
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 14px;
+    width: 14px;
+    height: 14px;
+    color: #6366f1;
+    font-size: 12px;
+    line-height: 1;
+}
 
 #chat-root .staff-users-list.expanded {
     margin: 8px 0 12px 9px;

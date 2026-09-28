@@ -12,6 +12,7 @@ function getGlobalVar(name, defaultValue = null) {
 // Lấy config từ DOM (được render từ Blade)
 function getOrderDetailConfig() {
     try {
+        if (window.orderDetailPageConfig) return window.orderDetailPageConfig;
         const el = document.getElementById('order-detail-config');
         if (!el) return {};
         const raw = el.getAttribute('data-config') || '{}';
@@ -21,6 +22,38 @@ function getOrderDetailConfig() {
         return {};
     }
 }
+
+function initOrderDetailPage() {
+const pageRoot = document.querySelector('.od-page');
+if (!pageRoot || pageRoot.dataset.orderDetailInitialized === '1') return () => {};
+pageRoot.dataset.orderDetailInitialized = '1';
+const listenerController = new AbortController();
+const listenerOptions = { signal: listenerController.signal };
+const timeoutIds = new Set();
+const schedule = (callback, delay) => {
+    const timeoutId = window.setTimeout(() => {
+        timeoutIds.delete(timeoutId);
+        callback();
+    }, delay);
+    timeoutIds.add(timeoutId);
+    return timeoutId;
+};
+
+const handleCopyApiClick = async (event) => {
+    const button = event.target.closest?.('.btn-copy-api');
+    if (!button || !pageRoot.contains(button)) return;
+
+    try {
+        await navigator.clipboard.writeText(button.dataset.api || '');
+        button.innerHTML = '<i class="fas fa-check"></i>';
+        schedule(() => {
+            if (button.isConnected) button.innerHTML = '<i class="fas fa-copy"></i>';
+        }, 1600);
+    } catch (error) {
+        console.error(error);
+    }
+};
+pageRoot.addEventListener('click', handleCopyApiClick, listenerOptions);
 
 const pageConfig = getOrderDetailConfig();
 
@@ -54,7 +87,6 @@ console.log('Variables loaded:', {
     csrf: csrf ? 'CSRF token exists' : 'No CSRF token'
 });
 
-document.addEventListener('DOMContentLoaded', function() {
     console.log('Order detail script loaded');
     
     const btnConfirm = document.getElementById('btn_confirm_order');
@@ -115,7 +147,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': csrf,
                         'Accept': 'application/json'
-                    }
+                    },
+                    signal: listenerController.signal,
                 });
 
                 const result = await response.json();
@@ -139,8 +172,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
 
                     // Quay lại trang phân phối để nhận đơn hàng tiếp theo.
-                    setTimeout(() => {
-                        window.location.href = route_distribution || '/distribution';
+                    schedule(() => {
+                        const redirectUrl = route_distribution || '/distribution';
+                        if (typeof window.__spaNavigate === 'function') window.__spaNavigate(redirectUrl);
+                        else window.location.href = redirectUrl;
                     }, 1500);
                 } else {
                     // Ẩn spinner
@@ -161,6 +196,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     btnConfirm.innerHTML = originalText;
                 }
             } catch (error) {
+                if (error?.name === 'AbortError') return;
                 console.error('Error:', error);
                 
                 // Ẩn spinner
@@ -180,7 +216,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 btnConfirm.disabled = false;
                 btnConfirm.innerHTML = originalText;
             }
-        });
+        }, listenerOptions);
     }
 
     // Xử lý nút Liên hệ CSKH (cho đơn hàng giá trị cao)
@@ -221,7 +257,7 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 alert('Vui lòng liên hệ CSKH qua chat box ở góc dưới màn hình.');
             }
-        });
+        }, listenerOptions);
     }
 
     // Xử lý hủy đơn hàng
@@ -259,7 +295,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': csrf,
                         'Accept': 'application/json'
-                    }
+                    },
+                    signal: listenerController.signal,
                 });
 
                 const result = await response.json();
@@ -281,11 +318,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
 
                     // Redirect về trang danh sách đơn hàng sau 1.5 giây
-                    setTimeout(() => {
+                    schedule(() => {
                         if (route_order) {
-                            window.location.href = route_order;
+                            if (typeof window.__spaNavigate === 'function') window.__spaNavigate(route_order);
+                            else window.location.href = route_order;
                         } else {
-                            window.location.reload();
+                            if (typeof window.__spaRefresh === 'function') window.__spaRefresh();
+                            else window.location.reload();
                         }
                     }, 1500);
                 } else {
@@ -306,6 +345,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     btnCancel.innerHTML = originalText;
                 }
             } catch (error) {
+                if (error?.name === 'AbortError') return;
                 console.error('Error:', error);
                 
                 // Ẩn spinner
@@ -324,7 +364,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 btnCancel.disabled = false;
                 btnCancel.innerHTML = originalText;
             }
-        });
+        }, listenerOptions);
     }
 
     // Xử lý báo cáo đơn hàng
@@ -375,7 +415,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         'X-CSRF-TOKEN': csrf,
                         'Accept': 'application/json'
                     },
-                    body: JSON.stringify({ reason })
+                    body: JSON.stringify({ reason }),
+                    signal: listenerController.signal,
                 });
 
                 const result = await response.json();
@@ -393,9 +434,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         alert(successMessage);
                     }
 
-                    setTimeout(() => {
+                    schedule(() => {
                         // Reload để cập nhật trạng thái nút "đã báo cáo"
-                        window.location.reload();
+                        if (typeof window.__spaRefresh === 'function') window.__spaRefresh();
+                        else window.location.reload();
                     }, 1200);
                 } else {
                     if (spinner) {
@@ -415,6 +457,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     btnReport.innerHTML = originalText;
                 }
             } catch (error) {
+                if (error?.name === 'AbortError') return;
                 console.error('Error:', error);
 
                 if (spinner) {
@@ -433,6 +476,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 btnReport.disabled = false;
                 btnReport.innerHTML = originalText;
             }
-        });
+        }, listenerOptions);
     }
-});
+    return () => {
+        listenerController.abort();
+        timeoutIds.forEach((timeoutId) => window.clearTimeout(timeoutId));
+        timeoutIds.clear();
+        if (spinner) spinner.hidden = true;
+        delete pageRoot.dataset.orderDetailInitialized;
+    };
+}
+
+window.__initOrderDetailPage = initOrderDetailPage;

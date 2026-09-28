@@ -1,6 +1,10 @@
-document.addEventListener("DOMContentLoaded", () => {
+function initHomePage() {
     const root = document.querySelector("[data-home-page]");
-    if (!root) return;
+    if (!root || root.dataset.homePageInitialized === '1') return () => {};
+    root.dataset.homePageInitialized = '1';
+    const cleanupFns = [];
+    const controller = new AbortController();
+    const listenerOptions = { signal: controller.signal };
 
     const config = window.homePageConfig || {};
     const messages = config.messages || {};
@@ -11,13 +15,18 @@ document.addEventListener("DOMContentLoaded", () => {
         const closeButton = announcement.querySelector(
             "[data-home-announcement-close]",
         );
+        let hideTimer = null;
 
         closeButton?.addEventListener("click", () => {
             announcement.classList.add("is-hiding");
-            window.setTimeout(() => {
+            hideTimer = window.setTimeout(() => {
+                hideTimer = null;
                 announcement.hidden = true;
                 announcement.classList.remove("is-hiding");
             }, 180);
+        }, listenerOptions);
+        cleanupFns.push(() => {
+            if (hideTimer) window.clearTimeout(hideTimer);
         });
     }
 
@@ -29,7 +38,7 @@ document.addEventListener("DOMContentLoaded", () => {
             text: messages.depositUnavailableText || "",
             confirmText: "Đóng",
         });
-    });
+    }, listenerOptions);
 
     const tabButtons = [
         ...root.querySelectorAll(".home-info-tab[data-content-target]"),
@@ -55,7 +64,7 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     tabButtons.forEach((button) => {
-        button.addEventListener("click", () => activateInfoPanel(button));
+        button.addEventListener("click", () => activateInfoPanel(button), listenerOptions);
     });
 
     const activityStream = root.querySelector("[data-social-activity]");
@@ -184,12 +193,16 @@ document.addEventListener("DOMContentLoaded", () => {
             activityInterval = window.setInterval(pushActivity, 5000);
         };
 
+        const handleActivityVisibility = () => document.hidden ? stopActivity() : startActivity();
         seedActivity();
         startActivity();
-        document.addEventListener("visibilitychange", () =>
-            document.hidden ? stopActivity() : startActivity(),
-        );
-        window.addEventListener("pagehide", stopActivity, { once: true });
+        document.addEventListener("visibilitychange", handleActivityVisibility);
+        window.addEventListener("pagehide", stopActivity);
+        cleanupFns.push(() => {
+            stopActivity();
+            document.removeEventListener("visibilitychange", handleActivityVisibility);
+            window.removeEventListener("pagehide", stopActivity);
+        });
     }
 
     const testimonials = root.querySelector("[data-testimonials]");
@@ -251,34 +264,34 @@ document.addEventListener("DOMContentLoaded", () => {
         previousButton?.addEventListener("click", () => {
             showTestimonial(currentIndex - 1);
             restartTestimonials();
-        });
+        }, listenerOptions);
 
         nextButton?.addEventListener("click", () => {
             showTestimonial(currentIndex + 1);
             restartTestimonials();
-        });
+        }, listenerOptions);
 
         dots.forEach((dot) => {
             dot.addEventListener("click", () => {
                 showTestimonial(Number(dot.dataset.testimonialDot || 0));
                 restartTestimonials();
-            });
+            }, listenerOptions);
         });
 
-        testimonials.addEventListener("mouseenter", stopTestimonials);
-        testimonials.addEventListener("mouseleave", startTestimonials);
-        testimonials.addEventListener("focusin", stopTestimonials);
+        testimonials.addEventListener("mouseenter", stopTestimonials, listenerOptions);
+        testimonials.addEventListener("mouseleave", startTestimonials, listenerOptions);
+        testimonials.addEventListener("focusin", stopTestimonials, listenerOptions);
         testimonials.addEventListener("focusout", (event) => {
             if (!testimonials.contains(event.relatedTarget))
                 startTestimonials();
-        });
+        }, listenerOptions);
 
         stage?.addEventListener(
             "touchstart",
             (event) => {
                 touchStartX = event.touches[0]?.clientX || 0;
             },
-            { passive: true },
+            { passive: true, signal: controller.signal },
         );
 
         stage?.addEventListener(
@@ -290,15 +303,27 @@ document.addEventListener("DOMContentLoaded", () => {
                 showTestimonial(currentIndex + (distance > 0 ? 1 : -1));
                 restartTestimonials();
             },
-            { passive: true },
+            { passive: true, signal: controller.signal },
         );
 
-        document.addEventListener("visibilitychange", () =>
-            document.hidden ? stopTestimonials() : startTestimonials(),
-        );
-        window.addEventListener("pagehide", stopTestimonials, { once: true });
+        const handleTestimonialVisibility = () => document.hidden ? stopTestimonials() : startTestimonials();
+        document.addEventListener("visibilitychange", handleTestimonialVisibility);
+        window.addEventListener("pagehide", stopTestimonials);
+        cleanupFns.push(() => {
+            stopTestimonials();
+            document.removeEventListener("visibilitychange", handleTestimonialVisibility);
+            window.removeEventListener("pagehide", stopTestimonials);
+        });
 
         showTestimonial(0);
         startTestimonials();
     }
-});
+
+    return () => {
+        controller.abort();
+        cleanupFns.reverse().forEach((cleanup) => cleanup());
+        delete root.dataset.homePageInitialized;
+    };
+}
+
+window.__initHomePage = initHomePage;
