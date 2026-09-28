@@ -26,21 +26,38 @@ const maskAccountNumber = (value) => {
 };
 
 const initBankAccount = (root) => {
-    if (root.dataset.bankAccountReady === 'true') return;
+    if (root.dataset.bankAccountReady === 'true') return () => {};
     root.dataset.bankAccountReady = 'true';
+    const controller = new AbortController();
+    const listenerOptions = { signal: controller.signal };
+    let modal = null;
+    let slimSelect = null;
+    let autoOpenFrame = null;
+
+    const cleanup = () => {
+        controller.abort();
+        if (autoOpenFrame !== null) cancelAnimationFrame(autoOpenFrame);
+        slimSelect?.destroy?.();
+        if (modal && root.querySelector('[data-bank-account-dialog]')?.classList.contains('show')) {
+            modal.hide();
+        }
+        modal?.dispose?.();
+        delete root.dataset.bankAccountReady;
+    };
 
     const dialogElement = root.querySelector('[data-bank-account-dialog]');
-    if (!dialogElement) return;
+    if (!dialogElement) return cleanup;
 
-    const modal = Modal.getOrCreateInstance(dialogElement);
+    modal = Modal.getOrCreateInstance(dialogElement);
 
-    root.querySelectorAll('[data-bank-account-open]').forEach((button) => {
-        button.addEventListener('click', () => modal.show());
-    });
+    root.addEventListener('click', (event) => {
+        const button = event.target.closest?.('[data-bank-account-open]');
+        if (button && root.contains(button)) modal.show();
+    }, listenerOptions);
 
     const form = root.querySelector('[data-bank-account-form]');
     const linkedView = root.querySelector('[data-bank-linked-view]');
-    if (root.dataset.linked === 'true' || !form) return;
+    if (root.dataset.linked === 'true' || !form) return cleanup;
 
     const bankSelect = root.querySelector('[data-bank-select]');
     const accountNumberInput = root.querySelector('[data-bank-account-number]');
@@ -56,7 +73,7 @@ const initBankAccount = (root) => {
     const progressSteps = [...root.querySelectorAll('[data-bank-progress-step]')];
     const endpoint = root.dataset.endpoint;
 
-    if (!bankSelect || !submitButton || !endpoint) return;
+    if (!bankSelect || !submitButton || !endpoint) return cleanup;
     let isSubmitting = false;
 
     const fieldByName = (name) => form.querySelector(`[name="${name}"]`)?.closest('.bank-field');
@@ -226,7 +243,7 @@ const initBankAccount = (root) => {
         form.hidden = true;
     };
 
-    const slimSelect = new SlimSelect({
+    slimSelect = new SlimSelect({
         select: bankSelect,
         settings: {
             searchPlaceholder: 'Tìm kiếm ngân hàng...',
@@ -255,7 +272,7 @@ const initBankAccount = (root) => {
             field.type = showPassword ? 'text' : 'password';
             icon?.classList.toggle('fa-eye', !showPassword);
             icon?.classList.toggle('fa-eye-slash', showPassword);
-        });
+        }, listenerOptions);
     });
 
     [accountNumberInput, ownerInput, passwordInput, passwordConfirmInput].forEach((input) => {
@@ -263,7 +280,7 @@ const initBankAccount = (root) => {
             setFieldError(input.name);
             updateReview();
             updateProgress();
-        });
+        }, listenerOptions);
     });
 
     form.addEventListener('submit', async (event) => {
@@ -290,6 +307,7 @@ const initBankAccount = (root) => {
                     'X-CSRF-TOKEN': csrfToken,
                 },
                 body: JSON.stringify(payload),
+                signal: controller.signal,
             });
             const result = await response.json();
 
@@ -311,6 +329,7 @@ const initBankAccount = (root) => {
             modal.hide();
             notify('success', result.message || 'Liên kết tài khoản ngân hàng thành công!', 'Thành công');
         } catch (error) {
+            if (error?.name === 'AbortError') return;
             console.error('Unable to link bank account:', error);
             const message = 'Có lỗi xảy ra, vui lòng thử lại.';
             showFormStatus(message);
@@ -318,12 +337,12 @@ const initBankAccount = (root) => {
         } finally {
             setSubmitting(false);
         }
-    });
+    }, listenerOptions);
 
     dialogElement.addEventListener('shown.bs.modal', () => {
         updateReview();
         updateProgress();
-    });
+    }, listenerOptions);
 
     dialogElement.addEventListener('hidden.bs.modal', () => {
         clearErrors();
@@ -331,28 +350,30 @@ const initBankAccount = (root) => {
         passwordConfirmInput.value = '';
         passwordInput.type = 'password';
         passwordConfirmInput.type = 'password';
-    });
+    }, listenerOptions);
 
     form.querySelector('.bank-account-form__scroll')?.addEventListener('scroll', () => {
         slimSelect.close();
-    }, { passive: true });
+    }, { passive: true, signal: controller.signal });
 
     updateReview();
     updateProgress();
 
     if (root.dataset.autoOpen === 'true' && root.dataset.linked !== 'true') {
-        requestAnimationFrame(() => modal.show());
+        autoOpenFrame = requestAnimationFrame(() => {
+            autoOpenFrame = null;
+            modal.show();
+        });
     }
 
+    return cleanup;
 };
 
 window.__initBankAccounts = function initBankAccounts() {
     const roots = Array.from(document.querySelectorAll('[data-bank-account]'));
-    roots.forEach(initBankAccount);
+    const cleanups = roots.map(initBankAccount);
 
     return () => {
-        roots.forEach((root) => {
-            delete root.dataset.bankAccountReady;
-        });
+        cleanups.reverse().forEach((cleanup) => cleanup?.());
     };
 };

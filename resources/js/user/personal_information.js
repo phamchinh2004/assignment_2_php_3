@@ -6,6 +6,8 @@ function initPersonalInformationPage() {
     if (!page || page.dataset.personalInformationInitialized === '1') return () => {};
     page.dataset.personalInformationInitialized = '1';
     document.body.classList.add('personal-information-active');
+    const controller = new AbortController();
+    const listenerOptions = { signal: controller.signal };
 
     const notify = (type, message, title = 'Thông báo') => {
         if (!message) return;
@@ -42,6 +44,9 @@ function initPersonalInformationPage() {
     let previewObjectUrl = null;
     let avatarUploading = false;
     let currentAvatarUrl = avatarPreview?.getAttribute('src') || '';
+    let activeAvatarXhr = null;
+    let avatarHideTimeout = null;
+    let bankOpenTimeout = null;
 
     const setAvatarMessage = (message = '', type = '') => {
         if (!avatarMessage) return;
@@ -96,7 +101,7 @@ function initPersonalInformationPage() {
         button.addEventListener('click', () => {
             resetAvatarSelection();
             avatarModal?.show();
-        });
+        }, listenerOptions);
     });
 
     avatarFileInput?.addEventListener('change', () => {
@@ -117,7 +122,7 @@ function initPersonalInformationPage() {
         if (avatarPreviewState) avatarPreviewState.textContent = 'Xem trước ảnh mới';
         if (avatarSubmit) avatarSubmit.disabled = false;
         setAvatarMessage();
-    });
+    }, listenerOptions);
 
     avatarSubmit?.addEventListener('click', () => {
         if (avatarUploading) return;
@@ -146,6 +151,7 @@ function initPersonalInformationPage() {
         formData.append('_token', csrfToken);
 
         const xhr = new XMLHttpRequest();
+        activeAvatarXhr = xhr;
 
         xhr.upload.addEventListener('progress', (event) => {
             if (!event.lengthComputable) return;
@@ -180,7 +186,10 @@ function initPersonalInformationPage() {
 
                 selectedAvatar = null;
                 if (avatarFileInput) avatarFileInput.value = '';
-                window.setTimeout(() => avatarModal?.hide(), 550);
+                avatarHideTimeout = window.setTimeout(() => {
+                    avatarHideTimeout = null;
+                    avatarModal?.hide();
+                }, 550);
                 return;
             }
 
@@ -197,6 +206,7 @@ function initPersonalInformationPage() {
         });
 
         xhr.addEventListener('loadend', () => {
+            if (activeAvatarXhr === xhr) activeAvatarXhr = null;
             avatarUploading = false;
             setAvatarProgress(false);
 
@@ -211,11 +221,11 @@ function initPersonalInformationPage() {
         xhr.open('POST', avatarEndpoint);
         xhr.setRequestHeader('Accept', 'application/json');
         xhr.send(formData);
-    });
+    }, listenerOptions);
 
     avatarModalElement?.addEventListener('hidden.bs.modal', () => {
         if (!avatarUploading) resetAvatarSelection();
-    });
+    }, listenerOptions);
 
     const bankRoot = page.querySelector('[data-bank-account]');
     const bankStatus = page.querySelector('[data-bank-hero-status]');
@@ -250,8 +260,11 @@ function initPersonalInformationPage() {
         }
 
         paymentPanel?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        window.setTimeout(() => bankRoot?.querySelector('[data-bank-account-open]')?.click(), 280);
-    });
+        bankOpenTimeout = window.setTimeout(() => {
+            bankOpenTimeout = null;
+            bankRoot?.querySelector('[data-bank-account-open]')?.click();
+        }, 280);
+    }, listenerOptions);
 
     let bankObserver = null;
     if (bankRoot) {
@@ -291,16 +304,19 @@ function initPersonalInformationPage() {
             notify('error', 'Không thể lưu địa chỉ lúc này. Vui lòng thử lại.', 'Có lỗi xảy ra');
         }
     };
-    warehouseForm?.addEventListener('submit', handleWarehouseSubmit);
-
-    const flashSuccess = page.dataset.flashSuccess?.trim();
-    if (flashSuccess) {
-        notify('success', flashSuccess, 'Đã cập nhật');
-    }
+    warehouseForm?.addEventListener('submit', handleWarehouseSubmit, listenerOptions);
 
     return () => {
+        controller.abort();
         bankObserver?.disconnect();
-        warehouseForm?.removeEventListener('submit', handleWarehouseSubmit);
+        if (avatarHideTimeout) window.clearTimeout(avatarHideTimeout);
+        if (bankOpenTimeout) window.clearTimeout(bankOpenTimeout);
+        if (activeAvatarXhr && activeAvatarXhr.readyState !== XMLHttpRequest.DONE) {
+            activeAvatarXhr.abort();
+        }
+        if (previewObjectUrl) URL.revokeObjectURL(previewObjectUrl);
+        avatarModal?.hide();
+        avatarModal?.dispose?.();
         document.body.classList.remove('personal-information-active');
         delete page.dataset.personalInformationInitialized;
     };

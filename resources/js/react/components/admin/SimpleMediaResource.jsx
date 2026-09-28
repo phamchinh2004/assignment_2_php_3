@@ -1,8 +1,16 @@
-import { Button, Card, Descriptions, Empty, Image, Popconfirm, Space, Table, Tag, Typography } from 'antd';
-import { ArrowLeftOutlined, EditOutlined, EyeOutlined, PlusOutlined } from '@ant-design/icons';
+import { Button, Descriptions, Empty, Image, Popconfirm, Space, Table, Tag, Typography } from 'antd';
+import { ArrowLeftOutlined, EditOutlined, EyeOutlined, PlusOutlined, SaveOutlined } from '@ant-design/icons';
 import LaravelForm, { fieldError, oldValue } from '../LaravelForm';
+import {
+    AdminDataCard,
+    AdminFormActions,
+    AdminFormSection,
+    AdminPage,
+    AdminPageHeader,
+    AdminSectionCard,
+} from './AdminUi';
 
-const { Text, Title } = Typography;
+const { Text } = Typography;
 
 export function routeFor(template, token, id) {
     return String(template || '').replace(token, encodeURIComponent(String(id)));
@@ -66,18 +74,17 @@ export function SimpleMediaList({ config, labels, token, secondaryKey, secondary
     ];
 
     return (
-        <div className="container-fluid px-4 pb-5">
-            <div className="page-header-wrapper d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
-                <div>
-                    <Title level={2}>{labels.title}</Title>
-                    <Text type="secondary">{labels.subtitle}</Text>
-                </div>
-                {permissions.create && <Button type="primary" icon={<PlusOutlined />} size="large" href={config.routes.create}>{labels.create}</Button>}
-            </div>
-            <Card>
-                <Table rowKey="id" columns={columns} dataSource={items} scroll={{ x: 900 }} pagination={{ pageSize: 10 }} />
-            </Card>
-        </div>
+        <AdminPage>
+            <AdminPageHeader
+                title={labels.title}
+                description={labels.subtitle}
+                meta={<Tag>{items.length} mục</Tag>}
+                actions={permissions.create ? <Button type="primary" icon={<PlusOutlined />} href={config.routes.create}>{labels.create}</Button> : null}
+            />
+            <AdminDataCard title={`Danh sách ${labels.singular.toLowerCase()}`} description={`Quản lý ${labels.singular.toLowerCase()} đang hiển thị trong hệ thống.`}>
+                <Table rowKey="id" columns={columns} dataSource={items} scroll={{ x: 900 }} pagination={{ pageSize: 15, showTotal: (total) => `${total} mục` }} locale={{ emptyText: `Chưa có ${labels.singular.toLowerCase()}` }} />
+            </AdminDataCard>
+        </AdminPage>
     );
 }
 
@@ -89,53 +96,61 @@ export function SimpleMediaForm({ config, labels, secondaryKey, secondaryLabel, 
     const imageError = fieldError(form, 'image');
 
     return (
-        <div className="container-fluid px-4 pb-5">
-            <Button icon={<ArrowLeftOutlined />} href={config.routes.index} className="mb-3">Quay lại danh sách</Button>
-            <Title level={2}>{editing ? labels.edit : labels.create}</Title>
-            <Text type="secondary">{labels.formSubtitle}</Text>
-            <Card className="mt-4">
+        <AdminPage width="form">
+            <AdminPageHeader
+                title={editing ? labels.edit : labels.create}
+                description={labels.formSubtitle}
+                backHref={config.routes.index}
+                backLabel="Danh sách"
+            />
+            <AdminSectionCard title="Thông tin cơ bản" description={`Các trường cần thiết để ${editing ? 'cập nhật' : 'tạo'} ${labels.singular.toLowerCase()}.`}>
                 <LaravelForm action={editing ? config.routes.update : config.routes.store} method={editing ? 'PUT' : 'POST'} encType="multipart/form-data">
-                    <div className="form-group-modern">
-                        <label className="form-label-modern" htmlFor={`${labels.key}-name`}>{labels.name} <span className="text-danger">*</span></label>
+                    <AdminFormSection title="Nội dung" description="Tên và thông tin nhận diện được hiển thị trực tiếp cho quản trị viên hoặc người dùng.">
+                        <label className="admin-field-label" htmlFor={`${labels.key}-name`}>{labels.name} <span className="text-danger">*</span></label>
                         <input id={`${labels.key}-name`} className="form-control" name="name" defaultValue={oldValue(form, 'name', item.name || '')} required />
                         {nameError && <span className="text-danger small">{nameError}</span>}
-                    </div>
-                    <div className="form-group-modern mt-3">
-                        <label className="form-label-modern" htmlFor={`${labels.key}-${secondaryKey}`}>{secondaryLabel}</label>
-                        <input id={`${labels.key}-${secondaryKey}`} type={secondaryType} className="form-control" name={secondaryKey} defaultValue={oldValue(form, secondaryKey, item[secondaryKey] || '')} />
-                        {secondaryError && <span className="text-danger small">{secondaryError}</span>}
-                    </div>
-                    {editing && item.image && (
-                        <div className="mt-3">
-                            <Text type="secondary">Ảnh hiện tại</Text>
-                            <div className="mt-2"><Image src={storageUrl(config.storageBaseUrl, item.image)} width={160} style={{ borderRadius: 12 }} /></div>
+                        <div style={{ marginTop: 18 }}>
+                            <label className="admin-field-label" htmlFor={`${labels.key}-${secondaryKey}`}>{secondaryLabel}</label>
+                            <input id={`${labels.key}-${secondaryKey}`} type={secondaryType} className="form-control" name={secondaryKey} defaultValue={oldValue(form, secondaryKey, item[secondaryKey] || '')} />
+                            {secondaryError && <span className="text-danger small">{secondaryError}</span>}
                         </div>
-                    )}
-                    <div className="form-group-modern mt-3">
-                        <label className="form-label-modern" htmlFor={`${labels.key}-image`}>{editing ? 'Thay ảnh' : labels.image}</label>
+                    </AdminFormSection>
+                    <AdminFormSection title="Hình ảnh" description="Ảnh nên rõ nét và đúng tỷ lệ hiển thị thực tế để tránh bị cắt hoặc méo.">
+                        {editing && item.image && (
+                            <div style={{ marginBottom: 16 }}>
+                                <div className="admin-field-label">Ảnh hiện tại</div>
+                                <div className="mt-2"><Image src={storageUrl(config.storageBaseUrl, item.image)} width={160} style={{ borderRadius: 12 }} /></div>
+                            </div>
+                        )}
+                        <label className="admin-field-label" htmlFor={`${labels.key}-image`}>{editing ? 'Thay ảnh' : labels.image}</label>
                         <input id={`${labels.key}-image`} type="file" name="image" accept="image/*" className="form-control" />
+                        <span className="admin-field-help">Chọn ảnh rõ nét, đúng tỷ lệ sử dụng thực tế của nội dung.</span>
                         {imageError && <span className="text-danger small">{imageError}</span>}
-                    </div>
-                    <div className="d-flex justify-content-end gap-2 mt-4">
+                    </AdminFormSection>
+                    <AdminFormActions>
                         <Button href={config.routes.index}>Hủy</Button>
-                        <Button type="primary" htmlType="submit">{editing ? 'Cập nhật' : 'Tạo mới'}</Button>
-                    </div>
+                        <Button type="primary" icon={<SaveOutlined />} htmlType="submit">{editing ? 'Cập nhật' : 'Tạo mới'}</Button>
+                    </AdminFormActions>
                 </LaravelForm>
-            </Card>
-        </div>
+            </AdminSectionCard>
+        </AdminPage>
     );
 }
 
 export function SimpleMediaShow({ config, labels, secondaryKey, secondaryLabel }) {
     const item = config.item || {};
     return (
-        <div className="container-fluid px-4 pb-5">
-            <Button icon={<ArrowLeftOutlined />} href={config.routes.index} className="mb-3">Quay lại danh sách</Button>
-            <div className="d-flex justify-content-between align-items-start gap-3 mb-4">
-                <div><Title level={2}>{item.name}</Title><Text type="secondary">Mã #{item.id}</Text></div>
-                {config.permissions?.update && <Button type="primary" icon={<EditOutlined />} href={config.routes.edit}>Chỉnh sửa</Button>}
-            </div>
-            <Card>
+        <AdminPage width="content">
+            <AdminPageHeader
+                title={item.name || labels.singular}
+                description={`Thông tin chi tiết ${labels.singular.toLowerCase()}`}
+                meta={<Tag>#{item.id}</Tag>}
+                actions={<Space wrap>
+                    <Button icon={<ArrowLeftOutlined />} href={config.routes.index}>Danh sách</Button>
+                    {config.permissions?.update && <Button type="primary" icon={<EditOutlined />} href={config.routes.edit}>Chỉnh sửa</Button>}
+                </Space>}
+            />
+            <AdminSectionCard title="Thông tin chi tiết" description="Dữ liệu hiện đang được lưu và sử dụng trong hệ thống.">
                 <div className="row">
                     <div className="col-md-4 mb-3">
                         {item.image ? <Image src={storageUrl(config.storageBaseUrl, item.image)} style={{ width: '100%', maxHeight: 260, objectFit: 'contain' }} /> : <Empty description="Chưa có ảnh" />}
@@ -149,7 +164,7 @@ export function SimpleMediaShow({ config, labels, secondaryKey, secondaryLabel }
                         </Descriptions>
                     </div>
                 </div>
-            </Card>
-        </div>
+            </AdminSectionCard>
+        </AdminPage>
     );
 }

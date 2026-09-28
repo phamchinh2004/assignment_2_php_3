@@ -37,7 +37,15 @@ class UserController extends Controller
      */
     public function index(AuthorizationService $authorization)
     {
-        $query = User::with(['frozen_orders', 'referrer', 'rank'])->where('role', 'member');
+        $query = User::with([
+            'frozen_orders',
+            'referrer',
+            'rank',
+            'memberConversations' => fn ($conversationQuery) => $conversationQuery
+                ->select('id', 'user_id', 'staff_id', 'public_id', 'updated_at')
+                ->with('staff:id,role')
+                ->latest('updated_at'),
+        ])->where('role', 'member');
         $actor = Auth::user();
         $capabilities = config('authorization.capabilities');
 
@@ -48,7 +56,7 @@ class UserController extends Controller
         $users = $query->latest('id')->get();
         $canViewFinancials = $authorization->can($actor, $capabilities['customers_view_financials']);
 
-        $items = $users->values()->map(function (User $user, int $index) use ($canViewFinancials) {
+        $items = $users->values()->map(function (User $user, int $index) use ($actor, $authorization, $canViewFinancials) {
             $hasFrozenOrder = $user->frozen_orders->contains(
                 fn ($frozenOrder) => $frozenOrder->custom_price !== null && (bool) $frozenOrder->is_frozen
             );
@@ -72,6 +80,7 @@ class UserController extends Controller
                 ] : null,
                 'avatar_url' => get_user_avatar($user),
                 'is_online' => $user->isOnline(),
+                'last_seen' => $user->last_seen?->toISOString(),
                 'last_seen_formatted' => $user->last_seen_formatted,
                 'last_seen_diff' => $user->last_seen ? $user->last_seen->diffForHumans() : 'Chưa từng online',
                 'location_country_code' => $user->location_country_code ?: $user->approx_location_country_code,
@@ -79,7 +88,9 @@ class UserController extends Controller
                 'location_city' => $user->location_city,
                 'warehouse_area' => $user->warehouse_area,
                 'created_at' => $user->created_at?->toISOString(),
+                'updated_at' => $user->updated_at?->toISOString(),
                 'has_frozen_order' => $hasFrozenOrder,
+                'chat_url' => $this->chatUrlForUser($user, $authorization, $actor),
             ];
 
             if ($canViewFinancials) {
@@ -115,6 +126,7 @@ class UserController extends Controller
                 'create' => route('user.create'),
                 'show' => route('user.show', ['user' => '__USER_ID__']),
                 'edit' => route('user.edit', ['user' => '__USER_ID__']),
+                'chat' => route('chat-panel'),
                 'changeStatus' => route('user.change.status', ['user' => '__USER_ID__']),
                 'frozenOrders' => route('user.frozen.order.interface', ['user' => '__USER_ID__']),
                 'onlineStatuses' => route('user.online.statuses'),
@@ -140,6 +152,7 @@ class UserController extends Controller
             return [
                 'id' => $user->id,
                 'is_online' => $user->isOnline(),
+                'last_seen' => $user->last_seen?->toISOString(),
                 'last_seen_formatted' => $user->last_seen_formatted,
                 'last_seen_diff' => $user->last_seen
                     ? $user->last_seen->diffForHumans()
@@ -159,6 +172,7 @@ class UserController extends Controller
     public function show(User $user, AuthorizationService $authorization)
     {
         $this->authorizeMemberAccess($user, $authorization);
+        $actor = Auth::user();
 
         $relations = [
             'rank',
@@ -194,11 +208,14 @@ class UserController extends Controller
             'user' => $payload,
             'permissions' => [
                 'viewFinancials' => $canViewFinancials,
-                'update' => $authorization->can(Auth::user(), config('authorization.capabilities.customers_update')),
+                'update' => $authorization->can($actor, config('authorization.capabilities.customers_update')),
+                'manageFrozenOrders' => $authorization->can($actor, config('authorization.capabilities.customers_manage_frozen_orders')),
             ],
             'routes' => [
                 'index' => route('user.index'),
                 'edit' => route('user.edit', ['user' => $user->id]),
+                'frozenOrders' => route('user.frozen.order.interface', ['user' => $user->id]),
+                'chat' => $this->chatUrlForUser($user, $authorization, $actor),
             ],
         ], 'Chi tiết người dùng');
     }
@@ -215,7 +232,7 @@ class UserController extends Controller
                 'index' => route('user.index'),
                 'store' => route('user.store'),
                 'checkUsername' => route('check_username'),
-                'checkPhone' => route('check_phone'),
+                'checkEmail' => route('check_email'),
             ],
         ], 'Thêm người dùng');
     }
@@ -234,12 +251,12 @@ class UserController extends Controller
     }
     public function store(StoreUserRequest $request)
     {
-        $data = $request->only(['full_name', 'username', 'phone']);
+        $data = $request->only(['full_name', 'username', 'email']);
         if (User::where('username', $data['username'])->exists()) {
             return back()->withErrors(['username' => 'Tên đăng nhập đã tồn tại!'])->withInput();
         }
-        if (User::where('phone', $data['phone'])->exists()) {
-            return back()->withErrors(['phone' => 'Số điện thoại đã tồn tại!'])->withInput();
+        if (User::where('email', $data['email'])->exists()) {
+            return back()->withErrors(['email' => 'Email đã tồn tại!'])->withInput();
         }
         if ($request->password != "") {
             if (strlen($request->password) >= 6) {
@@ -932,6 +949,26 @@ class UserController extends Controller
             'status' => 200,
             'message' => $message
         ]);
+    }
+
+    private function chatUrlForUser(User $member, AuthorizationService $authorization, User $actor): ?string
+    {
+        $conversations = $member->relationLoaded('memberConversations')
+            ? $member->memberConversations
+            : $member->memberConversations()
+                ->select('id', 'user_id', 'staff_id', 'public_id', 'updated_at')
+                ->with('staff:id,role')
+                ->latest('updated_at')
+                ->get();
+
+        $conversation = $conversations->first(
+            fn (Conversation $conversation) => $conversation->public_id
+                && $authorization->canViewConversation($actor, $conversation)
+        );
+
+        return $conversation
+            ? route('chat-panel', ['conversation' => $conversation->public_id])
+            : null;
     }
 
     private function authorizeMemberAccess(User $member, AuthorizationService $authorization): void

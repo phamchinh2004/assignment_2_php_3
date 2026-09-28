@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Http\Controllers\Admin\DashboardController;
 use App\Models\User;
 use App\Models\Manager_setting;
 use App\Models\User_manager_setting;
@@ -11,6 +12,36 @@ use Tests\TestCase;
 
 class StatisticsPermissionsTest extends TestCase
 {
+    public function test_dashboard_lists_personal_revenue_when_user_has_personal_statistics_permission(): void
+    {
+        $user = new User(['role' => 'staff']);
+        $assignment = new User_manager_setting(['is_active' => true]);
+        $assignment->setRelation('manager_setting', new Manager_setting([
+            'manager_code' => 'statistics.view-personal',
+        ]));
+        $user->setRelation('user_manager_settings', collect([$assignment]));
+
+        $request = Request::create('/admin');
+        $request->headers->set('X-React-Navigation', '1');
+        $this->app->instance('request', $request);
+        $request->setUserResolver(fn () => $user);
+
+        $response = app(DashboardController::class)->index($request);
+        $links = collect($response->getData(true)['props']['links'] ?? []);
+
+        $this->assertSame(['statistics-personal'], $links->pluck('key')->all());
+        $this->assertSame(route('doanh.thu.ban.than'), $links->first()['href']);
+    }
+
+    public function test_dashboard_does_not_require_a_statistics_permission(): void
+    {
+        $route = app('router')->getRoutes()->getByName('admin.dashboard');
+        $permissionMiddleware = collect($route->gatherMiddleware())
+            ->filter(fn (string $middleware) => str_starts_with($middleware, 'permission:'));
+
+        $this->assertTrue($permissionMiddleware->isEmpty());
+    }
+
     public function test_statistics_routes_require_their_own_permission_and_reject_other_permissions(): void
     {
         $cases = [

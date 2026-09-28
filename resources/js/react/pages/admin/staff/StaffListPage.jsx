@@ -1,13 +1,16 @@
-import { Button, Card, Col, Row, Segmented, Space, Statistic, Table, Tag, Typography } from 'antd';
+import { Button, Input, Segmented, Space, Table, Tag, Typography } from 'antd';
+import { TeamOutlined, UserAddOutlined } from '@ant-design/icons';
 import { useEffect, useMemo, useState } from 'react';
 import { requestJson } from '../../../lib/http';
+import { AdminDataCard, AdminMetricGrid, AdminPage, AdminPageHeader } from '../../../components/admin/AdminUi';
 
-const { Text, Title } = Typography;
+const { Text } = Typography;
 const routeFor = (template, id) => String(template || '').replace('__STAFF_ID__', encodeURIComponent(String(id)));
 const money = (value) => `${new Intl.NumberFormat('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}).format(Number(value || 0))}$`;
 
 export default function StaffListPage({ config }) {
     const [filter, setFilter] = useState('all');
+    const [search, setSearch] = useState('');
     const [staffs, setStaffs] = useState(config.staffs || []);
     const [presenceStats, setPresenceStats] = useState({ online: Number(config.onlineStaffCount || 0), offline: Number(config.offlineStaffCount || 0) });
 
@@ -45,6 +48,14 @@ export default function StaffListPage({ config }) {
         if (filter === 'activated') return item.status === 'activated';
         if (filter === 'banned') return item.status === 'banned';
         return true;
+    }).filter((item) => {
+        const needle = search.trim().toLocaleLowerCase('vi');
+        if (!needle) return true;
+        return [item.full_name, item.username, item.phone, item.email, item.role]
+            .filter(Boolean)
+            .join(' ')
+            .toLocaleLowerCase('vi')
+            .includes(needle);
     });
 
     const columns = [
@@ -60,17 +71,27 @@ export default function StaffListPage({ config }) {
         </Space> },
     ];
 
-    return <div className="container-fluid px-4 pb-5">
-        <div className="d-flex justify-content-between align-items-start gap-3 mb-4 flex-wrap"><div><Title level={2}>Quản lý admin & nhân viên</Title><Text type="secondary">Owner quản lý admin và staff; admin chỉ quản lý staff theo quyền backend.</Text></div>{config.permissions?.create&&<Button type="primary" href={config.routes.create}>Thêm tài khoản mới</Button>}</div>
-        <Row gutter={[16,16]} className="mb-4">
-            <Col xs={12} md={8} xl={5}><Card><Statistic title="Tổng nhân sự" value={counts.total}/></Card></Col>
-            <Col xs={12} md={8} xl={5}><Card><Statistic title="Đang online" value={presenceStats.online} suffix={<Text type="secondary">· {presenceStats.offline} offline</Text>}/></Card></Col>
-            <Col xs={12} md={8} xl={5}><Card><Statistic title="Đã kích hoạt" value={counts.active}/></Card></Col>
-            <Col xs={12} md={8} xl={4}><Card><Statistic title="Bị khóa" value={counts.banned}/></Card></Col>
-            <Col xs={24} md={8} xl={5}><Card><Statistic title="Doanh số nạp" value={counts.revenue} precision={2} suffix="$"/></Card></Col>
-        </Row>
-        <Card title="Danh sách tài khoản" extra={<Segmented value={filter} onChange={setFilter} options={[{label:`Tất cả (${counts.total})`,value:'all'},{label:`Online (${presenceStats.online})`,value:'online'},{label:`Offline (${presenceStats.offline})`,value:'offline'},{label:`Kích hoạt (${counts.active})`,value:'activated'},{label:`Bị khóa (${counts.banned})`,value:'banned'}]}/>}>
-            <Table rowKey="id" dataSource={filtered} columns={columns} scroll={{x:1000}} pagination={{pageSize:20,showSizeChanger:false}}/>
-        </Card>
-    </div>;
+    return <AdminPage>
+        <AdminPageHeader
+            eyebrow="Nhân sự nội bộ"
+            icon={<TeamOutlined />}
+            title="Quản lý admin & nhân viên"
+            description="Theo dõi tài khoản quản trị, trạng thái hoạt động và phạm vi quản lý. Quyền thao tác vẫn được giới hạn theo backend."
+            actions={config.permissions?.create&&<Button type="primary" icon={<UserAddOutlined />} href={config.routes.create}>Thêm tài khoản mới</Button>}
+        />
+        <AdminMetricGrid items={[
+            {key:'all',title:'Tổng nhân sự',value:counts.total,tone:'primary'},
+            {key:'online',title:'Đang online',value:presenceStats.online,hint:`${presenceStats.offline} offline`,tone:'success'},
+            {key:'active',title:'Đã kích hoạt',value:counts.active,tone:'info'},
+            {key:'banned',title:'Bị khóa',value:counts.banned,tone:'danger'},
+        ]} />
+        <AdminDataCard
+            title="Danh sách tài khoản nội bộ"
+            description="Tìm theo tên, username, email hoặc số điện thoại; các thao tác chỉ xuất hiện khi tài khoản hiện tại có quyền tương ứng."
+            toolbar={<><div style={{overflowX:'auto',maxWidth:'100%'}}><Segmented value={filter} onChange={setFilter} options={[{label:`Tất cả (${counts.total})`,value:'all'},{label:`Online (${presenceStats.online})`,value:'online'},{label:`Offline (${presenceStats.offline})`,value:'offline'},{label:`Kích hoạt (${counts.active})`,value:'activated'},{label:`Bị khóa (${counts.banned})`,value:'banned'}]}/></div><Input.Search className="admin-list-search" allowClear value={search} onChange={(event)=>setSearch(event.target.value)} placeholder="Tìm nhân sự..." /></>}
+        >
+            <div className="admin-data-summary" style={{marginBottom:10}}>Đang hiển thị {filtered.length} / {staffs.length} tài khoản</div>
+            <Table rowKey="id" dataSource={filtered} columns={columns} scroll={{x:1000}} pagination={{pageSize:20,showSizeChanger:false}} locale={{emptyText:'Không có tài khoản phù hợp'}} />
+        </AdminDataCard>
+    </AdminPage>;
 }

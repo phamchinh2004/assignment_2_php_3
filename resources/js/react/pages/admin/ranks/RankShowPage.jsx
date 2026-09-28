@@ -1,8 +1,9 @@
-import { Button, Card, Descriptions, Image, Pagination, Space, Statistic, Table, Tag, Typography } from 'antd';
-import { ArrowLeftOutlined, EditOutlined } from '@ant-design/icons';
+import { Button, Descriptions, Image, Pagination, Space, Table, Tag, Typography } from 'antd';
+import { CrownOutlined, EditOutlined } from '@ant-design/icons';
 import { spaNavigate } from '../../../navigation';
+import { AdminDataCard, AdminMetricGrid, AdminPage, AdminPageHeader, AdminSectionCard } from '../../../components/admin/AdminUi';
 
-const { Text, Title } = Typography;
+const { Text } = Typography;
 const money = (value) => Number(value || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const routeFor = (template, id) => String(template || '').replace('__USER_ID__', encodeURIComponent(String(id)));
 
@@ -24,21 +25,23 @@ export default function RankShowPage({ config }) {
         spaNavigate(url.toString());
     };
 
-    return <div className="container-fluid px-4 pb-5">
-        <Button icon={<ArrowLeftOutlined />} href={config.routes.index} className="mb-3">Quay lại danh sách cấp độ</Button>
-        <div className="d-flex flex-column flex-md-row justify-content-between gap-3 mb-4">
-            <Space align="start">
-                {rank.image && <Image width={64} src={`${String(config.storageBaseUrl || '/storage').replace(/\/$/, '')}/${rank.image}`} />}
-                <div><Title level={2} style={{ marginBottom: 4 }}>{rank.name}</Title><Text type="secondary">ID {rank.id}</Text></div>
-            </Space>
-            {config.permissions?.update && <Button type="primary" icon={<EditOutlined />} href={config.routes.edit}>Chỉnh sửa cấp độ</Button>}
-        </div>
-        <div className="row mb-4">
-            <div className="col-md-4 mb-3"><Card><Statistic title="Hoa hồng" value={Number(rank.commission_percentage || 0)} suffix="%" /></Card></div>
-            <div className="col-md-4 mb-3"><Card><Statistic title="Số đơn / vòng" value={Number(rank.spin_count || 0)} suffix="đơn" /></Card></div>
-            <div className="col-md-4 mb-3"><Card><Statistic title="Thành viên cấp này" value={Number(usersPage.total || 0)} /></Card></div>
-        </div>
-        <Card className="mb-4">
+    return <AdminPage>
+        <AdminPageHeader
+            eyebrow="Chi tiết cấp độ"
+            icon={<CrownOutlined />}
+            title={rank.name || 'Cấp độ'}
+            description="Theo dõi quyền lợi, giới hạn tài chính và số thành viên hiện đang thuộc cấp này."
+            backHref={config.routes.index}
+            backLabel="Danh sách cấp độ"
+            meta={<><Tag>ID {rank.id}</Tag>{rank.image && <Image preview width={34} height={34} src={`${String(config.storageBaseUrl || '/storage').replace(/\/$/, '')}/${rank.image}`} style={{objectFit:'cover',borderRadius:8}} />}</>}
+            actions={config.permissions?.update && <Button type="primary" icon={<EditOutlined />} href={config.routes.edit}>Chỉnh sửa cấp độ</Button>}
+        />
+        <AdminMetricGrid items={[
+            {key:'commission',title:'Hoa hồng',value:Number(rank.commission_percentage || 0),suffix:'%',tone:'success'},
+            {key:'orders',title:'Số đơn / vòng',value:Number(rank.spin_count || 0),suffix:'đơn',tone:'primary'},
+            {key:'members',title:'Thành viên cấp này',value:Number(usersPage.total || 0),tone:'info'},
+        ]} min={3} />
+        <AdminSectionCard className="mb-4" title="Cấu hình đang áp dụng" description="Các giá trị hiện tại ảnh hưởng trực tiếp đến thành viên của cấp độ này.">
             <Descriptions bordered column={{ xs: 1, md: 2 }}>
                 <Descriptions.Item label="Phí nâng cấp">${money(rank.upgrade_fee)}</Descriptions.Item>
                 <Descriptions.Item label="Tổng giá trị đơn">${money(rank.value)}</Descriptions.Item>
@@ -46,10 +49,10 @@ export default function RankShowPage({ config }) {
                 <Descriptions.Item label="Số tiền rút tối đa/lượt">${money(rank.maximum_withdrawal_amount)}</Descriptions.Item>
                 <Descriptions.Item label="Số đơn mẫu đã tạo">{rank.orders_count || 0}</Descriptions.Item>
             </Descriptions>
-        </Card>
-        <Card title="Thành viên đang ở cấp độ này">
+        </AdminSectionCard>
+        <AdminDataCard title="Thành viên đang ở cấp độ này" description="Danh sách tài khoản hiện có rank tương ứng; chỉ hiển thị liên kết hồ sơ khi có quyền xem chi tiết khách hàng.">
             <Table rowKey="id" dataSource={users} columns={columns} pagination={false} scroll={{ x: 760 }} />
             {Number(usersPage.last_page || 1) > 1 && <div className="d-flex justify-content-end mt-3"><Pagination current={Number(usersPage.current_page || 1)} pageSize={Number(usersPage.per_page || 10)} total={Number(usersPage.total || 0)} onChange={changePage} showSizeChanger={false} /></div>}
-        </Card>
-    </div>;
+        </AdminDataCard>
+    </AdminPage>;
 }

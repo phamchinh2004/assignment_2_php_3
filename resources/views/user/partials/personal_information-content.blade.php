@@ -19,8 +19,7 @@
     <main class="personal-profile-page"
         data-personal-profile-page
         data-avatar-upload-route="{{ route('upload_avatar') }}"
-        data-open-warehouse-on-load="{{ $warehouseHasErrors ? 'true' : 'false' }}"
-        data-flash-success="{{ session('success') }}">
+        data-open-warehouse-on-load="{{ $warehouseHasErrors ? 'true' : 'false' }}">
 
         <header class="profile-appbar" aria-labelledby="personal-profile-title">
             <a href="{{ route('me') }}" class="profile-appbar__back" aria-label="Quay lại trang Tôi">

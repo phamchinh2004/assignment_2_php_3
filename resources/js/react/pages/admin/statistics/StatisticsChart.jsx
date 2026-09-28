@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Alert } from 'antd';
 
-export default function StatisticsChart({ config, height = 300 }) {
+export default function StatisticsChart({ config, height = 300, ariaLabel = 'Biểu đồ thống kê' }) {
     const canvasRef = useRef(null);
     const chartRef = useRef(null);
 
@@ -23,7 +23,7 @@ export default function StatisticsChart({ config, height = 300 }) {
 
     return (
         <div style={{ position: 'relative', height }}>
-            <canvas ref={canvasRef} />
+            <canvas ref={canvasRef} role="img" aria-label={ariaLabel} />
         </div>
     );
 }

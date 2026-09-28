@@ -1,8 +1,9 @@
-import { Button, Card, Image, Popconfirm, Space, Statistic, Table, Tag, Typography } from 'antd';
+import { Button, Image, Popconfirm, Space, Table, Tag, Typography } from 'antd';
 import { CrownOutlined, PlusOutlined } from '@ant-design/icons';
 import LaravelForm from '../../../components/LaravelForm';
+import { AdminDataCard, AdminMetricGrid, AdminPage, AdminPageHeader } from '../../../components/admin/AdminUi';
 
-const { Text, Title } = Typography;
+const { Text } = Typography;
 const money = (value) => Number(value || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const routeFor = (template, id) => String(template || '').replace('__RANK_ID__', encodeURIComponent(String(id)));
 
@@ -43,16 +44,21 @@ export default function RankListPage({ config }) {
         },
     ];
 
-    return <div className="container-fluid px-4 pb-5">
-        <div className="page-header-wrapper d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
-            <div><Title level={2}>Quản lý cấp độ (Rank)</Title><Text type="secondary">Thiết lập cấp bậc, hoa hồng, số đơn và hạn mức rút tiền.</Text></div>
-            {permissions.create && <Button type="primary" icon={<PlusOutlined />} href={config.routes.create}>Thêm cấp độ mới</Button>}
-        </div>
-        <div className="row mb-4">
-            <div className="col-md-4 mb-3"><Card><Statistic title="Tổng cấp bậc" value={ranks.length} prefix={<CrownOutlined />} /></Card></div>
-            <div className="col-md-4 mb-3"><Card><Statistic title="Hoa hồng cao nhất" value={maxCommission} suffix="%" /></Card></div>
-            <div className="col-md-4 mb-3"><Card><Statistic title="Tổng đơn theo rank" value={totalOrders} /></Card></div>
-        </div>
-        <Card><Table rowKey="id" dataSource={ranks} columns={columns} scroll={{ x: 1050 }} pagination={{ pageSize: 10 }} /></Card>
-    </div>;
+    return <AdminPage>
+        <AdminPageHeader
+            eyebrow="Cấu hình thành viên"
+            icon={<CrownOutlined />}
+            title="Quản lý cấp độ"
+            description="Thiết lập quyền lợi, chu kỳ đơn hàng và hạn mức rút tiền cho từng cấp thành viên."
+            actions={permissions.create && <Button type="primary" icon={<PlusOutlined />} href={config.routes.create}>Thêm cấp độ mới</Button>}
+        />
+        <AdminMetricGrid items={[
+            {key:'count',title:'Tổng cấp bậc',value:ranks.length,tone:'primary'},
+            {key:'commission',title:'Hoa hồng cao nhất',value:maxCommission,suffix:'%',tone:'success'},
+            {key:'orders',title:'Tổng đơn mẫu theo rank',value:totalOrders,tone:'info'},
+        ]} min={3} />
+        <AdminDataCard title="Danh sách cấp độ" description="So sánh nhanh quyền lợi và giới hạn trước khi chỉnh sửa một cấp bậc.">
+            <Table rowKey="id" dataSource={ranks} columns={columns} scroll={{ x: 1050 }} pagination={{ pageSize: 10 }} locale={{emptyText:'Chưa có cấp độ'}} />
+        </AdminDataCard>
+    </AdminPage>;
 }

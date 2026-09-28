@@ -1,11 +1,19 @@
-import { Typography } from 'antd';
+import { UserAddOutlined } from '@ant-design/icons';
 import StaffForm from './StaffForm';
-
-const { Text, Title } = Typography;
+import { AdminPage, AdminPageHeader } from '../../../components/admin/AdminUi';
 
 export default function StaffCreatePage({ config }) {
-    return <div className="container-fluid px-4 pb-5">
-        <div className="mb-4"><Title level={2}>Thêm tài khoản nội bộ</Title><Text type="secondary">{config.canChooseRole ? 'Tạo tài khoản Staff hoặc Admin.' : 'Tạo tài khoản Staff mới.'}</Text></div>
+    return <AdminPage width="content" className="staff-create-page">
+        <AdminPageHeader
+            eyebrow="Nhân sự nội bộ"
+            icon={<UserAddOutlined />}
+            title="Thêm tài khoản nội bộ"
+            description={config.canChooseRole
+                ? 'Tạo tài khoản Staff hoặc Admin mới và thiết lập thông tin đăng nhập ban đầu.'
+                : 'Tạo tài khoản Staff mới và thiết lập thông tin đăng nhập ban đầu.'}
+            backHref={config.routes.index}
+            backLabel="Danh sách nhân sự"
+        />
         <StaffForm config={config} mode="create" />
-    </div>;
+    </AdminPage>;
 }

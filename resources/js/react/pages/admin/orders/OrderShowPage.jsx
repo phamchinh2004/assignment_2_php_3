@@ -1,5 +1,4 @@
 import {
-    ArrowLeftOutlined,
     EditOutlined,
     PhoneOutlined,
     ShoppingOutlined,
@@ -7,20 +6,19 @@ import {
 } from '@ant-design/icons';
 import {
     Button,
-    Card,
     Col,
     Descriptions,
     Image,
     Row,
     Space,
-    Statistic,
     Table,
     Tag,
     Typography,
 } from 'antd';
+import { AdminDataCard, AdminMetricGrid, AdminPage, AdminPageHeader, AdminSectionCard } from '../../../components/admin/AdminUi';
 import './order-show.css';
 
-const { Text, Title } = Typography;
+const { Text } = Typography;
 
 function formatMoney(value) {
     return new Intl.NumberFormat('en-US', {
@@ -109,58 +107,32 @@ export default function OrderShowPage({ config }) {
     ];
 
     return (
-        <div className="order-show-react-page">
-            <Button icon={<ArrowLeftOutlined />} href={config.routes.index} className="order-show-back">
-                Quay lại danh sách đơn hàng
-            </Button>
-
-            <div className="order-show-header">
-                <Space align="start" size={16}>
-                    <div className="order-show-image">
-                        {config.imageUrl
-                            ? <Image src={config.imageUrl} width={100} height={100} preview />
-                            : <ShoppingOutlined />}
-                    </div>
-                    <div>
-                        <Title level={2}>{order.name || 'Đơn hàng'}</Title>
-                        <Space wrap>
-                            <Tag>#{order.order_code}</Tag>
-                            <Tag color={Number(order.status) === 1 ? 'success' : 'error'}>
-                                {Number(order.status) === 1 ? 'Hoạt động' : 'Đã ẩn'}
-                            </Tag>
-                            <Tag color={Number(order.is_paid) === 1 ? 'success' : 'warning'}>
-                                {Number(order.is_paid) === 1 ? 'Đã thanh toán' : 'Chưa thanh toán'}
-                            </Tag>
-                            {order.partner?.name && <Tag color="blue">{order.partner.name}</Tag>}
-                        </Space>
-                    </div>
-                </Space>
-
-                {config.permissions?.update && (
+        <AdminPage className="order-show-react-page">
+            <AdminPageHeader
+                eyebrow="Chi tiết đơn hàng"
+                icon={<ShoppingOutlined />}
+                title={order.name || 'Đơn hàng'}
+                description="Thông tin sản phẩm, người nhận, thanh toán và lịch sử gán đơn cho thành viên."
+                backHref={config.routes.index}
+                backLabel="Danh sách đơn hàng"
+                meta={<>{config.imageUrl && <Image src={config.imageUrl} width={34} height={34} preview style={{objectFit:'cover',borderRadius:8}} />}<Tag>#{order.order_code}</Tag><Tag color={Number(order.status) === 1 ? 'success' : 'error'}>{Number(order.status) === 1 ? 'Hoạt động' : 'Đã ẩn'}</Tag><Tag color={Number(order.is_paid) === 1 ? 'success' : 'warning'}>{Number(order.is_paid) === 1 ? 'Đã thanh toán' : 'Chưa thanh toán'}</Tag>{order.partner?.name && <Tag color="blue">{order.partner.name}</Tag>}</>}
+                actions={config.permissions?.update && (
                     <Button type="primary" icon={<EditOutlined />} href={config.routes.edit}>
                         Chỉnh sửa đơn hàng
                     </Button>
                 )}
-            </div>
+            />
 
-            <Row gutter={[16, 16]} className="order-show-stats">
-                <Col xs={24} sm={12} xl={6}>
-                    <Card><Statistic title="Đơn giá sản phẩm" value={Number(order.price || 0)} precision={2} prefix="$" /></Card>
-                </Col>
-                <Col xs={24} sm={12} xl={6}>
-                    <Card><Statistic title="Số lượng" value={Number(order.quantity || 0)} /></Card>
-                </Col>
-                <Col xs={24} sm={12} xl={6}>
-                    <Card><Statistic title="Tổng giá trị đơn" value={totalValue} precision={2} prefix="$" /></Card>
-                </Col>
-                <Col xs={24} sm={12} xl={6}>
-                    <Card><Statistic title="Tỷ lệ hoa hồng" value={Number(order.commission_percentage || 0)} suffix="%" /></Card>
-                </Col>
-            </Row>
+            <AdminMetricGrid items={[
+                {key:'price',title:'Đơn giá sản phẩm',value:Number(order.price || 0),precision:2,prefix:'$',tone:'primary'},
+                {key:'quantity',title:'Số lượng',value:Number(order.quantity || 0),tone:'info'},
+                {key:'total',title:'Tổng giá trị đơn',value:totalValue,precision:2,prefix:'$',tone:'success'},
+                {key:'commission',title:'Tỷ lệ hoa hồng',value:Number(order.commission_percentage || 0),suffix:'%',tone:'warning'},
+            ]} />
 
             <Row gutter={[16, 16]}>
                 <Col xs={24} xl={14}>
-                    <Card title="Chi tiết mặt hàng & cấu hình" className="order-show-card">
+                    <AdminSectionCard title="Chi tiết mặt hàng & cấu hình" description="Cấu hình cốt lõi của đơn hàng mẫu." className="order-show-card">
                         <Descriptions column={1} bordered size="small">
                             <Descriptions.Item label="Tên sản phẩm">{order.name || '—'}</Descriptions.Item>
                             <Descriptions.Item label="Mã hệ thống"><Text code>{order.order_code || '—'}</Text></Descriptions.Item>
@@ -176,9 +148,9 @@ export default function OrderShowPage({ config }) {
                                 </Tag>
                             </Descriptions.Item>
                         </Descriptions>
-                    </Card>
+                    </AdminSectionCard>
 
-                    <Card title={`Lịch sử gán cho thành viên (${frozenOrders.length})`} className="order-show-card order-show-card-spaced">
+                    <div className="order-show-card-spaced"><AdminDataCard title="Lịch sử gán cho thành viên" description={`${frozenOrders.length} lần gán đơn được ghi nhận.`} className="order-show-card">
                         <Table
                             rowKey="id"
                             columns={frozenColumns}
@@ -187,11 +159,11 @@ export default function OrderShowPage({ config }) {
                             scroll={{ x: 720 }}
                             locale={{ emptyText: 'Chưa có thành viên nào nhận đơn này' }}
                         />
-                    </Card>
+                    </AdminDataCard></div>
                 </Col>
 
                 <Col xs={24} xl={10}>
-                    <Card title="Thông tin khách hàng nhận" className="order-show-card">
+                    <AdminSectionCard title="Thông tin khách hàng nhận" description="Thông tin nhận hàng đang gắn với đơn." className="order-show-card">
                         <Descriptions column={1} size="small">
                             <Descriptions.Item label="Người nhận">{order.customer_name || '—'}</Descriptions.Item>
                             <Descriptions.Item label="Số điện thoại">
@@ -202,9 +174,9 @@ export default function OrderShowPage({ config }) {
                             <Descriptions.Item label="Địa chỉ giao">{order.customer_address || '—'}</Descriptions.Item>
                             <Descriptions.Item label="Ghi chú">{order.customer_note || 'Không có ghi chú'}</Descriptions.Item>
                         </Descriptions>
-                    </Card>
+                    </AdminSectionCard>
 
-                    <Card title="Thanh toán & nền tảng" className="order-show-card order-show-card-spaced">
+                    <AdminSectionCard title="Thanh toán & nền tảng" description="Nguồn đơn và trạng thái thanh toán hiện tại." className="order-show-card order-show-card-spaced">
                         <Descriptions column={1} size="small">
                             <Descriptions.Item label="Nền tảng bán">{order.partner?.name || 'Hệ thống nội bộ'}</Descriptions.Item>
                             <Descriptions.Item label="Hình thức thanh toán">{paymentLabel(order.payment_method)}</Descriptions.Item>
@@ -216,7 +188,7 @@ export default function OrderShowPage({ config }) {
                             <Descriptions.Item label="Thời gian tạo">{formatDateTime(order.created_at)}</Descriptions.Item>
                             <Descriptions.Item label="Cập nhật cuối">{formatDateTime(order.updated_at)}</Descriptions.Item>
                         </Descriptions>
-                    </Card>
+                    </AdminSectionCard>
 
                     {order.fake_price ? (
                         <Text type="secondary" className="order-show-fake-price">
@@ -225,6 +197,6 @@ export default function OrderShowPage({ config }) {
                     ) : null}
                 </Col>
             </Row>
-        </div>
+        </AdminPage>
     );
 }

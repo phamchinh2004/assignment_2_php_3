@@ -25,7 +25,6 @@ Route::middleware(['role:staff|admin|own', 'checkBanned', 'auth'])->group(functi
     $capabilities = config('authorization.capabilities');
 
     Route::get('/', [DashboardController::class, 'index'])
-        ->middleware('permission:' . $capabilities['statistics_view_overview'])
         ->name('admin.dashboard');
 
     Route::get('/authorization-state', [AuthorizationController::class, 'state'])->name('authorization.state');

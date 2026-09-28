@@ -62,6 +62,8 @@ export function statusTag(status) {
         processing: { color: 'processing', label: 'Đang xử lý' },
         cancelled: { color: 'error', label: 'Đã hủy' },
         pending: { color: 'warning', label: 'Chờ xử lý' },
+        rejected: { color: 'error', label: 'Từ chối' },
+        failed: { color: 'error', label: 'Thất bại' },
     };
     return map[status] || { color: 'default', label: status || 'Không rõ' };
 }

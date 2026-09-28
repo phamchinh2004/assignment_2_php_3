@@ -40,6 +40,27 @@ const ADMIN_PATTERNS = [
     /^\/admin\/order(?:\/create|\/[^/]+(?:\/edit)?)?$/,
 ];
 
+const ADMIN_BREADCRUMB_RULES = [
+    { pattern: /^\/admin$/, section: 'Tổng quan', page: 'Dashboard' },
+    { pattern: /^\/admin\/(?:tong-doanh-thu|statistical\/revenue|doanh-thu-theo-nhan-vien|doanh-thu-tu-khach-hang|doanh-thu-ban-than)$/, section: 'Tổng quan', page: 'Thống kê' },
+    { pattern: /^\/admin\/chat-panel$/, section: 'Vận hành', page: 'Quản lý tin nhắn' },
+    { pattern: /^\/admin\/user(?:\/|$)/, section: 'Khách hàng', page: 'Quản lý khách hàng' },
+    { pattern: /^\/admin\/(?:withdraw-transaction|deposit-transaction|lucky-wheel-rewards)(?:\/|$)/, section: 'Giao dịch', page: 'Quản lý GDKH' },
+    { pattern: /^\/admin\/staffs?(?:\/|$)/, section: 'Nhân sự', page: 'Quản lý nhân viên' },
+    { pattern: /^\/admin\/order-distributions(?:\/|$)/, section: 'Đơn hàng', page: 'Phân phối đơn hàng' },
+    { pattern: /^\/admin\/order-reports(?:\/|$)/, section: 'Đơn hàng', page: 'Đơn hàng bị báo cáo' },
+    { pattern: /^\/admin\/order-status-timing(?:\/|$)/, section: 'Cấu hình', page: 'Thời gian đơn hàng' },
+    { pattern: /^\/admin\/order(?:\/|$)/, section: 'Đơn hàng', page: 'Quản lý đơn hàng' },
+    { pattern: /^\/admin\/feature-announcements(?:\/|$)/, section: 'Cấu hình', page: 'Thông báo tính năng' },
+    { pattern: /^\/admin\/frozen-order-settings$/, section: 'Cấu hình', page: 'Thời gian xử lý đơn hàng' },
+    { pattern: /^\/admin\/rank(?:\/|$)/, section: 'Cấu hình', page: 'Quản lý cấp độ' },
+    { pattern: /^\/admin\/manager_setting(?:\/|$)/, section: 'Cấu hình', page: 'Quản lý chức năng' },
+    { pattern: /^\/admin\/banner(?:\/|$)/, section: 'Nội dung', page: 'Quản lý banner' },
+    { pattern: /^\/admin\/section(?:\/|$)/, section: 'Nội dung', page: 'Nội dung website' },
+    { pattern: /^\/admin\/partner(?:\/|$)/, section: 'Nội dung', page: 'Quản lý đối tác' },
+    { pattern: /^\/admin\/language(?:\/|$)/, section: 'Nội dung', page: 'Quản lý ngôn ngữ' },
+];
+
 export function isSpaNavigationTarget(url, surface) {
     if (!(url instanceof URL) || url.origin !== window.location.origin) return false;
 
@@ -69,7 +90,9 @@ export function syncLegacyNavigationState(surface, pathname) {
     }
 
     if (surface === 'admin') {
-        const links = Array.from(document.querySelectorAll('.admin-menu-link[href], #accordionSidebar a[href]'))
+        const links = Array.from(document.querySelectorAll(
+            '.admin-menu-link[href], #accordionSidebar a.admin-sidebar__link[href], #accordionSidebar a.admin-sidebar__submenu-link[href]',
+        ))
             .filter((anchor) => {
                 try {
                     return new URL(anchor.href, window.location.origin).origin === window.location.origin;
@@ -91,11 +114,43 @@ export function syncLegacyNavigationState(surface, pathname) {
 
         links.forEach((anchor) => {
             const active = anchor === best;
-            anchor.classList.toggle('active', active);
+            const isModernSidebarLink = anchor.classList.contains('admin-sidebar__link')
+                || anchor.classList.contains('admin-sidebar__submenu-link');
+
+            anchor.classList.toggle(isModernSidebarLink ? 'is-active' : 'active', active);
+            if (isModernSidebarLink) anchor.classList.remove('active');
             if (active) anchor.setAttribute('aria-current', 'page');
             else anchor.removeAttribute('aria-current');
         });
+
+        document.querySelectorAll('#accordionSidebar .admin-sidebar__item').forEach((item) => {
+            const hasActiveChild = Boolean(item.querySelector('.admin-sidebar__submenu-link.is-active'));
+            const trigger = item.querySelector('.admin-sidebar__submenu-trigger');
+            const submenu = item.querySelector('.admin-sidebar__submenu');
+
+            item.classList.toggle('is-active', hasActiveChild);
+
+            if (trigger && submenu) {
+                trigger.classList.toggle('collapsed', !hasActiveChild);
+                trigger.setAttribute('aria-expanded', hasActiveChild ? 'true' : 'false');
+                submenu.classList.toggle('show', hasActiveChild);
+            }
+        });
+
+        syncAdminBreadcrumb(path);
     }
+}
+
+function syncAdminBreadcrumb(path) {
+    const sectionElement = document.querySelector('.admin-breadcrumb__section');
+    const currentElement = document.querySelector('.admin-breadcrumb__current');
+    if (!sectionElement || !currentElement) return;
+
+    const breadcrumb = ADMIN_BREADCRUMB_RULES.find(({ pattern }) => pattern.test(path));
+    if (!breadcrumb) return;
+
+    sectionElement.textContent = breadcrumb.section;
+    currentElement.textContent = breadcrumb.page;
 }
 
 function normalizePath(pathname) {

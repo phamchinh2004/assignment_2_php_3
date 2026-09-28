@@ -10,6 +10,7 @@ use App\Services\AdminOrderTransitionService;
 use App\Services\AuthorizationService;
 use App\Services\ReactPageService;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -25,7 +26,7 @@ class OrderDistributionController extends Controller
     ) {
     }
 
-    public function index(Request $request): View
+    public function index(Request $request): View|JsonResponse
     {
         $filters = $request->validate([
             'q' => ['nullable', 'string', 'max:120'],
@@ -88,7 +89,7 @@ class OrderDistributionController extends Controller
         ], 'Phân phối đơn hàng');
     }
 
-    public function show(Frozen_order $frozenOrder, AdminOrderTransitionService $workflow): View
+    public function show(Frozen_order $frozenOrder, AdminOrderTransitionService $workflow): View|JsonResponse
     {
         $frozenOrder->load([
             'user:id,full_name,username',

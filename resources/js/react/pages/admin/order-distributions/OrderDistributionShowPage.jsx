@@ -1,5 +1,6 @@
 import { Alert, Button, Card, Col, Descriptions, Image, Row, Space, Tag, Timeline, Typography } from 'antd';
 import LaravelForm from '../../../components/LaravelForm';
+import { AdminPage, AdminPageHeader } from '../../../components/admin/AdminUi';
 
 const { Paragraph, Text, Title } = Typography;
 const formatDate = (value) => value ? new Intl.DateTimeFormat('vi-VN',{dateStyle:'short',timeStyle:'medium'}).format(new Date(value)) : '—';
@@ -23,8 +24,8 @@ export default function OrderDistributionShowPage({ config }) {
         children: <div><Text strong>{event.status?.display_name || event.status?.name || 'Trạng thái không còn tồn tại'}</Text><div><Text type="secondary">{formatDate(event.created_at)} · {event.changed_by?.full_name || event.changed_by?.username || 'Hệ thống / chưa ghi nhận'}</Text></div>{event.notes && <Paragraph style={{marginTop:4,marginBottom:0}}>{event.notes}</Paragraph>}</div>,
     }));
 
-    return <div className="container-fluid px-4 pb-5">
-        <div className="d-flex justify-content-between align-items-center gap-3 mb-4"><div><Title level={2} style={{margin:0}}>Audit phân phối #{item.id}</Title><Text type="secondary">Kiểm tra người nhận, tiến độ và dữ liệu snapshot.</Text></div><Button href={backUrl.toString()}>Quay lại danh sách</Button></div>
+    return <AdminPage>
+        <AdminPageHeader eyebrow="Audit phân phối" title={`Audit phân phối #${item.id}`} description="Kiểm tra người nhận, tiến độ và dữ liệu snapshot." backHref={backUrl.toString()} backLabel="Danh sách phân phối" meta={<Tag color={item.status === 'completed' ? 'success' : 'processing'}>{currentLabel}</Tag>} />
         <Row gutter={[16,16]}>
             <Col xs={24} lg={16}>
                 <Card title="Thông tin phân phối" extra={<Tag color={item.status === 'completed'?'success':'processing'}>{currentLabel}</Tag>} className="mb-3">
@@ -78,5 +79,5 @@ export default function OrderDistributionShowPage({ config }) {
                 </Card>
             </Col>
         </Row>
-    </div>;
+    </AdminPage>;
 }

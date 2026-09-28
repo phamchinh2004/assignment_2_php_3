@@ -1,6 +1,8 @@
 import { Button, Card, Col, Form, Input, Pagination, Row, Select, Segmented, Space, Statistic, Table, Tag, Typography } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
 import { spaNavigate } from '../../../navigation';
+import { AdminDataCard, AdminPage, AdminPageHeader } from '../../../components/admin/AdminUi';
+import { AdminDatePicker } from '../../../components/admin/AdminDatePicker';
 
 const { Text, Title } = Typography;
 const routeFor = (template, id) => String(template || '').replace('__FROZEN_ID__', encodeURIComponent(String(id)));
@@ -60,8 +62,8 @@ export default function OrderDistributionListPage({ config }) {
     const statusOptions = [{ value: '', label: 'Tất cả' }, ...statuses.map((item) => ({ value: item.name, label: item.display_name })), { value: 'unknown', label: 'Chưa ghi nhận' }];
     const assignerOptions = [{ value: '', label: 'Tất cả người phân phối' }, ...(config.assigners || []).map((user) => ({ value: String(user.id), label: user.full_name || user.username }))];
 
-    return <div className="container-fluid px-4 pb-5">
-        <div className="mb-4"><Title level={2}>Phân phối đơn hàng</Title><Text type="secondary">Audit đơn đã phân phối, người nhận, nguồn phân phối và tiến độ xử lý.</Text></div>
+    return <AdminPage>
+        <AdminPageHeader eyebrow="Audit vận hành" title="Phân phối đơn hàng" description="Audit đơn đã phân phối, người nhận, nguồn phân phối và tiến độ xử lý." />
 
         <Row gutter={[16,16]} className="mb-4">
             <Col xs={12} lg={6}><Card><Statistic title="Tổng" value={Number(stats.total || 0)} /></Card></Col>
@@ -74,13 +76,13 @@ export default function OrderDistributionListPage({ config }) {
             <Form layout="vertical" onFinish={applyFilters} initialValues={{ ...filters, assigned_by: filters.assigned_by ? String(filters.assigned_by) : '', status: filters.status || '', source: filters.source || '', sort: filters.sort || 'created_at', direction: filters.direction || 'desc' }}>
                 <Row gutter={12}>
                     <Col xs={24} md={8}><Form.Item label="Tìm kiếm" name="q"><Input name="q" prefix={<SearchOutlined/>} placeholder="Mã đơn, tên sản phẩm, người nhận..." /></Form.Item></Col>
-                    <Col xs={12} md={4}><Form.Item label="Trạng thái" name="status"><Select name="status" options={statusOptions} /></Form.Item></Col>
-                    <Col xs={12} md={4}><Form.Item label="Nguồn" name="source"><Select name="source" options={[{value:'',label:'Tất cả'},{value:'admin',label:'Admin giao'},{value:'spin',label:'Người dùng tự nhận'},{value:'unknown',label:'Chưa ghi nhận'}]} /></Form.Item></Col>
-                    <Col xs={12} md={4}><Form.Item label="Người phân phối" name="assigned_by"><Select name="assigned_by" showSearch optionFilterProp="label" options={assignerOptions} /></Form.Item></Col>
-                    <Col xs={12} md={4}><Form.Item label="User ID" name="user_id"><Input name="user_id" inputMode="numeric" /></Form.Item></Col>
-                    <Col xs={12} md={4}><Form.Item label="Order ID" name="order_id"><Input name="order_id" inputMode="numeric" /></Form.Item></Col>
-                    <Col xs={12} md={4}><Form.Item label="Từ ngày" name="from"><Input name="from" type="date" /></Form.Item></Col>
-                    <Col xs={12} md={4}><Form.Item label="Đến ngày" name="to"><Input name="to" type="date" /></Form.Item></Col>
+                    <Col xs={12} md={4}><Form.Item label="Trạng thái" name="status"><Select name="status" placeholder="Tất cả trạng thái" options={statusOptions} /></Form.Item></Col>
+                    <Col xs={12} md={4}><Form.Item label="Nguồn" name="source"><Select name="source" placeholder="Tất cả nguồn" options={[{value:'',label:'Tất cả'},{value:'admin',label:'Admin giao'},{value:'spin',label:'Người dùng tự nhận'},{value:'unknown',label:'Chưa ghi nhận'}]} /></Form.Item></Col>
+                    <Col xs={12} md={4}><Form.Item label="Người phân phối" name="assigned_by"><Select name="assigned_by" showSearch optionFilterProp="label" placeholder="Tất cả người phân phối" options={assignerOptions} /></Form.Item></Col>
+                    <Col xs={12} md={4}><Form.Item label="User ID" name="user_id"><Input name="user_id" inputMode="numeric" placeholder="Nhập User ID" /></Form.Item></Col>
+                    <Col xs={12} md={4}><Form.Item label="Order ID" name="order_id"><Input name="order_id" inputMode="numeric" placeholder="Nhập Order ID" /></Form.Item></Col>
+                    <Col xs={12} md={4}><Form.Item label="Từ ngày" name="from"><AdminDatePicker /></Form.Item></Col>
+                    <Col xs={12} md={4}><Form.Item label="Đến ngày" name="to"><AdminDatePicker /></Form.Item></Col>
                     <Col xs={12} md={4}><Form.Item label="Sắp xếp" name="sort"><Select name="sort" options={[{value:'created_at',label:'Ngày tạo'},{value:'updated_at',label:'Cập nhật'},{value:'id',label:'ID'},{value:'status',label:'Trạng thái'}]} /></Form.Item></Col>
                     <Col xs={12} md={4}><Form.Item label="Chiều" name="direction"><Select name="direction" options={[{value:'desc',label:'Giảm dần'},{value:'asc',label:'Tăng dần'}]} /></Form.Item></Col>
                 </Row>
@@ -88,9 +90,13 @@ export default function OrderDistributionListPage({ config }) {
             </Form>
         </Card>
 
-        <Card title="Danh sách đơn phân phối" extra={<Segmented value={String(filters.status || '')} onChange={changeQuickStatus} options={[{label:`Tất cả (${stats.total || 0})`,value:''},{label:`Chờ xử lý (${stats.pending || 0})`,value:'pending'},{label:`Hoàn thành (${stats.completed || 0})`,value:'completed'}]} />}>
+        <AdminDataCard
+            title="Danh sách đơn phân phối"
+            description="Mở Audit để kiểm tra snapshot, lịch sử trạng thái và quyết toán."
+            extra={<Segmented value={String(filters.status || '')} onChange={changeQuickStatus} options={[{label:`Tất cả (${stats.total || 0})`,value:''},{label:`Chờ xử lý (${stats.pending || 0})`,value:'pending'},{label:`Hoàn thành (${stats.completed || 0})`,value:'completed'}]} />}
+        >
             <Table rowKey="id" dataSource={rows} columns={columns} pagination={false} scroll={{x:1150}} />
             {Number(page.last_page || 1) > 1 && <div className="d-flex justify-content-end mt-3"><Pagination current={Number(page.current_page || 1)} total={Number(page.total || 0)} pageSize={Number(page.per_page || 25)} showSizeChanger={false} onChange={changePage}/></div>}
-        </Card>
-    </div>;
+        </AdminDataCard>
+    </AdminPage>;
 }

@@ -1,10 +1,18 @@
 (() => {
-    const config = window.orderHistoryConfig || {};
-    const listRoute = config.routes?.list || '';
-    const orderRoute = config.routes?.order || '/order';
-    const csrf = config.csrf || document.querySelector('meta[name="csrf-token"]')?.content || '';
-    const userBalance = Number(config.userBalance || 0);
-    const labels = config.labels || {};
+    let listRoute = '';
+    let orderRoute = '/order';
+    let csrf = '';
+    let userBalance = 0;
+    let labels = {};
+
+    const syncConfig = () => {
+        const config = window.orderHistoryConfig || {};
+        listRoute = config.routes?.list || '';
+        orderRoute = config.routes?.order || '/order';
+        csrf = config.csrf || document.querySelector('meta[name="csrf-token"]')?.content || '';
+        userBalance = Number(config.userBalance || 0);
+        labels = config.labels || {};
+    };
 
     const statusConfig = {
         pending: { label: 'Chờ xử lý', tone: 'warning' },
@@ -483,6 +491,8 @@
         const root = document.querySelector('[data-order-history]');
         if (!root || root.dataset.orderHistoryInitialized === '1') return () => {};
         root.dataset.orderHistoryInitialized = '1';
+        syncConfig();
+        activeFilterId = 'btn_tat_ca';
 
         const savedTab = localStorage.getItem('tab_order') || 'tat-ca';
         const initialButton = Array.from(document.querySelectorAll('.history-filter-chip'))

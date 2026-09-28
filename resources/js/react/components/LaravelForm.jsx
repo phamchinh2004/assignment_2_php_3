@@ -1,4 +1,4 @@
-import { forwardRef } from 'react';
+import { forwardRef, useRef } from 'react';
 import { message } from 'antd';
 import { spaSubmitForm } from '../navigation';
 
@@ -20,20 +20,28 @@ export function oldValue(form, name, fallback = '') {
 const LaravelForm = forwardRef(function LaravelForm({ action, method = 'POST', children, onSubmit, spa = true, ...props }, ref) {
     const normalizedMethod = method.toUpperCase();
     const browserMethod = normalizedMethod === 'GET' ? 'GET' : 'POST';
+    const submittingRef = useRef(false);
 
     const handleSubmit = async (event) => {
         onSubmit?.(event);
         if (event.defaultPrevented || !spa || browserMethod === 'GET' || typeof window.__spaCommitBootstrap !== 'function') return;
 
         event.preventDefault();
+        if (submittingRef.current) return;
+
         const form = event.currentTarget;
         const submitter = event.nativeEvent?.submitter;
+        submittingRef.current = true;
+        if (submitter) submitter.disabled = true;
 
         try {
             await spaSubmitForm(form, submitter);
         } catch (error) {
             console.error('SPA form submission failed.', error);
             message.error('Không thể hoàn tất thao tác. Vui lòng thử lại.');
+        } finally {
+            submittingRef.current = false;
+            if (submitter?.isConnected) submitter.disabled = false;
         }
     };
 

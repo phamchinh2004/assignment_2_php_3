@@ -124,6 +124,9 @@
         }
 
         const navigationLink = event.target.closest('a.admin-sidebar__link, a.admin-sidebar__submenu-link');
+        if (navigationLink && event.detail > 0) {
+            navigationLink.blur();
+        }
         if (navigationLink && !desktopQuery.matches) {
             closeMobile();
         }

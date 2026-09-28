@@ -19,6 +19,7 @@ export default function OrderPage({ config }) {
     useEffect(() => {
         let cleanup = null;
         let cancelled = false;
+        const previousConfig = window.orderHistoryConfig;
         window.orderHistoryConfig = {
             routes: { list: config.routes.list, order: config.routes.order },
             csrf: config.csrf,
@@ -32,6 +33,8 @@ export default function OrderPage({ config }) {
         return () => {
             cancelled = true;
             cleanup?.();
+            if (previousConfig === undefined) delete window.orderHistoryConfig;
+            else window.orderHistoryConfig = previousConfig;
         };
     }, [config]);
 

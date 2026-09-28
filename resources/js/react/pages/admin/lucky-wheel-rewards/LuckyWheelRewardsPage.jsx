@@ -1,13 +1,10 @@
 import {
     Button,
     Card,
-    Col,
     Pagination,
     Popconfirm,
-    Row,
     Segmented,
     Space,
-    Statistic,
     Switch,
     Table,
     Tag,
@@ -22,8 +19,9 @@ import {
 } from '@ant-design/icons';
 import LaravelForm from '../../../components/LaravelForm';
 import { spaNavigate } from '../../../navigation';
+import { AdminDataCard, AdminMetricGrid, AdminPage, AdminPageHeader } from '../../../components/admin/AdminUi';
 
-const { Text, Title } = Typography;
+const { Text } = Typography;
 
 const replaceId = (template, token, id) => String(template || '').replace(token, encodeURIComponent(String(id)));
 const money = (value) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(value || 0));
@@ -160,14 +158,13 @@ export default function LuckyWheelRewardsPage({ config }) {
     ];
 
     return (
-        <div className="container-fluid px-4 pb-5">
-            <div className="d-flex justify-content-between align-items-start gap-3 mb-4 flex-wrap">
-                <div>
-                    <Title level={2} style={{ marginBottom: 4 }}>Quản lý phần thưởng vòng quay</Title>
-                    <Text type="secondary">Duyệt thưởng tiền mặt và cộng vào tài khoản theo luồng thưởng hiện có.</Text>
-                </div>
-
-                {permissions.configureAutoApproval && (
+        <AdminPage>
+            <AdminPageHeader
+                eyebrow="Giao dịch khách hàng"
+                icon={<GiftOutlined />}
+                title="Quản lý phần thưởng vòng quay"
+                description="Duyệt thưởng tiền mặt và cộng vào tài khoản theo luồng thưởng hiện có."
+                actions={permissions.configureAutoApproval ? (
                     <Card size="small" style={{ minWidth: 300 }}>
                         <Space align="center">
                             <div>
@@ -183,20 +180,21 @@ export default function LuckyWheelRewardsPage({ config }) {
                             />
                         </Space>
                     </Card>
-                )}
-            </div>
+                ) : null}
+            />
 
-            <Row gutter={[16, 16]} className="mb-4">
-                <Col xs={24} sm={12} lg={8} xl={4}><Card><Statistic title="Tổng phần thưởng" value={Number(counts.total || 0)} prefix={<GiftOutlined />} formatter={integer} /></Card></Col>
-                <Col xs={24} sm={12} lg={8} xl={5}><Card><Statistic title="Chờ duyệt" value={Number(counts.pending || 0)} prefix={<ClockCircleOutlined />} formatter={integer} /></Card></Col>
-                <Col xs={24} sm={12} lg={8} xl={5}><Card><Statistic title="Đã duyệt" value={Number(counts.approved || 0)} prefix={<CheckCircleOutlined />} formatter={integer} /></Card></Col>
-                <Col xs={24} sm={12} lg={8} xl={5}><Card><Statistic title="Đã từ chối" value={Number(counts.rejected || 0)} prefix={<CloseCircleOutlined />} formatter={integer} /></Card></Col>
-                <Col xs={24} sm={12} lg={8} xl={5}><Card><Statistic title="Đã trả thưởng" value={Number(counts.paid_amount || 0)} precision={2} prefix={<DollarOutlined />} /></Card></Col>
-            </Row>
+            <AdminMetricGrid min={4} className="lucky-wheel-reward-metrics" items={[
+                { key: 'total', title: 'Tổng phần thưởng', value: Number(counts.total || 0), tone: 'primary', icon: <GiftOutlined />, formatter: integer },
+                { key: 'pending', title: 'Chờ duyệt', value: Number(counts.pending || 0), tone: 'warning', icon: <ClockCircleOutlined />, formatter: integer },
+                { key: 'approved', title: 'Đã duyệt', value: Number(counts.approved || 0), tone: 'success', icon: <CheckCircleOutlined />, formatter: integer },
+                { key: 'rejected', title: 'Đã từ chối', value: Number(counts.rejected || 0), tone: 'danger', icon: <CloseCircleOutlined />, formatter: integer },
+                { key: 'paid', title: 'Đã trả thưởng', value: Number(counts.paid_amount || 0), tone: 'info', icon: <DollarOutlined />, precision: 2, prefix: '$' },
+            ]} />
 
-            <Card
+            <AdminDataCard
                 title="Danh sách phần thưởng"
-                extra={(
+                description="Lọc theo trạng thái và xử lý từng phần thưởng đang chờ duyệt."
+                toolbar={(
                     <Segmented
                         value={selectedStatus}
                         onChange={goToStatus}
@@ -229,7 +227,7 @@ export default function LuckyWheelRewardsPage({ config }) {
                         />
                     </div>
                 )}
-            </Card>
-        </div>
+            </AdminDataCard>
+        </AdminPage>
     );
 }

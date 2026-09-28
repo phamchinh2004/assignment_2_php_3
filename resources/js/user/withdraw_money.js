@@ -2,6 +2,16 @@ function initWithdrawPage() {
     const page = document.querySelector('.withdraw-page');
     if (!page || page.dataset.withdrawInitialized === '1') return () => {};
     page.dataset.withdrawInitialized = '1';
+    const controller = new AbortController();
+    const listenerOptions = { signal: controller.signal };
+    let amountNumeric = null;
+
+    const cleanup = () => {
+        controller.abort();
+        amountNumeric?.remove?.();
+        delete page.dataset.withdrawInitialized;
+    };
+
     const config = document.getElementById('withdrawal-config');
     const amountInput = document.getElementById('amount_input_field');
     const maxButton = document.getElementById('withdraw_all');
@@ -14,7 +24,7 @@ function initWithdrawPage() {
     const bankName = document.getElementById('select_bank_name');
     const accountNumber = document.getElementById('account_number');
 
-    if (!config || !amountInput || !submitButton) return;
+    if (!config || !amountInput || !submitButton) return cleanup;
 
     const maximumAmount = Number(config.dataset.maxAmount || 0);
     const feeRate = Number(config.dataset.feeRate || 0);
@@ -22,7 +32,7 @@ function initWithdrawPage() {
     const hasPassword = config.dataset.hasPassword === '1';
     const bankLabel = config.dataset.bankName || '';
     const accountMask = config.dataset.accountMask || '';
-    const amountNumeric = new AutoNumeric('#amount_input_field', {
+    amountNumeric = new AutoNumeric('#amount_input_field', {
         currencySymbol: '$',
         decimalCharacter: '.',
         digitGroupSeparator: ',',
@@ -58,12 +68,12 @@ function initWithdrawPage() {
         setAmountError(amount > maximumAmount ? `Số tiền tối đa có thể nhập lúc này là ${formatMoney(maximumAmount)} USD.` : '');
     };
 
-    amountInput.addEventListener('input', updateReview);
+    amountInput.addEventListener('input', updateReview, listenerOptions);
     maxButton?.addEventListener('click', function () {
         amountNumeric.set(maximumAmount);
         updateReview();
         amountInput.focus();
-    });
+    }, listenerOptions);
 
     document.querySelectorAll('.password-toggle').forEach((button) => {
         button.addEventListener('click', function () {
@@ -76,7 +86,7 @@ function initWithdrawPage() {
                 icon.classList.toggle('fa-eye', showing);
                 icon.classList.toggle('fa-eye-slash', !showing);
             }
-        });
+        }, listenerOptions);
     });
 
     const validate = () => {
@@ -142,6 +152,7 @@ function initWithdrawPage() {
                 transaction_password: transactionPassword.value,
                 confirm_transaction_password: confirmTransactionPassword?.value || '',
             }),
+            signal: controller.signal,
         });
 
         const body = await response.text();
@@ -184,18 +195,17 @@ function initWithdrawPage() {
             }
             notification('warning', result.message || trans.LoiKetNoi, trans.CanhBao);
         } catch (error) {
+            if (error?.name === 'AbortError') return;
             console.error(error);
             notification('warning', trans.LoiKetNoi, trans.CanhBao);
         } finally {
             setLoading(false);
         }
-    });
+    }, listenerOptions);
 
     submitButton.disabled = submitBlocked;
     updateReview();
-    return () => {
-        delete page.dataset.withdrawInitialized;
-    };
+    return cleanup;
 }
 
 window.__initWithdrawPage = initWithdrawPage;

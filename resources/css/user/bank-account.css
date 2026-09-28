@@ -32,9 +32,9 @@
 }
 
 .bank-account-card {
-    display: grid;
-    grid-template-columns: 44px minmax(0, 1fr) auto;
+    display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 11px;
     width: 100%;
     min-height: 86px;
@@ -51,6 +51,14 @@
     -webkit-tap-highlight-color: transparent;
 }
 
+.bank-account-card__main {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
 .bank-account-card.is-linked {
     border-color: #d8e2c5;
     background: linear-gradient(145deg, #ffffff 0%, #f8fbf2 100%);
@@ -64,6 +72,7 @@
     display: grid;
     width: 44px;
     height: 44px;
+    flex: 0 0 auto;
     place-items: center;
     border-radius: 14px;
     background: var(--bank-ink);
@@ -120,6 +129,7 @@
 .bank-account-card__side {
     justify-items: end;
     gap: 6px;
+    flex: 0 0 auto;
 }
 
 .bank-account-card__status,
@@ -815,15 +825,9 @@
 }
 
 @media (max-width: 619px) {
-    .bank-account-card {
-        grid-template-columns: 42px minmax(0, 1fr);
-    }
-
     .bank-account-card__side {
-        grid-column: 2;
-        grid-template-columns: auto 1fr;
-        align-items: center;
-        justify-items: start;
+        grid-template-columns: 1fr;
+        justify-items: end;
     }
 
     .bank-account-dialog {

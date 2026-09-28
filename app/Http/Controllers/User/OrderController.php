@@ -182,14 +182,6 @@ class OrderController extends Controller
             $user->refresh();
         }
 
-        if (!$hasPreciseLocation && blank($user->approx_location_country_code)) {
-            return response()->json([
-                'status' => 403,
-                'message' => 'Không thể xác định quốc gia hiện tại của bạn. Vui lòng thử lại hoặc cấp quyền vị trí.',
-                'location_required' => true,
-            ]);
-        }
-
         $get_frozen_order = Frozen_order::with('order')->find($frozen_id);
 
         if (!$get_frozen_order) {

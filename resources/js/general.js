@@ -382,7 +382,17 @@ window.change_password = async function () {
         spinner.hidden = true;
         return;
     }
-    const result = await request_change_password(present_password, password, confirmPassword);
+    if (form_change_password.dataset.submitting === '1') return;
+    form_change_password.dataset.submitting = '1';
+    let result;
+    try {
+        result = await request_change_password(present_password, password, confirmPassword);
+    } catch (error) {
+        spinner.hidden = true;
+        return;
+    } finally {
+        delete form_change_password.dataset.submitting;
+    }
     if (result.status === 200) {
         notification('success', result.message, 'Successfully!');
         // Close modal
@@ -452,7 +462,17 @@ window.change_transaction_password = async function () {
         spinner.hidden = true;
         return;
     }
-    const result = await change_transaction_password(present_transaction_password, password);
+    if (form_change_transaction_password.dataset.submitting === '1') return;
+    form_change_transaction_password.dataset.submitting = '1';
+    let result;
+    try {
+        result = await change_transaction_password(present_transaction_password, password);
+    } catch (error) {
+        spinner.hidden = true;
+        return;
+    } finally {
+        delete form_change_transaction_password.dataset.submitting;
+    }
     if (result.status === 200) {
         notification('success', result.message, 'Successfully!');
         // Close modal
@@ -510,7 +530,17 @@ window.reset_transaction_password = async function () {
     }
     const present_login_password = form.get('present_login_password');
 
-    const result = await reset_transaction_password(present_login_password);
+    if (form_reset_transaction_password.dataset.submitting === '1') return;
+    form_reset_transaction_password.dataset.submitting = '1';
+    let result;
+    try {
+        result = await reset_transaction_password(present_login_password);
+    } catch (error) {
+        spinner.hidden = true;
+        return;
+    } finally {
+        delete form_reset_transaction_password.dataset.submitting;
+    }
     if (result.status === 200) {
         notification('success', result.message, 'Successfully!');
         AppDialog.alert({

@@ -10,6 +10,7 @@ use App\Models\Status;
 use App\Services\AuthorizationService;
 use App\Services\OrderStatusService;
 use App\Services\ReactPageService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -23,7 +24,7 @@ class OrderReportController extends Controller
     ) {
     }
 
-    public function index(Request $request): View
+    public function index(Request $request): View|JsonResponse
     {
         $status = $request->input('status', 'pending');
 
@@ -56,7 +57,7 @@ class OrderReportController extends Controller
         ], 'Đơn hàng bị báo cáo');
     }
 
-    public function show(OrderReport $orderReport): View
+    public function show(OrderReport $orderReport): View|JsonResponse
     {
         $orderReport->load([
             'frozenOrder.order.partner',

@@ -10,6 +10,7 @@ use App\Models\Transaction_history;
 use App\Models\User;
 use App\Services\AuthorizationService;
 use App\Services\ReactPageService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -25,7 +26,7 @@ class TransactionHistoryController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index_withdraw(AuthorizationService $authorization): View
+    public function index_withdraw(AuthorizationService $authorization): View|JsonResponse
     {
         $query = Wallet_balance_history::with('user', 'byUser')
             // ->whereHas('user', function ($q) {
@@ -122,7 +123,7 @@ class TransactionHistoryController extends Controller
 
         return back()->with($result[0], $result[1]);
     }
-    public function index_deposit(AuthorizationService $authorization): View
+    public function index_deposit(AuthorizationService $authorization): View|JsonResponse
     {
         $query = Wallet_balance_history::with('user', 'byUser')
             // ->whereHas('user', function ($q) {

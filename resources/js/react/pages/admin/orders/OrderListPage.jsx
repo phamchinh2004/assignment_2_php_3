@@ -3,14 +3,9 @@ import {
     Alert,
     Avatar,
     Button,
-    Card,
-    Col,
     Input,
-    Row,
-    Segmented,
     Select,
     Space,
-    Statistic,
     Table,
     Tag,
     Typography,
@@ -28,9 +23,10 @@ import {
     StopOutlined,
     UnlockOutlined,
 } from '@ant-design/icons';
+import { AdminPage } from '../../../components/admin/AdminUi';
 import '../../../../../css/admin/order/index.css';
 
-const { Text, Title } = Typography;
+const { Text } = Typography;
 
 function routeFor(template, id) {
     return String(template || '').replace('__ORDER_ID__', encodeURIComponent(String(id)));
@@ -63,6 +59,12 @@ function formatDateTime(value) {
         minute: '2-digit',
         hour12: false,
     }).format(date);
+}
+
+function percentage(value, total) {
+    const denominator = Number(total || 0);
+    if (!denominator) return 0;
+    return Math.round((Number(value || 0) / denominator) * 100);
 }
 
 function paymentTag(method) {
@@ -338,45 +340,109 @@ export default function OrderListPage({ config }) {
     const stats = config.stats || {};
 
     return (
-        <div className="order-react-page">
-            <div className="order-react-header">
-                <div>
-                    <Title level={2} className="order-react-title">Quản lý đơn hàng</Title>
-                    <Text type="secondary">Theo dõi kho đơn hàng mẫu, giá bán, hoa hồng và trạng thái phân phối.</Text>
+        <AdminPage className="order-react-page">
+            <header className="order-page-header">
+                <div className="order-page-heading">
+                    <span className="order-page-heading__icon" aria-hidden="true"><ShoppingOutlined /></span>
+                    <div>
+                        <span className="order-page-eyebrow">Vận hành đơn hàng</span>
+                        <h1>Quản lý đơn hàng</h1>
+                        <p>Theo dõi kho đơn hàng mẫu, giá bán, hoa hồng và trạng thái phân phối trên một màn hình.</p>
+                    </div>
                 </div>
                 {permissions.create && (
                     <Button type="primary" size="large" icon={<PlusOutlined />} href={config.routes.create}>
                         Tạo đơn hàng mới
                     </Button>
                 )}
-            </div>
+            </header>
 
-            <Row gutter={[16, 16]} className="order-react-stats">
-                <Col xs={24} sm={12} xl={6}>
-                    <Card><Statistic title="Tổng đơn hàng" value={stats.total || 0} prefix={<ShoppingOutlined />} /></Card>
-                </Col>
-                <Col xs={24} sm={12} xl={6}>
-                    <Card><Statistic title="Đang hoạt động" value={stats.active || 0} prefix={<CheckCircleOutlined />} /></Card>
-                </Col>
-                <Col xs={24} sm={12} xl={6}>
-                    <Card><Statistic title="Tạm ngừng / Khóa" value={stats.inactive || 0} prefix={<LockOutlined />} /></Card>
-                </Col>
-                <Col xs={24} sm={12} xl={6}>
-                    <Card><Statistic title="Tổng giá trị đơn" value={Number(stats.totalValue || 0)} precision={2} prefix={<DollarOutlined />} suffix="$" /></Card>
-                </Col>
-            </Row>
+            <section className="order-metric-grid" aria-label="Tổng quan đơn hàng">
+                <article className="order-metric-card order-metric-card--primary">
+                    <span className="order-metric-card__icon"><ShoppingOutlined /></span>
+                    <div className="order-metric-card__body">
+                        <span>Tổng đơn hàng</span>
+                        <strong>{stats.total || 0}</strong>
+                        <small>Toàn bộ kho đơn hiện có</small>
+                    </div>
+                    <span className="order-metric-card__watermark"><ShoppingOutlined /></span>
+                </article>
+                <article className="order-metric-card order-metric-card--success">
+                    <span className="order-metric-card__icon"><CheckCircleOutlined /></span>
+                    <div className="order-metric-card__body">
+                        <span>Đang hoạt động</span>
+                        <div className="order-metric-card__value-row">
+                            <strong>{stats.active || 0}</strong>
+                            <em>{percentage(stats.active, stats.total)}%</em>
+                        </div>
+                        <small>Sẵn sàng phân phối</small>
+                    </div>
+                    <span className="order-metric-card__watermark"><CheckCircleOutlined /></span>
+                </article>
+                <article className="order-metric-card order-metric-card--danger">
+                    <span className="order-metric-card__icon"><LockOutlined /></span>
+                    <div className="order-metric-card__body">
+                        <span>Tạm ngừng / Khóa</span>
+                        <div className="order-metric-card__value-row">
+                            <strong>{stats.inactive || 0}</strong>
+                            <em>{percentage(stats.inactive, stats.total)}%</em>
+                        </div>
+                        <small>Cần kiểm tra trước khi dùng</small>
+                    </div>
+                    <span className="order-metric-card__watermark"><LockOutlined /></span>
+                </article>
+                <article className="order-metric-card order-metric-card--info">
+                    <span className="order-metric-card__icon"><DollarOutlined /></span>
+                    <div className="order-metric-card__body">
+                        <span>Tổng giá trị đơn</span>
+                        <strong className="order-metric-card__money">${formatMoney(stats.totalValue)}</strong>
+                        <small>Giá trị danh mục hiện tại</small>
+                    </div>
+                    <span className="order-metric-card__watermark"><DollarOutlined /></span>
+                </article>
+            </section>
 
-            <Card className="order-react-card" title="Danh sách đơn hàng">
-                <div className="order-react-toolbar">
-                    <Segmented
-                        value={status}
-                        onChange={handleStatusChange}
-                        options={[
-                            { label: `Tất cả (${stats.total || 0})`, value: '' },
-                            { label: `Đang hoạt động (${stats.active || 0})`, value: '1' },
-                            { label: `Tạm ngừng (${stats.inactive || 0})`, value: '0' },
-                        ]}
+            <section className="order-list-card">
+                <div className="order-list-card__header">
+                    <div className="order-list-title">
+                        <span className="order-list-title__icon"><ShoppingOutlined /></span>
+                        <div>
+                            <h2>Danh sách đơn hàng</h2>
+                            <p>Tìm kiếm, lọc và thao tác nhanh trên toàn bộ kho đơn hàng.</p>
+                        </div>
+                    </div>
+                    <Input
+                        allowClear
+                        value={search}
+                        onChange={(event) => setSearch(event.target.value)}
+                        prefix={<SearchOutlined />}
+                        placeholder="Tìm mã đơn, khách hàng, SĐT..."
+                        className="order-react-search"
                     />
+                </div>
+
+                <div className="order-react-toolbar">
+                    <div className="order-status-tabs" role="tablist" aria-label="Lọc trạng thái đơn hàng">
+                        {[
+                            { label: 'Tất cả', value: '', count: stats.total || 0, tone: 'primary' },
+                            { label: 'Đang hoạt động', value: '1', count: stats.active || 0, tone: 'success' },
+                            { label: 'Tạm ngừng', value: '0', count: stats.inactive || 0, tone: 'danger' },
+                        ].map((item) => (
+                            <button
+                                key={item.value || 'all'}
+                                type="button"
+                                role="tab"
+                                aria-selected={status === item.value}
+                                className={`order-status-tab order-status-tab--${item.tone}${status === item.value ? ' is-active' : ''}`}
+                                onClick={() => handleStatusChange(item.value)}
+                            >
+                                {item.value !== '' && <i />}
+                                <span>{item.label}</span>
+                                <small>{item.count}</small>
+                            </button>
+                        ))}
+                    </div>
+                    <div className="order-toolbar-actions">
                     <Select
                         allowClear
                         value={rank || undefined}
@@ -388,17 +454,10 @@ export default function OrderListPage({ config }) {
                             label: `${item.name} (${item.orders_count || 0})`,
                         }))}
                     />
-                    <Input
-                        allowClear
-                        value={search}
-                        onChange={(event) => setSearch(event.target.value)}
-                        prefix={<SearchOutlined />}
-                        placeholder="Tìm mã đơn, khách hàng, SĐT..."
-                        className="order-react-search"
-                    />
                     <Button icon={<ReloadOutlined />} onClick={loadOrders} loading={loading}>
                         Tải lại
                     </Button>
+                    </div>
                 </div>
 
                 {error && (
@@ -416,6 +475,7 @@ export default function OrderListPage({ config }) {
                     columns={columns}
                     dataSource={filteredOrders}
                     loading={loading}
+                    className="order-react-table"
                     scroll={{ x: 1450 }}
                     pagination={{
                         defaultPageSize: 10,
@@ -425,7 +485,7 @@ export default function OrderListPage({ config }) {
                     }}
                     locale={{ emptyText: error ? 'Không có dữ liệu để hiển thị' : 'Chưa có đơn hàng' }}
                 />
-            </Card>
-        </div>
+            </section>
+        </AdminPage>
     );
 }

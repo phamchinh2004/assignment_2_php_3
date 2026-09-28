@@ -1,10 +1,11 @@
-import { Button, Card, Popconfirm, Space, Statistic, Table, Tag, Typography, message } from 'antd';
+import { Button, Popconfirm, Space, Table, Tag, Typography, message } from 'antd';
 import { CheckCircleOutlined, EyeOutlined, LockOutlined, PlusOutlined, PictureOutlined, UnlockOutlined } from '@ant-design/icons';
 import LaravelForm from '../../../components/LaravelForm';
 import { spaGetAction } from '../../../navigation';
+import { AdminDataCard, AdminMetricGrid, AdminPage, AdminPageHeader } from '../../../components/admin/AdminUi';
 import './banner.css';
 
-const { Text, Title } = Typography;
+const { Text } = Typography;
 
 function routeFor(template, id) {
     return String(template || '').replace('__BANNER_ID__', encodeURIComponent(String(id)));
@@ -88,24 +89,22 @@ export default function BannerListPage({ config }) {
     ];
 
     return (
-        <div className="container-fluid px-4 pb-5">
-            <div className="page-header-wrapper d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
-                <div>
-                    <Title level={2}>Quản lý banner quảng cáo</Title>
-                    <Text type="secondary">Quản lý các slide banner hiển thị tại trang chủ và ứng dụng thành viên</Text>
-                </div>
-                {permissions.create && <Button type="primary" size="large" icon={<PlusOutlined />} href={config.routes.create}>Thêm banner mới</Button>}
-            </div>
-
-            <div className="row mb-4">
-                <div className="col-md-4 mb-3"><Card><Statistic title="Tổng bộ banner" value={banners.length} prefix={<PictureOutlined />} /></Card></div>
-                <div className="col-md-4 mb-3"><Card><Statistic title="Đang hiển thị" value={active} prefix={<CheckCircleOutlined />} /></Card></div>
-                <div className="col-md-4 mb-3"><Card><Statistic title="Tổng hình ảnh" value={totalImages} prefix={<PictureOutlined />} /></Card></div>
-            </div>
-
-            <Card title="Danh sách các bộ banner">
-                <Table rowKey="id" dataSource={banners} columns={columns} scroll={{ x: 980 }} pagination={{ pageSize: 10 }} />
-            </Card>
-        </div>
+        <AdminPage>
+            <AdminPageHeader
+                eyebrow="Nội dung hình ảnh"
+                icon={<PictureOutlined />}
+                title="Quản lý banner quảng cáo"
+                description="Quản lý các bộ slide đang dùng tại trang chủ và khu vực thành viên."
+                actions={permissions.create && <Button type="primary" icon={<PlusOutlined />} href={config.routes.create}>Thêm banner mới</Button>}
+            />
+            <AdminMetricGrid min={3} items={[
+                {key:'sets',title:'Tổng bộ banner',value:banners.length,tone:'primary'},
+                {key:'active',title:'Đang hiển thị',value:active,tone:'success'},
+                {key:'images',title:'Tổng hình ảnh',value:totalImages,tone:'info'},
+            ]} />
+            <AdminDataCard title="Danh sách bộ banner" description="Xem nhanh số slide và trạng thái hiển thị trước khi chỉnh sửa hoặc ẩn một bộ banner.">
+                <Table rowKey="id" dataSource={banners} columns={columns} scroll={{ x: 980 }} pagination={{ pageSize: 10 }} locale={{emptyText:'Chưa có bộ banner'}} />
+            </AdminDataCard>
+        </AdminPage>
     );
 }

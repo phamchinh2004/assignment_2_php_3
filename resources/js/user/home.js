@@ -3,6 +3,8 @@ function initHomePage() {
     if (!root || root.dataset.homePageInitialized === '1') return () => {};
     root.dataset.homePageInitialized = '1';
     const cleanupFns = [];
+    const controller = new AbortController();
+    const listenerOptions = { signal: controller.signal };
 
     const config = window.homePageConfig || {};
     const messages = config.messages || {};
@@ -13,13 +15,18 @@ function initHomePage() {
         const closeButton = announcement.querySelector(
             "[data-home-announcement-close]",
         );
+        let hideTimer = null;
 
         closeButton?.addEventListener("click", () => {
             announcement.classList.add("is-hiding");
-            window.setTimeout(() => {
+            hideTimer = window.setTimeout(() => {
+                hideTimer = null;
                 announcement.hidden = true;
                 announcement.classList.remove("is-hiding");
             }, 180);
+        }, listenerOptions);
+        cleanupFns.push(() => {
+            if (hideTimer) window.clearTimeout(hideTimer);
         });
     }
 
@@ -31,7 +38,7 @@ function initHomePage() {
             text: messages.depositUnavailableText || "",
             confirmText: "Đóng",
         });
-    });
+    }, listenerOptions);
 
     const tabButtons = [
         ...root.querySelectorAll(".home-info-tab[data-content-target]"),
@@ -57,7 +64,7 @@ function initHomePage() {
     };
 
     tabButtons.forEach((button) => {
-        button.addEventListener("click", () => activateInfoPanel(button));
+        button.addEventListener("click", () => activateInfoPanel(button), listenerOptions);
     });
 
     const activityStream = root.querySelector("[data-social-activity]");
@@ -257,34 +264,34 @@ function initHomePage() {
         previousButton?.addEventListener("click", () => {
             showTestimonial(currentIndex - 1);
             restartTestimonials();
-        });
+        }, listenerOptions);
 
         nextButton?.addEventListener("click", () => {
             showTestimonial(currentIndex + 1);
             restartTestimonials();
-        });
+        }, listenerOptions);
 
         dots.forEach((dot) => {
             dot.addEventListener("click", () => {
                 showTestimonial(Number(dot.dataset.testimonialDot || 0));
                 restartTestimonials();
-            });
+            }, listenerOptions);
         });
 
-        testimonials.addEventListener("mouseenter", stopTestimonials);
-        testimonials.addEventListener("mouseleave", startTestimonials);
-        testimonials.addEventListener("focusin", stopTestimonials);
+        testimonials.addEventListener("mouseenter", stopTestimonials, listenerOptions);
+        testimonials.addEventListener("mouseleave", startTestimonials, listenerOptions);
+        testimonials.addEventListener("focusin", stopTestimonials, listenerOptions);
         testimonials.addEventListener("focusout", (event) => {
             if (!testimonials.contains(event.relatedTarget))
                 startTestimonials();
-        });
+        }, listenerOptions);
 
         stage?.addEventListener(
             "touchstart",
             (event) => {
                 touchStartX = event.touches[0]?.clientX || 0;
             },
-            { passive: true },
+            { passive: true, signal: controller.signal },
         );
 
         stage?.addEventListener(
@@ -296,7 +303,7 @@ function initHomePage() {
                 showTestimonial(currentIndex + (distance > 0 ? 1 : -1));
                 restartTestimonials();
             },
-            { passive: true },
+            { passive: true, signal: controller.signal },
         );
 
         const handleTestimonialVisibility = () => document.hidden ? stopTestimonials() : startTestimonials();
@@ -313,6 +320,7 @@ function initHomePage() {
     }
 
     return () => {
+        controller.abort();
         cleanupFns.reverse().forEach((cleanup) => cleanup());
         delete root.dataset.homePageInitialized;
     };

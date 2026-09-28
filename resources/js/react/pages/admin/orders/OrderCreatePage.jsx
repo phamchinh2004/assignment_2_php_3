@@ -2,25 +2,22 @@ import { useMemo, useState } from 'react';
 import {
     Alert,
     Button,
-    Card,
     Form,
     Select,
-    Space,
-    Typography,
     Upload,
     message,
 } from 'antd';
 import {
-    ArrowLeftOutlined,
     CloudUploadOutlined,
+    ShoppingOutlined,
     ThunderboltOutlined,
 } from '@ant-design/icons';
 import { requestJson } from '../../../lib/http';
 import { spaNavigate } from '../../../navigation';
+import { AdminPage, AdminPageHeader, AdminSectionCard } from '../../../components/admin/AdminUi';
 import './order-create.css';
 
 const { Dragger } = Upload;
-const { Text, Title } = Typography;
 
 function generateRandomSplit(total, count, decimals = 2) {
     if (count <= 0) return [];
@@ -112,20 +109,17 @@ export default function OrderCreatePage({ config }) {
     };
 
     return (
-        <div className="order-create-react-page">
+        <AdminPage width="form" className="order-create-react-page">
             {contextHolder}
-
-            <Button icon={<ArrowLeftOutlined />} href={config.routes.index} className="order-create-back">
-                Quay lại danh sách đơn hàng
-            </Button>
-
-            <Card>
-                <Space direction="vertical" size={4} className="order-create-heading">
-                    <Title level={3}>Tạo tự động đơn hàng</Title>
-                    <Text type="secondary">
-                        Chọn cấp độ và tải ảnh để hệ thống tự động sinh các đơn hàng.
-                    </Text>
-                </Space>
+            <AdminPageHeader
+                eyebrow="Vận hành đơn hàng"
+                icon={<ShoppingOutlined />}
+                title="Tạo tự động đơn hàng"
+                description="Chọn cấp độ và tải ảnh để hệ thống tự động sinh các đơn hàng theo cấu hình rank hiện tại."
+                backHref={config.routes.index}
+                backLabel="Danh sách đơn hàng"
+            />
+            <AdminSectionCard title="Nguồn tạo đơn" description="Mỗi ảnh tương ứng một đơn; số lượng tạo thực tế bị giới hạn bởi số đơn còn thiếu của rank và tối đa 20 đơn mỗi lần.">
 
                 {error && <Alert type="error" showIcon message={error} className="order-create-alert" />}
 
@@ -177,7 +171,7 @@ export default function OrderCreatePage({ config }) {
                         Bắt đầu tạo tự động
                     </Button>
                 </Form>
-            </Card>
-        </div>
+            </AdminSectionCard>
+        </AdminPage>
     );
 }

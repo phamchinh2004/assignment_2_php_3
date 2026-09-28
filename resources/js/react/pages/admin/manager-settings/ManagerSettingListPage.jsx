@@ -1,8 +1,9 @@
-import { Button, Card, Collapse, Popconfirm, Space, Statistic, Tag, Typography } from 'antd';
+import { Button, Card, Collapse, Popconfirm, Space, Tag, Typography } from 'antd';
 import { PlusOutlined, SafetyCertificateOutlined } from '@ant-design/icons';
 import LaravelForm from '../../../components/LaravelForm';
+import { AdminPage, AdminPageHeader } from '../../../components/admin/AdminUi';
 
-const { Text, Title } = Typography;
+const { Text } = Typography;
 const routeFor = (template, id) => String(template || '').replace('__SETTING_ID__', encodeURIComponent(String(id)));
 
 export default function ManagerSettingListPage({ config }) {
@@ -23,9 +24,15 @@ export default function ManagerSettingListPage({ config }) {
         </Card>)}</Space>,
     }));
 
-    return <div className="container-fluid px-4 pb-5">
-        <div className="page-header-wrapper d-flex justify-content-between align-items-center gap-3"><div><Title level={2}>Danh sách chức năng phân quyền</Title><Text type="secondary">Nhóm chức năng con theo chức năng cha.</Text></div><Button type="primary" icon={<PlusOutlined />} href={config.routes.create}>Thêm chức năng mới</Button></div>
-        <div className="mb-4"><Card><Statistic title="Tổng chức năng" value={Number(config.totalSettings || 0)} /></Card></div>
-        <Collapse items={items} defaultActiveKey={groups.map((group) => group.key)} />
-    </div>;
+    return <AdminPage width="content">
+        <AdminPageHeader
+            eyebrow="Phân quyền"
+            icon={<SafetyCertificateOutlined />}
+            title="Danh sách chức năng phân quyền"
+            description="Mỗi nhóm cha gom các quyền con cùng nghiệp vụ để trang cấp quyền cho nhân viên dễ đọc và ít cấp nhầm hơn."
+            meta={<Tag>{Number(config.totalSettings || 0)} chức năng</Tag>}
+            actions={<Button type="primary" icon={<PlusOutlined />} href={config.routes.create}>Thêm chức năng mới</Button>}
+        />
+        <Collapse className="admin-permission-collapse" items={items} defaultActiveKey={groups.map((group) => group.key)} />
+    </AdminPage>;
 }

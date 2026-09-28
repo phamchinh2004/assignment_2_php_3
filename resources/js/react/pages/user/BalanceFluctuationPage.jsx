@@ -41,6 +41,10 @@ export default function BalanceFluctuationPage({ config }) {
     };
 
     useEffect(() => {
+        let active = true;
+        let cleanupCharts = () => {};
+        const previousStatistics = window.transactionStatistics;
+
         window.transactionStatistics = {
             profitLoss: config.statistics.profitLossSeries || [],
             status: {
@@ -49,7 +53,18 @@ export default function BalanceFluctuationPage({ config }) {
                 cancelled: summary.cancelled_count,
             },
         };
-        import('../../../user/balance_fluctuation.js');
+
+        import('../../../user/balance_fluctuation.js').then(({ initTransactionCharts }) => {
+            if (!active) return;
+            cleanupCharts = initTransactionCharts();
+        });
+
+        return () => {
+            active = false;
+            cleanupCharts();
+            if (previousStatistics === undefined) delete window.transactionStatistics;
+            else window.transactionStatistics = previousStatistics;
+        };
     }, [config.statistics.profitLossSeries, summary.cancelled_count, summary.completed_count, summary.pending_count]);
 
     return (

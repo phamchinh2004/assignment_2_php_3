@@ -1,9 +1,11 @@
-import { Button, Card, Checkbox, Collapse, Input, Space, Switch, Tag, Typography, message } from 'antd';
+import { Button, Checkbox, Collapse, Input, Space, Switch, Tag, Typography, message } from 'antd';
+import { SafetyCertificateOutlined } from '@ant-design/icons';
 import { useMemo, useState } from 'react';
 import LaravelForm from '../../../components/LaravelForm';
 import { requestJson } from '../../../lib/http';
+import { AdminPage, AdminPageHeader, AdminSectionCard } from '../../../components/admin/AdminUi';
 
-const { Text, Title } = Typography;
+const { Text } = Typography;
 
 export default function StaffPermissionsPage({ config }) {
     const [groups, setGroups] = useState(config.permissionGroups || []);
@@ -55,17 +57,42 @@ export default function StaffPermissionsPage({ config }) {
         return {
             key: group.key,
             label: <Space><Checkbox checked={ids.length>0&&checkedCount===ids.length} indeterminate={checkedCount>0&&checkedCount<ids.length} onClick={(event)=>event.stopPropagation()} onChange={(event)=>setGroupSelection(group,event.target.checked)}/><Text strong>{group.label}</Text><Tag>{ids.length} quyền</Tag></Space>,
-            children: <Space direction="vertical" size="middle" style={{width:'100%'}}>{(group.permissions||[]).map((permission)=>{
+            children: <div className="admin-permission-grid">{(group.permissions||[]).map((permission)=>{
                 const id=Number(permission.assignment?.id);
-                return <Card size="small" key={id}><div className="d-flex justify-content-between align-items-center gap-3"><Space align="start"><Checkbox checked={selected.includes(id)} onChange={(event)=>setSelected((current)=>event.target.checked?Array.from(new Set([...current,id])):current.filter((value)=>value!==id))}/><div><Text strong>{permission.label}</Text><div><Text code>{permission.code}</Text></div></div></Space><Switch checked={Boolean(permission.active)} loading={loadingId===id} onChange={()=>togglePermission(permission)}/></div></Card>;
-            })}</Space>,
+                const isSelected=selected.includes(id);
+                return <div className={`admin-permission-item${isSelected?' is-selected':''}`} key={id}>
+                    <Checkbox
+                        aria-label={`Chọn quyền ${permission.label}`}
+                        checked={isSelected}
+                        onChange={(event)=>setSelected((current)=>event.target.checked?Array.from(new Set([...current,id])):current.filter((value)=>value!==id))}
+                    />
+                    <div className="admin-permission-item__content">
+                        <Text strong className="admin-permission-item__label">{permission.label}</Text>
+                        <Text type="secondary" className="admin-permission-item__code" title={permission.code}>{permission.code}</Text>
+                    </div>
+                    <Switch
+                        size="small"
+                        aria-label={`${permission.active?'Thu hồi':'Cấp'} quyền ${permission.label}`}
+                        checked={Boolean(permission.active)}
+                        loading={loadingId===id}
+                        onChange={()=>togglePermission(permission)}
+                    />
+                </div>;
+            })}</div>,
         };
     });
 
-    return <div className="container-fluid px-4 pb-5">
-        <Button href={config.routes.index} style={{marginBottom:16}}>Quay lại danh sách nhân viên</Button>
-        <div className="mb-4"><Title level={2}>Phân quyền: {config.staff?.full_name || config.staff?.username}</Title><Text type="secondary">@{config.staff?.username} · quyền được nhóm theo chức năng trong registry hiện tại.</Text></div>
-        <Card>
+    return <AdminPage width="content">
+        <AdminPageHeader
+            eyebrow="Phân quyền nhân sự"
+            icon={<SafetyCertificateOutlined />}
+            title={`Phân quyền: ${config.staff?.full_name || config.staff?.username}`}
+            description="Bật/tắt từng quyền hoặc chọn nhiều quyền để cấp và thu hồi theo nhóm. Các quyền được nhóm theo chức năng nghiệp vụ."
+            backHref={config.routes.index}
+            backLabel="Danh sách nhân sự"
+            meta={<Tag>@{config.staff?.username}</Tag>}
+        />
+        <AdminSectionCard title="Danh sách quyền" description="Tìm theo module, tên hoặc mã quyền. Thao tác hàng loạt chỉ áp dụng cho các quyền đang được chọn.">
             <Space direction="vertical" size="middle" style={{width:'100%'}}>
                 <Input.Search value={query} onChange={(event)=>setQuery(event.target.value)} placeholder="Tìm theo module, tên quyền hoặc mã quyền..." allowClear/>
                 <div className="d-flex justify-content-between align-items-center gap-2 flex-wrap">
@@ -79,8 +106,8 @@ export default function StaffPermissionsPage({ config }) {
                         </LaravelForm>
                     </Space>
                 </div>
-                {collapseItems.length?<Collapse defaultActiveKey={collapseItems.map((item)=>item.key)} items={collapseItems}/>:<Text type="secondary">Không tìm thấy quyền phù hợp.</Text>}
+                {collapseItems.length?<Collapse className="admin-permission-collapse" defaultActiveKey={collapseItems.map((item)=>item.key)} items={collapseItems}/>:<Text type="secondary">Không tìm thấy quyền phù hợp.</Text>}
             </Space>
-        </Card>
-    </div>;
+        </AdminSectionCard>
+    </AdminPage>;
 }

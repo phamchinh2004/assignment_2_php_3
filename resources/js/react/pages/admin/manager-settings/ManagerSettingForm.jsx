@@ -1,8 +1,9 @@
-import { Button, Card, Input, Select, Typography } from 'antd';
-import { ArrowLeftOutlined } from '@ant-design/icons';
+import { Button, Input, Select, Typography } from 'antd';
+import { SafetyCertificateOutlined } from '@ant-design/icons';
 import LaravelForm, { fieldError, oldValue } from '../../../components/LaravelForm';
+import { AdminFormActions, AdminFormSection, AdminPage, AdminPageHeader, AdminSectionCard } from '../../../components/admin/AdminUi';
 
-const { Text, Title } = Typography;
+const { Text } = Typography;
 
 export default function ManagerSettingForm({ config, editing = false }) {
     const setting = config.setting || {};
@@ -11,18 +12,24 @@ export default function ManagerSettingForm({ config, editing = false }) {
     const parentError = fieldError(form, 'parent_manager_setting_id');
     const parentValue = oldValue(form, 'parent_manager_setting_id', setting.parent_manager_setting_id ?? '');
 
-    return <div className="container-fluid px-4 pb-5">
-        <Button icon={<ArrowLeftOutlined />} href={config.routes.index} className="mb-3">Quay lại danh sách chức năng</Button>
-        <Title level={2}>{editing ? 'Chỉnh sửa chức năng quản lý' : 'Thêm chức năng quản lý'}</Title>
-        <Text type="secondary">Chức năng con được nhóm dưới chức năng cha trong trang phân quyền.</Text>
-        <Card className="mt-4">
+    return <AdminPage width="form">
+        <AdminPageHeader
+            eyebrow="Phân quyền"
+            icon={<SafetyCertificateOutlined />}
+            title={editing ? 'Chỉnh sửa chức năng quản lý' : 'Thêm chức năng quản lý'}
+            description="Chức năng cha dùng để nhóm quyền; chức năng con là quyền thao tác cụ thể mà nhân viên có thể được cấp."
+            backHref={config.routes.index}
+            backLabel="Danh sách chức năng"
+            meta={editing ? <Text code>{setting.manager_code}</Text> : null}
+        />
+        <AdminSectionCard title="Thông tin chức năng" description="Đặt tên ngắn, đúng nghiệp vụ và gắn đúng nhóm cha để tránh quyền bị rơi sai khu vực.">
             <LaravelForm action={editing ? config.routes.update : config.routes.store} method={editing ? 'PUT' : 'POST'}>
-                <div className="mb-4">
+                <AdminFormSection title="Định danh hiển thị" description="Tên này xuất hiện trên màn hình phân quyền nhân viên.">
                     <label className="form-label-modern">Tên chức năng <span className="text-danger">*</span></label>
-                    <Input name="manager_name" defaultValue={oldValue(form, 'manager_name', setting.manager_name || '')} required />
+                    <Input name="manager_name" defaultValue={oldValue(form, 'manager_name', setting.manager_name || '')} placeholder="Ví dụ: Quản lý khách hàng" required />
                     {nameError && <Text type="danger" className="d-block mt-1">{nameError}</Text>}
-                </div>
-                <div className="mb-4">
+                </AdminFormSection>
+                <AdminFormSection title="Nhóm quyền" description="Để trống khi đây là nhóm cha; nếu là quyền thao tác, hãy chọn nhóm nghiệp vụ tương ứng.">
                     <label className="form-label-modern">Chức năng cha</label>
                     <Select
                         className="w-100"
@@ -35,10 +42,9 @@ export default function ManagerSettingForm({ config, editing = false }) {
                     />
                     <input id="manager-parent-value" type="hidden" name="parent_manager_setting_id" defaultValue={parentValue ?? ''} />
                     {parentError && <Text type="danger" className="d-block mt-1">{parentError}</Text>}
-                </div>
-                {editing && <div className="mb-4"><Text type="secondary">Mã quyền hiện tại: <Text code>{setting.manager_code}</Text></Text></div>}
-                <div className="d-flex justify-content-end gap-2"><Button href={config.routes.index}>Hủy</Button><Button type="primary" htmlType="submit">{editing ? 'Cập nhật' : 'Tạo chức năng'}</Button></div>
+                </AdminFormSection>
+                <AdminFormActions><Button href={config.routes.index}>Hủy</Button><Button type="primary" htmlType="submit">{editing ? 'Cập nhật' : 'Tạo chức năng'}</Button></AdminFormActions>
             </LaravelForm>
-        </Card>
-    </div>;
+        </AdminSectionCard>
+    </AdminPage>;
 }

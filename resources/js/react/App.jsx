@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Spin } from 'antd';
 import { useLocation, useNavigate } from 'react-router-dom';
 import AppRoutes from './Route';
@@ -14,9 +14,33 @@ export default function App({ bootstrap }) {
         requestKey: `${initialUrlKey}|0`,
     });
     const [loading, setLoading] = useState(false);
+    const notifiedBootstrapRef = useRef(bootstrap);
+    const lastLoadedUrlRef = useRef(initialUrlKey);
     const urlKey = `${location.pathname}${location.search}`;
     const requestKey = `${urlKey}|${refreshNonce}`;
     const surface = pageState.bootstrap?.surface || bootstrap?.surface;
+
+    useEffect(() => {
+        syncLegacyNavigationState(surface, location.pathname);
+    }, [surface, location.pathname]);
+
+    useEffect(() => {
+        if (pageState.bootstrap === notifiedBootstrapRef.current) return;
+        notifiedBootstrapRef.current = pageState.bootstrap;
+
+        const flash = pageState.bootstrap?.props?.flash || {};
+        const notice = flash.success
+            ? ['success', flash.success, 'Thành công!']
+            : flash.error
+                ? ['error', flash.error, 'Thông báo!']
+                : flash.warning
+                    ? ['warning', flash.warning, 'Cảnh báo!']
+                    : null;
+
+        if (notice && typeof window.notification === 'function') {
+            window.notification(...notice);
+        }
+    }, [pageState.bootstrap, surface]);
 
     const targetUrl = useMemo(
         () => new URL(`${urlKey}${location.hash || ''}`, window.location.origin),
@@ -67,6 +91,7 @@ export default function App({ bootstrap }) {
                 bootstrap: nextBootstrap,
                 requestKey: `${nextUrlKey}|${refreshNonce}`,
             });
+            lastLoadedUrlRef.current = nextUrlKey;
             if (nextBootstrap.title) document.title = nextBootstrap.title;
             syncLegacyNavigationState(surface, target.pathname);
             navigate(`${target.pathname}${target.search}${target.hash}`, { replace: options.replace !== false });
@@ -120,12 +145,21 @@ export default function App({ bootstrap }) {
                 }
 
                 setPageState({ bootstrap: nextBootstrap, requestKey });
+                lastLoadedUrlRef.current = urlKey;
                 if (nextBootstrap.title) document.title = nextBootstrap.title;
                 syncLegacyNavigationState(surface, targetUrl.pathname);
             })
             .catch((error) => {
                 if (error.name === 'AbortError') return;
-                console.error('SPA navigation failed, falling back to a full request.', error);
+                console.error('SPA navigation failed.', error);
+                if (surface === 'admin') {
+                    setLoading(false);
+                    navigate(lastLoadedUrlRef.current, { replace: true });
+                    if (typeof window.notification === 'function') {
+                        window.notification('error', 'Không thể tải trang quản trị. Vui lòng thử lại.', 'Lỗi điều hướng');
+                    }
+                    return;
+                }
                 window.location.assign(targetUrl.toString());
             })
             .finally(() => {
@@ -133,7 +167,7 @@ export default function App({ bootstrap }) {
             });
 
         return () => controller.abort();
-    }, [location.pathname, pageState.requestKey, requestKey, surface, targetUrl]);
+    }, [location.pathname, navigate, pageState.requestKey, requestKey, surface, targetUrl, urlKey]);
 
     if (loading || pageState.requestKey !== requestKey) {
         return (

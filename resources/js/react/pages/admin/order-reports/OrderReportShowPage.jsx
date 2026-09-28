@@ -1,5 +1,6 @@
 import { Alert, Button, Card, Col, Descriptions, Image, Input, Row, Space, Tag, Timeline, Typography } from 'antd';
 import LaravelForm from '../../../components/LaravelForm';
+import { AdminPage, AdminPageHeader } from '../../../components/admin/AdminUi';
 
 const { Paragraph, Text, Title } = Typography;
 const { TextArea } = Input;
@@ -41,12 +42,12 @@ export default function OrderReportShowPage({ config }) {
     });
 
     if (!frozen) {
-        return <div className="container-fluid px-4 pb-5"><Button href={config.routes.index}>Quay lại</Button><Alert type="error" showIcon className="mt-3" message="Không tìm thấy thông tin đơn hàng." /></div>;
+        return <AdminPage width="medium"><Button href={config.routes.index}>Quay lại</Button><Alert type="error" showIcon className="mt-3" message="Không tìm thấy thông tin đơn hàng." /></AdminPage>;
     }
 
     return (
-        <div className="container-fluid px-4 pb-5">
-            <div className="d-flex justify-content-between align-items-center gap-3 mb-4"><Title level={2} style={{ margin: 0 }}>Chi tiết báo cáo đơn hàng</Title><Button href={config.routes.index}>Quay lại danh sách</Button></div>
+        <AdminPage>
+            <AdminPageHeader eyebrow={'Báo cáo #' + (report.id || '')} title="Chi tiết báo cáo đơn hàng" description="Đối chiếu lý do báo cáo, snapshot đơn và lịch sử xử lý trước khi ra quyết định." backHref={config.routes.index} backLabel="Danh sách báo cáo" meta={<Tag color={status.color}>{status.label}</Tag>} />
             {display.uses_snapshot_fallback && <Alert type="warning" showIcon className="mb-4" message="Frozen order thiếu snapshot; một phần dữ liệu đang dùng fallback từ Order hiện tại." />}
             <Row gutter={[16, 16]}>
                 <Col xs={24} lg={16}>
@@ -104,6 +105,6 @@ export default function OrderReportShowPage({ config }) {
                     </Card>
                 </Col>
             </Row>
-        </div>
+        </AdminPage>
     );
 }

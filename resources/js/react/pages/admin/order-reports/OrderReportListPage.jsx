@@ -1,7 +1,8 @@
-import { Button, Card, Pagination, Segmented, Space, Table, Tag, Typography } from 'antd';
+import { Button, Pagination, Segmented, Space, Table, Tag, Typography } from 'antd';
 import { spaNavigate } from '../../../navigation';
+import { AdminDataCard, AdminPage, AdminPageHeader } from '../../../components/admin/AdminUi';
 
-const { Text, Title } = Typography;
+const { Text } = Typography;
 const routeFor = (template, id) => String(template || '').replace('__REPORT_ID__', encodeURIComponent(String(id)));
 const formatDate = (value) => value ? new Intl.DateTimeFormat('vi-VN', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value)) : '—';
 
@@ -46,10 +47,12 @@ export default function OrderReportListPage({ config }) {
     ];
 
     return (
-        <div className="container-fluid px-4 pb-5">
-            <div className="d-flex justify-content-between align-items-center gap-3 mb-4 flex-wrap">
-                <div><Title level={2}>Đơn hàng bị báo cáo</Title><Text type="secondary">Theo dõi và xử lý các báo cáo đơn hàng.</Text></div>
-                <Segmented
+        <AdminPage>
+            <AdminPageHeader
+                eyebrow="Kiểm soát đơn hàng"
+                title="Đơn hàng bị báo cáo"
+                description="Theo dõi và xử lý các báo cáo đơn hàng."
+                actions={(<Segmented
                     value={config.status || 'pending'}
                     onChange={changeStatus}
                     options={[
@@ -57,12 +60,12 @@ export default function OrderReportListPage({ config }) {
                         { label: 'Đã hủy (đơn ảo)', value: 'approved' },
                         { label: 'Đã xác nhận (đơn thật)', value: 'rejected' },
                     ]}
-                />
-            </div>
-            <Card>
+                />)}
+            />
+            <AdminDataCard title="Danh sách báo cáo" description="Ưu tiên các báo cáo chờ xử lý và giữ lịch sử quyết định để audit.">
                 <Table rowKey="id" dataSource={rows} columns={columns} pagination={false} scroll={{ x: 1050 }} />
                 {Number(page.last_page || 1) > 1 && <Space style={{ width: '100%', justifyContent: 'flex-end', marginTop: 16 }}><Pagination current={Number(page.current_page || 1)} total={Number(page.total || 0)} pageSize={Number(page.per_page || 20)} showSizeChanger={false} onChange={changePage} /></Space>}
-            </Card>
-        </div>
+            </AdminDataCard>
+        </AdminPage>
     );
 }

@@ -1,9 +1,11 @@
-import { useMemo, useRef, useState } from 'react';
-import { Button, Card, Checkbox, Col, Image, Input, InputNumber, Modal, Row, Space, Table, Tag, Typography, message } from 'antd';
-import { DeleteOutlined, EditOutlined, PictureOutlined, SaveOutlined } from '@ant-design/icons';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Button, Checkbox, Image, Input, InputNumber, Modal, Space, Table, Tag, Typography, message } from 'antd';
+import { DeleteOutlined, EditOutlined, LockOutlined, PictureOutlined, SaveOutlined } from '@ant-design/icons';
 import LaravelForm from '../../../components/LaravelForm';
+import { AdminDataCard, AdminMetricGrid, AdminPage, AdminPageHeader } from '../../../components/admin/AdminUi';
 
-const { Text, Title } = Typography;
+const { Text } = Typography;
+const ORDER_PAGE_SIZE = 20;
 
 function replaceFrozenRoute(template, id) {
     return template.replace('__FROZEN_ID__', String(id));
@@ -35,8 +37,16 @@ export default function UserFrozenOrdersPage({ config }) {
     const [changingImage, setChangingImage] = useState(null);
     const editFormRef = useRef(null);
     const imageFormRef = useRef(null);
+    const ordersTableRef = useRef(null);
 
     const currentSpin = Number(config.progress?.current_spin || 0);
+    const currentOrderPosition = useMemo(
+        () => orders.findIndex((order) => Number(order.index) === currentSpin),
+        [orders, currentSpin]
+    );
+    const currentOrderPage = currentOrderPosition >= 0
+        ? Math.floor(currentOrderPosition / ORDER_PAGE_SIZE) + 1
+        : 1;
     const isCurrentSpin = (order) => Number(order.index) === currentSpin || spunFrozenIds.has(Number(order.id));
     const isBlocked = (order) => frozenIds.has(Number(order.id)) || isCurrentSpin(order);
     const selectableIds = useMemo(
@@ -44,11 +54,35 @@ export default function UserFrozenOrdersPage({ config }) {
         [orders, config.frozenOrderIds, config.frozenOrders, currentSpin]
     );
 
+    useEffect(() => {
+        if (currentOrderPosition < 0) return undefined;
+
+        const frame = window.requestAnimationFrame(() => {
+            ordersTableRef.current
+                ?.querySelector('[data-current-spin-order="true"]')
+                ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+
+        return () => window.cancelAnimationFrame(frame);
+    }, [currentOrderPosition]);
+
     const updateValue = (orderId, key, value) => {
         setValues((current) => ({
             ...current,
             [orderId]: { ...current[orderId], [key]: value },
         }));
+    };
+
+    const setOrderSelected = (orderId, checked) => {
+        setSelected((current) => checked
+            ? (current.includes(orderId) ? current : [...current, orderId])
+            : current.filter((id) => id !== orderId));
+    };
+
+    const toggleOrderSelected = (orderId) => {
+        setSelected((current) => current.includes(orderId)
+            ? current.filter((id) => id !== orderId)
+            : [...current, orderId]);
     };
 
     const validateTiming = (source) => {
@@ -123,16 +157,13 @@ export default function UserFrozenOrdersPage({ config }) {
                 <Checkbox
                     disabled={isBlocked(order)}
                     checked={selected.includes(order.id)}
-                    onChange={(event) => {
-                        setSelected((current) => event.target.checked
-                            ? [...current, order.id]
-                            : current.filter((id) => id !== order.id));
-                    }}
+                    onChange={(event) => setOrderSelected(order.id, event.target.checked)}
                 />
             ),
         },
         {
             title: 'Đơn hàng',
+            width: 260,
             render: (_, order) => (
                 <Space>
                     {order.image_url && <Image src={order.image_url} width={56} height={56} style={{ objectFit: 'cover' }} />}
@@ -152,6 +183,7 @@ export default function UserFrozenOrdersPage({ config }) {
                 <InputNumber
                     min={0}
                     style={{ width: '100%' }}
+                    placeholder="Nhập giá giả"
                     disabled={isBlocked(order)}
                     value={values[order.id]?.custom_price}
                     onChange={(value) => updateValue(order.id, 'custom_price', value ?? '')}
@@ -166,6 +198,7 @@ export default function UserFrozenOrdersPage({ config }) {
                     min={0}
                     max={100}
                     style={{ width: '100%' }}
+                    placeholder="Nhập hoa hồng"
                     disabled={isBlocked(order)}
                     value={values[order.id]?.commission_percentage}
                     onChange={(value) => updateValue(order.id, 'commission_percentage', value ?? '')}
@@ -173,13 +206,20 @@ export default function UserFrozenOrdersPage({ config }) {
             ),
         },
         {
-            title: 'Thời gian (giờ)',
+            title: (
+                <div style={{ minWidth: 300, lineHeight: 1.3 }}>
+                    <div>Thời gian (giờ)</div>
+                    <Text type="secondary" style={{ fontSize: 11, fontWeight: 400 }}>
+                        DL = Deadline · CB1 = Cảnh báo lần 1 · CB2 = Cảnh báo lần 2
+                    </Text>
+                </div>
+            ),
             width: 330,
             render: (_, order) => (
-                <Space>
-                    <InputNumber min={1} disabled={isBlocked(order)} value={values[order.id]?.processing_time_limit} onChange={(value) => updateValue(order.id, 'processing_time_limit', value)} addonBefore="DL" />
-                    <InputNumber min={1} disabled={isBlocked(order)} value={values[order.id]?.notification_1_remaining_time} onChange={(value) => updateValue(order.id, 'notification_1_remaining_time', value)} addonBefore="CB1" />
-                    <InputNumber min={1} disabled={isBlocked(order)} value={values[order.id]?.notification_2_remaining_time} onChange={(value) => updateValue(order.id, 'notification_2_remaining_time', value)} addonBefore="CB2" />
+                <Space size={6}>
+                    <InputNumber min={1} style={{ width: 100 }} disabled={isBlocked(order)} value={values[order.id]?.processing_time_limit} onChange={(value) => updateValue(order.id, 'processing_time_limit', value)} addonBefore="DL" />
+                    <InputNumber min={1} style={{ width: 100 }} disabled={isBlocked(order)} value={values[order.id]?.notification_1_remaining_time} onChange={(value) => updateValue(order.id, 'notification_1_remaining_time', value)} addonBefore="CB1" />
+                    <InputNumber min={1} style={{ width: 100 }} disabled={isBlocked(order)} value={values[order.id]?.notification_2_remaining_time} onChange={(value) => updateValue(order.id, 'notification_2_remaining_time', value)} addonBefore="CB2" />
                 </Space>
             ),
         },
@@ -228,13 +268,23 @@ export default function UserFrozenOrdersPage({ config }) {
     ];
 
     return (
-        <Space direction="vertical" size="large" style={{ width: '100%' }}>
-            <div>
-                <Title level={2} style={{ marginBottom: 4 }}>Đóng băng đơn hàng</Title>
-                <Text type="secondary">{user.full_name || user.username} · ID {user.id}</Text>
-            </div>
+        <AdminPage>
+            <AdminPageHeader
+                eyebrow="Vận hành khách hàng"
+                icon={<LockOutlined />}
+                title="Đóng băng đơn hàng"
+                description={`${user.full_name || user.username} · @${user.username} · ID ${user.id}. Thiết lập giá, hoa hồng và thời gian xử lý riêng cho các đơn được chỉ định.`}
+                backHref={config.routes.index}
+                backLabel="Danh sách người dùng"
+            />
 
-            <Card>
+            <AdminMetricGrid min={3} items={[
+                {key:'spin',title:'Vị trí quay hiện tại',value:currentSpin,tone:'primary'},
+                {key:'frozen',title:'Đang đóng băng',value:frozenOrders.length,tone:'info'},
+                {key:'selectable',title:'Có thể chọn',value:selectableIds.length,tone:'success'},
+            ]} />
+
+            <AdminDataCard title="Chọn đơn để đóng băng" description="Thiết lập riêng giá giả, hoa hồng và các mốc thời gian. Quy tắc bắt buộc: Deadline > Cảnh báo 1 > Cảnh báo 2 > 0.">
                 <LaravelForm action={config.routes.store} method="POST" onSubmit={confirmFreeze}>
                     {selected.map((orderId) => {
                         const value = values[orderId] || {};
@@ -250,26 +300,43 @@ export default function UserFrozenOrdersPage({ config }) {
                             </span>
                         );
                     })}
-                    <Row justify="space-between" gutter={[12, 12]} style={{ marginBottom: 16 }}>
-                        <Col>
-                            <Space>
-                                <Button onClick={() => setSelected(selectableIds)}>Chọn tất cả</Button>
-                                <Button onClick={() => setSelected([])}>Bỏ chọn</Button>
-                            </Space>
-                        </Col>
-                        <Col>
-                            <Button type="primary" htmlType="submit" icon={<SaveOutlined />}>Đóng băng đã chọn</Button>
-                        </Col>
-                    </Row>
-                    <Table rowKey="id" columns={orderColumns} dataSource={orders} pagination={{ pageSize: 20 }} scroll={{ x: 1100 }} />
+                    <div className="admin-toolbar">
+                        <div className="admin-toolbar-main">
+                            <Text type="secondary">Đã chọn <strong>{selected.length}</strong> / {selectableIds.length} đơn khả dụng</Text>
+                        </div>
+                        <div className="admin-toolbar-actions">
+                            <Button onClick={() => setSelected(selectableIds)}>Chọn tất cả</Button>
+                            <Button onClick={() => setSelected([])}>Bỏ chọn</Button>
+                            <Button type="primary" htmlType="submit" icon={<SaveOutlined />} disabled={!selected.length}>Đóng băng đã chọn</Button>
+                        </div>
+                    </div>
+                    <div ref={ordersTableRef}>
+                        <Table
+                            rowKey="id"
+                            columns={orderColumns}
+                            dataSource={orders}
+                            pagination={{ pageSize: ORDER_PAGE_SIZE, defaultCurrent: currentOrderPage }}
+                            scroll={{ x: 1280 }}
+                            onRow={(order) => ({
+                                'data-current-spin-order': Number(order.index) === currentSpin ? 'true' : undefined,
+                                style: { cursor: isBlocked(order) ? 'default' : 'pointer' },
+                                onClick: (event) => {
+                                    if (isBlocked(order)) return;
+
+                                    const interactiveTarget = event.target.closest?.(
+                                        'input, button, a, [role="button"], .ant-checkbox-wrapper, .ant-input-number, .ant-image'
+                                    );
+                                    if (interactiveTarget) return;
+
+                                    toggleOrderSelected(order.id);
+                                },
+                            })}
+                        />
+                    </div>
                 </LaravelForm>
-            </Card>
+            </AdminDataCard>
 
-            <Card title={`Đơn đang đóng băng (${frozenOrders.length})`}>
-                <Table rowKey="id" columns={frozenColumns} dataSource={frozenOrders} pagination={{ pageSize: 15 }} scroll={{ x: 850 }} />
-            </Card>
-
-            <Button href={config.routes.index}>Quay lại danh sách người dùng</Button>
+            <div style={{marginTop:20}}><AdminDataCard title="Đơn đang đóng băng" description={`${frozenOrders.length} đơn hiện có cấu hình đóng băng riêng cho người dùng này.`}><Table rowKey="id" columns={frozenColumns} dataSource={frozenOrders} pagination={{ pageSize: 15 }} scroll={{ x: 850 }} locale={{emptyText:'Chưa có đơn đóng băng'}} /></AdminDataCard></div>
 
             <Modal
                 title="Cập nhật đơn đóng băng"
@@ -282,11 +349,11 @@ export default function UserFrozenOrdersPage({ config }) {
                     <LaravelForm ref={editFormRef} action={replaceFrozenRoute(config.routes.update, editing.id)} method="PUT" onSubmit={validateEdit}>
                         <Space direction="vertical" style={{ width: '100%' }}>
                             <Text strong>{editing.snapshot_name || editing.order?.name || `Frozen #${editing.id}`}</Text>
-                            <InputNumber name="custom_price" min={0} style={{ width: '100%' }} defaultValue={editing.custom_price} addonBefore="Giá giả" />
-                            <InputNumber name="commission_percentage" min={0} max={100} style={{ width: '100%' }} defaultValue={editing.commission_percentage} addonBefore="Hoa hồng %" />
-                            <InputNumber name="processing_time_limit" min={1} style={{ width: '100%' }} defaultValue={editing.processing_time_limit || defaults.processing_time_limit || 24} addonBefore="Deadline" />
-                            <InputNumber name="notification_1_remaining_time" min={1} style={{ width: '100%' }} defaultValue={editing.notification_1_remaining_time || defaults.notification_1_remaining_time || 12} addonBefore="Cảnh báo 1" />
-                            <InputNumber name="notification_2_remaining_time" min={1} style={{ width: '100%' }} defaultValue={editing.notification_2_remaining_time || defaults.notification_2_remaining_time || 1} addonBefore="Cảnh báo 2" />
+                            <InputNumber name="custom_price" min={0} style={{ width: '100%' }} placeholder="Nhập giá giả" defaultValue={editing.custom_price} addonBefore="Giá giả" />
+                            <InputNumber name="commission_percentage" min={0} max={100} style={{ width: '100%' }} placeholder="Nhập hoa hồng %" defaultValue={editing.commission_percentage} addonBefore="Hoa hồng %" />
+                            <InputNumber name="processing_time_limit" min={1} style={{ width: '100%' }} placeholder="Nhập deadline" defaultValue={editing.processing_time_limit || defaults.processing_time_limit || 24} addonBefore="Deadline" />
+                            <InputNumber name="notification_1_remaining_time" min={1} style={{ width: '100%' }} placeholder="Nhập cảnh báo 1" defaultValue={editing.notification_1_remaining_time || defaults.notification_1_remaining_time || 12} addonBefore="Cảnh báo 1" />
+                            <InputNumber name="notification_2_remaining_time" min={1} style={{ width: '100%' }} placeholder="Nhập cảnh báo 2" defaultValue={editing.notification_2_remaining_time || defaults.notification_2_remaining_time || 1} addonBefore="Cảnh báo 2" />
                             <Space style={{ justifyContent: 'flex-end', width: '100%' }}>
                                 <Button onClick={() => setEditing(null)}>Hủy</Button>
                                 <Button type="primary" htmlType="submit">Lưu</Button>
@@ -317,6 +384,6 @@ export default function UserFrozenOrdersPage({ config }) {
                     </LaravelForm>
                 )}
             </Modal>
-        </Space>
+        </AdminPage>
     );
 }

@@ -497,7 +497,7 @@
 
         <section class="home-voices" aria-labelledby="home-voices-title" data-testimonials>
             <div class="home-voices__intro">
-                <span class="home-kicker">Phản hồi minh họa</span>
+                <span class="home-kicker">Phản hồi từ các nhà phân phối</span>
                 <h2 id="home-voices-title">Góc nhìn từ cộng đồng</h2>
                 <p>Các nội dung bên dưới được giữ lại từ Home cũ như phần trình bày social-proof minh họa.</p>
                 <div class="home-voices__controls">
@@ -525,7 +525,7 @@
                         <footer>
                             <img src="{{ asset($testimonial['avatar']) }}" alt="" loading="lazy">
                             <div><strong>{{ $testimonial['name'] }}</strong><span>{{ $testimonial['rank'] }}</span></div>
-                            <small>Minh họa</small>
+                            <small>User</small>
                         </footer>
                     </article>
                 @endforeach

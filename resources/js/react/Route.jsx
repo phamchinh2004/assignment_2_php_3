@@ -93,7 +93,7 @@ export default function AppRoutes({ bootstrap }) {
             <Route path="/distribution" element={<Suspense fallback={<RouteLoader />}><LegacyUserPage config={bootstrap.props || {}} /></Suspense>} />
             <Route path="/withdraw" element={<Suspense fallback={<RouteLoader />}><LegacyUserPage config={bootstrap.props || {}} /></Suspense>} />
             <Route path="/personal-information" element={<Suspense fallback={<RouteLoader />}><LegacyUserPage config={bootstrap.props || {}} /></Suspense>} />
-            <Route path="/admin" element={<AdminLayout flash={bootstrap.props?.flash} />}>
+            <Route path="/admin" element={<AdminLayout />}>
                 <Route index element={<Suspense fallback={<RouteLoader />}><AdminDashboardPage config={bootstrap.props || {}} /></Suspense>} />
                 <Route path="chat-panel" element={<Suspense fallback={<RouteLoader />}><AdminChatPage config={bootstrap.props || {}} /></Suspense>} />
                 <Route path="banner" element={<Suspense fallback={<RouteLoader />}><BannerListPage config={bootstrap.props || {}} /></Suspense>} />

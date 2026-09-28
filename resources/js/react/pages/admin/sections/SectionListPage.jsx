@@ -1,8 +1,9 @@
-import { Button, Card, Popconfirm, Space, Statistic, Table, Tag, Typography, message } from 'antd';
+import { Button, Popconfirm, Space, Table, Tag, Typography, message } from 'antd';
 import { FileTextOutlined, PlusOutlined } from '@ant-design/icons';
 import { spaGetAction } from '../../../navigation';
+import { AdminDataCard, AdminMetricGrid, AdminPage, AdminPageHeader } from '../../../components/admin/AdminUi';
 
-const { Text, Title } = Typography;
+const { Text } = Typography;
 const routeFor = (template, id) => String(template || '').replace('__SECTION_ID__', encodeURIComponent(String(id)));
 
 export default function SectionListPage({ config }) {
@@ -28,16 +29,21 @@ export default function SectionListPage({ config }) {
         },
     ];
 
-    return <div className="container-fluid px-4 pb-5">
-        <div className="page-header-wrapper d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
-            <div><Title level={2}>Nội dung website</Title><Text type="secondary">Quản lý các Section nội dung đa ngôn ngữ.</Text></div>
-            {permissions.create && <Button type="primary" icon={<PlusOutlined />} href={config.routes.create}>Thêm section mới</Button>}
-        </div>
-        <div className="row mb-4">
-            <div className="col-md-4 mb-3"><Card><Statistic title="Tổng section" value={sections.length} prefix={<FileTextOutlined />} /></Card></div>
-            <div className="col-md-4 mb-3"><Card><Statistic title="Đang hoạt động" value={active} /></Card></div>
-            <div className="col-md-4 mb-3"><Card><Statistic title="Tổng bản dịch" value={translations} /></Card></div>
-        </div>
-        <Card><Table rowKey="id" dataSource={sections} columns={columns} scroll={{ x: 760 }} pagination={{ pageSize: 10 }} /></Card>
-    </div>;
+    return <AdminPage>
+        <AdminPageHeader
+            eyebrow="Website"
+            icon={<FileTextOutlined />}
+            title="Nội dung website"
+            description="Quản lý các section và tình trạng nội dung đa ngôn ngữ đang được sử dụng trên website."
+            actions={permissions.create && <Button type="primary" icon={<PlusOutlined />} href={config.routes.create}>Thêm section mới</Button>}
+        />
+        <AdminMetricGrid items={[
+            {key:'all',title:'Tổng section',value:sections.length,tone:'primary'},
+            {key:'active',title:'Đang hoạt động',value:active,tone:'success'},
+            {key:'translations',title:'Tổng bản dịch',value:translations,tone:'info'},
+        ]} min={3} />
+        <AdminDataCard title="Danh sách section" description="Ưu tiên kiểm tra trạng thái và số bản dịch trước khi chỉnh sửa nội dung.">
+            <Table rowKey="id" dataSource={sections} columns={columns} scroll={{ x: 760 }} pagination={{ pageSize: 10 }} locale={{emptyText:'Chưa có section nội dung'}} />
+        </AdminDataCard>
+    </AdminPage>;
 }

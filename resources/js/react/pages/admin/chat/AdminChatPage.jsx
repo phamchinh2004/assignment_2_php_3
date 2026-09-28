@@ -1,5 +1,7 @@
 import { useEffect, useRef } from 'react';
 import '../../../../../css/admin/chat/chat-component.css';
+import '../../../../../css/admin/sidebar-chat.css';
+import '../../../../../css/admin/chat.css';
 
 function executeInlineScripts(container) {
     if (window.__adminChatInlineScriptsExecuted) return false;
@@ -75,7 +77,7 @@ export default function AdminChatPage({ config }) {
     return (
         <div
             ref={containerRef}
-            className="h-screen"
+            className="admin-chat-page"
             data-admin-chat-page
             dangerouslySetInnerHTML={{ __html: config.html || '' }}
         />

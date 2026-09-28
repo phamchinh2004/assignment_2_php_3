@@ -1,8 +1,10 @@
 import { useRef, useState } from 'react';
-import { Button, Card, Checkbox, Col, Descriptions, Input, InputNumber, Modal, Row, Select, Space, Tag, Typography } from 'antd';
+import { Button, Checkbox, Col, Descriptions, Input, InputNumber, Modal, Row, Select, Space, Tag, Typography } from 'antd';
+import { SaveOutlined, UserOutlined } from '@ant-design/icons';
 import LaravelForm, { fieldError, oldValue } from '../../../components/LaravelForm';
+import { AdminFormActions, AdminFormSection, AdminPage, AdminPageHeader, AdminSectionCard } from '../../../components/admin/AdminUi';
 
-const { Text, Title } = Typography;
+const { Text } = Typography;
 
 function dateTime(value) {
     if (!value) return 'Chưa ghi nhận';
@@ -48,44 +50,50 @@ export default function UserEditPage({ config }) {
     );
 
     return (
-        <Space direction="vertical" size="large" style={{ width: '100%' }}>
-            <div>
-                <Title level={2} style={{ marginBottom: 4 }}>Chỉnh sửa người dùng #{user.id}</Title>
-                <Text type="secondary">@{user.username}</Text>
-            </div>
+        <AdminPage>
+            <AdminPageHeader
+                eyebrow="Khách hàng"
+                icon={<UserOutlined />}
+                title={`Chỉnh sửa người dùng #${user.id}`}
+                description={`@${user.username} · Chỉ hiển thị các nhóm nghiệp vụ mà tài khoản quản trị hiện tại được phép thay đổi.`}
+                backHref={config.routes.index}
+                backLabel="Danh sách người dùng"
+                meta={<Tag color={user.is_online ? 'success' : 'default'}>{user.is_online ? 'Online' : 'Offline'}</Tag>}
+            />
 
             <Row gutter={[20, 20]}>
                 <Col xs={24} xl={16}>
-                    <Card>
+                    <AdminSectionCard title="Thông tin có thể chỉnh sửa" description="Các trường nhạy cảm chỉ xuất hiện khi quyền backend tương ứng đang được cấp.">
                         <LaravelForm ref={updateFormRef} action={config.routes.update} method="PUT">
+                            <AdminFormSection title="Hồ sơ & liên hệ" description="Thông tin nhận diện, liên hệ và địa chỉ kho của thành viên.">
                             <Row gutter={[16, 16]}>
                                 <Col xs={24} md={12}>
                                     <Text strong>Họ và tên</Text>
-                                    <Input name="full_name" defaultValue={oldValue(form, 'full_name', user.full_name)} status={fieldError(form, 'full_name') ? 'error' : ''} />
+                                    <Input name="full_name" placeholder="Nhập họ và tên" defaultValue={oldValue(form, 'full_name', user.full_name)} status={fieldError(form, 'full_name') ? 'error' : ''} />
                                     {fieldError(form, 'full_name') && <Text type="danger">{fieldError(form, 'full_name')}</Text>}
                                 </Col>
                                 <Col xs={24} md={12}>
                                     <Text strong>Tên đăng nhập</Text>
-                                    <Input name="username" defaultValue={oldValue(form, 'username', user.username)} status={fieldError(form, 'username') ? 'error' : ''} />
+                                    <Input name="username" placeholder="Nhập tên đăng nhập" defaultValue={oldValue(form, 'username', user.username)} status={fieldError(form, 'username') ? 'error' : ''} />
                                     {fieldError(form, 'username') && <Text type="danger">{fieldError(form, 'username')}</Text>}
                                 </Col>
                                 <Col xs={24} md={12}>
                                     <Text strong>Email</Text>
-                                    <Input name="email" defaultValue={oldValue(form, 'email', user.email)} status={fieldError(form, 'email') ? 'error' : ''} />
+                                    <Input name="email" placeholder="Nhập email" defaultValue={oldValue(form, 'email', user.email)} status={fieldError(form, 'email') ? 'error' : ''} />
                                     {fieldError(form, 'email') && <Text type="danger">{fieldError(form, 'email')}</Text>}
                                 </Col>
                                 <Col xs={24} md={12}>
                                     <Text strong>Số điện thoại</Text>
-                                    <Input name="phone" defaultValue={oldValue(form, 'phone', user.phone)} status={fieldError(form, 'phone') ? 'error' : ''} />
+                                    <Input name="phone" placeholder="Nhập số điện thoại" defaultValue={oldValue(form, 'phone', user.phone)} status={fieldError(form, 'phone') ? 'error' : ''} />
                                     {fieldError(form, 'phone') && <Text type="danger">{fieldError(form, 'phone')}</Text>}
                                 </Col>
                                 <Col xs={24} md={12}>
                                     <Text strong>Khu vực kho</Text>
-                                    <Input name="warehouse_area" defaultValue={oldValue(form, 'warehouse_area', user.warehouse_area)} />
+                                    <Input name="warehouse_area" placeholder="Nhập khu vực kho" defaultValue={oldValue(form, 'warehouse_area', user.warehouse_area)} />
                                 </Col>
                                 <Col xs={24} md={12}>
                                     <Text strong>Địa chỉ kho</Text>
-                                    <Input name="warehouse_address" defaultValue={oldValue(form, 'warehouse_address', user.warehouse_address)} />
+                                    <Input name="warehouse_address" placeholder="Nhập địa chỉ kho" defaultValue={oldValue(form, 'warehouse_address', user.warehouse_address)} />
                                 </Col>
                                 {permissions.changeReferrer && (
                                     <Col xs={24}>
@@ -96,6 +104,7 @@ export default function UserEditPage({ config }) {
                                             optionFilterProp="label"
                                             style={{ width: '100%' }}
                                             value={referrer || undefined}
+                                            placeholder="Chọn người quản lý / giới thiệu"
                                             onChange={(value) => setReferrer(value ? String(value) : '')}
                                             options={(config.referrerCandidates || []).map((item) => ({
                                                 value: String(item.id),
@@ -106,12 +115,13 @@ export default function UserEditPage({ config }) {
                                     </Col>
                                 )}
                             </Row>
+                            </AdminFormSection>
 
-                            <Title level={4} style={{ marginTop: 28 }}>Ngân hàng</Title>
+                            <AdminFormSection title="Thông tin ngân hàng" description="Dùng cho các nghiệp vụ rút tiền và đối soát tài khoản.">
                             <Row gutter={[16, 16]}>
                                 <Col xs={24}>
                                     <Text strong>Tên tài khoản ngân hàng</Text>
-                                    <Input name="username_bank" defaultValue={oldValue(form, 'username_bank', user.username_bank)} />
+                                    <Input name="username_bank" placeholder="Nhập tên chủ tài khoản" defaultValue={oldValue(form, 'username_bank', user.username_bank)} />
                                 </Col>
                                 <Col xs={24} md={12}>
                                     <Text strong>Ngân hàng</Text>
@@ -121,6 +131,7 @@ export default function UserEditPage({ config }) {
                                         optionFilterProp="label"
                                         style={{ width: '100%' }}
                                         value={bankName || undefined}
+                                        placeholder="Chọn ngân hàng"
                                         options={bankOptions}
                                         onChange={(value) => setBankName(value || '')}
                                     />
@@ -128,28 +139,29 @@ export default function UserEditPage({ config }) {
                                 </Col>
                                 <Col xs={24} md={12}>
                                     <Text strong>Số tài khoản</Text>
-                                    <Input name="account_number" defaultValue={oldValue(form, 'account_number', user.account_number)} />
+                                    <Input name="account_number" placeholder="Nhập số tài khoản" defaultValue={oldValue(form, 'account_number', user.account_number)} />
                                 </Col>
                             </Row>
+                            </AdminFormSection>
 
-                            <Title level={4} style={{ marginTop: 28 }}>Cài đặt tài khoản</Title>
+                            <AdminFormSection title="Cài đặt vận hành" description="Trạng thái, số dư, cấp độ và lượt quay chỉ xuất hiện khi bạn có đúng quyền nghiệp vụ.">
                             <Row gutter={[16, 16]}>
                                 {permissions.adjustBalance && (
                                     <>
                                         <Col xs={24} md={12}>
                                             <Text strong>Số dư</Text>
-                                            <InputNumber name="balance" style={{ width: '100%' }} min={0} defaultValue={oldValue(form, 'balance', user.balance || 0)} />
+                                            <InputNumber name="balance" style={{ width: '100%' }} min={0} placeholder="Nhập số dư" defaultValue={oldValue(form, 'balance', user.balance || 0)} />
                                         </Col>
                                         <Col xs={24} md={12}>
                                             <Text strong>Số dư đóng băng</Text>
-                                            <InputNumber name="frozen_balance" style={{ width: '100%' }} min={0} step={0.00000001} defaultValue={oldValue(form, 'frozen_balance', user.frozen_balance || 0)} />
+                                            <InputNumber name="frozen_balance" style={{ width: '100%' }} min={0} step={0.00000001} placeholder="Nhập số dư đóng băng" defaultValue={oldValue(form, 'frozen_balance', user.frozen_balance || 0)} />
                                         </Col>
                                     </>
                                 )}
                                 {permissions.changeStatus && (
                                     <Col xs={24} md={12}>
                                         <Text strong>Trạng thái</Text>
-                                        <Select style={{ width: '100%' }} value={status} onChange={setStatus} options={[
+                                        <Select style={{ width: '100%' }} value={status} placeholder="Chọn trạng thái" onChange={setStatus} options={[
                                             { value: 'activated', label: 'Đã kích hoạt' },
                                             { value: 'inactivated', label: 'Chưa kích hoạt' },
                                             { value: 'banned', label: 'Bị khóa' },
@@ -160,7 +172,7 @@ export default function UserEditPage({ config }) {
                                 {permissions.chooseRole && (
                                     <Col xs={24} md={12}>
                                         <Text strong>Vai trò</Text>
-                                        <Select style={{ width: '100%' }} value={role} onChange={setRole} options={[
+                                        <Select style={{ width: '100%' }} value={role} placeholder="Chọn vai trò" onChange={setRole} options={[
                                             { value: 'member', label: 'Member' },
                                             { value: 'staff', label: 'Staff' },
                                             { value: 'admin', label: 'Admin' },
@@ -176,6 +188,7 @@ export default function UserEditPage({ config }) {
                                                 allowClear
                                                 style={{ width: '100%' }}
                                                 value={rank || undefined}
+                                                placeholder="Chọn cấp độ"
                                                 onChange={(value) => setRank(value ? String(value) : '')}
                                                 options={(config.ranks || []).map((item) => ({
                                                     value: String(item.id),
@@ -186,7 +199,7 @@ export default function UserEditPage({ config }) {
                                         </Col>
                                         <Col xs={24} md={12}>
                                             <Text strong>Lượt quay may mắn được cấp còn lại</Text>
-                                            <InputNumber name="lucky_wheel_bonus_spins" style={{ width: '100%' }} min={0} step={1} defaultValue={oldValue(form, 'lucky_wheel_bonus_spins', user.lucky_wheel_bonus_spins || 0)} />
+                                            <InputNumber name="lucky_wheel_bonus_spins" style={{ width: '100%' }} min={0} step={1} placeholder="Nhập số lượt quay" defaultValue={oldValue(form, 'lucky_wheel_bonus_spins', user.lucky_wheel_bonus_spins || 0)} />
                                         </Col>
                                     </>
                                 )}
@@ -199,17 +212,18 @@ export default function UserEditPage({ config }) {
                                 <Checkbox checked={cloneAccount} onChange={(event) => setCloneAccount(event.target.checked)}>Tài khoản clone</Checkbox>
                                 {cloneAccount && <input type="hidden" name="clone_account" value="1" />}
                             </Space>
-                            <Space style={{ marginTop: 24 }}>
+                            </AdminFormSection>
+                            <AdminFormActions>
                                 <Button href={config.routes.index}>Hủy</Button>
-                                <Button type="primary" onClick={submitWithConfirmation}>Lưu thay đổi</Button>
-                            </Space>
+                                <Button type="primary" icon={<SaveOutlined />} onClick={submitWithConfirmation}>Lưu thay đổi</Button>
+                            </AdminFormActions>
                         </LaravelForm>
-                    </Card>
+                    </AdminSectionCard>
                 </Col>
 
                 <Col xs={24} xl={8}>
                     <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-                        <Card title="Vị trí hiện tại">
+                        <AdminSectionCard title="Vị trí hiện tại" description="Dữ liệu vị trí gần nhất đã được hệ thống ghi nhận.">
                             {hasLocation ? (
                                 <Descriptions column={1} size="small">
                                     <Descriptions.Item label="Thành phố">{user.location_city || '—'}</Descriptions.Item>
@@ -250,8 +264,8 @@ export default function UserEditPage({ config }) {
                             <div style={{ marginTop: 12 }}>
                                 <Tag color={user.is_online ? 'success' : 'default'}>{user.is_online ? 'Online' : 'Offline'}</Tag>
                             </div>
-                        </Card>
-                        <Card title="Thông tin hệ thống">
+                        </AdminSectionCard>
+                        <AdminSectionCard title="Thông tin hệ thống" description="Thông tin theo dõi và định danh không cần chỉnh trực tiếp tại form.">
                             <Descriptions column={1} size="small">
                                 <Descriptions.Item label="Mã giới thiệu">{user.referral_code || 'Chưa có'}</Descriptions.Item>
                                 <Descriptions.Item label="Người quản lý">{user.referrer ? (user.referrer.full_name || user.referrer.username) : 'Chưa có'}</Descriptions.Item>
@@ -259,10 +273,10 @@ export default function UserEditPage({ config }) {
                                 <Descriptions.Item label="Hoạt động gần nhất">{dateTime(user.last_seen)}</Descriptions.Item>
                                 <Descriptions.Item label="IP đăng ký">{user.register_ip || 'Chưa ghi nhận'}</Descriptions.Item>
                             </Descriptions>
-                        </Card>
+                        </AdminSectionCard>
                     </Space>
                 </Col>
             </Row>
-        </Space>
+        </AdminPage>
     );
 }

@@ -113,6 +113,7 @@ class HomeController extends Controller
             // Nếu còn nhiều hơn 10 đơn hàng, lấy đúng 10 đơn hàng tiếp theo
             $list_10_orders = Order::where('rank_id', $user->rank_id)
                 ->where('index', '>', $current_spin->current_spin)
+                ->orderBy('index', 'asc')
                 ->limit(10)
                 ->get();
         }

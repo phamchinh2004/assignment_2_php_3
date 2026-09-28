@@ -1,9 +1,9 @@
-import { Button, Card, Input, InputNumber, message, Select, Space, Switch, Table, Tag, Typography } from 'antd';
-import { SaveOutlined } from '@ant-design/icons';
+import { Button, Input, InputNumber, message, Select, Space, Switch, Table, Tag } from 'antd';
+import { ClockCircleOutlined, SaveOutlined } from '@ant-design/icons';
 import { useMemo, useState } from 'react';
 import { requestJson } from '../../../lib/http';
+import { AdminDataCard, AdminPage, AdminPageHeader } from '../../../components/admin/AdminUi';
 
-const { Text, Title } = Typography;
 const routeFor = (template, id) => String(template || '').replace('__TIMING_ID__', encodeURIComponent(String(id)));
 
 export default function OrderStatusTimingListPage({ config }) {
@@ -39,8 +39,17 @@ export default function OrderStatusTimingListPage({ config }) {
         { title: '', width: 90, render: (_, row) => canUpdate ? <Button href={routeFor(config.routes.edit, row.id)}>Chi tiết</Button> : null },
     ];
 
-    return <div className="container-fluid px-4 pb-5">
-        <div className="d-flex justify-content-between align-items-center gap-3 mb-4"><div><Title level={2}>Thời gian chuyển trạng thái đơn</Title><Text type="secondary">{activeCount}/{rows.length} bước đang bật tự động.</Text></div>{canUpdate && <Button type="primary" icon={<SaveOutlined />} loading={saving} onClick={saveAll}>Lưu tất cả</Button>}</div>
-        <Card><Table rowKey="id" dataSource={rows} columns={columns} pagination={false} scroll={{ x: 1000 }} /></Card>
-    </div>;
+    return <AdminPage>
+        <AdminPageHeader
+            eyebrow="Tự động hóa đơn hàng"
+            icon={<ClockCircleOutlined />}
+            title="Thời gian chuyển trạng thái đơn"
+            description="Cấu hình khoảng thời gian và bước chuyển trạng thái tự động. Các dòng tắt vẫn được giữ để có thể bật lại khi cần."
+            meta={<Tag color={activeCount ? 'success' : 'default'}>{activeCount}/{rows.length} bước đang bật</Tag>}
+            actions={canUpdate && <Button type="primary" icon={<SaveOutlined />} loading={saving} onClick={saveAll}>Lưu tất cả</Button>}
+        />
+        <AdminDataCard title="Quy tắc chuyển trạng thái" description="Kiểm tra tối thiểu, tối đa và đơn vị thời gian theo từng bước trước khi lưu đồng loạt.">
+            <Table rowKey="id" dataSource={rows} columns={columns} pagination={false} scroll={{ x: 1000 }} locale={{emptyText:'Chưa có quy tắc thời gian'}} />
+        </AdminDataCard>
+    </AdminPage>;
 }

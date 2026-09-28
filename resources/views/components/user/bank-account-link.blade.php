@@ -24,22 +24,24 @@
 
 <section {{ $attributes->class('bank-account') }} data-bank-account data-linked="{{ $bankLinked ? 'true' : 'false' }}"
     data-auto-open="{{ $autoOpen ? 'true' : 'false' }}" data-endpoint="{{ route('bank_link') }}">
-    <button type="button" class="bank-account-card {{ $bankLinked ? 'is-linked is-locked' : 'is-unlinked' }}"
+    <button type="button" class="bank-account-card justify-content-between {{ $bankLinked ? 'is-linked is-locked' : 'is-unlinked' }}"
         data-bank-account-open aria-haspopup="dialog">
-        <span class="bank-account-card__icon" aria-hidden="true">
-            <i class="fa-solid fa-building-columns"></i>
-        </span>
-
-        <span class="bank-account-card__body">
-            <span class="bank-account-card__eyebrow">Tài khoản ngân hàng</span>
-            <strong data-bank-summary-name>{{ $bankLinked ? $user->bank_name : 'Chưa liên kết' }}</strong>
-            <span class="bank-account-card__meta" data-bank-summary-meta @if(!$bankLinked) hidden @endif>
-                <span data-bank-summary-account>{{ $maskedAccount }}</span>
-                <span aria-hidden="true">•</span>
-                <span data-bank-summary-owner>{{ $user->username_bank }}</span>
+        <span class="bank-account-card__main">
+            <span class="bank-account-card__icon" aria-hidden="true">
+                <i class="fa-solid fa-building-columns"></i>
             </span>
-            <span class="bank-account-card__meta" data-bank-summary-empty @if($bankLinked) hidden @endif>
-                Thiết lập tài khoản nhận tiền và mật khẩu giao dịch.
+
+            <span class="bank-account-card__body">
+                <span class="bank-account-card__eyebrow">Tài khoản ngân hàng</span>
+                <strong data-bank-summary-name>{{ $bankLinked ? $user->bank_name : 'Chưa liên kết' }}</strong>
+                <span class="bank-account-card__meta" data-bank-summary-meta @if(!$bankLinked) hidden @endif>
+                    <span data-bank-summary-account>{{ $maskedAccount }}</span>
+                    <span aria-hidden="true">•</span>
+                    <span data-bank-summary-owner>{{ $user->username_bank }}</span>
+                </span>
+                <span class="bank-account-card__meta" data-bank-summary-empty @if(!$bankLinked) hidden @endif>
+                    Thiết lập tài khoản nhận tiền và mật khẩu giao dịch.
+                </span>
             </span>
         </span>
 

@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import {
     Alert,
     Button,
-    Card,
     Col,
     Form,
     Image,
@@ -19,15 +18,16 @@ import {
     message,
 } from 'antd';
 import {
-    ArrowLeftOutlined,
     SaveOutlined,
+    ShoppingOutlined,
     UploadOutlined,
 } from '@ant-design/icons';
 import { requestJson } from '../../../lib/http';
 import { spaNavigate } from '../../../navigation';
+import { AdminFormActions, AdminPage, AdminPageHeader, AdminSectionCard } from '../../../components/admin/AdminUi';
 import './order-edit.css';
 
-const { Text, Title } = Typography;
+const { Text } = Typography;
 
 const paymentOptions = [
     { value: 'COD', label: 'COD (Thanh toán khi nhận hàng)' },
@@ -140,32 +140,24 @@ export default function OrderEditPage({ config }) {
     };
 
     return (
-        <div className="order-edit-react-page">
+        <AdminPage className="order-edit-react-page">
             {contextHolder}
-
-            <Button icon={<ArrowLeftOutlined />} href={config.routes.index} className="order-edit-back">
-                Quay lại danh sách đơn hàng
-            </Button>
-
-            <div className="order-edit-heading">
-                <div>
-                    <Title level={3}>Chỉnh sửa đơn hàng</Title>
-                    <Space wrap>
-                        <Tag>{order.order_code}</Tag>
-                        <Tag color={Number(order.status) === 1 ? 'success' : 'error'}>
-                            {Number(order.status) === 1 ? 'Đang hoạt động' : 'Ngừng hoạt động'}
-                        </Tag>
-                    </Space>
-                </div>
-                <Text type="secondary">Tạo: {config.createdAt || '—'}</Text>
-            </div>
+            <AdminPageHeader
+                eyebrow="Vận hành đơn hàng"
+                icon={<ShoppingOutlined />}
+                title="Chỉnh sửa đơn hàng"
+                description="Cập nhật thông tin sản phẩm, người nhận và trạng thái thanh toán của đơn hàng."
+                backHref={config.routes.index}
+                backLabel="Danh sách đơn hàng"
+                meta={<><Tag>{order.order_code}</Tag><Tag color={Number(order.status) === 1 ? 'success' : 'error'}>{Number(order.status) === 1 ? 'Đang hoạt động' : 'Ngừng hoạt động'}</Tag><Text type="secondary">Tạo: {config.createdAt || '—'}</Text></>}
+            />
 
             {error && <Alert type="error" showIcon message={error} className="order-edit-alert" />}
 
             <Form form={form} layout="vertical" initialValues={initialValues}>
                 <Row gutter={[16, 16]}>
                     <Col xs={24} xl={12}>
-                        <Card title="Thông tin sản phẩm" className="order-edit-card">
+                        <AdminSectionCard title="Thông tin sản phẩm" description="Ảnh, mã, giá và số lượng của đơn hàng mẫu." className="order-edit-card">
                             <div className="order-edit-image-row">
                                 <Image width={150} height={150} src={previewUrl} fallback="/theme/admin/img/undraw_profile.svg" />
                                 <Upload
@@ -180,22 +172,22 @@ export default function OrderEditPage({ config }) {
                             </div>
 
                             <Form.Item name="name" label="Tên đơn hàng" rules={[{ required: true, message: 'Vui lòng nhập tên đơn hàng.' }]}>
-                                <Input maxLength={255} />
+                                <Input maxLength={255} placeholder="Nhập tên đơn hàng" />
                             </Form.Item>
 
                             <Form.Item name="order_code" label="Mã đơn hàng" rules={[{ required: true, message: 'Vui lòng nhập mã đơn hàng.' }]}>
-                                <Input maxLength={255} />
+                                <Input maxLength={255} placeholder="Nhập mã đơn hàng" />
                             </Form.Item>
 
                             <Row gutter={12}>
                                 <Col span={12}>
                                     <Form.Item name="price" label="Giá ($)" rules={[{ required: true }]}>
-                                        <InputNumber min={0} precision={2} className="order-edit-full" />
+                                        <InputNumber min={0} precision={2} placeholder="Nhập giá" className="order-edit-full" />
                                     </Form.Item>
                                 </Col>
                                 <Col span={12}>
                                     <Form.Item name="quantity" label="Số lượng" rules={[{ required: true }]}>
-                                        <InputNumber min={1} precision={0} className="order-edit-full" />
+                                        <InputNumber min={1} precision={0} placeholder="Nhập số lượng" className="order-edit-full" />
                                     </Form.Item>
                                 </Col>
                             </Row>
@@ -207,26 +199,26 @@ export default function OrderEditPage({ config }) {
                                     message={`Hoa hồng: ${order.commission_percentage || 0}%${order.rank?.name ? ` · Cấp độ: ${order.rank.name}` : ''}`}
                                 />
                             )}
-                        </Card>
+                        </AdminSectionCard>
                     </Col>
 
                     <Col xs={24} xl={12}>
-                        <Card title="Thông tin khách hàng" className="order-edit-card">
+                        <AdminSectionCard title="Thông tin khách hàng" description="Thông tin người nhận dùng cho vận hành giao hàng." className="order-edit-card">
                             <Form.Item name="customer_name" label="Họ tên khách hàng">
-                                <Input maxLength={255} />
+                                <Input maxLength={255} placeholder="Nhập họ tên khách hàng" />
                             </Form.Item>
                             <Form.Item name="customer_phone" label="Số điện thoại">
-                                <Input maxLength={50} />
+                                <Input maxLength={50} placeholder="Nhập số điện thoại" />
                             </Form.Item>
                             <Form.Item name="customer_address" label="Địa chỉ giao hàng">
-                                <Input.TextArea rows={3} maxLength={500} showCount />
+                                <Input.TextArea rows={3} maxLength={500} placeholder="Nhập địa chỉ giao hàng" showCount />
                             </Form.Item>
                             <Form.Item name="customer_note" label="Ghi chú từ khách hàng">
-                                <Input.TextArea rows={2} maxLength={1000} showCount />
+                                <Input.TextArea rows={2} maxLength={1000} placeholder="Nhập ghi chú của khách hàng" showCount />
                             </Form.Item>
-                        </Card>
+                        </AdminSectionCard>
 
-                        <Card title="Thanh toán & nền tảng" className="order-edit-card order-edit-card-spaced">
+                        <AdminSectionCard title="Thanh toán & nền tảng" description="Nguồn đơn, phương thức thanh toán và mã tracking tích hợp." className="order-edit-card order-edit-card-spaced">
                             <Form.Item name="partner_id" label="Nền tảng bán hàng">
                                 <Select
                                     allowClear
@@ -238,7 +230,7 @@ export default function OrderEditPage({ config }) {
                                 />
                             </Form.Item>
                             <Form.Item name="payment_method" label="Hình thức thanh toán">
-                                <Select allowClear options={paymentOptions} />
+                                <Select allowClear placeholder="Chọn hình thức thanh toán" options={paymentOptions} />
                             </Form.Item>
                             <Form.Item name="is_paid" label="Đã thanh toán" valuePropName="checked">
                                 <Switch disabled={paymentMethod === 'COD'} />
@@ -247,19 +239,19 @@ export default function OrderEditPage({ config }) {
                                 <Text type="secondary">COD không thể đánh dấu đã thanh toán.</Text>
                             )}
                             <Form.Item name="api" label="API Tracking String" className="order-edit-api-field">
-                                <Input maxLength={255} />
+                                <Input maxLength={255} placeholder="Nhập chuỗi API tracking" />
                             </Form.Item>
-                        </Card>
+                        </AdminSectionCard>
                     </Col>
                 </Row>
 
-                <div className="order-edit-actions">
+                <AdminFormActions>
                     <Button href={config.routes.index}>Hủy bỏ</Button>
                     <Button type="primary" icon={<SaveOutlined />} loading={submitting} onClick={handleSubmit}>
                         Lưu thay đổi
                     </Button>
-                </div>
+                </AdminFormActions>
             </Form>
-        </div>
+        </AdminPage>
     );
 }

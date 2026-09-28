@@ -12,6 +12,8 @@ use App\Models\User_manager_setting;
 use App\Services\AuthorizationService;
 use App\Services\PermissionRegistry;
 use App\Services\ReactPageService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -28,7 +30,7 @@ class StaffController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(AuthorizationService $authorization): View
+    public function index(AuthorizationService $authorization): View|JsonResponse
     {
         $list_staffs = User::with('referrer')
             ->withSum(['deposits_made as total_deposit' => function ($q) {
@@ -132,7 +134,7 @@ class StaffController extends Controller
         $staff_id,
         AuthorizationService $authorization,
         PermissionRegistry $registry
-    ): View
+    ): View|JsonResponse|RedirectResponse
     {
         $get_user = User::find($staff_id);
         if (!$get_user) {
@@ -269,7 +271,7 @@ class StaffController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create(AuthorizationService $authorization): View
+    public function create(AuthorizationService $authorization): View|JsonResponse
     {
         return $this->reactPage->admin('admin.staff.create', [
             'canChooseRole' => $authorization->isSuperuser(Auth::user()),
@@ -337,7 +339,7 @@ class StaffController extends Controller
         );
         return redirect()->route('staff.index')->with('success', 'Tạo tài khoản quản trị thành công!');
     }
-    public function show(string $id, AuthorizationService $authorization): View
+    public function show(string $id, AuthorizationService $authorization): View|JsonResponse
     {
         $staff = User::with([
             'referrer',
@@ -350,7 +352,10 @@ class StaffController extends Controller
 
         abort_unless($authorization->canManageOperator(Auth::user(), $staff), 403);
 
-        $referrals = User::with('rank')->where('referrer_id', $staff->id)->latest()->paginate(10);
+        $referrals = $staff->managedMembers()
+            ->with('rank')
+            ->latest()
+            ->paginate(10);
 
         $staff->setAttribute('is_online', $staff->isOnline());
         $staff->setAttribute('last_seen_text', $staff->last_seen_text);
@@ -388,7 +393,7 @@ class StaffController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id, AuthorizationService $authorization): View
+    public function edit(string $id, AuthorizationService $authorization): View|JsonResponse|RedirectResponse
     {
         $get_staff_old = User::find($id);
         if (!$get_staff_old) {

@@ -1,7 +1,10 @@
 import ApexCharts from 'apexcharts';
 
-const initTransactionCharts = () => {
+export const initTransactionCharts = () => {
     const data = window.transactionStatistics || { profitLoss: [], status: {} };
+    const charts = [];
+    const observers = [];
+    let disposed = false;
     const money = value => `${new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 5 }).format(value)}$`;
     const axisMoney = value => `${new Intl.NumberFormat('vi-VN', { notation: 'compact', maximumFractionDigits: 2 }).format(value)}$`;
     const signedMoney = value => `${value > 0 ? '+' : ''}${money(value)}`;
@@ -13,25 +16,34 @@ const initTransactionCharts = () => {
     const failed = target => {
         target.innerHTML = '<div class="empty-state"><i class="fas fa-triangle-exclamation"></i><strong>Không thể tải biểu đồ</strong><span>Vui lòng tải lại trang.</span></div>';
     };
-    const render = (target, options) => {
+    const render = (target, options, initialZoomRange = null) => {
         try {
             target.replaceChildren();
             const initialHeight = Math.round(target.getBoundingClientRect().height);
             options.chart.height = initialHeight;
             const chart = new ApexCharts(target, options);
+            charts.push(chart);
             chart.render().then(() => {
+                if (disposed) return;
+                if (initialZoomRange) {
+                    chart.zoomX(initialZoomRange.min, initialZoomRange.max);
+                }
                 if (!window.ResizeObserver) return;
                 let renderedHeight = initialHeight;
                 const observer = new ResizeObserver(entries => {
+                    if (disposed) return;
                     const nextHeight = Math.round(entries[0].contentRect.height);
                     if (nextHeight <= 0 || nextHeight === renderedHeight) return;
                     renderedHeight = nextHeight;
                     chart.updateOptions({ chart: { height: nextHeight } }, false, false, false);
                 });
                 observer.observe(target);
-            }).catch(() => failed(target));
+                observers.push(observer);
+            }).catch(() => {
+                if (!disposed) failed(target);
+            });
         } catch (error) {
-            failed(target);
+            if (!disposed) failed(target);
         }
     };
 
@@ -48,6 +60,20 @@ const initTransactionCharts = () => {
                 return { x: chartTimestamp, y: item.cumulative };
             });
             const profitLossValues = data.profitLoss.map(item => Number(item.cumulative));
+            const transactionPoints = data.profitLoss.filter(item => item.event_type !== 'baseline');
+            let initialProfitLossZoom = null;
+            if (transactionPoints.length) {
+                const firstTransactionTimestamp = new Date(transactionPoints[0].occurred_at).getTime();
+                const lastTransactionTimestamp = new Date(transactionPoints.at(-1).occurred_at).getTime();
+                const transactionSpan = Math.max(0, lastTransactionTimestamp - firstTransactionTimestamp);
+                const zoomPadding = transactionSpan > 0
+                    ? Math.max(transactionSpan * 0.08, 60 * 1000)
+                    : 12 * 60 * 60 * 1000;
+                initialProfitLossZoom = {
+                    min: firstTransactionTimestamp - zoomPadding,
+                    max: lastTransactionTimestamp + zoomPadding,
+                };
+            }
             const minimumProfitLoss = Math.min(0, ...profitLossValues);
             const maximumProfitLoss = Math.max(0, ...profitLossValues);
             const profitLossPadding = (maximumProfitLoss - minimumProfitLoss) * 0.1 || 1;
@@ -81,7 +107,7 @@ const initTransactionCharts = () => {
                     return `<div class="pnl-tooltip"><strong>${dateTime(point.occurred_at)}</strong><span>Loại: <b>${eventLabel}</b></span><span>Biến động: <b class="${point.change >= 0 ? 'positive' : 'negative'}">${signedMoney(point.change)}</b></span><span>Lãi/Lỗ lũy kế: <b>${signedMoney(point.cumulative)}</b></span>${order}</div>`;
                 } },
                 responsive: [{ breakpoint: 576, options: { chart: { animations: { enabled: false } }, stroke: { width: 2.5 }, markers: { size: 3 }, grid: { padding: { left: 0, right: 5 } }, yaxis: { labels: { minWidth: 30, maxWidth: 58, style: { fontSize: '9px' } } } } }],
-            });
+            }, initialProfitLossZoom);
         }
     }
 
@@ -100,10 +126,10 @@ const initTransactionCharts = () => {
             });
         }
     }
-};
 
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initTransactionCharts, { once: true });
-} else {
-    initTransactionCharts();
-}
+    return () => {
+        disposed = true;
+        observers.forEach((observer) => observer.disconnect());
+        charts.forEach((chart) => chart.destroy());
+    };
+};

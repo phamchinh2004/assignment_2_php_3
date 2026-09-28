@@ -47,7 +47,7 @@ class FeatureAnnouncementController extends Controller
         ]);
     }
 
-    public function index(FeatureAnnouncementService $service): View
+    public function index(FeatureAnnouncementService $service): View|JsonResponse
     {
         $announcements = FeatureAnnouncement::query()
             ->with([
@@ -83,7 +83,7 @@ class FeatureAnnouncementController extends Controller
         ], 'Thông báo tính năng');
     }
 
-    public function create(): View
+    public function create(): View|JsonResponse
     {
         return $this->reactPage->admin('admin.feature-announcements.create', [
             'roleOptions' => $this->roleOptions(),
@@ -137,7 +137,7 @@ class FeatureAnnouncementController extends Controller
     public function show(
         FeatureAnnouncement $featureAnnouncement,
         FeatureAnnouncementService $service
-    ): View {
+    ): View|JsonResponse {
         $featureAnnouncement->load([
             'creator:id,full_name,username',
             'targetedUsers:id,full_name,username,email,role',
@@ -159,7 +159,7 @@ class FeatureAnnouncementController extends Controller
         ], "Chi tiết thông báo — {$featureAnnouncement->title}");
     }
 
-    public function edit(FeatureAnnouncement $featureAnnouncement): View
+    public function edit(FeatureAnnouncement $featureAnnouncement): View|JsonResponse
     {
         $featureAnnouncement->load('targetedUsers:id');
 
