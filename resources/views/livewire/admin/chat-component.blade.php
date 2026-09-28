@@ -1333,7 +1333,8 @@
             const frame = image.closest('.admin-chat-image-frame');
             if (!frame) return;
 
-            frame.classList.remove('is-loaded', 'is-error');
+            frame.classList.remove('is-loading', 'is-loaded', 'is-error');
+            if (state === 'loading') frame.classList.add('is-loading');
             if (state === 'loaded') frame.classList.add('is-loaded');
             if (state === 'error') frame.classList.add('is-error');
         }

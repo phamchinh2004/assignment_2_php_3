@@ -13,7 +13,7 @@ const typeIcons = {
 const statusLabels = { completed: 'Hoàn thành', processing: 'Đang xử lý', cancelled: 'Đã huỷ', recorded: 'Đã ghi sổ' };
 const detailLabels = { normal: 'Tiền nạp', bonus: 'Tiền thưởng', virtual_withdraw: 'Rút tiền', balance: 'Số dư khả dụng', frozen_balance: 'Số dư đóng băng' };
 
-const money = (value, precision = 2) => `${new Intl.NumberFormat('vi-VN', { maximumFractionDigits: precision }).format(Number(value || 0))}$`;
+const money = (value, precision = 2) => `${new Intl.NumberFormat('en-US', { maximumFractionDigits: precision }).format(Number(value || 0))}$`;
 const trend = (value) => `${Number(value || 0) > 0 ? '+' : ''}${new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 1 }).format(Number(value || 0))}%`;
 const number = (value) => new Intl.NumberFormat('vi-VN').format(Number(value || 0));
 const dateTime = (value) => value ? new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(value)) : '';

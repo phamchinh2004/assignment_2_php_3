@@ -114,6 +114,7 @@ export default function App({ bootstrap }) {
 
     useEffect(() => {
         if (pageState.requestKey === requestKey) {
+            setLoading(false);
             syncLegacyNavigationState(surface, location.pathname);
             return undefined;
         }
