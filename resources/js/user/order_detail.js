@@ -58,13 +58,15 @@ pageRoot.addEventListener('click', handleCopyApiClick, listenerOptions);
 const pageConfig = getOrderDetailConfig();
 
 // Đảm bảo các biến được truy cập đúng cách
-const trans = getGlobalVar('trans', pageConfig?.trans || {});
-const route_confirm_order = getGlobalVar('route_confirm_order', pageConfig?.routes?.confirm || '');
-const route_cancel_order = getGlobalVar('route_cancel_order', pageConfig?.routes?.cancel || '');
-const route_report_order = getGlobalVar('route_report_order', pageConfig?.routes?.report || '');
-const route_order = getGlobalVar('route_order', pageConfig?.routes?.order || '');
-const route_distribution = getGlobalVar('route_distribution', pageConfig?.routes?.distribution || '');
-const csrf = getGlobalVar('csrf', pageConfig?.csrf || document.querySelector('meta[name="csrf-token"]')?.content || '');
+// Trong SPA, config hiện tại phải là source of truth.
+// Các global legacy có thể còn sót lại từ đơn trước sau khi React đổi route.
+const trans = pageConfig?.trans ?? getGlobalVar('trans', {});
+const route_confirm_order = pageConfig?.routes?.confirm ?? getGlobalVar('route_confirm_order', '');
+const route_cancel_order = pageConfig?.routes?.cancel ?? getGlobalVar('route_cancel_order', '');
+const route_report_order = pageConfig?.routes?.report ?? getGlobalVar('route_report_order', '');
+const route_order = pageConfig?.routes?.order ?? getGlobalVar('route_order', '');
+const route_distribution = pageConfig?.routes?.distribution ?? getGlobalVar('route_distribution', '');
+const csrf = pageConfig?.csrf ?? getGlobalVar('csrf', document.querySelector('meta[name="csrf-token"]')?.content || '');
 
 // Expose lại lên window để các đoạn debug/khác có thể dùng
 if (typeof window !== 'undefined') {
