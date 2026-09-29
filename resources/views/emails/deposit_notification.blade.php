@@ -254,7 +254,7 @@
                 </tr>
                 <tr>
                     <td>Được xử lý bởi:</td>
-                    <td>{{ $adminName }}</td>
+                    <td>Nhân viên CSKH</td>
                 </tr>
                 <tr>
                     <td>Thời gian:</td>
