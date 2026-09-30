@@ -61,7 +61,7 @@ export default function StaffListPage({ config }) {
     const columns = [
         { title:'Tài khoản', render:(_,item)=>{const content=<div><Text strong>{item.full_name || 'Chưa đặt tên'}</Text><div><Text type="secondary">@{item.username} · {item.phone || 'Chưa có SĐT'}</Text></div><Tag color={item.role==='admin'?'gold':'green'}>{item.role==='admin'?'Admin':'Staff'}</Tag></div>;return config.permissions?.viewDetail?<a href={routeFor(config.routes.show,item.id)}>{content}</a>:content;}},
         { title:'Hoạt động', render:(_,item)=><Tag color={item.is_online?'success':'default'}>{item.is_online ? 'Online' : (item.last_seen_text || 'Offline')}</Tag> },
-        { title:'Tổng doanh số nạp', dataIndex:'total_deposit', render:(value)=><Text strong style={{color:'#16a34a'}}>{money(value)}</Text> },
+        { title:'Tổng doanh số nạp', dataIndex:'total_deposit', render:(value,item)=><div><Text strong style={{color:'#16a34a'}}>{money(value)}</Text>{item.role==='admin'&&<div><Text type="secondary">Gồm staff trực thuộc</Text></div>}</div> },
         { title:'Trạng thái', dataIndex:'status', render:(value)=><Tag color={value==='activated'?'success':value==='inactivated'?'warning':'error'}>{value==='activated'?'Đã kích hoạt':value==='inactivated'?'Chưa kích hoạt':'Bị khóa'}</Tag> },
         { title:'Thao tác', width:300, render:(_,item)=><Space wrap>
             {config.permissions?.viewDetail && <Button size="small" href={routeFor(config.routes.show,item.id)}>Xem</Button>}

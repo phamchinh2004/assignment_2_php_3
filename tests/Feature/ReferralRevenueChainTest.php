@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Http\Controllers\Admin\StatisticalController;
+use App\Http\Controllers\Admin\StaffController;
 use App\Http\Controllers\User\HomeController;
 use App\Models\Conversation;
 use App\Models\Rank;
@@ -165,6 +166,7 @@ class ReferralRevenueChainTest extends TestCase
         $this->assertSame(3, $statistics['table_data'][0]['invited_users']);
         $this->assertSame(3, $statistics['table_data'][0]['total_transactions']);
         $this->assertEquals(600, $statistics['table_data'][0]['total_revenue']);
+        $this->assertSame(1, $statistics['summary']['active_staff']);
 
         $this->actingAs($manager);
         $personal = app(StatisticalController::class)->getPersonalRevenueStats(
@@ -216,6 +218,7 @@ class ReferralRevenueChainTest extends TestCase
         $this->assertEquals(200, $byStaff[$staffC->id]['total_revenue']);
         $this->assertSame(1, $byStaff[$staffB->id]['total_transactions']);
         $this->assertSame(1, $byStaff[$staffC->id]['total_transactions']);
+        $this->assertSame(2, $statistics['summary']['active_staff']);
         $this->assertSame(0, $statistics['summary']['legacy_transactions']);
 
         $detailB = app(StatisticalController::class)->getRevenueDetail(Request::create('/test', 'GET', [
@@ -367,6 +370,45 @@ class ReferralRevenueChainTest extends TestCase
         )->getData(true);
 
         $this->assertCount(30, $thirtyDays['data']['daily_revenue']);
+    }
+
+    public function test_staff_management_deposit_totals_include_direct_team_revenue_for_admin_only(): void
+    {
+        $owner = $this->user(User::ROLE_OWNER, 100000, 'owner');
+        $admin = $this->user(User::ROLE_ADMIN, 100001, 'admin', [
+            'referrer_id' => $owner->id,
+        ]);
+        $staff = $this->user(User::ROLE_STAFF, 100002, 'staff', [
+            'referrer_id' => $admin->id,
+        ]);
+        $otherStaff = $this->user(User::ROLE_STAFF, 100003, 'other_staff', [
+            'referrer_id' => $owner->id,
+        ]);
+
+        $adminMember = $this->user(User::ROLE_MEMBER, 200001, 'admin_member', [
+            'referrer_id' => $admin->id,
+        ]);
+        $staffMember = $this->user(User::ROLE_MEMBER, 200002, 'staff_member', [
+            'referrer_id' => $staff->id,
+        ]);
+        $otherMember = $this->user(User::ROLE_MEMBER, 200003, 'other_member', [
+            'referrer_id' => $otherStaff->id,
+        ]);
+
+        $this->deposit($adminMember, 25);
+        $this->deposit($staffMember, 100);
+        $this->deposit($otherMember, 70);
+
+        $method = new \ReflectionMethod(StaffController::class, 'depositTotalsByStaff');
+        $totals = $method->invoke(app(StaffController::class), collect([
+            $admin->id,
+            $staff->id,
+            $otherStaff->id,
+        ]));
+
+        $this->assertEquals(125, $totals->get($admin->id));
+        $this->assertEquals(100, $totals->get($staff->id));
+        $this->assertEquals(70, $totals->get($otherStaff->id));
     }
 
     private function user(string $role, int $referralCode, string $username, array $attributes = []): User

@@ -638,7 +638,10 @@ class StatisticalController extends Controller
                 'total_staff' => count($tableData),
                 'total_revenue' => $totalRevenue,
                 'total_transactions' => $totalTransactions,
-                'avg_revenue' => count($tableData) > 0 ? $totalRevenue / count($tableData) : 0,
+                'active_staff' => count(array_filter(
+                    $tableData,
+                    fn ($item) => $item['total_revenue'] > 0
+                )),
                 'legacy_transactions' => $legacyTransactions,
                 'legacy_revenue' => $legacyRevenue,
             ];

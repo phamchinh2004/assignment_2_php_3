@@ -494,23 +494,65 @@ class StaffController extends Controller
             return collect();
         }
 
-        return DB::table('wallet_balance_histories as wbh')
+        $operators = User::query()
+            ->whereIn('id', $staffIds)
+            ->whereIn('role', [User::ROLE_ADMIN, User::ROLE_STAFF])
+            ->get(['id', 'role']);
+
+        $adminIds = $operators
+            ->where('role', User::ROLE_ADMIN)
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->values();
+
+        $staffByAdmin = collect();
+        if ($adminIds->isNotEmpty()) {
+            $staffByAdmin = User::query()
+                ->where('role', User::ROLE_STAFF)
+                ->whereIn('referrer_id', $adminIds)
+                ->get(['id', 'referrer_id'])
+                ->groupBy(fn (User $staff) => (int) $staff->referrer_id);
+        }
+
+        $attributionIds = $staffIds
+            ->merge($staffByAdmin->flatten(1)->pluck('id')->map(fn ($id) => (int) $id))
+            ->unique()
+            ->values();
+
+        $directTotals = DB::table('wallet_balance_histories as wbh')
             ->join('users as customers', 'wbh.user_id', '=', 'customers.id')
             ->where('customers.clone_account', 0)
             ->where('customers.role', User::ROLE_MEMBER)
             ->where('wbh.type', 'deposit')
             ->where('wbh.status', 'completed')
             ->where('wbh.transaction_type', 'normal')
-            ->where(function ($query) use ($staffIds) {
-                $query->whereIn('wbh.assigned_staff_id', $staffIds)
-                    ->orWhere(function ($legacyQuery) use ($staffIds) {
+            ->where(function ($query) use ($attributionIds) {
+                $query->whereIn('wbh.assigned_staff_id', $attributionIds)
+                    ->orWhere(function ($legacyQuery) use ($attributionIds) {
                         $legacyQuery->whereNull('wbh.assigned_staff_id')
-                            ->whereIn('customers.referrer_id', $staffIds);
+                            ->whereIn('customers.referrer_id', $attributionIds);
                     });
             })
             ->selectRaw('COALESCE(wbh.assigned_staff_id, customers.referrer_id) as staff_id')
             ->selectRaw('SUM(wbh.value) as total_deposit')
             ->groupByRaw('COALESCE(wbh.assigned_staff_id, customers.referrer_id)')
             ->pluck('total_deposit', 'staff_id');
+
+        return $operators->mapWithKeys(function (User $operator) use ($directTotals, $staffByAdmin) {
+            $operatorId = (int) $operator->id;
+            $total = (float) ($directTotals->get($operatorId) ?? 0);
+
+            if ($operator->role === User::ROLE_ADMIN) {
+                $childStaffIds = collect($staffByAdmin->get($operatorId, collect()))
+                    ->pluck('id')
+                    ->map(fn ($id) => (int) $id);
+
+                $total += $childStaffIds->sum(
+                    fn ($staffId) => (float) ($directTotals->get($staffId) ?? 0)
+                );
+            }
+
+            return [$operatorId => $total];
+        });
     }
 }

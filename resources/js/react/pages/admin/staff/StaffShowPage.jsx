@@ -42,7 +42,7 @@ export default function StaffShowPage({ config }) {
         />
 
         <AdminMetricGrid items={[
-            {key:'deposit',title:'Doanh số nạp',value:Number(staff.total_deposit || 0),precision:2,suffix:'$',tone:'success'},
+            {key:'deposit',title:staff.role==='admin'?'Doanh số nạp của team':'Doanh số nạp',value:Number(staff.total_deposit || 0),precision:2,suffix:'$',tone:'success'},
             {key:'customers',title:'Thành viên quản lý',value:Number(page.total || 0),tone:'primary'},
             {key:'permissions',title:'Quyền đang bật',value:activePermissions.length,tone:'info'},
             {key:'presence',title:'Trạng thái hiện diện',value:staff.is_online?'Online':'Offline',tone:staff.is_online?'success':'neutral'},
