@@ -66,6 +66,7 @@ class UserDepositService
                 'type' => 'deposit',
                 'status' => 'completed',
                 'by_user_id' => $actor?->id,
+                'assigned_staff_id' => $lockedUser->currentAssignedStaffId(),
                 'transaction_type' => $transactionType,
             ]);
 

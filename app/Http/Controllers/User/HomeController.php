@@ -678,6 +678,7 @@ class HomeController extends Controller
                 'balance_before' => $balance_before,
                 'balance_after' => $balance_after,
                 'type' => "withdraw",
+                'assigned_staff_id' => $user->currentAssignedStaffId(),
                 'username_bank' => $username_bank,
                 'bank_name' => $bank_name,
                 'account_number' => $account_number,

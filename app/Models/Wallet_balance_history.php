@@ -17,6 +17,7 @@ class Wallet_balance_history extends Model
         'type',
         'status',
         'by_user_id',
+        'assigned_staff_id',
         'username_bank',
         'bank_name',
         'account_number',
@@ -34,5 +35,10 @@ class Wallet_balance_history extends Model
     public function byUser()
     {
         return $this->belongsTo(User::class, 'by_user_id');
+    }
+
+    public function assignedStaff()
+    {
+        return $this->belongsTo(User::class, 'assigned_staff_id');
     }
 }

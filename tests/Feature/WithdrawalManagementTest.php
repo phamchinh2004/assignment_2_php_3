@@ -61,10 +61,20 @@ class WithdrawalManagementTest extends TestCase
             $table->string('type');
             $table->string('status')->default('processing');
             $table->foreignId('by_user_id')->nullable();
+            $table->foreignId('assigned_staff_id')->nullable();
             $table->string('username_bank')->nullable();
             $table->string('bank_name')->nullable();
             $table->string('account_number')->nullable();
             $table->string('transaction_type')->default('normal');
+            $table->timestamps();
+        });
+
+        Schema::create('conversations', function (Blueprint $table) {
+            $table->id();
+            $table->uuid('public_id')->unique();
+            $table->foreignId('user_id');
+            $table->foreignId('staff_id')->nullable();
+            $table->string('status')->default('open');
             $table->timestamps();
         });
 

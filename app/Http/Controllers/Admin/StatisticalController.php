@@ -136,7 +136,10 @@ class StatisticalController extends Controller
             ->count('user_id');
 
         // Tính kỳ trước để so sánh trend
-        $diffInDays = max(1, $startDate->diffInDays($endDate) + 1);
+        $diffInDays = max(
+            1,
+            $startDate->copy()->startOfDay()->diffInDays($endDate->copy()->startOfDay()) + 1
+        );
         $prevEndDate = $startDate->copy()->subSecond();
         $prevStartDate = $startDate->copy()->subDays($diffInDays);
 
@@ -313,7 +316,7 @@ class StatisticalController extends Controller
 
             $startDate = $request->get('start_date')
                 ? Carbon::parse($request->get('start_date'))->startOfDay()
-                : now()->subDays($period);
+                : now()->subDays(max((int) $period - 1, 0))->startOfDay();
 
             $endDate = $request->get('end_date')
                 ? Carbon::parse($request->get('end_date'))->endOfDay()
@@ -360,7 +363,7 @@ class StatisticalController extends Controller
 
             $startDate = $request->get('start_date')
                 ? Carbon::parse($request->get('start_date'))->startOfDay()
-                : now()->subDays($period);
+                : now()->subDays(max((int) $period - 1, 0))->startOfDay();
 
             $endDate = $request->get('end_date')
                 ? Carbon::parse($request->get('end_date'))->endOfDay()
@@ -403,7 +406,7 @@ class StatisticalController extends Controller
 
             $startDate = $request->get('start_date')
                 ? Carbon::parse($request->get('start_date'))->startOfDay()
-                : now()->subDays($period);
+                : now()->subDays(max((int) $period - 1, 0))->startOfDay();
 
             $endDate = $request->get('end_date')
                 ? Carbon::parse($request->get('end_date'))->endOfDay()
@@ -505,6 +508,91 @@ class StatisticalController extends Controller
         }
     }
 
+    private function buildStaffRevenueTableData(Carbon $dateFrom, Carbon $dateTo, ?int $staffId = null): array
+    {
+        $staffQuery = User::query()
+            ->where('role', User::ROLE_STAFF)
+            ->select('id', 'full_name', 'email', 'phone');
+
+        if ($staffId) {
+            $staffQuery->whereKey($staffId);
+        }
+
+        $staffList = $staffQuery->get();
+        $staffIds = $staffList->pluck('id')->map(fn ($id) => (int) $id)->values();
+
+        $aggregates = collect();
+        if ($staffIds->isNotEmpty()) {
+            $aggregates = DB::table('wallet_balance_histories as wbh')
+                ->join('users as customers', 'wbh.user_id', '=', 'customers.id')
+                ->where('customers.clone_account', 0)
+                ->where('customers.role', User::ROLE_MEMBER)
+                ->where('wbh.type', 'deposit')
+                ->where('wbh.status', 'completed')
+                ->where('wbh.transaction_type', 'normal')
+                ->whereBetween('wbh.created_at', [$dateFrom, $dateTo])
+                ->where(function ($query) use ($staffIds) {
+                    $query->whereIn('wbh.assigned_staff_id', $staffIds)
+                        ->orWhere(function ($legacyQuery) use ($staffIds) {
+                            $legacyQuery->whereNull('wbh.assigned_staff_id')
+                                ->whereIn('customers.referrer_id', $staffIds);
+                        });
+                })
+                ->selectRaw('COALESCE(wbh.assigned_staff_id, customers.referrer_id) as staff_id')
+                ->selectRaw('COUNT(wbh.id) as total_transactions')
+                ->selectRaw('COUNT(DISTINCT wbh.user_id) as invited_users')
+                ->selectRaw('SUM(wbh.value) as total_revenue')
+                ->selectRaw('SUM(CASE WHEN wbh.assigned_staff_id IS NULL THEN 1 ELSE 0 END) as legacy_transactions')
+                ->selectRaw('SUM(CASE WHEN wbh.assigned_staff_id IS NULL THEN wbh.value ELSE 0 END) as legacy_revenue')
+                ->groupByRaw('COALESCE(wbh.assigned_staff_id, customers.referrer_id)')
+                ->get()
+                ->keyBy(fn ($row) => (int) $row->staff_id);
+        }
+
+        $legacyTransactions = 0;
+        $legacyRevenue = 0.0;
+        $tableData = $staffList->map(function (User $staff) use ($aggregates, &$legacyTransactions, &$legacyRevenue) {
+            $aggregate = $aggregates->get((int) $staff->id);
+            $staffLegacyTransactions = (int) ($aggregate->legacy_transactions ?? 0);
+            $staffLegacyRevenue = (float) ($aggregate->legacy_revenue ?? 0);
+
+            $legacyTransactions += $staffLegacyTransactions;
+            $legacyRevenue += $staffLegacyRevenue;
+
+            return [
+                'staff_id' => (int) $staff->id,
+                'staff_name' => $staff->full_name,
+                'staff_email' => $staff->email,
+                'staff_phone' => $staff->phone ?? '',
+                'invited_users' => (int) ($aggregate->invited_users ?? 0),
+                'total_transactions' => (int) ($aggregate->total_transactions ?? 0),
+                'total_revenue' => (float) ($aggregate->total_revenue ?? 0),
+                'legacy_transactions' => $staffLegacyTransactions,
+                'legacy_revenue' => $staffLegacyRevenue,
+            ];
+        })->all();
+
+        return [$tableData, $legacyTransactions, $legacyRevenue];
+    }
+
+    private function attributedTransactions(int $staffId)
+    {
+        return Wallet_balance_history::query()
+            ->where(function ($query) use ($staffId) {
+                $query->where('assigned_staff_id', $staffId)
+                    ->orWhere(function ($legacyQuery) use ($staffId) {
+                        $legacyQuery->whereNull('assigned_staff_id')
+                            ->whereHas('user', function ($userQuery) use ($staffId) {
+                                $userQuery->where('referrer_id', $staffId);
+                            });
+                    });
+            })
+            ->whereHas('user', function ($query) {
+                $query->where('role', User::ROLE_MEMBER)
+                    ->where('clone_account', 0);
+            });
+    }
+
     /**
      * API lấy dữ liệu doanh thu theo nhân viên
      */
@@ -519,56 +607,14 @@ class StatisticalController extends Controller
             $dateFrom = Carbon::parse($dateFrom)->startOfDay();
             $dateTo = Carbon::parse($dateTo)->endOfDay();
 
-            // Query cơ bản
-            $query = User::where('role', User::ROLE_STAFF)
-                ->with(['managedMembers' => function ($q) use ($dateFrom, $dateTo) {
-                    $q->with(['wallet_balance_histories' => function ($wq) use ($dateFrom, $dateTo) {
-                        $wq->where('type', 'deposit')
-                            ->where('status', 'completed')
-                            ->where('transaction_type', 'normal')
-                            ->whereBetween('created_at', [$dateFrom, $dateTo]);
-                    }])->where('clone_account', 0);
-                }]);
+            [$tableData, $legacyTransactions, $legacyRevenue] = $this->buildStaffRevenueTableData(
+                $dateFrom,
+                $dateTo,
+                $staffId ? (int) $staffId : null
+            );
 
-            // Nếu có filter theo nhân viên
-            if ($staffId) {
-                $query->where('id', $staffId);
-            }
-
-            $staffList = $query->get();
-
-            // Tính toán dữ liệu
-            $tableData = [];
-            $chartLabels = [];
-            $chartRevenueData = [];
-            $totalRevenue = 0;
-            $totalTransactions = 0;
-
-            foreach ($staffList as $staff) {
-                $invitedUsers = $staff->managedMembers;
-                $staffRevenue = 0;
-                $staffTransactions = 0;
-
-                foreach ($invitedUsers as $user) {
-                    $userTransactions = $user->wallet_balance_histories;
-                    $staffTransactions += $userTransactions->count();
-                    $staffRevenue += $userTransactions->sum('value');
-                }
-
-                $tableData[] = [
-                    'staff_id' => $staff->id,
-                    'staff_name' => $staff->full_name,
-                    'staff_email' => $staff->email,
-                    'invited_users' => $invitedUsers->count(),
-                    'total_transactions' => $staffTransactions,
-                    'total_revenue' => $staffRevenue
-                ];
-
-                $chartLabels[] = $staff->full_name;
-                $chartRevenueData[] = $staffRevenue;
-                $totalRevenue += $staffRevenue;
-                $totalTransactions += $staffTransactions;
-            }
+            $totalRevenue = array_sum(array_column($tableData, 'total_revenue'));
+            $totalTransactions = array_sum(array_column($tableData, 'total_transactions'));
 
             // Sắp xếp theo doanh thu giảm dần
             usort($tableData, function ($a, $b) {
@@ -589,16 +635,18 @@ class StatisticalController extends Controller
 
             // Tính toán summary
             $summary = [
-                'total_staff' => count($staffList),
+                'total_staff' => count($tableData),
                 'total_revenue' => $totalRevenue,
                 'total_transactions' => $totalTransactions,
-                'avg_revenue' => count($staffList) > 0 ? $totalRevenue / count($staffList) : 0
+                'avg_revenue' => count($tableData) > 0 ? $totalRevenue / count($tableData) : 0,
+                'legacy_transactions' => $legacyTransactions,
+                'legacy_revenue' => $legacyRevenue,
             ];
 
             // Dữ liệu cho biểu đồ
             $chartData = [
-                'labels' => $chartLabels,
-                'revenue_data' => $chartRevenueData,
+                'labels' => array_column($tableData, 'staff_name'),
+                'revenue_data' => array_column($tableData, 'total_revenue'),
                 'top_labels' => $topLabels,
                 'top_data' => $topData
             ];
@@ -650,15 +698,7 @@ class StatisticalController extends Controller
                 ], 404);
             }
 
-            // Lấy danh sách người dùng được mời bởi nhân viên này
-            $invitedUsers = User::query()
-                ->managedBy((int) $staffId)
-                ->where('role', User::ROLE_MEMBER)
-                ->where('clone_account', 0)
-                ->get();
-
-            // Lấy giao dịch của những người dùng được nhân viên giới thiệu
-            $transactions = Wallet_balance_history::whereIn('user_id', $invitedUsers->pluck('id'))
+            $transactions = $this->attributedTransactions((int) $staffId)
                 ->where('type', 'deposit')
                 ->where('status', 'completed')
                 ->where('transaction_type', 'normal')
@@ -669,9 +709,11 @@ class StatisticalController extends Controller
 
             // Tính toán thống kê
             $statistics = [
-                'invited_users' => $invitedUsers->count(),
+                'invited_users' => $transactions->pluck('user_id')->unique()->count(),
                 'total_transactions' => $transactions->count(),
-                'total_revenue' => $transactions->sum('value')
+                'total_revenue' => $transactions->sum('value'),
+                'legacy_transactions' => $transactions->whereNull('assigned_staff_id')->count(),
+                'legacy_revenue' => $transactions->whereNull('assigned_staff_id')->sum('value'),
             ];
 
             return response()->json([
@@ -704,15 +746,15 @@ class StatisticalController extends Controller
             $staffId = $request->get('staff_id');
 
             // Validate dates
-            $dateFrom = Carbon::parse($dateFrom);
-            $dateTo = Carbon::parse($dateTo);
+            $dateFrom = Carbon::parse($dateFrom)->startOfDay();
+            $dateTo = Carbon::parse($dateTo)->endOfDay();
 
             // Tạo query
             $query = DB::table('wallet_balance_histories as wbh')
-                ->join('users as u', 'wbh.user_id', '=', 'u.id')
-                ->join('users as staff', 'u.referrer_id', '=', 'staff.id')
-                ->where('u.clone_account', 0)
-                ->where('u.role', User::ROLE_MEMBER)
+                ->join('users as customers', 'wbh.user_id', '=', 'customers.id')
+                ->join('users as staff', 'staff.id', '=', DB::raw('COALESCE(wbh.assigned_staff_id, customers.referrer_id)'))
+                ->where('customers.clone_account', 0)
+                ->where('customers.role', User::ROLE_MEMBER)
                 ->where('wbh.type', 'deposit')
                 ->where('wbh.status', 'completed')
                 ->where('wbh.transaction_type', 'normal')
@@ -793,7 +835,10 @@ class StatisticalController extends Controller
             // Tính kỳ trước
             $startDateObj = Carbon::parse($startDate)->startOfDay();
             $endDateObj = Carbon::parse($endDate)->endOfDay();
-            $diffInDays = max(1, $startDateObj->diffInDays($endDateObj) + 1);
+            $diffInDays = max(
+                1,
+                $startDateObj->copy()->startOfDay()->diffInDays($endDateObj->copy()->startOfDay()) + 1
+            );
             $prevEndDate = $startDateObj->copy()->subSecond();
             $prevStartDate = $startDateObj->copy()->subDays($diffInDays);
 
@@ -977,6 +1022,9 @@ class StatisticalController extends Controller
 
             // Tổng doanh thu
             $totalRevenue = Wallet_balance_history::where('type', 'deposit')
+                ->whereHas('user', function ($q) {
+                    $q->where('clone_account', 0);
+                })
                 ->where('transaction_type', 'normal')
                 ->where('status', 'completed')
                 ->whereBetween('created_at', [
@@ -1063,45 +1111,12 @@ class StatisticalController extends Controller
             $dateFromParsed = Carbon::parse($dateFrom)->startOfDay();
             $dateToParsed = Carbon::parse($dateTo)->endOfDay();
 
-            $query = User::where('role', User::ROLE_STAFF)
-                ->with(['managedMembers' => function ($q) use ($dateFromParsed, $dateToParsed) {
-                    $q->with(['wallet_balance_histories' => function ($wq) use ($dateFromParsed, $dateToParsed) {
-                        $wq->where('type', 'deposit')
-                            ->where('status', 'completed')
-                            ->where('transaction_type', 'normal')
-                            ->whereBetween('created_at', [$dateFromParsed, $dateToParsed]);
-                    }])->where('clone_account', 0);
-                }]);
-
-            if ($staffId) {
-                $query->where('id', $staffId);
-            }
-
-            $staffList = $query->get();
-            $tableData = [];
-            $totalAllRevenue = 0;
-
-            foreach ($staffList as $staff) {
-                $invitedUsers = $staff->managedMembers;
-                $staffRevenue = 0;
-                $staffTransactions = 0;
-
-                foreach ($invitedUsers as $user) {
-                    $userTransactions = $user->wallet_balance_histories;
-                    $staffTransactions += $userTransactions->count();
-                    $staffRevenue += $userTransactions->sum('value');
-                }
-
-                $tableData[] = [
-                    'staff_name' => $staff->full_name,
-                    'staff_email' => $staff->email,
-                    'staff_phone' => $staff->phone ?? '',
-                    'invited_users' => $invitedUsers->count(),
-                    'total_transactions' => $staffTransactions,
-                    'total_revenue' => $staffRevenue
-                ];
-                $totalAllRevenue += $staffRevenue;
-            }
+            [$tableData] = $this->buildStaffRevenueTableData(
+                $dateFromParsed,
+                $dateToParsed,
+                $staffId ? (int) $staffId : null
+            );
+            $totalAllRevenue = array_sum(array_column($tableData, 'total_revenue'));
 
             usort($tableData, function ($a, $b) {
                 return $b['total_revenue'] <=> $a['total_revenue'];
@@ -1199,27 +1214,22 @@ class StatisticalController extends Controller
             $startDate = $request->get('start_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
             $endDate = $request->get('end_date', Carbon::now()->format('Y-m-d'));
 
-            $staffRevenue = Wallet_balance_history::join('users as staff', 'wallet_balance_histories.by_user_id', '=', 'staff.id')
-                ->join('users as customers', 'wallet_balance_histories.user_id', '=', 'customers.id')
-                ->where('customers.clone_account', 0)
-                ->where('wallet_balance_histories.type', 'deposit')
-                ->where('wallet_balance_histories.status', 'completed')
-                ->where('wallet_balance_histories.transaction_type', 'normal')
-                ->whereNotNull('wallet_balance_histories.by_user_id')
-                ->whereBetween('wallet_balance_histories.created_at', [
-                    Carbon::parse($startDate)->startOfDay(),
-                    Carbon::parse($endDate)->endOfDay()
-                ])
-                ->select(
-                    'staff.full_name as staff_name',
-                    'staff.email as staff_email',
-                    DB::raw('COUNT(wallet_balance_histories.id) as transaction_count'),
-                    DB::raw('SUM(wallet_balance_histories.value) as total_revenue'),
-                    DB::raw('COUNT(DISTINCT wallet_balance_histories.user_id) as unique_customers')
-                )
-                ->groupBy('staff.id', 'staff.full_name', 'staff.email')
-                ->orderBy('total_revenue', 'desc')
-                ->get();
+            [$tableData] = $this->buildStaffRevenueTableData(
+                Carbon::parse($startDate)->startOfDay(),
+                Carbon::parse($endDate)->endOfDay()
+            );
+
+            $staffRevenue = collect($tableData)
+                ->filter(fn ($row) => $row['total_transactions'] > 0)
+                ->sortByDesc('total_revenue')
+                ->values()
+                ->map(fn ($row) => [
+                    'staff_name' => $row['staff_name'],
+                    'staff_email' => $row['staff_email'],
+                    'transaction_count' => $row['total_transactions'],
+                    'total_revenue' => $row['total_revenue'],
+                    'unique_customers' => $row['invited_users'],
+                ]);
 
             return response()->json([
                 'success' => true,
@@ -1452,9 +1462,9 @@ class StatisticalController extends Controller
     {
         switch ($timeRange) {
             case '7_days':
-                return now()->subDays(7);
+                return now()->subDays(6)->startOfDay();
             case '30_days':
-                return now()->subDays(30);
+                return now()->subDays(29)->startOfDay();
             case '3_months':
                 return now()->subMonths(3);
             case '6_months':
@@ -1462,17 +1472,13 @@ class StatisticalController extends Controller
             case '1_year':
                 return now()->subYear();
             default:
-                return now()->subDays(7);
+                return now()->subDays(6)->startOfDay();
         }
     }
 
     private function getDailyRevenue($userId, $startDate, $endDate)
     {
-        $data = Wallet_balance_history::whereHas('user', function ($q) use ($userId) {
-                $q->managedBy((int) $userId)
-                    ->where('role', User::ROLE_MEMBER)
-                    ->where('clone_account', 0);
-            })
+        $data = $this->attributedTransactions((int) $userId)
             ->where('status', 'completed')
             ->where('transaction_type', 'normal')
             ->where('type', 'deposit')
@@ -1505,11 +1511,7 @@ class StatisticalController extends Controller
 
     private function getMonthlyRevenue($userId, $startDate, $endDate)
     {
-        $data = Wallet_balance_history::whereHas('user', function ($q) use ($userId) {
-                $q->managedBy((int) $userId)
-                    ->where('role', User::ROLE_MEMBER)
-                    ->where('clone_account', 0);
-            })
+        $data = $this->attributedTransactions((int) $userId)
             ->where('status', 'completed')
             ->where('transaction_type', 'normal')
             ->where('type', 'deposit')
@@ -1536,11 +1538,7 @@ class StatisticalController extends Controller
 
     private function getOverviewStats($userId, $startDate, $endDate)
     {
-        $stats = Wallet_balance_history::whereHas('user', function ($q) use ($userId) {
-                $q->managedBy((int) $userId)
-                    ->where('role', User::ROLE_MEMBER)
-                    ->where('clone_account', 0);
-            })
+        $stats = $this->attributedTransactions((int) $userId)
             ->where('status', 'completed')
             ->where('transaction_type', 'normal')
             ->whereBetween('created_at', [$startDate, $endDate])
@@ -1548,7 +1546,8 @@ class StatisticalController extends Controller
                 SUM(CASE WHEN type = "deposit" THEN value ELSE 0 END) as total_deposit,
                 SUM(CASE WHEN type = "withdraw" THEN value ELSE 0 END) as total_withdraw,
                 COUNT(CASE WHEN type = "deposit" THEN 1 END) as deposit_count,
-                COUNT(CASE WHEN type = "withdraw" THEN 1 END) as withdraw_count
+                COUNT(CASE WHEN type = "withdraw" THEN 1 END) as withdraw_count,
+                SUM(CASE WHEN assigned_staff_id IS NULL THEN 1 ELSE 0 END) as legacy_transactions
             ')
             ->first();
 
@@ -1557,14 +1556,11 @@ class StatisticalController extends Controller
         $netRevenue = $totalRevenue - $totalWithdraw;
 
         // Tính toán so với kỳ trước
-        $prevStartDate = $startDate->copy()->sub($endDate->diff($startDate));
-        $prevEndDate = $startDate->copy()->subDay();
+        $periodDays = max(1, $startDate->copy()->startOfDay()->diffInDays($endDate->copy()->startOfDay()) + 1);
+        $prevEndDate = $startDate->copy()->subSecond();
+        $prevStartDate = $startDate->copy()->subDays($periodDays)->startOfDay();
 
-        $prevStats = Wallet_balance_history::whereHas('user', function ($q) use ($userId) {
-                $q->managedBy((int) $userId)
-                    ->where('role', User::ROLE_MEMBER)
-                    ->where('clone_account', 0);
-            })
+        $prevStats = $this->attributedTransactions((int) $userId)
             ->where('status', 'completed')
             ->where('type', 'deposit')
             ->where('transaction_type', 'normal')
@@ -1584,6 +1580,7 @@ class StatisticalController extends Controller
             'deposit_count' => $stats->deposit_count,
             'withdraw_count' => $stats->withdraw_count,
             'total_transactions' => $stats->deposit_count + $stats->withdraw_count,
+            'legacy_transactions' => (int) ($stats->legacy_transactions ?? 0),
             'growth_rate' => round($growth, 2),
             'avg_transaction_value' => $stats->deposit_count > 0 ? round($totalRevenue / $stats->deposit_count, 2) : 0
         ];
@@ -1591,11 +1588,7 @@ class StatisticalController extends Controller
 
     private function getTransactionTypeStats($userId, $startDate, $endDate)
     {
-        $stats = Wallet_balance_history::whereHas('user', function ($q) use ($userId) {
-                $q->managedBy((int) $userId)
-                    ->where('role', User::ROLE_MEMBER)
-                    ->where('clone_account', 0);
-            })
+        $stats = $this->attributedTransactions((int) $userId)
             ->where('status', 'completed')
             ->where('transaction_type', 'normal')
             ->whereBetween('created_at', [$startDate, $endDate])
@@ -1626,11 +1619,7 @@ class StatisticalController extends Controller
         $type = $request->get('type'); // deposit, withdraw
         $status = $request->get('status'); // processing, completed, cancelled
 
-        $query = Wallet_balance_history::whereHas('user', function ($q) use ($userId) {
-                $q->managedBy((int) $userId)
-                    ->where('role', User::ROLE_MEMBER)
-                    ->where('clone_account', 0);
-            })
+        $query = $this->attributedTransactions((int) $userId)
             ->with(['user:id,full_name,username'])
             ->where('transaction_type', 'normal')
             ->orderBy('created_at', 'desc');

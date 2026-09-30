@@ -213,6 +213,11 @@ class User extends Authenticatable
     {
         return $this->hasMany(Wallet_balance_history::class, 'by_user_id');
     }
+
+    public function attributedDeposits()
+    {
+        return $this->hasMany(Wallet_balance_history::class, 'assigned_staff_id');
+    }
     public function user_spin_progress()
     {
         return $this->belongsTo(User_spin_progress::class, 'user_id');
@@ -234,6 +239,20 @@ class User extends Authenticatable
     {
         return $this->hasOne(Conversation::class, 'user_id')
             ->latestOfMany('updated_at');
+    }
+
+    public function currentAssignedStaffId(): ?int
+    {
+        $conversationStaffId = $this->memberConversations()
+            ->latest('updated_at')
+            ->latest('id')
+            ->value('staff_id');
+
+        if ($conversationStaffId !== null) {
+            return (int) $conversationStaffId;
+        }
+
+        return $this->referrer_id !== null ? (int) $this->referrer_id : null;
     }
     /**
      * Get invited users sorted by latest conversation updated_at

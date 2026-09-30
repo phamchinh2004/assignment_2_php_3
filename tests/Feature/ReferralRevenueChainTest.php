@@ -3,13 +3,20 @@
 namespace Tests\Feature;
 
 use App\Http\Controllers\Admin\StatisticalController;
+use App\Http\Controllers\User\HomeController;
 use App\Models\Conversation;
+use App\Models\Rank;
 use App\Models\User;
+use App\Models\User_spin_progress;
 use App\Models\Wallet_balance_history;
+use App\Services\UserDepositService;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class ReferralRevenueChainTest extends TestCase
@@ -33,6 +40,14 @@ class ReferralRevenueChainTest extends TestCase
             $table->string('role')->default(User::ROLE_MEMBER);
             $table->string('status')->default('inactivated');
             $table->foreignId('referrer_id')->nullable();
+            $table->foreignId('rank_id')->nullable();
+            $table->decimal('balance', 16, 6)->default(0);
+            $table->decimal('frozen_balance', 16, 6)->default(0);
+            $table->unsignedInteger('count_withdrawals')->default(0);
+            $table->string('username_bank')->nullable();
+            $table->string('bank_name')->nullable();
+            $table->string('account_number')->nullable();
+            $table->string('transaction_password')->nullable();
             $table->string('register_ip')->nullable();
             $table->boolean('clone_account')->default(false);
             $table->string('location_permission')->nullable();
@@ -63,10 +78,46 @@ class ReferralRevenueChainTest extends TestCase
             $table->id();
             $table->foreignId('user_id');
             $table->decimal('value', 16, 6);
+            $table->decimal('initial_balance', 16, 6)->default(0);
+            $table->decimal('balance_before', 16, 6)->nullable();
+            $table->decimal('balance_after', 16, 6)->nullable();
             $table->string('type');
-            $table->string('status');
+            $table->string('status')->default('processing');
             $table->string('transaction_type')->default('normal');
             $table->foreignId('by_user_id')->nullable();
+            $table->foreignId('assigned_staff_id')->nullable();
+            $table->string('username_bank')->nullable();
+            $table->string('bank_name')->nullable();
+            $table->string('account_number')->nullable();
+            $table->timestamps();
+        });
+
+        Schema::create('ranks', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->double('commission_percentage')->default(0);
+            $table->double('upgrade_fee')->default(0);
+            $table->integer('spin_count')->default(1);
+            $table->double('value')->default(0);
+            $table->integer('maximum_number_of_withdrawals')->default(5);
+            $table->double('maximum_withdrawal_amount')->default(1000);
+            $table->timestamps();
+        });
+
+        Schema::create('user_spin_progresses', function (Blueprint $table) {
+            $table->id();
+            $table->integer('current_spin')->default(0);
+            $table->foreignId('user_id');
+            $table->foreignId('rank_id');
+            $table->timestamps();
+        });
+
+        Schema::create('frozen_orders', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id');
+            $table->decimal('custom_price', 16, 6)->nullable();
+            $table->boolean('is_frozen')->default(false);
+            $table->string('status')->nullable();
             $table->timestamps();
         });
 
@@ -125,6 +176,199 @@ class ReferralRevenueChainTest extends TestCase
         $this->assertSame(3, $personal['data']['overview_stats']['deposit_count']);
     }
 
+    public function test_deposit_revenue_is_locked_to_staff_assigned_when_each_deposit_is_created(): void
+    {
+        Event::fake();
+        Queue::fake();
+
+        $owner = $this->user(User::ROLE_OWNER, 100000, 'owner');
+        $staffB = $this->user(User::ROLE_STAFF, 100001, 'staff_b');
+        $staffC = $this->user(User::ROLE_STAFF, 100002, 'staff_c');
+        $member = $this->user(User::ROLE_MEMBER, 200001, 'member', [
+            'referrer_id' => $staffB->id,
+        ]);
+
+        $conversation = new Conversation([
+            'user_id' => $member->id,
+            'staff_id' => $staffB->id,
+        ]);
+        $conversation->public_id = (string) Str::uuid();
+        $conversation->save();
+
+        $depositService = app(UserDepositService::class);
+        $depositService->deposit($member, 100, 'normal', $owner);
+
+        $conversation->update(['staff_id' => $staffC->id]);
+        $depositService->deposit($member, 200, 'normal', $owner);
+
+        $histories = Wallet_balance_history::query()->orderBy('id')->get();
+        $this->assertSame([$staffB->id, $staffC->id], $histories->pluck('assigned_staff_id')->all());
+        $this->assertSame([$owner->id, $owner->id], $histories->pluck('by_user_id')->all());
+        $this->assertSame($staffB->id, $member->fresh()->referrer_id);
+
+        $statistics = app(StatisticalController::class)->getRevenueByStaff(Request::create('/test', 'GET', [
+            'date_from' => now()->subDay()->format('Y-m-d'),
+            'date_to' => now()->addDay()->format('Y-m-d'),
+        ]))->getData(true);
+
+        $byStaff = collect($statistics['table_data'])->keyBy('staff_id');
+        $this->assertEquals(100, $byStaff[$staffB->id]['total_revenue']);
+        $this->assertEquals(200, $byStaff[$staffC->id]['total_revenue']);
+        $this->assertSame(1, $byStaff[$staffB->id]['total_transactions']);
+        $this->assertSame(1, $byStaff[$staffC->id]['total_transactions']);
+        $this->assertSame(0, $statistics['summary']['legacy_transactions']);
+
+        $detailB = app(StatisticalController::class)->getRevenueDetail(Request::create('/test', 'GET', [
+            'staff_id' => $staffB->id,
+            'date_from' => now()->subDay()->format('Y-m-d'),
+            'date_to' => now()->addDay()->format('Y-m-d'),
+        ]))->getData(true);
+        $this->assertEquals(100, $detailB['statistics']['total_revenue']);
+        $this->assertSame(1, $detailB['statistics']['total_transactions']);
+
+        $chartC = app(StatisticalController::class)->getRevenueChart(Request::create('/test', 'GET', [
+            'staff_id' => $staffC->id,
+            'date_from' => now()->subDay()->format('Y-m-d'),
+            'date_to' => now()->addDay()->format('Y-m-d'),
+        ]))->getData(true);
+        $this->assertEquals(200, $chartC['chart_data'][0]['total_revenue']);
+
+        $this->actingAs($staffB);
+        $personalB = app(StatisticalController::class)->getPersonalRevenueStats(
+            Request::create('/test', 'GET', ['time_range' => '7_days'])
+        )->getData(true);
+        $this->assertEquals(100, $personalB['data']['overview_stats']['total_revenue']);
+
+        $this->actingAs($staffC);
+        $personalC = app(StatisticalController::class)->getPersonalRevenueStats(
+            Request::create('/test', 'GET', ['time_range' => '7_days'])
+        )->getData(true);
+        $this->assertEquals(200, $personalC['data']['overview_stats']['total_revenue']);
+    }
+
+    public function test_withdrawal_is_locked_to_staff_assigned_when_request_is_created(): void
+    {
+        $staffB = $this->user(User::ROLE_STAFF, 100001, 'staff_b');
+        $staffC = $this->user(User::ROLE_STAFF, 100002, 'staff_c');
+        $rank = Rank::query()->create([
+            'name' => 'Test',
+            'commission_percentage' => 0,
+            'spin_count' => 1,
+            'value' => 0,
+            'maximum_number_of_withdrawals' => 5,
+            'maximum_withdrawal_amount' => 1000,
+        ]);
+        $member = $this->user(User::ROLE_MEMBER, 200001, 'member', [
+            'referrer_id' => $staffB->id,
+            'rank_id' => $rank->id,
+            'balance' => 1000,
+            'count_withdrawals' => 0,
+            'username_bank' => 'Member',
+            'bank_name' => 'Test Bank',
+            'account_number' => '123456',
+            'transaction_password' => password_hash('secret', PASSWORD_DEFAULT),
+        ]);
+        User_spin_progress::query()->create([
+            'user_id' => $member->id,
+            'rank_id' => $rank->id,
+            'current_spin' => 2,
+        ]);
+
+        $conversation = new Conversation([
+            'user_id' => $member->id,
+            'staff_id' => $staffB->id,
+        ]);
+        $conversation->public_id = (string) Str::uuid();
+        $conversation->save();
+
+        $this->actingAs($member);
+        $this->app->instance('request', Request::create('/handle-withdraw', 'POST', [
+            'amount' => 50,
+            'username_bank' => 'Member',
+            'bank_name' => 'Test Bank',
+            'account_number' => '123456',
+            'transaction_password' => 'secret',
+        ]));
+        $firstResponse = app(HomeController::class)->handle_withdraw();
+        $this->assertSame(200, $firstResponse->getData(true)['status']);
+
+        $firstWithdrawal = Wallet_balance_history::query()->where('type', 'withdraw')->firstOrFail();
+        $this->assertSame($staffB->id, $firstWithdrawal->assigned_staff_id);
+        $firstWithdrawal->update(['status' => 'completed']);
+
+        $conversation->update(['staff_id' => $staffC->id]);
+        $this->app->instance('request', Request::create('/handle-withdraw', 'POST', [
+            'amount' => 60,
+            'username_bank' => 'Member',
+            'bank_name' => 'Test Bank',
+            'account_number' => '123456',
+            'transaction_password' => 'secret',
+        ]));
+        $secondResponse = app(HomeController::class)->handle_withdraw();
+        $this->assertSame(200, $secondResponse->getData(true)['status']);
+
+        $secondWithdrawal = Wallet_balance_history::query()
+            ->where('type', 'withdraw')
+            ->orderByDesc('id')
+            ->firstOrFail();
+        $this->assertSame($staffC->id, $secondWithdrawal->assigned_staff_id);
+        $secondWithdrawal->update(['status' => 'completed']);
+
+        $this->actingAs($staffB);
+        $personalB = app(StatisticalController::class)->getPersonalRevenueStats(
+            Request::create('/test', 'GET', ['time_range' => '7_days'])
+        )->getData(true);
+        $this->assertEquals(50, $personalB['data']['overview_stats']['total_withdraw']);
+
+        $this->actingAs($staffC);
+        $personalC = app(StatisticalController::class)->getPersonalRevenueStats(
+            Request::create('/test', 'GET', ['time_range' => '7_days'])
+        )->getData(true);
+        $this->assertEquals(60, $personalC['data']['overview_stats']['total_withdraw']);
+    }
+
+    public function test_customer_revenue_distribution_excludes_clone_accounts_from_other_slice(): void
+    {
+        $manager = $this->user(User::ROLE_STAFF, 100001, 'manager');
+        $member = $this->user(User::ROLE_MEMBER, 200001, 'member', ['referrer_id' => $manager->id]);
+        $clone = $this->user(User::ROLE_MEMBER, 200002, 'clone', [
+            'referrer_id' => $manager->id,
+            'clone_account' => true,
+        ]);
+
+        $this->deposit($member, 100);
+        $this->deposit($clone, 900);
+
+        $distribution = app(StatisticalController::class)->revenueDistribution(
+            Request::create('/test', 'GET', [
+                'start_date' => now()->subDay()->format('Y-m-d'),
+                'end_date' => now()->addDay()->format('Y-m-d'),
+            ])
+        )->getData(true);
+
+        $this->assertTrue($distribution['success']);
+        $this->assertEquals(100, array_sum($distribution['data']['values']));
+        $this->assertNotContains('Khác', $distribution['data']['labels']);
+    }
+
+    public function test_personal_revenue_seven_day_preset_contains_exactly_seven_calendar_days(): void
+    {
+        $staff = $this->user(User::ROLE_STAFF, 100001, 'staff');
+        $this->actingAs($staff);
+
+        $personal = app(StatisticalController::class)->getPersonalRevenueStats(
+            Request::create('/test', 'GET', ['time_range' => '7_days'])
+        )->getData(true);
+
+        $this->assertCount(7, $personal['data']['daily_revenue']);
+
+        $thirtyDays = app(StatisticalController::class)->getPersonalRevenueStats(
+            Request::create('/test', 'GET', ['time_range' => '30_days'])
+        )->getData(true);
+
+        $this->assertCount(30, $thirtyDays['data']['daily_revenue']);
+    }
+
     private function user(string $role, int $referralCode, string $username, array $attributes = []): User
     {
         return User::query()->create(array_merge([
@@ -160,6 +404,7 @@ class ReferralRevenueChainTest extends TestCase
             'type' => 'deposit',
             'status' => 'completed',
             'transaction_type' => 'normal',
+            'assigned_staff_id' => $user->latestConversation()->value('staff_id') ?? $user->referrer_id,
         ]);
     }
 }

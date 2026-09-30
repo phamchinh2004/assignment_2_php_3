@@ -15,6 +15,7 @@ use App\Services\ReactPageService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -33,19 +34,17 @@ class StaffController extends Controller
     public function index(AuthorizationService $authorization): View|JsonResponse
     {
         $list_staffs = User::with('referrer')
-            ->withSum(['deposits_made as total_deposit' => function ($q) {
-                $q->where('type', 'deposit')
-                    ->where('status', 'completed');
-                // ->where('by_user_id', Auth::user()->id);
-            }], 'value')
             ->whereIn('role', $authorization->manageableOperatorRoles(Auth::user()))
             ->get();
+
+        $depositTotals = $this->depositTotalsByStaff($list_staffs->pluck('id'));
 
         $onlineStaffCount = $list_staffs->filter(fn($u) => $u->isOnline())->count();
         $offlineStaffCount = $list_staffs->count() - $onlineStaffCount;
 
         $actor = Auth::user();
-        $list_staffs->each(function (User $staff) use ($authorization, $actor) {
+        $list_staffs->each(function (User $staff) use ($authorization, $actor, $depositTotals) {
+            $staff->setAttribute('total_deposit', (float) ($depositTotals->get($staff->id) ?? 0));
             $staff->setAttribute('is_online', $staff->isOnline());
             $staff->setAttribute('last_seen_text', $staff->last_seen_text);
             $staff->setAttribute('last_seen_formatted', $staff->last_seen_formatted);
@@ -345,12 +344,10 @@ class StaffController extends Controller
             'referrer',
             'user_manager_settings.manager_setting',
         ])
-        ->withSum(['deposits_made as total_deposit' => function ($q) {
-            $q->where('type', 'deposit')->where('status', 'completed');
-        }], 'value')
         ->findOrFail($id);
 
         abort_unless($authorization->canManageOperator(Auth::user(), $staff), 403);
+        $staff->setAttribute('total_deposit', (float) ($this->depositTotalsByStaff([$staff->id])->get($staff->id) ?? 0));
 
         $referrals = $staff->managedMembers()
             ->with('rank')
@@ -488,5 +485,32 @@ class StaffController extends Controller
                 $assignment->save();
             }
         }
+    }
+
+    private function depositTotalsByStaff($staffIds)
+    {
+        $staffIds = collect($staffIds)->map(fn ($id) => (int) $id)->filter()->unique()->values();
+        if ($staffIds->isEmpty()) {
+            return collect();
+        }
+
+        return DB::table('wallet_balance_histories as wbh')
+            ->join('users as customers', 'wbh.user_id', '=', 'customers.id')
+            ->where('customers.clone_account', 0)
+            ->where('customers.role', User::ROLE_MEMBER)
+            ->where('wbh.type', 'deposit')
+            ->where('wbh.status', 'completed')
+            ->where('wbh.transaction_type', 'normal')
+            ->where(function ($query) use ($staffIds) {
+                $query->whereIn('wbh.assigned_staff_id', $staffIds)
+                    ->orWhere(function ($legacyQuery) use ($staffIds) {
+                        $legacyQuery->whereNull('wbh.assigned_staff_id')
+                            ->whereIn('customers.referrer_id', $staffIds);
+                    });
+            })
+            ->selectRaw('COALESCE(wbh.assigned_staff_id, customers.referrer_id) as staff_id')
+            ->selectRaw('SUM(wbh.value) as total_deposit')
+            ->groupByRaw('COALESCE(wbh.assigned_staff_id, customers.referrer_id)')
+            ->pluck('total_deposit', 'staff_id');
     }
 }

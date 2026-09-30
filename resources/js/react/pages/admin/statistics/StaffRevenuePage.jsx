@@ -88,6 +88,14 @@ export default function StaffRevenuePage({ config }) {
                 <Col><Space><Button icon={<ReloadOutlined />} loading={loading} onClick={loadData}>Làm mới</Button>{config.permissions?.export && <Button type="primary" icon={<DownloadOutlined />} disabled={invalidDateRange(startDate, endDate)} onClick={() => window.location.assign(withQuery(config.routes.export, { date_from: startDate, date_to: endDate, staff_id: staffId }))}>Xuất CSV</Button>}</Space></Col>
             </Row>
             {error && <Alert type="error" showIcon message={error} />}
+            {Number(summary.legacy_transactions || 0) > 0 && (
+                <Alert
+                    type="warning"
+                    showIcon
+                    message={`${number(summary.legacy_transactions)} giao dịch cũ chưa có snapshot nhân viên phụ trách`}
+                    description="Các giao dịch này vẫn giữ cách tính cũ theo người quản lý hiện tại. Giao dịch mới được cố định theo nhân viên phụ trách tại thời điểm phát sinh."
+                />
+            )}
             <Card><Row gutter={[12, 12]} align="bottom"><Col xs={24} md={8}><Text strong>Nhân viên</Text><Select allowClear showSearch optionFilterProp="label" style={{ width: '100%' }} placeholder="Tất cả nhân viên" value={staffId || undefined} onChange={(value) => setStaffId(value ? String(value) : '')} options={staff.map((item) => ({ value: String(item.id), label: `${item.full_name} - ${item.email || item.phone || ''}` }))} /></Col><Col xs={12} md={5}><Text strong>Từ ngày</Text><AdminDatePicker value={startDate} onChange={setStartDate} /></Col><Col xs={12} md={5}><Text strong>Đến ngày</Text><AdminDatePicker value={endDate} onChange={setEndDate} /></Col><Col xs={24} md={6}><Button block type="primary" loading={loading} onClick={loadData}>Áp dụng</Button></Col></Row></Card>
             <Row gutter={[16, 16]}><Col xs={24} md={12} xl={6}><Card loading={loading}><Statistic title="Nhân viên" value={summary.total_staff || 0} formatter={number} /></Card></Col><Col xs={24} md={12} xl={6}><Card loading={loading}><Statistic title="Tổng doanh thu" value={summary.total_revenue || 0} formatter={(value) => money(value)} /></Card></Col><Col xs={24} md={12} xl={6}><Card loading={loading}><Statistic title="Giao dịch" value={summary.total_transactions || 0} formatter={number} /></Card></Col><Col xs={24} md={12} xl={6}><Card loading={loading}><Statistic title="TB / nhân viên" value={summary.avg_revenue || 0} formatter={(value) => money(value)} /></Card></Col></Row>
             <Row gutter={[16, 16]}><Col xs={24} xl={9}><Card title="Top nhân viên theo doanh thu"><StatisticsChart config={chartConfig} height={360} /></Card></Col><Col xs={24} xl={15}><Card title="Chi tiết theo nhân viên"><Table rowKey="staff_id" loading={loading} columns={columns} dataSource={payload?.table_data || []} pagination={{ pageSize: 12 }} scroll={{ x: 900 }} /></Card></Col></Row>
