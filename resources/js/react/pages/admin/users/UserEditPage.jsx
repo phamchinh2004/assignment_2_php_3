@@ -1,10 +1,17 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button, Checkbox, Col, Descriptions, Input, InputNumber, Modal, Row, Select, Space, Tag, Typography } from 'antd';
 import { SaveOutlined, UserOutlined } from '@ant-design/icons';
 import LaravelForm, { fieldError, oldValue } from '../../../components/LaravelForm';
 import { AdminFormActions, AdminFormSection, AdminPage, AdminPageHeader, AdminSectionCard } from '../../../components/admin/AdminUi';
 
 const { Text } = Typography;
+
+function FormFieldError({ form, name }) {
+    const message = fieldError(form, name);
+    if (!message) return null;
+
+    return <Text type="danger" role="alert" style={{ display: 'block', marginTop: 4 }}>{message}</Text>;
+}
 
 function dateTime(value) {
     if (!value) return 'Chưa ghi nhận';
@@ -25,6 +32,23 @@ export default function UserEditPage({ config }) {
     const [bankName, setBankName] = useState(String(oldValue(form, 'bank_name', user.bank_name || '')));
     const [cloneAccount, setCloneAccount] = useState(Boolean(Number(oldValue(form, 'clone_account', user.clone_account ? 1 : 0))));
     const [resetProgress, setResetProgress] = useState(false);
+
+    useEffect(() => {
+        const firstErrorName = Object.keys(form.errors || {})[0];
+        const formElement = updateFormRef.current;
+        if (!firstErrorName || !formElement) return;
+
+        const errorField = Array.from(formElement.querySelectorAll('[data-error-field]'))
+            .find((element) => element.dataset.errorField === firstErrorName);
+        const fallbackField = formElement.querySelector(`[name="${firstErrorName}"]`);
+        const target = errorField || fallbackField;
+
+        if (!target) return;
+
+        window.requestAnimationFrame(() => {
+            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+    }, [form.errors]);
 
     const bankOptions = Object.entries(config.banks || {}).map(([label, banks]) => ({
         label,
@@ -67,42 +91,45 @@ export default function UserEditPage({ config }) {
                         <LaravelForm ref={updateFormRef} action={config.routes.update} method="PUT">
                             <AdminFormSection title="Hồ sơ & liên hệ" description="Thông tin nhận diện, liên hệ và địa chỉ kho của thành viên.">
                             <Row gutter={[16, 16]}>
-                                <Col xs={24} md={12}>
+                                <Col xs={24} md={12} data-error-field="full_name">
                                     <Text strong>Họ và tên</Text>
                                     <Input name="full_name" placeholder="Nhập họ và tên" defaultValue={oldValue(form, 'full_name', user.full_name)} status={fieldError(form, 'full_name') ? 'error' : ''} />
-                                    {fieldError(form, 'full_name') && <Text type="danger">{fieldError(form, 'full_name')}</Text>}
+                                    <FormFieldError form={form} name="full_name" />
                                 </Col>
-                                <Col xs={24} md={12}>
+                                <Col xs={24} md={12} data-error-field="username">
                                     <Text strong>Tên đăng nhập</Text>
                                     <Input name="username" placeholder="Nhập tên đăng nhập" defaultValue={oldValue(form, 'username', user.username)} status={fieldError(form, 'username') ? 'error' : ''} />
-                                    {fieldError(form, 'username') && <Text type="danger">{fieldError(form, 'username')}</Text>}
+                                    <FormFieldError form={form} name="username" />
                                 </Col>
-                                <Col xs={24} md={12}>
+                                <Col xs={24} md={12} data-error-field="email">
                                     <Text strong>Email</Text>
                                     <Input name="email" placeholder="Nhập email" defaultValue={oldValue(form, 'email', user.email)} status={fieldError(form, 'email') ? 'error' : ''} />
-                                    {fieldError(form, 'email') && <Text type="danger">{fieldError(form, 'email')}</Text>}
+                                    <FormFieldError form={form} name="email" />
                                 </Col>
-                                <Col xs={24} md={12}>
+                                <Col xs={24} md={12} data-error-field="phone">
                                     <Text strong>Số điện thoại</Text>
                                     <Input name="phone" placeholder="Nhập số điện thoại" defaultValue={oldValue(form, 'phone', user.phone)} status={fieldError(form, 'phone') ? 'error' : ''} />
-                                    {fieldError(form, 'phone') && <Text type="danger">{fieldError(form, 'phone')}</Text>}
+                                    <FormFieldError form={form} name="phone" />
                                 </Col>
-                                <Col xs={24} md={12}>
+                                <Col xs={24} md={12} data-error-field="warehouse_area">
                                     <Text strong>Khu vực kho</Text>
-                                    <Input name="warehouse_area" placeholder="Nhập khu vực kho" defaultValue={oldValue(form, 'warehouse_area', user.warehouse_area)} />
+                                    <Input name="warehouse_area" placeholder="Nhập khu vực kho" defaultValue={oldValue(form, 'warehouse_area', user.warehouse_area)} status={fieldError(form, 'warehouse_area') ? 'error' : ''} />
+                                    <FormFieldError form={form} name="warehouse_area" />
                                 </Col>
-                                <Col xs={24} md={12}>
+                                <Col xs={24} md={12} data-error-field="warehouse_address">
                                     <Text strong>Địa chỉ kho</Text>
-                                    <Input name="warehouse_address" placeholder="Nhập địa chỉ kho" defaultValue={oldValue(form, 'warehouse_address', user.warehouse_address)} />
+                                    <Input name="warehouse_address" placeholder="Nhập địa chỉ kho" defaultValue={oldValue(form, 'warehouse_address', user.warehouse_address)} status={fieldError(form, 'warehouse_address') ? 'error' : ''} />
+                                    <FormFieldError form={form} name="warehouse_address" />
                                 </Col>
                                 {permissions.changeReferrer && (
-                                    <Col xs={24}>
+                                    <Col xs={24} data-error-field="referrer_id">
                                         <Text strong>Người quản lý / giới thiệu</Text>
                                         <Select
                                             allowClear
                                             showSearch
                                             optionFilterProp="label"
                                             style={{ width: '100%' }}
+                                            status={fieldError(form, 'referrer_id') ? 'error' : ''}
                                             value={referrer || undefined}
                                             placeholder="Chọn người quản lý / giới thiệu"
                                             onChange={(value) => setReferrer(value ? String(value) : '')}
@@ -112,6 +139,7 @@ export default function UserEditPage({ config }) {
                                             }))}
                                         />
                                         <input type="hidden" name="referrer_id" value={referrer} />
+                                        <FormFieldError form={form} name="referrer_id" />
                                     </Col>
                                 )}
                             </Row>
@@ -119,27 +147,31 @@ export default function UserEditPage({ config }) {
 
                             <AdminFormSection title="Thông tin ngân hàng" description="Dùng cho các nghiệp vụ rút tiền và đối soát tài khoản.">
                             <Row gutter={[16, 16]}>
-                                <Col xs={24}>
+                                <Col xs={24} data-error-field="username_bank">
                                     <Text strong>Tên tài khoản ngân hàng</Text>
-                                    <Input name="username_bank" placeholder="Nhập tên chủ tài khoản" defaultValue={oldValue(form, 'username_bank', user.username_bank)} />
+                                    <Input name="username_bank" placeholder="Nhập tên chủ tài khoản" defaultValue={oldValue(form, 'username_bank', user.username_bank)} status={fieldError(form, 'username_bank') ? 'error' : ''} />
+                                    <FormFieldError form={form} name="username_bank" />
                                 </Col>
-                                <Col xs={24} md={12}>
+                                <Col xs={24} md={12} data-error-field="bank_name">
                                     <Text strong>Ngân hàng</Text>
                                     <Select
                                         allowClear
                                         showSearch
                                         optionFilterProp="label"
                                         style={{ width: '100%' }}
+                                        status={fieldError(form, 'bank_name') ? 'error' : ''}
                                         value={bankName || undefined}
                                         placeholder="Chọn ngân hàng"
                                         options={bankOptions}
                                         onChange={(value) => setBankName(value || '')}
                                     />
                                     <input type="hidden" name="bank_name" value={bankName} />
+                                    <FormFieldError form={form} name="bank_name" />
                                 </Col>
-                                <Col xs={24} md={12}>
+                                <Col xs={24} md={12} data-error-field="account_number">
                                     <Text strong>Số tài khoản</Text>
-                                    <Input name="account_number" placeholder="Nhập số tài khoản" defaultValue={oldValue(form, 'account_number', user.account_number)} />
+                                    <Input name="account_number" placeholder="Nhập số tài khoản" defaultValue={oldValue(form, 'account_number', user.account_number)} status={fieldError(form, 'account_number') ? 'error' : ''} />
+                                    <FormFieldError form={form} name="account_number" />
                                 </Col>
                             </Row>
                             </AdminFormSection>
@@ -148,45 +180,50 @@ export default function UserEditPage({ config }) {
                             <Row gutter={[16, 16]}>
                                 {permissions.adjustBalance && (
                                     <>
-                                        <Col xs={24} md={12}>
+                                        <Col xs={24} md={12} data-error-field="balance">
                                             <Text strong>Số dư</Text>
-                                            <InputNumber name="balance" style={{ width: '100%' }} min={0} placeholder="Nhập số dư" defaultValue={oldValue(form, 'balance', user.balance || 0)} />
+                                            <InputNumber name="balance" style={{ width: '100%' }} min={0} placeholder="Nhập số dư" defaultValue={oldValue(form, 'balance', user.balance || 0)} status={fieldError(form, 'balance') ? 'error' : ''} />
+                                            <FormFieldError form={form} name="balance" />
                                         </Col>
-                                        <Col xs={24} md={12}>
+                                        <Col xs={24} md={12} data-error-field="frozen_balance">
                                             <Text strong>Số dư đóng băng</Text>
-                                            <InputNumber name="frozen_balance" style={{ width: '100%' }} min={0} step={0.00000001} placeholder="Nhập số dư đóng băng" defaultValue={oldValue(form, 'frozen_balance', user.frozen_balance || 0)} />
+                                            <InputNumber name="frozen_balance" style={{ width: '100%' }} min={0} step={0.00000001} placeholder="Nhập số dư đóng băng" defaultValue={oldValue(form, 'frozen_balance', user.frozen_balance || 0)} status={fieldError(form, 'frozen_balance') ? 'error' : ''} />
+                                            <FormFieldError form={form} name="frozen_balance" />
                                         </Col>
                                     </>
                                 )}
                                 {permissions.changeStatus && (
-                                    <Col xs={24} md={12}>
+                                    <Col xs={24} md={12} data-error-field="status">
                                         <Text strong>Trạng thái</Text>
-                                        <Select style={{ width: '100%' }} value={status} placeholder="Chọn trạng thái" onChange={setStatus} options={[
+                                        <Select style={{ width: '100%' }} status={fieldError(form, 'status') ? 'error' : ''} value={status} placeholder="Chọn trạng thái" onChange={setStatus} options={[
                                             { value: 'activated', label: 'Đã kích hoạt' },
                                             { value: 'inactivated', label: 'Chưa kích hoạt' },
                                             { value: 'banned', label: 'Bị khóa' },
                                         ]} />
                                         <input type="hidden" name="status" value={status} />
+                                        <FormFieldError form={form} name="status" />
                                     </Col>
                                 )}
                                 {permissions.chooseRole && (
-                                    <Col xs={24} md={12}>
+                                    <Col xs={24} md={12} data-error-field="role">
                                         <Text strong>Vai trò</Text>
-                                        <Select style={{ width: '100%' }} value={role} placeholder="Chọn vai trò" onChange={setRole} options={[
+                                        <Select style={{ width: '100%' }} status={fieldError(form, 'role') ? 'error' : ''} value={role} placeholder="Chọn vai trò" onChange={setRole} options={[
                                             { value: 'member', label: 'Member' },
                                             { value: 'staff', label: 'Staff' },
                                             { value: 'admin', label: 'Admin' },
                                         ]} />
                                         <input type="hidden" name="role" value={role} />
+                                        <FormFieldError form={form} name="role" />
                                     </Col>
                                 )}
                                 {permissions.manageSpin && (
                                     <>
-                                        <Col xs={24} md={12}>
+                                        <Col xs={24} md={12} data-error-field="rank">
                                             <Text strong>Cấp độ</Text>
                                             <Select
                                                 allowClear
                                                 style={{ width: '100%' }}
+                                                status={fieldError(form, 'rank') ? 'error' : ''}
                                                 value={rank || undefined}
                                                 placeholder="Chọn cấp độ"
                                                 onChange={(value) => setRank(value ? String(value) : '')}
@@ -196,10 +233,12 @@ export default function UserEditPage({ config }) {
                                                 }))}
                                             />
                                             <input type="hidden" name="rank" value={rank} />
+                                            <FormFieldError form={form} name="rank" />
                                         </Col>
-                                        <Col xs={24} md={12}>
+                                        <Col xs={24} md={12} data-error-field="lucky_wheel_bonus_spins">
                                             <Text strong>Lượt quay may mắn được cấp còn lại</Text>
-                                            <InputNumber name="lucky_wheel_bonus_spins" style={{ width: '100%' }} min={0} step={1} placeholder="Nhập số lượt quay" defaultValue={oldValue(form, 'lucky_wheel_bonus_spins', user.lucky_wheel_bonus_spins || 0)} />
+                                            <InputNumber name="lucky_wheel_bonus_spins" style={{ width: '100%' }} min={0} step={1} placeholder="Nhập số lượt quay" defaultValue={oldValue(form, 'lucky_wheel_bonus_spins', user.lucky_wheel_bonus_spins || 0)} status={fieldError(form, 'lucky_wheel_bonus_spins') ? 'error' : ''} />
+                                            <FormFieldError form={form} name="lucky_wheel_bonus_spins" />
                                         </Col>
                                     </>
                                 )}

@@ -48,6 +48,7 @@ class OrderDistributionController extends Controller
             'assignedBy:id,full_name,username',
             'latestStatusOrder.changedBy:id,full_name,username',
         ]);
+        $this->scopeToVisibleCustomers($query, $request->user());
         $this->applyFilters($query, $filters);
 
         $sort = $filters['sort'] ?? 'created_at';
@@ -61,6 +62,7 @@ class OrderDistributionController extends Controller
         });
 
         $base = Frozen_order::query();
+        $this->scopeToVisibleCustomers($base, $request->user());
         $stats = [
             'total' => (clone $base)->count(),
             'pending' => (clone $base)->where(function (Builder $q) {
@@ -70,27 +72,33 @@ class OrderDistributionController extends Controller
             'completed' => (clone $base)->where('status', 'completed')->count(),
         ];
         $statuses = Status::query()->orderBy('sort_order')->get(['name', 'display_name']);
-        $assigners = User::query()->whereIn('id', Frozen_order::query()->select('assigned_by')->whereNotNull('assigned_by'))
+        $visibleFrozenOrders = Frozen_order::query()->select('assigned_by')->whereNotNull('assigned_by');
+        $this->scopeToVisibleCustomers($visibleFrozenOrders, $request->user());
+        $assigners = User::query()->whereIn('id', $visibleFrozenOrders)
             ->orderBy('full_name')->get(['id', 'full_name', 'username']);
+        $actor = $request->user() ?? Auth::user();
 
         return $this->reactPage->admin('admin.order-distributions.index', [
             'frozenOrders' => $frozenOrders,
             'stats' => $stats,
             'statuses' => $statuses,
             'assigners' => $assigners,
-            'filters' => $filters,
+            'filters' => (object) $filters,
             'routes' => [
                 'index' => route('order_distributions.index'),
                 'show' => route('order_distributions.show', ['frozenOrder' => '__FROZEN_ID__']),
             ],
             'permissions' => [
-                'viewDetail' => $this->authorization->can($request->user(), config('authorization.capabilities.order_distributions_view_detail')),
+                'viewDetail' => $actor
+                    ? $this->authorization->can($actor, config('authorization.capabilities.order_distributions_view_detail'))
+                    : false,
             ],
         ], 'Phân phối đơn hàng');
     }
 
     public function show(Frozen_order $frozenOrder, AdminOrderTransitionService $workflow): View|JsonResponse
     {
+        $this->authorizeFrozenOrderAccess($frozenOrder);
         $frozenOrder->load([
             'user:id,full_name,username',
             'assignedBy:id,full_name,username',
@@ -139,6 +147,7 @@ class OrderDistributionController extends Controller
         AdminOrderTransitionService $workflow,
         AuthorizationService $authorization
     ) {
+        $this->authorizeFrozenOrderAccess($frozenOrder);
         $data = $request->validate([
             'expected_status' => ['required', Rule::in(array_keys(AdminOrderTransitionService::NEXT))],
             'expected_updated_at' => ['required', 'string', 'max:50'],
@@ -219,5 +228,25 @@ class OrderDistributionController extends Controller
                 $query->whereDate($column, $operator, $filters[$key]);
             }
         }
+    }
+
+    private function scopeToVisibleCustomers(Builder $query, ?User $actor): Builder
+    {
+        if (!$actor || $actor->role === User::ROLE_OWNER) {
+            return $query;
+        }
+
+        return $query->whereHas('user', fn (Builder $userQuery) => $userQuery->visibleCustomersTo($actor));
+    }
+
+    private function authorizeFrozenOrderAccess(Frozen_order $frozenOrder): void
+    {
+        $actor = Auth::user();
+        if ($actor->role === User::ROLE_OWNER) {
+            return;
+        }
+
+        $frozenOrder->loadMissing('user');
+        abort_unless($frozenOrder->user && $actor->canAccessCustomer($frozenOrder->user), 403);
     }
 }

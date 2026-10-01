@@ -43,6 +43,8 @@ const AdminDashboardPage = lazy(() => import('./pages/admin/dashboard/AdminDashb
 const AdminChatPage = lazy(() => import('./pages/admin/chat/AdminChatPage'));
 const OrderReportListPage = lazy(() => import('./pages/admin/order-reports/OrderReportListPage'));
 const OrderReportShowPage = lazy(() => import('./pages/admin/order-reports/OrderReportShowPage'));
+const BugReportListPage = lazy(() => import('./pages/admin/bug-reports/BugReportListPage'));
+const BugReportShowPage = lazy(() => import('./pages/admin/bug-reports/BugReportShowPage'));
 const OrderDistributionListPage = lazy(() => import('./pages/admin/order-distributions/OrderDistributionListPage'));
 const OrderDistributionShowPage = lazy(() => import('./pages/admin/order-distributions/OrderDistributionShowPage'));
 const WithdrawTransactionsPage = lazy(() => import('./pages/admin/transactions/WithdrawTransactionsPage'));
@@ -130,6 +132,8 @@ export default function AppRoutes({ bootstrap }) {
                 <Route path="lucky-wheel-rewards" element={<Suspense fallback={<RouteLoader />}><LuckyWheelRewardsPage config={bootstrap.props || {}} /></Suspense>} />
                 <Route path="order-reports" element={<Suspense fallback={<RouteLoader />}><OrderReportListPage config={bootstrap.props || {}} /></Suspense>} />
                 <Route path="order-reports/:reportId" element={<Suspense fallback={<RouteLoader />}><OrderReportShowPage config={bootstrap.props || {}} /></Suspense>} />
+                <Route path="bug-reports" element={<Suspense fallback={<RouteLoader />}><BugReportListPage config={bootstrap.props || {}} /></Suspense>} />
+                <Route path="bug-reports/:reportId" element={<Suspense fallback={<RouteLoader />}><BugReportShowPage config={bootstrap.props || {}} /></Suspense>} />
                 <Route path="order-distributions" element={<Suspense fallback={<RouteLoader />}><OrderDistributionListPage config={bootstrap.props || {}} /></Suspense>} />
                 <Route path="order-distributions/:frozenOrderId" element={<Suspense fallback={<RouteLoader />}><OrderDistributionShowPage config={bootstrap.props || {}} /></Suspense>} />
                 <Route path="withdraw-transaction" element={<Suspense fallback={<RouteLoader />}><WithdrawTransactionsPage config={bootstrap.props || {}} /></Suspense>} />

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\AuthorizationController;
 use App\Http\Controllers\Admin\BannerController;
+use App\Http\Controllers\Admin\BugReportController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\FeatureAnnouncementController;
 use App\Http\Controllers\Admin\HeaderStateController;
@@ -33,6 +34,19 @@ Route::middleware(['role:staff|admin|own', 'checkBanned', 'auth'])->group(functi
         ->name('header.notifications.read-all');
     Route::post('/header/notifications/{notification}/read', [HeaderStateController::class, 'markNotificationRead'])
         ->name('header.notifications.read');
+
+    Route::post('/bug-reports', [BugReportController::class, 'store'])
+        ->middleware(['role:staff|admin', 'permission:' . $capabilities['bug_reports_create']])
+        ->name('bug_reports.store');
+    Route::get('/bug-reports', [BugReportController::class, 'index'])
+        ->middleware(['role:own', 'permission:' . $capabilities['bug_reports_view']])
+        ->name('bug_reports.index');
+    Route::get('/bug-reports/{bugReport}', [BugReportController::class, 'show'])
+        ->middleware(['role:own', 'permission:' . $capabilities['bug_reports_view_detail']])
+        ->name('bug_reports.show');
+    Route::post('/bug-reports/{bugReport}/resolve', [BugReportController::class, 'resolve'])
+        ->middleware(['role:own', 'permission:' . $capabilities['bug_reports_resolve']])
+        ->name('bug_reports.resolve');
 
     Route::get('/feature-announcements/unread', [FeatureAnnouncementController::class, 'unread'])
         ->name('feature_announcements.unread');

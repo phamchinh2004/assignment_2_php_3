@@ -34,7 +34,7 @@ class StaffController extends Controller
     public function index(AuthorizationService $authorization): View|JsonResponse
     {
         $list_staffs = User::with('referrer')
-            ->whereIn('role', $authorization->manageableOperatorRoles(Auth::user()))
+            ->visibleOperatorsTo(Auth::user())
             ->get();
 
         $depositTotals = $this->depositTotalsByStaff($list_staffs->pluck('id'));
@@ -81,7 +81,8 @@ class StaffController extends Controller
      */
     public function getOnlineStatuses(AuthorizationService $authorization)
     {
-        $staffs = User::whereIn('role', $authorization->manageableOperatorRoles(Auth::user()))
+        $staffs = User::query()
+            ->visibleOperatorsTo(Auth::user())
             ->select('id', 'full_name', 'username', 'role', 'last_seen')
             ->get()
             ->map(function ($staff) {
@@ -139,11 +140,20 @@ class StaffController extends Controller
         if (!$get_user) {
             return back()->with('error', 'Người dùng không xác định!');
         }
-        abort_unless($authorization->canManageOperatorPermissions(Auth::user(), $get_user), 403);
+        $actor = Auth::user();
+        abort_unless($authorization->canManageOperatorPermissions($actor, $get_user), 403);
         $this->syncRegistryAssignments($get_user, $registry);
+        $assignablePermissionCodes = $authorization->assignableOperatorPermissions(
+            $actor,
+            $get_user,
+            $registry->codes()
+        );
         $assignments = User_manager_setting::with('manager_setting')
             ->where('user_id', $get_user->id)
-            ->whereHas('manager_setting', fn ($query) => $query->whereIn('manager_code', $registry->codes()))
+            ->whereHas(
+                'manager_setting',
+                fn ($query) => $query->whereIn('manager_code', $assignablePermissionCodes)
+            )
             ->get();
         $permissionGroups = $registry->groups($assignments);
 
@@ -171,10 +181,16 @@ class StaffController extends Controller
             ]);
         }
         $target = User::find($get_user_manager_setting->user_id);
-        abort_unless($target && $authorization->canManageOperatorPermissions(Auth::user(), $target), 403);
+        $actor = Auth::user();
+        abort_unless($target && $authorization->canManageOperatorPermissions($actor, $target), 403);
         abort_unless(
             $get_user_manager_setting->manager_setting
-                && $registry->contains($get_user_manager_setting->manager_setting->manager_code),
+                && $registry->contains($get_user_manager_setting->manager_setting->manager_code)
+                && $authorization->canAssignOperatorPermission(
+                    $actor,
+                    $target,
+                    $get_user_manager_setting->manager_setting->manager_code
+                ),
             403
         );
 
@@ -242,6 +258,18 @@ class StaffController extends Controller
             return back()->with('error', 'Danh sách quyền không hợp lệ hoặc không thuộc nhân viên này!');
         }
 
+        $actor = Auth::user();
+        abort_if(
+            $assignments->contains(
+                fn ($assignment) => ! $authorization->canAssignOperatorPermission(
+                    $actor,
+                    $staff,
+                    $assignment->manager_setting->manager_code
+                )
+            ),
+            403
+        );
+
         User_manager_setting::where('user_id', $staff->id)
             ->whereIn('id', $assignmentIds)
             ->update(['is_active' => (bool) $data['is_active']]);
@@ -272,8 +300,11 @@ class StaffController extends Controller
      */
     public function create(AuthorizationService $authorization): View|JsonResponse
     {
+        $actor = Auth::user();
+
         return $this->reactPage->admin('admin.staff.create', [
-            'canChooseRole' => $authorization->isSuperuser(Auth::user()),
+            'canChooseRole' => $authorization->isSuperuser($actor),
+            'managerCandidates' => $this->managerCandidates($actor, $authorization),
             'routes' => [
                 'index' => route('staff.index'),
                 'store' => route('staff.store'),
@@ -318,15 +349,22 @@ class StaffController extends Controller
             'role' => $canChooseRole
                 ? ['required', Rule::in([User::ROLE_STAFF, User::ROLE_ADMIN])]
                 : ['prohibited'],
+            'manager_id' => $canChooseRole
+                ? ['nullable', 'integer', Rule::exists('users', 'id')->where(fn ($query) => $query->whereIn('role', [User::ROLE_OWNER, User::ROLE_ADMIN]))]
+                : ['prohibited'],
         ]);
 
         $requestedRole = $canChooseRole ? $data['role'] : User::ROLE_STAFF;
+        $managerId = $canChooseRole && $requestedRole === User::ROLE_STAFF
+            ? (int) ($data['manager_id'] ?? $actor->id)
+            : (int) $actor->id;
+        unset($data['manager_id']);
         $data['full_name'] = ($requestedRole === User::ROLE_ADMIN ? 'Admin ' : 'Nhân viên ')
             . Str::upper(Str::random(8));
         $data['phone'] = $this->return_random_phone();
         $data['password'] = empty($data['password']) ? '123456' : $data['password'];
         $data['password'] = Hash::make($data['password']);
-        $data['referrer_id'] = $actor->id;
+        $data['referrer_id'] = $managerId;
         $data['status'] = "activated";
         $data['role'] = $requestedRole;
         $data['referral_code'] = $this->return_random_referral_code();
@@ -401,6 +439,7 @@ class StaffController extends Controller
         return $this->reactPage->admin('admin.staff.edit', [
             'staff' => $get_staff_old,
             'canChooseRole' => $authorization->isSuperuser(Auth::user()),
+            'managerCandidates' => $this->managerCandidates(Auth::user(), $authorization),
             'routes' => [
                 'index' => route('staff.index'),
                 'update' => route('staff.update', ['staff' => $get_staff_old]),
@@ -429,9 +468,19 @@ class StaffController extends Controller
             'role' => $authorization->isSuperuser($actor)
                 ? ['required', Rule::in([User::ROLE_STAFF, User::ROLE_ADMIN])]
                 : ['prohibited'],
+            'manager_id' => $authorization->isSuperuser($actor)
+                ? ['nullable', 'integer', Rule::exists('users', 'id')->where(fn ($query) => $query->whereIn('role', [User::ROLE_OWNER, User::ROLE_ADMIN]))]
+                : ['prohibited'],
         ]);
         $oldRole = $get_user->role;
         $roleChanged = isset($data['role']) && $data['role'] !== $oldRole;
+        if ($authorization->isSuperuser($actor)) {
+            $targetRole = $data['role'] ?? $get_user->role;
+            $data['referrer_id'] = $targetRole === User::ROLE_STAFF
+                ? (int) ($data['manager_id'] ?? $actor->id)
+                : (int) $actor->id;
+        }
+        unset($data['manager_id']);
         $get_user->update($data);
         $forcedPermissionState = $roleChanged
             ? $get_user->role === User::ROLE_ADMIN
@@ -452,6 +501,29 @@ class StaffController extends Controller
             }
         }
         return redirect()->route('staff.index')->with('success', 'Cập nhật tài khoản nhân viên thành công!');
+    }
+
+    private function managerCandidates(User $actor, AuthorizationService $authorization): array
+    {
+        if (!$authorization->isSuperuser($actor)) {
+            return [];
+        }
+
+        return User::query()
+            ->where(function ($query) use ($actor) {
+                $query->whereKey($actor->id)
+                    ->orWhere('role', User::ROLE_ADMIN);
+            })
+            ->orderByRaw('CASE WHEN id = ? THEN 0 ELSE 1 END', [$actor->id])
+            ->orderBy('full_name')
+            ->get(['id', 'full_name', 'username', 'role'])
+            ->map(fn (User $user) => [
+                'id' => (int) $user->id,
+                'full_name' => $user->full_name,
+                'username' => $user->username,
+                'role' => $user->role,
+            ])
+            ->all();
     }
 
     private function syncRegistryAssignments(

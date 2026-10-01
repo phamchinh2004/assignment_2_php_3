@@ -2,8 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Http\Controllers\Admin\TransactionHistoryController;
 use App\Models\User;
 use App\Models\Wallet_balance_history;
+use App\Services\AuthorizationService;
 use App\Services\UserDepositService;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
@@ -166,6 +168,47 @@ class WithdrawalManagementTest extends TestCase
         $this->assertSame(125.0, (float) $member->fresh()->balance);
         $this->assertSame(100.0, $result['history']->balance_before);
         $this->assertSame(150.0, $result['history']->balance_after);
+    }
+
+    public function test_admin_transaction_lists_include_own_team_and_exclude_other_admin_team(): void
+    {
+        $owner = $this->user(User::ROLE_OWNER);
+        $adminA = $this->user(User::ROLE_ADMIN, ['referrer_id' => $owner->id]);
+        $adminB = $this->user(User::ROLE_ADMIN, ['referrer_id' => $owner->id]);
+        $staffA = $this->user(User::ROLE_STAFF, ['referrer_id' => $adminA->id]);
+        $staffB = $this->user(User::ROLE_STAFF, ['referrer_id' => $adminB->id]);
+        $directCustomer = $this->user(User::ROLE_MEMBER, ['referrer_id' => $adminA->id]);
+        $teamCustomer = $this->user(User::ROLE_MEMBER, ['referrer_id' => $staffA->id]);
+        $otherCustomer = $this->user(User::ROLE_MEMBER, ['referrer_id' => $staffB->id]);
+
+        foreach ([$directCustomer, $teamCustomer, $otherCustomer] as $customer) {
+            Wallet_balance_history::query()->create([
+                'user_id' => $customer->id,
+                'value' => 10,
+                'type' => 'deposit',
+                'status' => 'completed',
+                'transaction_type' => 'normal',
+            ]);
+            $this->withdrawal($customer);
+        }
+
+        $this->actingAs($adminA);
+        $controller = app(TransactionHistoryController::class);
+        $authorization = app(AuthorizationService::class);
+
+        $depositView = $controller->index_deposit($authorization);
+        $depositProps = $depositView->getData()['reactPageBootstrap']['props'];
+        $this->assertEqualsCanonicalizing(
+            [$directCustomer->id, $teamCustomer->id],
+            collect($depositProps['transactions'])->pluck('user_id')->all()
+        );
+
+        $withdrawView = $controller->index_withdraw($authorization);
+        $withdrawProps = $withdrawView->getData()['reactPageBootstrap']['props'];
+        $this->assertEqualsCanonicalizing(
+            [$directCustomer->id, $teamCustomer->id],
+            collect($withdrawProps['transactions'])->pluck('user_id')->all()
+        );
     }
 
     private function user(string $role, array $attributes = []): User

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Conversation;
+use App\Models\BugReport;
 use App\Models\LuckyWheelSpin;
 use App\Models\Message;
 use App\Models\OrderReport;
@@ -58,11 +59,17 @@ class AdminHeaderService
             ? OrderReport::query()->where('status', 'pending')->count()
             : 0;
 
+        $bugReportCount = $this->authorization->isSuperuser($user)
+            && $this->authorization->can($user, config('authorization.capabilities.bug_reports_view'))
+            ? BugReport::query()->where('status', BugReport::STATUS_PENDING)->count()
+            : 0;
+
         return [
             'customer_transactions' => $withdrawalCount + $rewardCount,
             'withdrawals' => $withdrawalCount,
             'lucky_wheel_rewards' => $rewardCount,
             'order_reports' => $orderReportCount,
+            'bug_reports' => $bugReportCount,
         ];
     }
 

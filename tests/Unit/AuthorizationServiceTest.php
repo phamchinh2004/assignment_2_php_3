@@ -26,6 +26,15 @@ class AuthorizationServiceTest extends TestCase
                 'capabilities' => [
                     'chats_view_all' => 'chats.view-all',
                 ],
+                'staff_hidden_permissions' => [
+                    'staff.view',
+                    'staff-permissions.view',
+                    'staff-permissions.assign',
+                    'chats.view-all',
+                    'bug-reports.view',
+                    'bug-reports.view-detail',
+                    'bug-reports.resolve',
+                ],
             ],
         ]));
 
@@ -36,16 +45,56 @@ class AuthorizationServiceTest extends TestCase
     {
         $owner = new User(['role' => User::ROLE_OWNER]);
         $admin = new User(['role' => User::ROLE_ADMIN]);
-        $staff = new User(['role' => User::ROLE_STAFF]);
+        $admin->id = 10;
+        $staff = new User(['role' => User::ROLE_STAFF, 'referrer_id' => 10]);
+        $unmanagedStaff = new User(['role' => User::ROLE_STAFF, 'referrer_id' => 99]);
         $member = new User(['role' => User::ROLE_MEMBER]);
         $this->assertTrue($this->authorization->canManageOperatorPermissions($owner, $admin));
         $this->assertTrue($this->authorization->canManageOperatorPermissions($owner, $staff));
         $this->assertTrue($this->authorization->canManageOperatorPermissions($admin, $staff));
+        $this->assertFalse($this->authorization->canManageOperatorPermissions($admin, $unmanagedStaff));
         $this->assertFalse($this->authorization->canManageOperatorPermissions($admin, $admin));
         $this->assertFalse($this->authorization->canManageOperatorPermissions($admin, $owner));
         $this->assertFalse($this->authorization->canManageOperatorPermissions($owner, $owner));
         $this->assertFalse($this->authorization->canManageOperatorPermissions($owner, $member));
         $this->assertFalse($this->authorization->canManageOperatorPermissions($staff, $admin));
+    }
+
+    public function test_admin_can_delegate_only_owned_permissions_that_are_allowed_for_staff(): void
+    {
+        $admin = $this->userWithPermissions(User::ROLE_ADMIN, [
+            'orders.view',
+            'chats.view-all',
+            'staff-permissions.assign',
+        ]);
+        $admin->id = 10;
+        $staff = $this->staffWithPermissions([]);
+        $staff->referrer_id = $admin->id;
+
+        $this->assertTrue($this->authorization->canAssignOperatorPermission($admin, $staff, 'orders.view'));
+        $this->assertFalse($this->authorization->canAssignOperatorPermission($admin, $staff, 'orders.update'));
+        $this->assertFalse($this->authorization->canAssignOperatorPermission($admin, $staff, 'chats.view-all'));
+        $this->assertFalse($this->authorization->canAssignOperatorPermission($admin, $staff, 'staff-permissions.assign'));
+        $this->assertSame(
+            ['orders.view'],
+            $this->authorization->assignableOperatorPermissions($admin, $staff, [
+                'orders.view',
+                'orders.update',
+                'chats.view-all',
+                'staff-permissions.assign',
+            ])
+        );
+    }
+
+    public function test_owner_can_delegate_non_hidden_permissions_but_staff_hidden_permissions_stay_blocked(): void
+    {
+        $owner = new User(['role' => User::ROLE_OWNER]);
+        $owner->id = 1;
+        $staff = $this->staffWithPermissions([]);
+
+        $this->assertTrue($this->authorization->canAssignOperatorPermission($owner, $staff, 'orders.update'));
+        $this->assertFalse($this->authorization->canAssignOperatorPermission($owner, $staff, 'bug-reports.resolve'));
+        $this->assertFalse($this->authorization->canAssignOperatorPermission($owner, $staff, 'staff.view'));
     }
 
     public function test_staff_permissions_are_resolved_from_active_assignments(): void
@@ -102,6 +151,7 @@ class AuthorizationServiceTest extends TestCase
         $staff = new User();
         $staff->id = 20;
         $staff->role = User::ROLE_STAFF;
+        $staff->referrer_id = $admin->id;
 
         $otherAdmin = new User();
         $otherAdmin->id = 30;

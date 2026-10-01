@@ -1,6 +1,6 @@
 import { Button, Checkbox, Collapse, Input, Space, Switch, Tag, Typography, message } from 'antd';
 import { SafetyCertificateOutlined } from '@ant-design/icons';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import LaravelForm from '../../../components/LaravelForm';
 import { requestJson } from '../../../lib/http';
 import { AdminPage, AdminPageHeader, AdminSectionCard } from '../../../components/admin/AdminUi';
@@ -12,6 +12,11 @@ export default function StaffPermissionsPage({ config }) {
     const [query, setQuery] = useState('');
     const [selected, setSelected] = useState([]);
     const [loadingId, setLoadingId] = useState(null);
+
+    useEffect(() => {
+        setGroups(config.permissionGroups || []);
+        setSelected([]);
+    }, [config.permissionGroups]);
 
     const visibleGroups = useMemo(() => {
         const needle = query.trim().toLocaleLowerCase('vi');

@@ -20,6 +20,12 @@ export default function StaffForm({ config, mode }) {
     const editing = mode === 'edit';
     const action = editing ? config.routes.update : config.routes.store;
     const [createRole, setCreateRole] = useState(() => oldValue(form, 'role', 'staff'));
+    const [editRole, setEditRole] = useState(() => oldValue(form, 'role', staff.role || 'staff'));
+    const [managerId, setManagerId] = useState(() => String(oldValue(
+        form,
+        'manager_id',
+        staff.referrer_id || config.managerCandidates?.[0]?.id || '',
+    )));
 
     if (!editing) {
         const usernameError = fieldError(form, 'username');
@@ -151,6 +157,25 @@ export default function StaffForm({ config, mode }) {
                                     </Radio.Group>
                                     <input type="hidden" name="role" value={createRole} />
                                     {roleError && <Text type="danger" className="staff-create-error">{roleError}</Text>}
+                                    {createRole === 'staff' && config.managerCandidates?.length > 0 && (
+                                        <div className="staff-create-field" style={{ marginTop: 18 }}>
+                                            <label className="staff-create-label">Admin quản lý</label>
+                                            <Select
+                                                style={{ width: '100%' }}
+                                                value={managerId || undefined}
+                                                onChange={(value) => setManagerId(String(value))}
+                                                options={config.managerCandidates.map((manager) => ({
+                                                    value: String(manager.id),
+                                                    label: manager.role === 'own'
+                                                        ? `${manager.full_name || manager.username} (Chủ hệ thống)`
+                                                        : `${manager.full_name || manager.username} (@${manager.username})`,
+                                                }))}
+                                            />
+                                            <input type="hidden" name="manager_id" value={managerId} />
+                                            {fieldError(form, 'manager_id') && <Text type="danger" className="staff-create-error">{fieldError(form, 'manager_id')}</Text>}
+                                            <span className="staff-create-help">Staff chỉ nằm trong phạm vi dữ liệu của Admin được chọn.</span>
+                                        </div>
+                                    )}
                                 </>
                             ) : (
                                 <div className="staff-role-locked">
@@ -264,14 +289,31 @@ export default function StaffForm({ config, mode }) {
                     >
                         <Select
                             placeholder="Chọn vai trò"
-                            defaultValue={oldValue(form, 'role', staff.role || 'staff')}
+                            value={editRole}
                             options={[{ value: 'staff', label: 'Staff' }, { value: 'admin', label: 'Admin' }]}
-                            onChange={(value) => {
-                                const field = document.getElementById('staff-role-field');
-                                if (field) field.value = value;
-                            }}
+                            onChange={setEditRole}
                         />
-                        <input id="staff-role-field" type="hidden" name="role" defaultValue={oldValue(form, 'role', staff.role || 'staff')} />
+                        <input id="staff-role-field" type="hidden" name="role" value={editRole} readOnly />
+                    </Form.Item>
+                )}
+
+                {config.canChooseRole && editRole === 'staff' && config.managerCandidates?.length > 0 && (
+                    <Form.Item
+                        label="Admin quản lý"
+                        validateStatus={fieldError(form, 'manager_id') ? 'error' : ''}
+                        help={fieldError(form, 'manager_id') || 'Staff chỉ hiển thị dữ liệu cho Admin được chọn và tài khoản Own.'}
+                    >
+                        <Select
+                            value={managerId || undefined}
+                            onChange={(value) => setManagerId(String(value))}
+                            options={config.managerCandidates.map((manager) => ({
+                                value: String(manager.id),
+                                label: manager.role === 'own'
+                                    ? `${manager.full_name || manager.username} (Chủ hệ thống)`
+                                    : `${manager.full_name || manager.username} (@${manager.username})`,
+                            }))}
+                        />
+                        <input type="hidden" name="manager_id" value={managerId} />
                     </Form.Item>
                 )}
 

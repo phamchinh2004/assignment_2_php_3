@@ -70,6 +70,75 @@
     transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
 }
 
+.admin-topbar__report-button {
+    height: 40px;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 0 12px;
+    border: 1px solid #fecaca;
+    border-radius: 10px;
+    background: #fff7f7;
+    color: #b91c1c;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+
+.admin-topbar__report-button:hover,
+.admin-topbar__report-button:focus-visible {
+    border-color: #fca5a5;
+    background: #fef2f2;
+    color: #991b1b;
+    outline: none;
+}
+
+.admin-topbar__report-button[disabled] {
+    border-color: #e2e8f0;
+    background: #f8fafc;
+    color: #94a3b8;
+    cursor: not-allowed;
+}
+
+a.admin-topbar__report-button {
+    text-decoration: none !important;
+}
+
+.admin-bug-report-modal {
+    border: 0;
+    border-radius: 14px;
+    box-shadow: 0 24px 60px rgb(15 23 42 / 18%);
+}
+
+.admin-bug-report-modal .modal-header,
+.admin-bug-report-modal .modal-footer {
+    border-color: #eef2f7;
+}
+
+.admin-bug-report-modal__subtitle {
+    margin: 5px 0 0;
+    color: #64748b;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.admin-bug-report-images {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.admin-bug-report-images__item {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #f8fafc;
+}
+
 .admin-topbar__mobile-menu:hover,
 .admin-topbar__mobile-menu:focus-visible,
 .admin-topbar__icon-button:hover,
@@ -653,6 +722,16 @@
     }
 
     .admin-quick-search {
+        display: none;
+    }
+
+    .admin-topbar__report-button {
+        width: 40px;
+        padding: 0;
+        justify-content: center;
+    }
+
+    .admin-topbar__report-button span {
         display: none;
     }
 

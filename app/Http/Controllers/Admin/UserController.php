@@ -49,9 +49,7 @@ class UserController extends Controller
         $actor = Auth::user();
         $capabilities = config('authorization.capabilities');
 
-        if (!$authorization->can($actor, $capabilities['customers_view_all'])) {
-            $query->where('referrer_id', $actor->id);
-        }
+        $query->visibleCustomersTo($actor);
 
         $users = $query->latest('id')->get();
         $canViewFinancials = $authorization->can($actor, $capabilities['customers_view_financials']);
@@ -140,13 +138,9 @@ class UserController extends Controller
      */
     public function getOnlineStatuses(AuthorizationService $authorization)
     {
-        $query = User::where('role', User::ROLE_MEMBER)
+        $query = User::query()
+            ->visibleCustomersTo(Auth::user())
             ->select('id', 'last_seen');
-        $actor = Auth::user();
-
-        if (!$authorization->can($actor, config('authorization.capabilities.customers_view_all'))) {
-            $query->where('referrer_id', $actor->id);
-        }
 
         $users = $query->get()->map(function (User $user) {
             return [
@@ -294,6 +288,7 @@ class UserController extends Controller
             Auth::user(),
             config('authorization.capabilities.customers_change_referrer')
         );
+        $actor = Auth::user();
         $referrerCandidates = $canChangeReferrer
             ? User::query()
                 ->whereIn('role', User::MANAGEMENT_ROLES)
@@ -414,7 +409,6 @@ class UserController extends Controller
                 'Banco Popular Español',
             ],
         ];
-        $actor = Auth::user();
         $capabilities = config('authorization.capabilities');
         $canAdjustBalance = $authorization->can($actor, $capabilities['customers_adjust_balance']);
         $canChangeStatus = $authorization->can($actor, $capabilities['customers_change_status']);
@@ -976,14 +970,6 @@ class UserController extends Controller
         abort_unless($member->role === User::ROLE_MEMBER, 404);
 
         $actor = Auth::user();
-        $canManageAll = $authorization->can(
-            $actor,
-            config('authorization.capabilities.customers_view_all')
-        );
-
-        abort_unless(
-            $canManageAll || (int) $member->referrer_id === (int) $actor->id,
-            403
-        );
+        abort_unless($actor->canAccessCustomer($member), 403);
     }
 }

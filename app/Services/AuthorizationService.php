@@ -227,12 +227,37 @@ class AuthorizationService
         }
 
         return $actor->role === User::ROLE_ADMIN
-            && $target->role === User::ROLE_STAFF;
+            && $target->role === User::ROLE_STAFF
+            && (int) $target->referrer_id === (int) $actor->id;
     }
 
     public function canManageOperatorPermissions(User $actor, User $target): bool
     {
         return $this->canManageOperator($actor, $target);
+    }
+
+    public function canAssignOperatorPermission(User $actor, User $target, string $permission): bool
+    {
+        if (! $this->canManageOperatorPermissions($actor, $target)) {
+            return false;
+        }
+
+        if (
+            $target->role === User::ROLE_STAFF
+            && in_array($permission, config('authorization.staff_hidden_permissions', []), true)
+        ) {
+            return false;
+        }
+
+        return $this->isSuperuser($actor) || $this->can($actor, $permission);
+    }
+
+    public function assignableOperatorPermissions(User $actor, User $target, array $permissions): array
+    {
+        return collect($this->cleanPermissions($permissions))
+            ->filter(fn (string $permission) => $this->canAssignOperatorPermission($actor, $target, $permission))
+            ->values()
+            ->all();
     }
 
     public function manageableOperatorRoles(User $actor): array

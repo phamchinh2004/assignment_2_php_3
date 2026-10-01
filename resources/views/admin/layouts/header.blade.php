@@ -11,6 +11,7 @@
         ['patterns' => ['order.*'], 'section' => 'Đơn hàng', 'page' => 'Quản lý đơn hàng'],
         ['patterns' => ['order_distributions.*'], 'section' => 'Đơn hàng', 'page' => 'Phân phối đơn hàng'],
         ['patterns' => ['order_reports.*'], 'section' => 'Đơn hàng', 'page' => 'Đơn hàng bị báo cáo'],
+        ['patterns' => ['bug_reports.*'], 'section' => 'Vận hành', 'page' => 'Báo lỗi hệ thống'],
         ['patterns' => ['feature_announcements.*'], 'section' => 'Cấu hình', 'page' => 'Thông báo tính năng'],
         ['patterns' => ['admin.order_status_timing.*'], 'section' => 'Cấu hình', 'page' => 'Thời gian đơn hàng'],
         ['patterns' => ['frozen_order_settings.*'], 'section' => 'Cấu hình', 'page' => 'Thời gian xử lý đơn hàng'],
@@ -38,6 +39,11 @@
         'staff' => 'Nhân viên',
     ];
     $currentRole = Auth::user()->role ?? 'admin';
+    $authorization = app(\App\Services\AuthorizationService::class);
+    $isBugReporterRole = in_array($currentRole, [\App\Models\User::ROLE_ADMIN, \App\Models\User::ROLE_STAFF], true);
+    $canSubmitBugReport = $isBugReporterRole
+        && $authorization->can(Auth::user(), config('authorization.capabilities.bug_reports_create'));
+    $canReceiveBugReports = $currentRole === \App\Models\User::ROLE_OWNER;
     $roleLabel = $roleLabels[$currentRole] ?? ucfirst($currentRole);
     $displayName = Auth::user()->username ?? Auth::user()->full_name ?? 'Admin';
     $avatarInitial = strtoupper(substr($displayName, 0, 1));
@@ -76,6 +82,20 @@
             </div>
             <div id="adminQuickSearchResults" class="admin-quick-search__results" role="listbox" hidden></div>
         </div>
+
+        @if ($canReceiveBugReports)
+            <a class="admin-topbar__report-button" href="{{ route('bug_reports.index') }}" aria-label="Mở danh sách báo lỗi hệ thống">
+                <i class="fas fa-bug" aria-hidden="true"></i>
+                <span>Báo lỗi</span>
+            </a>
+        @elseif ($isBugReporterRole)
+            <button class="admin-topbar__report-button" type="button" data-toggle="modal" data-target="#bugReportModal"
+                aria-label="Báo lỗi hệ thống"
+                @unless($canSubmitBugReport) disabled title="Tài khoản chưa được cấp quyền Gửi báo lỗi" @endunless>
+                <i class="fas {{ $canSubmitBugReport ? 'fa-bug' : 'fa-lock' }}" aria-hidden="true"></i>
+                <span>Báo lỗi</span>
+            </button>
+        @endif
 
         <div class="dropdown admin-topbar__dropdown">
             <button class="admin-topbar__icon-button dropdown-toggle" type="button" id="alertsDropdown"
@@ -155,3 +175,55 @@
         </div>
     </div>
 </nav>
+
+@if ($canSubmitBugReport)
+    <div class="modal fade" id="bugReportModal" tabindex="-1" role="dialog" aria-labelledby="bugReportModalTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content admin-bug-report-modal">
+                <form id="adminBugReportForm" action="{{ route('bug_reports.store') }}" method="POST" novalidate>
+                    @csrf
+                    <div class="modal-header">
+                        <div>
+                            <h5 class="modal-title" id="bugReportModalTitle">Báo lỗi hệ thống</h5>
+                            <p class="admin-bug-report-modal__subtitle">Mô tả lỗi bạn đang gặp. Báo cáo sẽ được gửi trực tiếp tới chủ hệ thống.</p>
+                        </div>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Đóng">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="adminBugReportStatus" class="alert d-none" role="status"></div>
+                        <div class="form-group">
+                            <label for="adminBugReportTitle">Tiêu đề lỗi</label>
+                            <input id="adminBugReportTitle" class="form-control" type="text" name="title" maxlength="160"
+                                placeholder="Ví dụ: Không thể xác nhận giao dịch">
+                            <div id="adminBugReportTitleError" class="invalid-feedback"></div>
+                        </div>
+                        <div class="form-group mb-0">
+                            <label for="adminBugReportDescription">Mô tả chi tiết</label>
+                            <textarea id="adminBugReportDescription" class="form-control" name="description" rows="5" maxlength="5000"
+                                placeholder="Bạn thao tác gì, lỗi xảy ra ở bước nào, kết quả mong đợi là gì..."></textarea>
+                            <div id="adminBugReportDescriptionError" class="invalid-feedback"></div>
+                        </div>
+                        <div class="form-group mt-3 mb-0">
+                            <label for="adminBugReportImages">Ảnh đính kèm <span class="text-muted font-weight-normal">(không bắt buộc)</span></label>
+                            <input id="adminBugReportImages" class="form-control-file" type="file" name="images[]" multiple
+                                accept="image/jpeg,image/png,image/webp">
+                            <small class="form-text text-muted">Tối đa 5 ảnh JPG/PNG/WEBP, mỗi ảnh tối đa 5MB.</small>
+                            <div id="adminBugReportImagesError" class="invalid-feedback d-block"></div>
+                            <div id="adminBugReportImagePreview" class="admin-bug-report-images" aria-live="polite"></div>
+                        </div>
+                        <input id="adminBugReportPageUrl" type="hidden" name="page_url">
+                        <input id="adminBugReportUserAgent" type="hidden" name="user_agent">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light" data-dismiss="modal">Hủy</button>
+                        <button id="adminBugReportSubmit" type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane mr-1" aria-hidden="true"></i> Gửi báo lỗi
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+@endif

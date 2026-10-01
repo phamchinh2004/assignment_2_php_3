@@ -34,11 +34,7 @@ class TransactionHistoryController extends Controller
             // })
             ->where('type', 'withdraw');
         $actor = Auth::user();
-        if (!$authorization->can($actor, config('authorization.capabilities.withdrawals_view_all'))) {
-            $query->whereHas('user', function ($q) use ($actor) {
-                $q->where('referrer_id', $actor->id);
-            });
-        }
+        $query->whereHas('user', fn ($q) => $q->visibleCustomersTo($actor));
         $list_withdraw_transactions = $query->orderByDesc("wallet_balance_histories.id")->get();
         return $this->reactPage->admin('admin.transactions.withdraw', [
             'transactions' => $list_withdraw_transactions,
@@ -131,9 +127,7 @@ class TransactionHistoryController extends Controller
             // })
             ->where('type', 'deposit');
         $actor = Auth::user();
-        if (!$authorization->can($actor, config('authorization.capabilities.deposits_view_all'))) {
-            $query->where('by_user_id', $actor->id);
-        }
+        $query->whereHas('user', fn ($q) => $q->visibleCustomersTo($actor));
         $list_deposit_transactions = $query->orderByDesc('id')->get();
         return $this->reactPage->admin('admin.transactions.deposit', [
             'transactions' => $list_deposit_transactions,
@@ -211,22 +205,9 @@ class TransactionHistoryController extends Controller
 
         $actor = Auth::user();
 
-        $viewAllPermission = $expectedType === 'deposit'
-            ? config('authorization.capabilities.deposits_view_all')
-            : config('authorization.capabilities.withdrawals_view_all');
-
-        if ($authorization->can($actor, $viewAllPermission)) {
-            return;
-        }
-
-        if ($expectedType === 'deposit') {
-            abort_unless((int) $transaction->by_user_id === (int) $actor->id, 403);
-            return;
-        }
-
         $transaction->loadMissing('user');
         abort_unless(
-            $transaction->user && (int) $transaction->user->referrer_id === (int) $actor->id,
+            $transaction->user && $actor->canAccessCustomer($transaction->user),
             403
         );
     }

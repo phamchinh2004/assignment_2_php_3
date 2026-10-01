@@ -36,6 +36,7 @@
     );
     $isRewardActive = request()->routeIs('lucky_wheel_rewards.*');
     $isFeatureAnnouncementsActive = request()->routeIs('feature_announcements.*');
+    $isBugReportsActive = request()->routeIs('bug_reports.*');
     $isTransactionActive = $isWithdrawActive || $isDepositActive || $isRewardActive;
 @endphp
 
@@ -122,6 +123,16 @@
                     <span class="admin-sidebar__label">Quản lý tin nhắn</span>
                     <span id="adminSidebarMessageBadge" class="admin-sidebar__badge" hidden aria-live="polite"></span>
                 </a>
+
+                @if ($isOwner)
+                    <a class="admin-sidebar__link {{ $isBugReportsActive ? 'is-active' : '' }}"
+                        href="{{ route('bug_reports.index') }}" data-sidebar-tooltip="Báo lỗi hệ thống"
+                        @if($isBugReportsActive) aria-current="page" @endif>
+                        <span class="admin-sidebar__icon"><i class="fas fa-bug" aria-hidden="true"></i></span>
+                        <span class="admin-sidebar__label">Báo lỗi hệ thống</span>
+                        <span id="adminSidebarBugReportBadge" class="admin-sidebar__badge" hidden aria-live="polite"></span>
+                    </a>
+                @endif
 
                 @if ($canCustomers)
                     <a class="admin-sidebar__link {{ request()->routeIs('user.*') ? 'is-active' : '' }}"

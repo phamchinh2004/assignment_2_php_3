@@ -7,6 +7,7 @@ use App\Jobs\PrepareOrder;
 use App\Models\OrderReport;
 use App\Models\OrderStatusTiming;
 use App\Models\Status;
+use App\Models\User;
 use App\Services\AuthorizationService;
 use App\Services\OrderStatusService;
 use App\Services\ReactPageService;
@@ -28,8 +29,11 @@ class OrderReportController extends Controller
     {
         $status = $request->input('status', 'pending');
 
-        $reports = OrderReport::query()
-            ->when($status, fn($q) => $q->where('status', $status))
+        $reportsQuery = OrderReport::query()
+            ->when($status, fn($q) => $q->where('status', $status));
+        $this->scopeToVisibleCustomers($reportsQuery, $request->user());
+
+        $reports = $reportsQuery
             ->with([
                 'frozenOrder.order.partner',
                 'frozenOrder.user',
@@ -59,6 +63,7 @@ class OrderReportController extends Controller
 
     public function show(OrderReport $orderReport): View|JsonResponse
     {
+        $this->authorizeReportAccess($orderReport);
         $orderReport->load([
             'frozenOrder.order.partner',
             'frozenOrder.user',
@@ -181,6 +186,7 @@ class OrderReportController extends Controller
      */
     public function confirm(Request $request, OrderReport $orderReport)
     {
+        $this->authorizeReportAccess($orderReport);
         if ($orderReport->status !== 'pending') {
             return redirect()->back()->with('error', 'Báo cáo này đã được xử lý trước đó.');
         }
@@ -245,6 +251,7 @@ class OrderReportController extends Controller
      */
     public function cancel(Request $request, OrderReport $orderReport)
     {
+        $this->authorizeReportAccess($orderReport);
         if ($orderReport->status !== 'pending') {
             return redirect()->back()->with('error', 'Báo cáo này đã được xử lý trước đó.');
         }
@@ -279,5 +286,29 @@ class OrderReportController extends Controller
         $orderReport->save();
 
         return redirect()->route('order_reports.show', $orderReport)->with('success', 'Đã hủy đơn hàng (xác nhận báo cáo đúng).');
+    }
+
+    private function scopeToVisibleCustomers($query, User $actor)
+    {
+        if ($actor->role === User::ROLE_OWNER) {
+            return $query;
+        }
+
+        return $query->whereHas(
+            'frozenOrder.user',
+            fn ($userQuery) => $userQuery->visibleCustomersTo($actor)
+        );
+    }
+
+    private function authorizeReportAccess(OrderReport $orderReport): void
+    {
+        $actor = Auth::user();
+        if ($actor->role === User::ROLE_OWNER) {
+            return;
+        }
+
+        $orderReport->loadMissing('frozenOrder.user');
+        $customer = $orderReport->frozenOrder?->user;
+        abort_unless($customer && $actor->canAccessCustomer($customer), 403);
     }
 }

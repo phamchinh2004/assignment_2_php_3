@@ -128,9 +128,86 @@ class User extends Authenticatable
             ->where('role', self::ROLE_MEMBER);
     }
 
+    public function managedStaff()
+    {
+        return $this->hasMany(User::class, 'referrer_id')
+            ->where('role', self::ROLE_STAFF);
+    }
+
     public function scopeManagedBy(Builder $query, int $managerId): Builder
     {
         return $query->where('referrer_id', $managerId);
+    }
+
+    public function scopeVisibleCustomersTo(Builder $query, User $actor): Builder
+    {
+        $query->where('role', self::ROLE_MEMBER);
+
+        $managerIds = $actor->customerManagerIds();
+        if ($managerIds === null) {
+            return $query;
+        }
+
+        if ($managerIds === []) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        return $query->whereIn('referrer_id', $managerIds);
+    }
+
+    public function scopeVisibleOperatorsTo(Builder $query, User $actor): Builder
+    {
+        if ($actor->role === self::ROLE_OWNER) {
+            return $query->whereIn('role', [self::ROLE_ADMIN, self::ROLE_STAFF]);
+        }
+
+        if ($actor->role === self::ROLE_ADMIN) {
+            return $query->where('role', self::ROLE_STAFF)
+                ->where('referrer_id', $actor->id);
+        }
+
+        return $query->whereRaw('1 = 0');
+    }
+
+    /**
+     * IDs that may own customers visible to this management account.
+     * null means unrestricted owner access.
+     *
+     * @return array<int>|null
+     */
+    public function customerManagerIds(): ?array
+    {
+        if ($this->role === self::ROLE_OWNER) {
+            return null;
+        }
+
+        if ($this->role === self::ROLE_STAFF) {
+            return [(int) $this->id];
+        }
+
+        if ($this->role !== self::ROLE_ADMIN) {
+            return [];
+        }
+
+        return $this->managedStaff()
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->prepend((int) $this->id)
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    public function canAccessCustomer(User $customer): bool
+    {
+        if ($customer->role !== self::ROLE_MEMBER) {
+            return false;
+        }
+
+        $managerIds = $this->customerManagerIds();
+
+        return $managerIds === null
+            || in_array((int) $customer->referrer_id, $managerIds, true);
     }
 
     public function referralManager(): ?self

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\LuckyWheelSetting;
 use App\Models\LuckyWheelSpin;
+use App\Models\User;
 use App\Services\AuthorizationService;
 use App\Services\LuckyWheelRewardService;
 use App\Services\ReactPageService;
@@ -40,6 +41,7 @@ class LuckyWheelRewardController extends Controller
                 LuckyWheelSpin::STATUS_APPROVED,
                 LuckyWheelSpin::STATUS_REJECTED,
             ]);
+        $this->scopeToVisibleCustomers($query, $request->user());
 
         if (!empty($validated['status'])) {
             $query->where('reward_status', $validated['status']);
@@ -48,6 +50,7 @@ class LuckyWheelRewardController extends Controller
         $rewards = $query->latest('id')->paginate(20)->withQueryString();
 
         $baseQuery = LuckyWheelSpin::query()->where('reward_type', LuckyWheelSpin::REWARD_CASH);
+        $this->scopeToVisibleCustomers($baseQuery, $request->user());
         $counts = [
             'total' => (clone $baseQuery)->whereIn('reward_status', [
                 LuckyWheelSpin::STATUS_PENDING,
@@ -86,6 +89,7 @@ class LuckyWheelRewardController extends Controller
 
     public function approve(LuckyWheelSpin $spin, LuckyWheelRewardService $rewardService)
     {
+        $this->authorizeSpinAccess($spin);
         $wasApproved = $spin->reward_status === LuckyWheelSpin::STATUS_APPROVED;
         $approved = $rewardService->approve($spin, Auth::user(), LuckyWheelSpin::APPROVAL_MANUAL);
 
@@ -99,6 +103,7 @@ class LuckyWheelRewardController extends Controller
 
     public function reject(LuckyWheelSpin $spin, LuckyWheelRewardService $rewardService)
     {
+        $this->authorizeSpinAccess($spin);
         $wasRejected = $spin->reward_status === LuckyWheelSpin::STATUS_REJECTED;
         $rewardService->reject($spin, Auth::user());
 
@@ -128,5 +133,25 @@ class LuckyWheelRewardController extends Controller
                 ? 'Đã bật tự động duyệt. Các phần thưởng tiền mặt từ lượt quay mới sẽ được cộng ngay.'
                 : 'Đã tắt tự động duyệt. Phần thưởng tiền mặt mới sẽ chờ quản trị viên duyệt.'
         );
+    }
+
+    private function scopeToVisibleCustomers($query, User $actor)
+    {
+        if ($actor->role === User::ROLE_OWNER) {
+            return $query;
+        }
+
+        return $query->whereHas('user', fn ($userQuery) => $userQuery->visibleCustomersTo($actor));
+    }
+
+    private function authorizeSpinAccess(LuckyWheelSpin $spin): void
+    {
+        $actor = Auth::user();
+        if ($actor->role === User::ROLE_OWNER) {
+            return;
+        }
+
+        $spin->loadMissing('user');
+        abort_unless($spin->user && $actor->canAccessCustomer($spin->user), 403);
     }
 }

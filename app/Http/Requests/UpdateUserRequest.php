@@ -87,7 +87,6 @@ class UpdateUserRequest extends FormRequest
                 'required',
                 'string',
                 'max:50',
-                Rule::unique('users', 'phone')->ignore($userId),
             ],
             'username_bank' => ['nullable', 'string', 'max:255'],
             'bank_name' => ['nullable', 'string', 'max:255'],

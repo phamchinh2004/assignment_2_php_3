@@ -411,6 +411,55 @@ class ReferralRevenueChainTest extends TestCase
         $this->assertEquals(70, $totals->get($otherStaff->id));
     }
 
+    public function test_admin_statistics_only_include_own_and_direct_staff_customers_while_owner_sees_all(): void
+    {
+        $owner = $this->user(User::ROLE_OWNER, 110000, 'scope_owner');
+        $adminA = $this->user(User::ROLE_ADMIN, 110001, 'scope_admin_a', ['referrer_id' => $owner->id]);
+        $adminB = $this->user(User::ROLE_ADMIN, 110002, 'scope_admin_b', ['referrer_id' => $owner->id]);
+        $staffA = $this->user(User::ROLE_STAFF, 110003, 'scope_staff_a', ['referrer_id' => $adminA->id]);
+        $staffB = $this->user(User::ROLE_STAFF, 110004, 'scope_staff_b', ['referrer_id' => $adminB->id]);
+
+        $adminCustomer = $this->user(User::ROLE_MEMBER, 210001, 'scope_admin_customer', ['referrer_id' => $adminA->id]);
+        $staffCustomer = $this->user(User::ROLE_MEMBER, 210002, 'scope_staff_customer', ['referrer_id' => $staffA->id]);
+        $otherCustomer = $this->user(User::ROLE_MEMBER, 210003, 'scope_other_customer', ['referrer_id' => $staffB->id]);
+
+        $this->deposit($adminCustomer, 10);
+        $this->deposit($staffCustomer, 20);
+        $this->deposit($otherCustomer, 100);
+
+        $period = [
+            'start_date' => now()->subDay()->format('Y-m-d'),
+            'end_date' => now()->addDay()->format('Y-m-d'),
+        ];
+
+        $this->actingAs($adminA);
+        $overview = app(StatisticalController::class)
+            ->revenueOverview(Request::create('/test', 'GET', $period))
+            ->getData(true);
+        $this->assertTrue($overview['success']);
+        $this->assertEquals(30, $overview['data']['total_revenue']);
+        $this->assertSame(2, $overview['data']['total_customers']);
+
+        $staffList = app(StatisticalController::class)->getStaffList()->getData(true);
+        $this->assertSame([$staffA->id], collect($staffList['data'])->pluck('id')->all());
+
+        $byStaff = app(StatisticalController::class)
+            ->getRevenueByStaff(Request::create('/test', 'GET', [
+                'date_from' => $period['start_date'],
+                'date_to' => $period['end_date'],
+            ]))
+            ->getData(true);
+        $this->assertSame([$staffA->id], collect($byStaff['table_data'])->pluck('staff_id')->all());
+        $this->assertEquals(20, $byStaff['table_data'][0]['total_revenue']);
+
+        $this->actingAs($owner);
+        $ownerOverview = app(StatisticalController::class)
+            ->revenueOverview(Request::create('/test', 'GET', $period))
+            ->getData(true);
+        $this->assertEquals(130, $ownerOverview['data']['total_revenue']);
+        $this->assertSame(3, $ownerOverview['data']['total_customers']);
+    }
+
     private function user(string $role, int $referralCode, string $username, array $attributes = []): User
     {
         return User::query()->create(array_merge([

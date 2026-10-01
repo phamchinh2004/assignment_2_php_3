@@ -87,6 +87,25 @@ class AdminUserReferrerUpdateTest extends TestCase
         $this->assertSame($newReferrer->id, $member->fresh()->referrer_id);
     }
 
+    public function test_editing_member_allows_phone_shared_with_another_user(): void
+    {
+        $actor = $this->user(User::ROLE_STAFF);
+        $otherMember = $this->user(User::ROLE_MEMBER, ['referrer_id' => $actor->id]);
+        $member = $this->user(User::ROLE_MEMBER, ['referrer_id' => $actor->id]);
+        $this->grant($actor, ['customers_update']);
+
+        $this->actingAs($actor)
+            ->put(route('user.update', $member), [
+                'full_name' => $member->full_name,
+                'username' => $member->username,
+                'email' => $member->email,
+                'phone' => $otherMember->phone,
+            ])
+            ->assertRedirect(route('user.index'));
+
+        $this->assertSame($otherMember->phone, $member->fresh()->phone);
+    }
+
     public function test_user_without_change_referrer_permission_cannot_change_the_referrer(): void
     {
         $actor = $this->user(User::ROLE_STAFF);
@@ -114,6 +133,41 @@ class AdminUserReferrerUpdateTest extends TestCase
             ->assertJsonValidationErrors('referrer_id');
 
         $this->assertSame($actor->id, $member->fresh()->referrer_id);
+    }
+
+    public function test_admin_view_all_permission_still_cannot_edit_another_admin_team_customer(): void
+    {
+        $owner = $this->user(User::ROLE_OWNER);
+        $adminA = $this->user(User::ROLE_ADMIN, ['referrer_id' => $owner->id]);
+        $adminB = $this->user(User::ROLE_ADMIN, ['referrer_id' => $owner->id]);
+        $staffA = $this->user(User::ROLE_STAFF, ['referrer_id' => $adminA->id]);
+        $staffB = $this->user(User::ROLE_STAFF, ['referrer_id' => $adminB->id]);
+        $ownCustomer = $this->user(User::ROLE_MEMBER, ['referrer_id' => $staffA->id]);
+        $otherCustomer = $this->user(User::ROLE_MEMBER, ['referrer_id' => $staffB->id]);
+        $this->grant($adminA, ['customers_update', 'customers_view_all']);
+
+        $ownPayload = [
+            'full_name' => 'Own team updated',
+            'username' => $ownCustomer->username,
+            'email' => $ownCustomer->email,
+            'phone' => $ownCustomer->phone,
+        ];
+        $otherPayload = [
+            'full_name' => 'Other team updated',
+            'username' => $otherCustomer->username,
+            'email' => $otherCustomer->email,
+            'phone' => $otherCustomer->phone,
+        ];
+
+        $this->actingAs($adminA)
+            ->put(route('user.update', $ownCustomer), $ownPayload)
+            ->assertRedirect(route('user.index'));
+        $this->assertSame('Own team updated', $ownCustomer->fresh()->full_name);
+
+        $this->actingAs($adminA)
+            ->putJson(route('user.update', $otherCustomer), $otherPayload)
+            ->assertForbidden();
+        $this->assertNotSame('Other team updated', $otherCustomer->fresh()->full_name);
     }
 
     public function test_permission_migration_groups_the_permission_without_granting_it(): void
@@ -168,6 +222,85 @@ class AdminUserReferrerUpdateTest extends TestCase
         );
     }
 
+    public function test_staff_permission_page_only_shows_permissions_the_admin_can_delegate(): void
+    {
+        $owner = $this->user(User::ROLE_OWNER);
+        $admin = $this->user(User::ROLE_ADMIN, ['referrer_id' => $owner->id]);
+        $staff = $this->user(User::ROLE_STAFF, ['referrer_id' => $admin->id]);
+        $this->grant($admin, [
+            'staff_permissions_view',
+            'staff_permissions_assign',
+            'orders_view',
+            'bug_reports_create',
+            'chats_view_all',
+        ]);
+
+        $this->actingAs($admin);
+        $view = app(StaffController::class)->edit_permissions(
+            $staff->id,
+            app(AuthorizationService::class),
+            app(PermissionRegistry::class)
+        );
+        $groups = $view->getData()['reactPageBootstrap']['props']['permissionGroups'];
+        $visibleCodes = collect($groups)
+            ->flatMap(fn (array $group) => collect($group['permissions'])->pluck('code'))
+            ->values()
+            ->all();
+
+        $this->assertContains('orders.view', $visibleCodes);
+        $this->assertContains('bug-reports.create', $visibleCodes);
+        $this->assertNotContains('orders.view-detail', $visibleCodes);
+        $this->assertNotContains('staff-permissions.view', $visibleCodes);
+        $this->assertNotContains('staff-permissions.assign', $visibleCodes);
+        $this->assertNotContains('chats.view-all', $visibleCodes);
+        $this->assertNotContains('bug-reports.view', $visibleCodes);
+        $this->assertNotContains('bug-reports.view-detail', $visibleCodes);
+        $this->assertNotContains('bug-reports.resolve', $visibleCodes);
+    }
+
+    public function test_staff_permission_endpoints_reject_permissions_the_admin_cannot_delegate(): void
+    {
+        $owner = $this->user(User::ROLE_OWNER);
+        $admin = $this->user(User::ROLE_ADMIN, ['referrer_id' => $owner->id]);
+        $staff = $this->user(User::ROLE_STAFF, ['referrer_id' => $admin->id]);
+        $this->grant($admin, [
+            'staff_permissions_view',
+            'staff_permissions_assign',
+            'orders_view',
+        ]);
+
+        $this->actingAs($admin);
+        app(StaffController::class)->edit_permissions(
+            $staff->id,
+            app(AuthorizationService::class),
+            app(PermissionRegistry::class)
+        );
+
+        $allowedId = $this->assignmentId($staff, 'orders.view');
+        $missingId = $this->assignmentId($staff, 'orders.view-detail');
+        $hiddenId = $this->assignmentId($staff, 'bug-reports.resolve');
+
+        $this->postJson(route('staff.change.status.permission'), ['id' => $allowedId])
+            ->assertOk()
+            ->assertJson(['is_active' => true]);
+        $this->assertTrue((bool) DB::table('user_manager_settings')->where('id', $allowedId)->value('is_active'));
+
+        $this->postJson(route('staff.change.status.permission'), ['id' => $missingId])
+            ->assertForbidden();
+        $this->postJson(route('staff.change.status.permission'), ['id' => $hiddenId])
+            ->assertForbidden();
+
+        $this->post(route('staff.change.status.permissions'), [
+            'staff_id' => $staff->id,
+            'assignment_ids' => [$allowedId, $missingId],
+            'is_active' => 0,
+        ])->assertForbidden();
+
+        $this->assertTrue((bool) DB::table('user_manager_settings')->where('id', $allowedId)->value('is_active'));
+        $this->assertFalse((bool) DB::table('user_manager_settings')->where('id', $missingId)->value('is_active'));
+        $this->assertFalse((bool) DB::table('user_manager_settings')->where('id', $hiddenId)->value('is_active'));
+    }
+
     private function user(string $role, array $attributes = []): User
     {
         static $sequence = 0;
@@ -201,6 +334,15 @@ class AdminUserReferrerUpdateTest extends TestCase
                 'updated_at' => now(),
             ]);
         }
+    }
+
+    private function assignmentId(User $user, string $permissionCode): int
+    {
+        return (int) DB::table('user_manager_settings as ums')
+            ->join('manager_settings as ms', 'ms.id', '=', 'ums.manager_setting_id')
+            ->where('ums.user_id', $user->id)
+            ->where('ms.manager_code', $permissionCode)
+            ->value('ums.id');
     }
 
     private function payload(User $member, ?int $referrerId): array

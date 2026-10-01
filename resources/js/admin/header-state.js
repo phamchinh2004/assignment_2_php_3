@@ -10,6 +10,7 @@ if (headerRoot) {
     const sidebarWithdrawBadge = document.getElementById('adminSidebarWithdrawBadge');
     const sidebarRewardBadge = document.getElementById('adminSidebarRewardBadge');
     const sidebarOrderReportBadge = document.getElementById('adminSidebarOrderReportBadge');
+    const sidebarBugReportBadge = document.getElementById('adminSidebarBugReportBadge');
     const readAllButton = document.getElementById('adminNotificationReadAll');
     const loadMoreButton = document.getElementById('adminNotificationLoadMore');
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
@@ -308,6 +309,7 @@ if (headerRoot) {
             [sidebarWithdrawBadge, data.withdrawals, 'yêu cầu rút tiền mới'],
             [sidebarRewardBadge, data.lucky_wheel_rewards, 'phần thưởng vòng quay chờ duyệt'],
             [sidebarOrderReportBadge, data.order_reports, 'đơn hàng bị báo cáo chờ xử lý'],
+            [sidebarBugReportBadge, data.bug_reports, 'báo lỗi hệ thống chờ xử lý'],
         ];
 
         badges.forEach(([element, count, label]) => {
@@ -377,6 +379,111 @@ if (headerRoot) {
             await refresh();
         } catch (error) {
             console.error('[Admin header] Unable to mark all notifications as read', error);
+        }
+    });
+
+    const bugReportForm = document.getElementById('adminBugReportForm');
+    const bugReportSubmit = document.getElementById('adminBugReportSubmit');
+    const bugReportStatus = document.getElementById('adminBugReportStatus');
+    const bugReportTitle = document.getElementById('adminBugReportTitle');
+    const bugReportDescription = document.getElementById('adminBugReportDescription');
+    const bugReportImages = document.getElementById('adminBugReportImages');
+    const bugReportImagePreview = document.getElementById('adminBugReportImagePreview');
+    const bugReportPageUrl = document.getElementById('adminBugReportPageUrl');
+    const bugReportUserAgent = document.getElementById('adminBugReportUserAgent');
+    let bugReportPreviewUrls = [];
+
+    function clearBugReportErrors() {
+        [
+            [bugReportTitle, document.getElementById('adminBugReportTitleError')],
+            [bugReportDescription, document.getElementById('adminBugReportDescriptionError')],
+            [bugReportImages, document.getElementById('adminBugReportImagesError')],
+        ].forEach(([field, error]) => {
+            field?.classList.remove('is-invalid');
+            if (error) error.textContent = '';
+        });
+        bugReportStatus?.classList.add('d-none');
+        bugReportStatus?.classList.remove('alert-success', 'alert-danger');
+    }
+
+    function showBugReportFieldError(name, message) {
+        const normalizedName = String(name || '').startsWith('images') ? 'images' : name;
+        const map = {
+            title: [bugReportTitle, document.getElementById('adminBugReportTitleError')],
+            description: [bugReportDescription, document.getElementById('adminBugReportDescriptionError')],
+            images: [bugReportImages, document.getElementById('adminBugReportImagesError')],
+        };
+        const [field, error] = map[normalizedName] || [];
+        field?.classList.add('is-invalid');
+        if (error) error.textContent = message;
+    }
+
+    function clearBugReportImagePreview() {
+        bugReportPreviewUrls.forEach((url) => URL.revokeObjectURL(url));
+        bugReportPreviewUrls = [];
+        bugReportImagePreview?.replaceChildren();
+    }
+
+    bugReportImages?.addEventListener('change', () => {
+        clearBugReportImagePreview();
+
+        Array.from(bugReportImages.files || []).slice(0, 5).forEach((file) => {
+            const url = URL.createObjectURL(file);
+            bugReportPreviewUrls.push(url);
+
+            const image = document.createElement('img');
+            image.src = url;
+            image.alt = file.name;
+            image.className = 'admin-bug-report-images__item';
+            bugReportImagePreview?.appendChild(image);
+        });
+    });
+
+    bugReportForm?.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        clearBugReportErrors();
+        if (bugReportPageUrl) bugReportPageUrl.value = window.location.href;
+        if (bugReportUserAgent) bugReportUserAgent.value = navigator.userAgent || '';
+        if (bugReportSubmit) bugReportSubmit.disabled = true;
+
+        try {
+            const response = await fetch(bugReportForm.action, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    Accept: 'application/json',
+                    ...(csrfToken ? { 'X-CSRF-TOKEN': csrfToken } : {}),
+                },
+                body: new FormData(bugReportForm),
+            });
+            const payload = await response.json().catch(() => ({}));
+
+            if (response.status === 422) {
+                Object.entries(payload.errors || {}).forEach(([field, messages]) => {
+                    showBugReportFieldError(field, Array.isArray(messages) ? messages[0] : messages);
+                });
+                return;
+            }
+
+            if (!response.ok) {
+                throw new Error(payload.message || 'Không thể gửi báo lỗi.');
+            }
+
+            bugReportForm.reset();
+            clearBugReportImagePreview();
+            if (bugReportStatus) {
+                bugReportStatus.textContent = payload.message || 'Đã gửi báo lỗi tới chủ hệ thống.';
+                bugReportStatus.classList.remove('d-none');
+                bugReportStatus.classList.add('alert-success');
+            }
+        } catch (error) {
+            if (bugReportStatus) {
+                bugReportStatus.textContent = error.message || 'Không thể gửi báo lỗi. Vui lòng thử lại.';
+                bugReportStatus.classList.remove('d-none');
+                bugReportStatus.classList.add('alert-danger');
+            }
+        } finally {
+            if (bugReportSubmit) bugReportSubmit.disabled = false;
         }
     });
 

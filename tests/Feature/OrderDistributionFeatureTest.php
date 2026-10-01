@@ -31,6 +31,7 @@ class OrderDistributionFeatureTest extends TestCase
             $table->string('username')->nullable();
             $table->string('role');
             $table->string('status');
+            $table->foreignId('referrer_id')->nullable();
             $table->timestamp('last_seen')->nullable();
             $table->decimal('balance', 16, 6)->default(0);
             $table->decimal('frozen_balance', 16, 6)->default(0);
@@ -158,7 +159,17 @@ class OrderDistributionFeatureTest extends TestCase
             'updated_from' => '2026-09-23', 'updated_to' => '2026-09-23',
         ]);
         $view = app(OrderDistributionController::class)->index($request);
-        $this->assertSame([$match->id], $view->getData()['frozenOrders']->pluck('id')->all());
+        $props = $view->getData()['reactPageBootstrap']['props'];
+        $this->assertSame([$match->id], $props['frozenOrders']->pluck('id')->all());
+    }
+
+    public function test_empty_filters_are_serialized_as_an_object_for_the_react_form(): void
+    {
+        $request = Request::create('/admin/order-distributions', 'GET');
+        $view = app(OrderDistributionController::class)->index($request);
+        $filters = $view->getData()['reactPageBootstrap']['props']['filters'];
+
+        $this->assertSame('{}', json_encode($filters));
     }
 
     public function test_end_date_filters_work_without_start_dates(): void
@@ -173,13 +184,14 @@ class OrderDistributionFeatureTest extends TestCase
             'to' => '2026-09-21', 'updated_to' => '2026-09-22',
         ]);
         $view = app(OrderDistributionController::class)->index($request);
-        $this->assertSame([$order->id], $view->getData()['frozenOrders']->pluck('id')->all());
+        $props = $view->getData()['reactPageBootstrap']['props'];
+        $this->assertSame([$order->id], $props['frozenOrders']->pluck('id')->all());
     }
 
     public function test_admin_with_view_detail_permission_but_without_transition_permission_cannot_advance(): void
     {
         $admin = $this->user(User::ROLE_ADMIN);
-        $recipient = $this->user(User::ROLE_MEMBER);
+        $recipient = $this->user(User::ROLE_MEMBER, ['referrer_id' => $admin->id]);
         $this->grant($admin, ['order_distributions_view_detail']);
         $order = $this->frozenOrder($recipient);
 
@@ -189,10 +201,42 @@ class OrderDistributionFeatureTest extends TestCase
         $this->assertDatabaseCount('status_orders', 0);
     }
 
+    public function test_admin_can_open_own_staff_customer_distribution_but_not_other_admin_team(): void
+    {
+        $owner = $this->user(User::ROLE_OWNER);
+        $adminA = $this->user(User::ROLE_ADMIN, ['referrer_id' => $owner->id]);
+        $adminB = $this->user(User::ROLE_ADMIN, ['referrer_id' => $owner->id]);
+        $staffA = $this->user(User::ROLE_STAFF, ['referrer_id' => $adminA->id]);
+        $staffB = $this->user(User::ROLE_STAFF, ['referrer_id' => $adminB->id]);
+        $ownCustomer = $this->user(User::ROLE_MEMBER, ['referrer_id' => $staffA->id]);
+        $otherCustomer = $this->user(User::ROLE_MEMBER, ['referrer_id' => $staffB->id]);
+        $ownDistribution = $this->frozenOrder($ownCustomer);
+        $otherDistribution = $this->frozenOrder($otherCustomer);
+        $this->grant($adminA, ['order_distributions_view_detail']);
+
+        $controller = app(OrderDistributionController::class);
+        $workflow = app(AdminOrderTransitionService::class);
+
+        $this->actingAs($adminA);
+        $ownView = $controller->show($ownDistribution, $workflow);
+        $this->assertSame($ownDistribution->id, $ownView->getData()['reactPageBootstrap']['props']['frozenOrder']->id);
+
+        try {
+            $controller->show($otherDistribution, $workflow);
+            $this->fail('Admin must not access another admin team distribution.');
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+            $this->assertSame(403, $exception->getStatusCode());
+        }
+
+        $this->actingAs($owner);
+        $ownerView = $controller->show($otherDistribution, $workflow);
+        $this->assertSame($otherDistribution->id, $ownerView->getData()['reactPageBootstrap']['props']['frozenOrder']->id);
+    }
+
     public function test_show_exposes_source_order_link_when_admin_can_view_order_detail(): void
     {
         $admin = $this->user(User::ROLE_ADMIN);
-        $recipient = $this->user(User::ROLE_MEMBER);
+        $recipient = $this->user(User::ROLE_MEMBER, ['referrer_id' => $admin->id]);
         $this->grant($admin, ['order_distributions_view_detail', 'orders_view_detail']);
         $orderId = DB::table('orders')->insertGetId([
             'order_code' => 'SOURCE-001',
@@ -208,7 +252,7 @@ class OrderDistributionFeatureTest extends TestCase
             app(AuthorizationService::class)
         );
 
-        $this->assertTrue($view->getData()['canViewOrder']);
+        $this->assertTrue($view->getData()['reactPageBootstrap']['props']['permissions']['viewOrder']);
     }
 
     public function test_transition_advances_only_one_step_and_records_the_admin(): void
@@ -270,7 +314,7 @@ class OrderDistributionFeatureTest extends TestCase
     {
         $admin = $this->user(User::ROLE_ADMIN);
         $this->grant($admin, ['order_distributions_transition']);
-        $order = $this->frozenOrder($this->user(User::ROLE_MEMBER), [
+        $order = $this->frozenOrder($this->user(User::ROLE_MEMBER, ['referrer_id' => $admin->id]), [
             'status' => 'delivered', 'delivered_at' => now()->subDays(15),
         ]);
 
@@ -323,14 +367,14 @@ class OrderDistributionFeatureTest extends TestCase
         $this->assertDatabaseCount('transaction_histories', 1);
     }
 
-    private function user(string $role): User
+    private function user(string $role, array $attributes = []): User
     {
-        return User::query()->create([
+        return User::query()->create(array_merge([
             'full_name' => 'Test ' . $role,
             'username' => uniqid($role, true),
             'role' => $role,
             'status' => 'activated',
-        ]);
+        ], $attributes));
     }
 
     private function frozenOrder(User $recipient, array $attributes = []): Frozen_order

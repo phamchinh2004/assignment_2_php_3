@@ -47,6 +47,15 @@ $modules = [
             'cancel' => ['code' => 'order-reports.cancel', 'label' => 'Hủy báo cáo'],
         ],
     ],
+    'bug_reports' => [
+        'label' => 'Báo lỗi hệ thống',
+        'permissions' => [
+            'create' => ['code' => 'bug-reports.create', 'label' => 'Gửi báo lỗi'],
+            'view' => ['code' => 'bug-reports.view', 'label' => 'Xem danh sách báo lỗi'],
+            'view_detail' => ['code' => 'bug-reports.view-detail', 'label' => 'Xem chi tiết báo lỗi'],
+            'resolve' => ['code' => 'bug-reports.resolve', 'label' => 'Xử lý báo lỗi'],
+        ],
+    ],
     'order_distributions' => [
         'label' => 'Phân phối đơn hàng',
         'permissions' => [
@@ -191,9 +200,23 @@ foreach ($modules as $moduleKey => $module) {
     }
 }
 
+$staffHiddenPermissions = [];
+foreach (['staff', 'staff_permissions'] as $moduleKey) {
+    foreach ($modules[$moduleKey]['permissions'] ?? [] as $permission) {
+        $staffHiddenPermissions[] = $permission['code'];
+    }
+}
+$staffHiddenPermissions = array_values(array_unique(array_merge($staffHiddenPermissions, [
+    'chats.view-all',
+    'bug-reports.view',
+    'bug-reports.view-detail',
+    'bug-reports.resolve',
+])));
+
 return [
     // Keep historical assignments in the database, but omit retired features from permission screens.
     'retired_permissions' => ['orders.maintenance'],
+    'staff_hidden_permissions' => $staffHiddenPermissions,
     'fallback_route' => 'chat-panel',
     'modules' => $modules,
     'capabilities' => $capabilities,
