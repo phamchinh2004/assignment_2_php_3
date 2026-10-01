@@ -35,9 +35,14 @@ class AdminHeaderService
                 ->where('type', 'withdraw')
                 ->where('status', 'processing');
 
-            if (!$this->authorization->can($user, config('authorization.capabilities.withdrawals_view_all'))) {
-                $withdrawals->whereHas('user', fn ($query) => $query->where('referrer_id', $user->id));
-            }
+            $canViewAllWithdrawals = $this->authorization->can(
+                $user,
+                config('authorization.capabilities.withdrawals_view_all')
+            );
+            $withdrawals->whereHas(
+                'user',
+                fn ($query) => $query->visibleCustomersTo($user, $canViewAllWithdrawals)
+            );
 
             $withdrawalCount = $withdrawals->count();
         }

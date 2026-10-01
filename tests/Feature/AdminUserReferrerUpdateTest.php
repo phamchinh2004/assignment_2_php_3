@@ -144,7 +144,27 @@ class AdminUserReferrerUpdateTest extends TestCase
         $staffB = $this->user(User::ROLE_STAFF, ['referrer_id' => $adminB->id]);
         $ownCustomer = $this->user(User::ROLE_MEMBER, ['referrer_id' => $staffA->id]);
         $otherCustomer = $this->user(User::ROLE_MEMBER, ['referrer_id' => $staffB->id]);
+
+        $restrictedCustomerIds = User::query()
+            ->visibleCustomersTo($adminA)
+            ->pluck('id')
+            ->all();
+        $this->assertContains($ownCustomer->id, $restrictedCustomerIds);
+        $this->assertNotContains($otherCustomer->id, $restrictedCustomerIds);
+
         $this->grant($adminA, ['customers_update', 'customers_view_all']);
+
+        $canViewAllCustomers = app(AuthorizationService::class)->can(
+            $adminA,
+            config('authorization.capabilities.customers_view_all')
+        );
+        $visibleCustomerIds = User::query()
+            ->visibleCustomersTo($adminA, $canViewAllCustomers)
+            ->pluck('id')
+            ->all();
+
+        $this->assertContains($ownCustomer->id, $visibleCustomerIds);
+        $this->assertContains($otherCustomer->id, $visibleCustomerIds);
 
         $ownPayload = [
             'full_name' => 'Own team updated',

@@ -139,9 +139,13 @@ class User extends Authenticatable
         return $query->where('referrer_id', $managerId);
     }
 
-    public function scopeVisibleCustomersTo(Builder $query, User $actor): Builder
+    public function scopeVisibleCustomersTo(Builder $query, User $actor, bool $viewAll = false): Builder
     {
         $query->where('role', self::ROLE_MEMBER);
+
+        if ($viewAll) {
+            return $query;
+        }
 
         $managerIds = $actor->customerManagerIds();
         if ($managerIds === null) {

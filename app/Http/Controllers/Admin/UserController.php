@@ -48,8 +48,9 @@ class UserController extends Controller
         ])->where('role', 'member');
         $actor = Auth::user();
         $capabilities = config('authorization.capabilities');
+        $canViewAllCustomers = $authorization->can($actor, $capabilities['customers_view_all']);
 
-        $query->visibleCustomersTo($actor);
+        $query->visibleCustomersTo($actor, $canViewAllCustomers);
 
         $users = $query->latest('id')->get();
         $canViewFinancials = $authorization->can($actor, $capabilities['customers_view_financials']);
@@ -138,8 +139,13 @@ class UserController extends Controller
      */
     public function getOnlineStatuses(AuthorizationService $authorization)
     {
+        $actor = Auth::user();
+        $canViewAllCustomers = $authorization->can(
+            $actor,
+            config('authorization.capabilities.customers_view_all')
+        );
         $query = User::query()
-            ->visibleCustomersTo(Auth::user())
+            ->visibleCustomersTo($actor, $canViewAllCustomers)
             ->select('id', 'last_seen');
 
         $users = $query->get()->map(function (User $user) {
@@ -165,7 +171,7 @@ class UserController extends Controller
      */
     public function show(User $user, AuthorizationService $authorization)
     {
-        $this->authorizeMemberAccess($user, $authorization);
+        $this->authorizeMemberView($user, $authorization);
         $actor = Auth::user();
 
         $relations = [
@@ -971,5 +977,18 @@ class UserController extends Controller
 
         $actor = Auth::user();
         abort_unless($actor->canAccessCustomer($member), 403);
+    }
+
+    private function authorizeMemberView(User $member, AuthorizationService $authorization): void
+    {
+        abort_unless($member->role === User::ROLE_MEMBER, 404);
+
+        $actor = Auth::user();
+        $canViewAllCustomers = $authorization->can(
+            $actor,
+            config('authorization.capabilities.customers_view_all')
+        );
+
+        abort_unless($canViewAllCustomers || $actor->canAccessCustomer($member), 403);
     }
 }

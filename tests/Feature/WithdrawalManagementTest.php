@@ -211,6 +211,48 @@ class WithdrawalManagementTest extends TestCase
         );
     }
 
+    public function test_admin_view_all_permissions_include_other_admin_team_transactions(): void
+    {
+        $owner = $this->user(User::ROLE_OWNER);
+        $adminA = $this->user(User::ROLE_ADMIN, ['referrer_id' => $owner->id]);
+        $adminB = $this->user(User::ROLE_ADMIN, ['referrer_id' => $owner->id]);
+        $staffA = $this->user(User::ROLE_STAFF, ['referrer_id' => $adminA->id]);
+        $staffB = $this->user(User::ROLE_STAFF, ['referrer_id' => $adminB->id]);
+        $ownCustomer = $this->user(User::ROLE_MEMBER, ['referrer_id' => $staffA->id]);
+        $otherCustomer = $this->user(User::ROLE_MEMBER, ['referrer_id' => $staffB->id]);
+
+        foreach ([$ownCustomer, $otherCustomer] as $customer) {
+            Wallet_balance_history::query()->create([
+                'user_id' => $customer->id,
+                'value' => 10,
+                'type' => 'deposit',
+                'status' => 'completed',
+                'transaction_type' => 'normal',
+            ]);
+            $this->withdrawal($customer);
+        }
+
+        $this->grant($adminA, ['deposits_view_all', 'withdrawals_view_all']);
+        $this->actingAs($adminA);
+
+        $controller = app(TransactionHistoryController::class);
+        $authorization = app(AuthorizationService::class);
+
+        $depositProps = $controller->index_deposit($authorization)
+            ->getData()['reactPageBootstrap']['props'];
+        $this->assertEqualsCanonicalizing(
+            [$ownCustomer->id, $otherCustomer->id],
+            collect($depositProps['transactions'])->pluck('user_id')->all()
+        );
+
+        $withdrawProps = $controller->index_withdraw($authorization)
+            ->getData()['reactPageBootstrap']['props'];
+        $this->assertEqualsCanonicalizing(
+            [$ownCustomer->id, $otherCustomer->id],
+            collect($withdrawProps['transactions'])->pluck('user_id')->all()
+        );
+    }
+
     private function user(string $role, array $attributes = []): User
     {
         return User::query()->create(array_merge([
@@ -230,5 +272,25 @@ class WithdrawalManagementTest extends TestCase
             'status' => 'processing',
             'transaction_type' => 'normal',
         ], $attributes));
+    }
+
+    private function grant(User $user, array $capabilities): void
+    {
+        foreach ($capabilities as $capability) {
+            $permissionId = DB::table('manager_settings')->insertGetId([
+                'manager_name' => $capability,
+                'manager_code' => config('authorization.capabilities.'.$capability),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            DB::table('user_manager_settings')->insert([
+                'user_id' => $user->id,
+                'manager_setting_id' => $permissionId,
+                'is_active' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
     }
 }
