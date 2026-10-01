@@ -8,6 +8,8 @@ $projectBackupPath = rtrim((string) (env('PROJECT_BACKUP_PATH') ?: base_path()),
 
 return [
     'backup' => [
+        'name' => env('APP_NAME', 'laravel-backup'),
+
         'source' => [
             'files' => [
                 'include' => [
@@ -42,11 +44,21 @@ return [
     ],
 
     'schedule' => [
-        'backup_time' => env('BACKUP_TIME', '02:00'),
-        'full_backup_day' => (int) env('FULL_BACKUP_DAY', 0),
-        'full_backup_time' => env('FULL_BACKUP_TIME', '04:00'),
-        'cleanup_time' => env('BACKUP_CLEANUP_TIME', '03:00'),
+        'project_backup_time' => env('PROJECT_BACKUP_TIME', env('FULL_BACKUP_TIME', '04:00')),
         'timezone' => env('BACKUP_TIMEZONE', 'Asia/Ho_Chi_Minh'),
+    ],
+
+    'snapshots' => [
+        'db' => [
+            'filename_prefix' => 'db-',
+            'max_copies' => (int) env('BACKUP_DB_MAX_COPIES', 2),
+            'max_age_minutes' => (int) env('BACKUP_DB_MAX_AGE_MINUTES', 60),
+        ],
+        'project' => [
+            'filename_prefix' => 'project-',
+            'max_copies' => (int) env('BACKUP_PROJECT_MAX_COPIES', 2),
+            'max_age_minutes' => (int) env('BACKUP_PROJECT_MAX_AGE_HOURS', 48) * 60,
+        ],
     ],
 
     'monitor_backups' => [
