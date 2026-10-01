@@ -9,7 +9,7 @@ export default function ForgotPasswordPage({ config }) {
         <div className="container_login_register">
             <Background src={config.assets.background} />
             <main className="forgot-page"><section className="forgot-card">
-                <img className="auth-brand-logo forgot-logo" src={config.assets.logo} alt="TT Affiliate" />
+                <img className="auth-brand-logo forgot-logo" src={config.assets.logo} alt={config.brandName || 'Dropshipping'} />
                 <div className="forgot-icon"><i className="fa-solid fa-key" /></div>
                 <h1 className="forgot-title">Quên mật khẩu?</h1>
                 <p className="forgot-description">Nhập email đã đăng ký. Chúng tôi sẽ gửi mật khẩu mới đến địa chỉ này.</p>

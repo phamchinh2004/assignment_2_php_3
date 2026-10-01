@@ -57,7 +57,7 @@ export default function LoginPage({ config }) {
             <Background src={config.assets.background} />
             <main className="auth-page">
                 <section className="auth-card">
-                    <img className="auth-brand-logo auth-logo" src={config.assets.logo} alt="TT Affiliate" />
+                    <img className="auth-brand-logo auth-logo" src={config.assets.logo} alt={config.brandName || 'Dropshipping'} />
                     <nav className="auth-tabs" aria-label="Điều hướng tài khoản">
                         <a className="active" href={config.routes.login}>Đăng nhập</a>
                         <a href={config.routes.register}>Đăng ký</a>
@@ -88,7 +88,7 @@ export default function LoginPage({ config }) {
                     <div className="auth-social"><button type="button" onClick={socialComingSoon} className="p-0 border-0 bg-transparent"><img src={config.assets.facebook} alt="Facebook" /></button><button type="button" onClick={socialComingSoon} className="p-0 border-0 bg-transparent"><img src={config.assets.google} alt="Google" /></button></div>
                 </section>
             </main>
-            <Disclaimer />
+            <Disclaimer brandName={config.brandName} />
         </div>
     );
 }

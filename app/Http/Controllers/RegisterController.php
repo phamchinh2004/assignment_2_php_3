@@ -17,6 +17,7 @@ class RegisterController extends Controller
     public function index(ReactPageService $reactPage)
     {
         return $reactPage->guest('auth.register', [
+            'brandName' => config('app.name', 'Dropshipping'),
             'routes' => [
                 'register' => route('register'),
                 'submit' => route('registerdone'),
@@ -25,7 +26,7 @@ class RegisterController extends Controller
                 'checkEmail' => route('check_email'),
             ],
             'assets' => [
-                'background' => asset('images/login_and_register/background.png'),
+                'background' => asset('images/login_and_register/background.webp'),
                 'logo' => asset('images/login_and_register/tta.webp'),
                 'facebook' => asset('images/login_and_register/fb-logo.png'),
                 'google' => asset('images/login_and_register/gg-logo.png'),

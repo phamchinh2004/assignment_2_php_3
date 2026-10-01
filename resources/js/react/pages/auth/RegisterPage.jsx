@@ -167,7 +167,7 @@ export default function RegisterPage({ config }) {
         <div className="container_register">
             <Background src={config.assets.background} />
             <main className="auth-page"><section className="auth-card auth-card-wide">
-                <img className="auth-brand-logo auth-logo" src={config.assets.logo} alt="TT Affiliate" />
+                <img className="auth-brand-logo auth-logo" src={config.assets.logo} alt={config.brandName || 'Dropshipping'} />
                 <nav className="auth-tabs"><a href={config.routes.login}>Đăng nhập</a><a className="active" href={config.routes.register}>Đăng ký</a></nav>
                 <div className="auth-heading"><h1 className="auth-title">Tạo tài khoản</h1><p className="auth-subtitle">Tham gia hệ thống và bắt đầu hành trình của bạn</p></div>
                 <ServerNotice flash={config.flash} local={notice} />
@@ -189,7 +189,7 @@ export default function RegisterPage({ config }) {
                 <div className="auth-switch text-center mt-4">Bạn đã có tài khoản? <a href={config.routes.login}>Đăng nhập ngay</a></div>
                 <div className="auth-social"><img src={config.assets.facebook} alt="Facebook" /><img src={config.assets.google} alt="Google" /></div>
             </section></main>
-            <Disclaimer />
+            <Disclaimer brandName={config.brandName} />
         </div>
     );
 }

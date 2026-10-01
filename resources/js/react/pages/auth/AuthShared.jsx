@@ -89,11 +89,11 @@ export function Turnstile({ config, action }) {
     return <div className="auth-turnstile"><div ref={hostRef} style={{ width: '100%' }} /></div>;
 }
 
-export function Disclaimer() {
+export function Disclaimer({ brandName = 'Dropshipping' }) {
     return (
         <footer className="auth-affiliation-disclaimer" role="note">
             <p><strong>Disclaimer:</strong></p>
-            <p>This website is not affiliated with, sponsored, endorsed, or approved by TikTok or ByteDance Ltd.<br />TikTok is a trademark of ByteDance Ltd.<br />All other brand names, logos, and trademarks are the property of their respective owners and are used for identification purposes only.<br />The use of these names does not imply any affiliation or endorsement.</p>
+            <p>{brandName} is an independent platform and is not affiliated with or endorsed by third-party marketplaces or social platforms.<br />Third-party brand names, logos, and trademarks remain the property of their respective owners.</p>
             <p><strong>Affiliate Disclosure:</strong></p>
             <p>This website may contain affiliate links. We may receive a commission if you make a purchase or sign up for a service through those links, at no additional cost to you.</p>
         </footer>

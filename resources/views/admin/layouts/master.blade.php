@@ -2,16 +2,20 @@
 <html lang="en">
 
 <head>
+    @php
+        $brandName = config('app.name', 'Dropshipping');
+        $brandDescription = $brandName . ' là nền tảng độc lập hỗ trợ quản lý sản phẩm, đơn hàng và hoạt động giới thiệu.';
+    @endphp
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="description" content="TT Affiliate là nền tảng thương mại điện tử tích hợp trực tiếp vào Dropshipping, cho phép người dùng mua sắm sản phẩm ngay trong video. Thông qua TT Affiliate, các thương hiệu và người bán có thể tiếp cận hàng triệu người dùng trẻ tuổi, tạo ra trải nghiệm mua sắm thú vị và tương tác. Sự phát triển vượt bậc của TT Affiliate trong những năm gần đây đã biến nó thành một trong những mạng xã hội phổ biến nhất thế giới.">
+    <meta name="description" content="{{ $brandDescription }}">
     <meta property="og:type" content="website">
-    <meta property="og:title" content="TT Affiliate">
-    <meta property="og:description" content="TT Affiliate là nền tảng thương mại điện tử tích hợp trực tiếp vào Dropshipping, cho phép người dùng mua sắm sản phẩm ngay trong video. Thông qua TT Affiliate, các thương hiệu và người bán có thể tiếp cận hàng triệu người dùng trẻ tuổi, tạo ra trải nghiệm mua sắm thú vị và tương tác. Sự phát triển vượt bậc của TT Affiliate trong những năm gần đây đã biến nó thành một trong những mạng xã hội phổ biến nhất thế giới.">
+    <meta property="og:title" content="{{ $brandName }}">
+    <meta property="og:description" content="{{ $brandDescription }}">
     <meta property="og:url" content="{{ url()->current() }}">
     <meta property="og:image" content="{{ asset('images/logo/tta.webp') }}">
-    <meta property="og:image:alt" content="TT Affiliate">
+    <meta property="og:image:alt" content="{{ $brandName }}">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:image" content="{{ asset('images/logo/tta.webp') }}">
     <meta name="author" content="">

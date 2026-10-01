@@ -2,20 +2,23 @@
 <html lang="en">
 
 <head>
+    @php
+        $brandName = config('app.name', 'Dropshipping');
+        $brandDescription = $brandName . ' là nền tảng độc lập hỗ trợ khám phá sản phẩm, quản lý đơn hàng và chương trình giới thiệu cho người dùng.';
+    @endphp
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hệ thống</title>
-    <meta name="description" content="TT Affiliate là nền tảng thương mại điện tử tích hợp trực tiếp vào ứng dụng Dropshipping, cho phép người dùng mua sắm sản phẩm ngay trong video. Thông qua TT Affiliate, các thương hiệu và người bán có thể tiếp cận hàng triệu người dùng trẻ tuổi, tạo ra trải nghiệm mua sắm thú vị và tương tác. Sự phát triển vượt bậc của TT Affiliate trong những năm gần đây đã biến nó thành một trong những mạng xã hội phổ biến nhất thế giới.">
+    <title>{{ $brandName }}</title>
+    <meta name="description" content="{{ $brandDescription }}">
     <meta property="og:type" content="website">
-    <meta property="og:title" content="TT Affiliate">
-    <meta property="og:description" content="TT Affiliate là nền tảng thương mại điện tử tích hợp trực tiếp vào ứng dụng Dropshipping, cho phép người dùng mua sắm sản phẩm ngay trong video. Thông qua TT Affiliate, các thương hiệu và người bán có thể tiếp cận hàng triệu người dùng trẻ tuổi, tạo ra trải nghiệm mua sắm thú vị và tương tác. Sự phát triển vượt bậc của TT Affiliate trong những năm gần đây đã biến nó thành một trong những mạng xã hội phổ biến nhất thế giới.">
+    <meta property="og:title" content="{{ $brandName }}">
+    <meta property="og:description" content="{{ $brandDescription }}">
     <meta property="og:url" content="{{ url()->current() }}">
     <meta property="og:image" content="{{ asset('images/logo/tta.webp') }}">
-    <meta property="og:image:alt" content="TT Affiliate">
+    <meta property="og:image:alt" content="{{ $brandName }}">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="TT Affiliate">
-    <meta name="twitter:description"
-        content="TT Affiliate là nền tảng thương mại điện tử tích hợp trực tiếp vào Dropshipping, cho phép người dùng mua sắm sản phẩm ngay trong video. Thông qua TT Affiliate, các thương hiệu và người bán có thể tiếp cận hàng triệu người dùng trẻ tuổi, tạo ra trải nghiệm mua sắm thú vị và tương tác. Sự phát triển vượt bậc của TT Affiliate trong những năm gần đây đã biến nó thành một trong những mạng xã hội phổ biến nhất thế giới.">
+    <meta name="twitter:title" content="{{ $brandName }}">
+    <meta name="twitter:description" content="{{ $brandDescription }}">
     <meta name="twitter:image" content="{{ asset('images/logo/tta.webp') }}">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -57,10 +60,8 @@
             <div class="site-affiliation-disclaimer" role="note">
                 <p><strong>Disclaimer:</strong></p>
                 <p>
-                    This website is not affiliated with, sponsored, endorsed, or approved by TikTok or ByteDance Ltd.<br>
-                    TikTok is a trademark of ByteDance Ltd.<br>
-                    All other brand names, logos, and trademarks are the property of their respective owners and are used for identification purposes only.<br>
-                    The use of these names does not imply any affiliation or endorsement.
+                    {{ $brandName }} is an independent platform and is not affiliated with or endorsed by third-party marketplaces or social platforms.<br>
+                    Third-party brand names, logos, and trademarks remain the property of their respective owners.
                 </p>
                 <p><strong>Affiliate Disclosure:</strong></p>
                 <p>

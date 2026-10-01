@@ -17,6 +17,7 @@ class LoginController extends Controller
     public function index(ReactPageService $reactPage)
     {
         $page = $reactPage->guest('auth.login', [
+            'brandName' => config('app.name', 'Dropshipping'),
             'routes' => [
                 'login' => route('login'),
                 'submit' => route('login_done'),
@@ -25,7 +26,7 @@ class LoginController extends Controller
                 'checkUsername' => route('check_username'),
             ],
             'assets' => [
-                'background' => asset('images/login_and_register/background.png'),
+                'background' => asset('images/login_and_register/background.webp'),
                 'logo' => asset('images/login_and_register/tta.webp'),
                 'facebook' => asset('images/login_and_register/fb-logo.png'),
                 'google' => asset('images/login_and_register/gg-logo.png'),
@@ -270,12 +271,13 @@ class LoginController extends Controller
     public function forgot_password(ReactPageService $reactPage)
     {
         return $reactPage->guest('auth.forgot-password', [
+            'brandName' => config('app.name', 'Dropshipping'),
             'routes' => [
                 'submit' => route('send_new_password'),
                 'login' => route('login'),
             ],
             'assets' => [
-                'background' => asset('images/login_and_register/background.png'),
+                'background' => asset('images/login_and_register/background.webp'),
                 'logo' => asset('images/login_and_register/tta.webp'),
             ],
         ], 'Quên mật khẩu');
