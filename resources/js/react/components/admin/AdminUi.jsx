@@ -52,7 +52,7 @@ export function AdminMetricCard({
     ...statisticProps
 }) {
     return (
-        <Card className={`admin-metric-card admin-metric-card--${tone}`} bordered>
+        <Card className={`admin-metric-card admin-metric-card--${tone}`} variant="outlined">
             <div className="admin-metric-card__content">
                 {icon && <span className="admin-metric-card__icon" aria-hidden="true">{icon}</span>}
                 <Statistic
@@ -72,9 +72,9 @@ export function AdminMetricCard({
 export function AdminMetricGrid({ items, min = 4, className = '' }) {
     return (
         <Row gutter={[14, 14]} className={`admin-metric-grid ${className}`.trim()}>
-            {items.filter(Boolean).map((item) => (
-                <Col xs={24} sm={12} xl={24 / Math.max(1, Math.min(min, items.filter(Boolean).length))} key={item.key || item.title}>
-                    <AdminMetricCard {...item} />
+            {items.filter(Boolean).map(({ key: metricKey, ...metricProps }) => (
+                <Col xs={24} sm={12} xl={24 / Math.max(1, Math.min(min, items.filter(Boolean).length))} key={metricKey || metricProps.title}>
+                    <AdminMetricCard {...metricProps} />
                 </Col>
             ))}
         </Row>

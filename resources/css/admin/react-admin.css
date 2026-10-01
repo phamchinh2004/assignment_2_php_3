@@ -3841,6 +3841,207 @@ a.customer-identity__name:hover {
     box-shadow: 0 2px 7px rgb(79 95 244 / 10%);
 }
 
+.customer-mobile-list {
+    display: none;
+}
+
+.customer-mobile-card {
+    position: relative;
+    overflow: hidden;
+    padding: 14px;
+    border: 1px solid #e4e9f1;
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 4px 14px rgb(15 23 42 / 4%);
+}
+
+.customer-mobile-card--real {
+    border-color: #cfe9dc;
+    background: #f7fcf9;
+}
+
+.customer-mobile-card--real::before {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 3px;
+    background: #27a76f;
+    content: '';
+}
+
+.customer-mobile-card__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    padding-right: 28px;
+}
+
+.customer-mobile-card__identity {
+    display: flex;
+    min-width: 0;
+    flex: 1 1 auto;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.customer-mobile-card__identity .ant-avatar {
+    flex: 0 0 46px;
+    border: 1px solid #dfe6ef;
+    background: #e8edf4;
+    color: #6e7a91;
+}
+
+.customer-mobile-card__identity-copy {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.customer-mobile-card__name-row {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 5px 7px;
+}
+
+.customer-mobile-card__name-row a,
+.customer-mobile-card__name-row strong {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    color: #17213b;
+    font-size: 14px;
+    font-weight: 760;
+    line-height: 1.3;
+    text-decoration: none;
+}
+
+.customer-mobile-card__name-row a:hover {
+    color: #465cf2;
+    text-decoration: underline;
+}
+
+.customer-mobile-card__name-row > span {
+    display: inline-flex;
+    min-height: 22px;
+    align-items: center;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: #eef2f7;
+    color: #6d7890;
+    font-size: 10px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.customer-mobile-card__username {
+    margin-top: 2px;
+    overflow-wrap: anywhere;
+    color: #7b879d;
+    font-size: 12px;
+}
+
+.customer-mobile-card__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 5px;
+    margin-top: 7px;
+}
+
+.customer-mobile-card__meta .customer-presence {
+    min-height: 25px;
+}
+
+.customer-mobile-card__head > .customer-status-pill {
+    flex: 0 0 auto;
+}
+
+.customer-mobile-card__details {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 13px;
+}
+
+.customer-mobile-detail {
+    min-width: 0;
+    padding: 10px;
+    border: 1px solid #e8ecf3;
+    border-radius: 10px;
+    background: rgb(248 250 252 / 86%);
+}
+
+.customer-mobile-detail > span {
+    display: block;
+    margin-bottom: 5px;
+    color: #8490a5;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .015em;
+    text-transform: uppercase;
+}
+
+.customer-mobile-detail strong,
+.customer-mobile-detail small {
+    display: block;
+    overflow-wrap: anywhere;
+}
+
+.customer-mobile-detail strong {
+    color: #24304b;
+    font-size: 12px;
+    font-weight: 750;
+    line-height: 1.4;
+}
+
+.customer-mobile-detail small {
+    margin-top: 3px;
+    color: #77839a;
+    font-size: 10.5px;
+    line-height: 1.4;
+}
+
+.customer-mobile-card__actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #e9edf3;
+}
+
+.customer-mobile-card__actions .ant-btn {
+    width: 100%;
+    min-width: 0;
+    height: 44px;
+    border-radius: 10px;
+    box-shadow: none;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.customer-mobile-card__actions .ant-btn-primary {
+    border-color: #5062f4;
+    background: linear-gradient(135deg, #5068f5, #5b3df2);
+}
+
+.customer-mobile-card__index {
+    position: absolute;
+    top: 12px;
+    right: 11px;
+    color: #a0a9b9;
+    font-size: 9px;
+    font-weight: 750;
+}
+
+.customer-mobile-empty {
+    padding: 34px 18px;
+    border: 1px dashed #d9e0ea;
+    border-radius: 12px;
+    color: #7c899e;
+    text-align: center;
+}
+
 @media (max-width: 1199.98px) {
     .customer-metric-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -3857,6 +4058,10 @@ a.customer-identity__name:hover {
 }
 
 @media (max-width: 767.98px) {
+    .customer-admin-page {
+        width: 100%;
+    }
+
     .customer-page-header,
     .customer-list-card__header {
         align-items: stretch;
@@ -3867,9 +4072,42 @@ a.customer-identity__name:hover {
         width: 100%;
     }
 
-    .customer-metric-grid,
+    .customer-metric-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
     .customer-finance-grid {
         grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .customer-metric-card {
+        min-height: 88px;
+        gap: 10px;
+        padding: 13px 12px;
+    }
+
+    .customer-metric-card__icon {
+        width: 40px;
+        height: 40px;
+        flex-basis: 40px;
+        border-radius: 11px;
+        font-size: 18px;
+    }
+
+    .customer-metric-card__body strong {
+        font-size: 23px;
+    }
+
+    .customer-metric-card__value-row {
+        gap: 6px;
+    }
+
+    .customer-metric-card__value-row em {
+        min-height: 20px;
+        padding-inline: 6px;
+        font-size: 9.5px;
     }
 
     .customer-list-search {
@@ -3877,13 +4115,52 @@ a.customer-identity__name:hover {
         flex-basis: auto;
     }
 
+    .customer-list-search .ant-input-affix-wrapper {
+        height: 44px;
+    }
+
+    .customer-list-search .ant-input {
+        font-size: 16px;
+    }
+
+    .customer-filter-button.ant-btn {
+        display: none;
+    }
+
     .customer-filter-tabs {
         width: 100%;
     }
 
+    .customer-filter-tab {
+        min-height: 42px;
+        padding: 8px 13px;
+        font-size: 12px;
+    }
+
     .customer-sort-control {
+        min-height: 44px;
         align-self: stretch;
-        justify-content: flex-end;
+        justify-content: flex-start;
+    }
+
+    .customer-sort-control .ant-select {
+        min-width: 0;
+        flex: 1 1 auto;
+    }
+
+    .customer-table-wrap {
+        display: none;
+    }
+
+    .customer-mobile-list {
+        display: grid;
+        gap: 10px;
+        padding: 12px;
+        background: #f7f9fc;
+    }
+
+    .customer-mobile-card__details {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .customer-list-footer {
@@ -3893,7 +4170,17 @@ a.customer-identity__name:hover {
 
     .customer-pagination {
         width: 100%;
-        justify-content: flex-end;
+        justify-content: space-between;
+    }
+
+    .customer-page-size.ant-select {
+        width: 120px;
+    }
+
+    .customer-pagination .ant-btn,
+    .customer-current-page {
+        width: 44px;
+        height: 44px;
     }
 }
 
@@ -3914,6 +4201,19 @@ a.customer-identity__name:hover {
         font-size: 23px;
     }
 
+    .customer-page-heading p {
+        display: none;
+    }
+
+    .customer-page-header {
+        gap: 14px;
+        margin-bottom: 14px;
+    }
+
+    .customer-add-button.ant-btn {
+        height: 46px;
+    }
+
     .customer-list-card__header,
     .customer-list-card__toolbar,
     .customer-list-footer {
@@ -3925,6 +4225,62 @@ a.customer-identity__name:hover {
     .customer-finance-card {
         padding-right: 14px;
         padding-left: 14px;
+    }
+
+    .customer-metric-card {
+        min-height: 84px;
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 7px;
+    }
+
+    .customer-metric-card__body {
+        width: 100%;
+    }
+
+    .customer-metric-card__body > span {
+        white-space: normal;
+    }
+
+    .customer-metric-card__value-row {
+        justify-content: space-between;
+    }
+
+    .customer-list-title p {
+        display: none;
+    }
+
+    .customer-list-card__toolbar {
+        gap: 10px;
+    }
+
+    .customer-mobile-list {
+        padding: 10px;
+    }
+
+    .customer-mobile-card {
+        padding: 13px 12px;
+    }
+
+    .customer-mobile-card__head {
+        padding-right: 0;
+        flex-direction: column;
+    }
+
+    .customer-mobile-card__head > .customer-status-pill {
+        margin-left: 56px;
+    }
+
+    .customer-mobile-card__details {
+        grid-template-columns: 1fr;
+    }
+
+    .customer-mobile-card__actions {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .customer-mobile-card__actions > :last-child:nth-child(odd) {
+        grid-column: 1 / -1;
     }
 
     .customer-metric-spark,

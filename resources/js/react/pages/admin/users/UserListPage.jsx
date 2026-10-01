@@ -243,6 +243,43 @@ export default function UserListPage({ config }) {
         setDepositType('real');
     };
 
+    const openDepositModal = (user) => {
+        setDepositUser(user);
+        setDepositAmount(null);
+        setDepositType('real');
+    };
+
+    const getUserActionItems = (user) => [
+        {
+            key: 'chat',
+            icon: <MessageOutlined />,
+            label: user.chat_url ? <a href={user.chat_url}>Nhắn tin</a> : 'Nhắn tin',
+            disabled: !user.chat_url,
+        },
+        ...(permissions.viewDetail ? [{
+            key: 'detail',
+            icon: <EyeOutlined />,
+            label: <a href={replaceRoute(routes.show, user.id)}>Chi tiết</a>,
+        }] : []),
+        ...(permissions.update ? [{
+            key: 'edit',
+            icon: <EditOutlined />,
+            label: <a href={replaceRoute(routes.edit, user.id)}>Chỉnh sửa</a>,
+        }] : []),
+        ...(permissions.manageFrozenOrders ? [{
+            key: 'frozen',
+            icon: <span className="customer-action-snowflake">❄</span>,
+            label: <a href={replaceRoute(routes.frozenOrders, user.id)}>Đơn đóng băng</a>,
+        }] : []),
+        ...(permissions.changeStatus ? [{
+            key: 'status',
+            icon: user.status === 'activated' ? <StopOutlined /> : <CheckCircleOutlined />,
+            label: user.status === 'activated' ? 'Khóa tài khoản' : 'Kích hoạt tài khoản',
+            danger: user.status === 'activated',
+            onClick: () => changeStatus(user),
+        }] : []),
+    ];
+
     const columns = [
         {
             title: '#',
@@ -331,36 +368,7 @@ export default function UserListPage({ config }) {
             key: 'actions',
             width: permissions.viewFinancials ? '12%' : '13%',
             render: (_, user) => {
-                const actionItems = [
-                    {
-                        key: 'chat',
-                        icon: <MessageOutlined />,
-                        label: user.chat_url ? <a href={user.chat_url}>Nhắn tin</a> : 'Nhắn tin',
-                        disabled: !user.chat_url,
-                    },
-                    ...(permissions.viewDetail ? [{
-                        key: 'detail',
-                        icon: <EyeOutlined />,
-                        label: <a href={replaceRoute(routes.show, user.id)}>Chi tiết</a>,
-                    }] : []),
-                    ...(permissions.update ? [{
-                        key: 'edit',
-                        icon: <EditOutlined />,
-                        label: <a href={replaceRoute(routes.edit, user.id)}>Chỉnh sửa</a>,
-                    }] : []),
-                    ...(permissions.manageFrozenOrders ? [{
-                        key: 'frozen',
-                        icon: <span className="customer-action-snowflake">❄</span>,
-                        label: <a href={replaceRoute(routes.frozenOrders, user.id)}>Đơn đóng băng</a>,
-                    }] : []),
-                    ...(permissions.changeStatus ? [{
-                        key: 'status',
-                        icon: user.status === 'activated' ? <StopOutlined /> : <CheckCircleOutlined />,
-                        label: user.status === 'activated' ? 'Khóa tài khoản' : 'Kích hoạt tài khoản',
-                        danger: user.status === 'activated',
-                        onClick: () => changeStatus(user),
-                    }] : []),
-                ];
+                const actionItems = getUserActionItems(user);
 
                 return (
                     <div className="customer-row-actions">
@@ -370,11 +378,7 @@ export default function UserListPage({ config }) {
                                 type="primary"
                                 aria-label="Nạp tiền"
                                 title="Nạp tiền"
-                                onClick={() => {
-                                    setDepositUser(user);
-                                    setDepositAmount(null);
-                                    setDepositType('real');
-                                }}
+                                onClick={() => openDepositModal(user)}
                             >
                                 +$
                             </Button>
@@ -563,6 +567,92 @@ export default function UserListPage({ config }) {
                         pagination={false}
                         locale={{ emptyText: 'Không có tài khoản phù hợp' }}
                     />
+                </div>
+
+                <div className="customer-mobile-list" aria-label="Danh sách khách hàng trên thiết bị di động">
+                    {pageUsers.length === 0 && (
+                        <div className="customer-mobile-empty">Không có tài khoản phù hợp</div>
+                    )}
+                    {pageUsers.map((user, index) => {
+                        const meta = statusMeta(user.status);
+                        const actionItems = getUserActionItems(user);
+
+                        return (
+                            <article
+                                key={user.id}
+                                className={'customer-mobile-card' + (!user.clone_account ? ' customer-mobile-card--real' : '')}
+                            >
+                                <div className="customer-mobile-card__head">
+                                    <div className="customer-mobile-card__identity">
+                                        <Avatar size={46} src={user.avatar_url} icon={<UserOutlined />} />
+                                        <div className="customer-mobile-card__identity-copy">
+                                            <div className="customer-mobile-card__name-row">
+                                                {permissions.viewDetail ? (
+                                                    <a href={replaceRoute(routes.show, user.id)}>
+                                                        {user.full_name || 'Chưa đặt tên'}
+                                                    </a>
+                                                ) : (
+                                                    <strong>{user.full_name || 'Chưa đặt tên'}</strong>
+                                                )}
+                                                <span>ID: {user.id}</span>
+                                            </div>
+                                            <div className="customer-mobile-card__username">@{user.username}</div>
+                                            <div className="customer-mobile-card__meta">
+                                                <span className={'customer-presence' + (user.is_online ? ' customer-presence--online' : '')}>
+                                                    <i />
+                                                    {user.is_online ? 'Online' : (user.last_seen_diff || 'Chưa từng online')}
+                                                </span>
+                                                {user.rank?.name && <Tag className="customer-badge customer-badge--rank">{user.rank.name}</Tag>}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <span className={`customer-status-pill customer-status-pill--${meta.color}`}><i />{meta.label}</span>
+                                </div>
+
+                                <div className="customer-mobile-card__details">
+                                    {permissions.viewFinancials && (
+                                        <div className="customer-mobile-detail">
+                                            <span>Số dư khả dụng</span>
+                                            <strong><WalletOutlined /> {money(user.balance, 5)}$</strong>
+                                            <small><span className="customer-frozen-dot">❄</span> Đóng băng: {money(user.frozen_balance, 2)}$</small>
+                                        </div>
+                                    )}
+                                    <div className="customer-mobile-detail">
+                                        <span>Vị trí & khu vực</span>
+                                        <strong><GlobalOutlined /> {user.location_country_code || '—'} {user.location_country || 'Chưa rõ'}</strong>
+                                        <small>{[user.location_city, user.warehouse_area].filter(Boolean).join(' • ') || 'Chưa định vị'}</small>
+                                    </div>
+                                    <div className="customer-mobile-detail">
+                                        <span>Phân loại</span>
+                                        <strong>{user.clone_account ? 'Tài khoản clone' : 'Tài khoản thật'}</strong>
+                                        <small>{user.referrer ? `QL: ${user.referrer.full_name || `@${user.referrer.username}`}` : 'Chưa có người quản lý'}</small>
+                                    </div>
+                                </div>
+
+                                <div className="customer-mobile-card__actions">
+                                    {permissions.adjustBalance && (
+                                        <Button type="primary" icon={<DollarOutlined />} onClick={() => openDepositModal(user)}>
+                                            Nạp tiền
+                                        </Button>
+                                    )}
+                                    {permissions.viewDetail && (
+                                        <Button icon={<EyeOutlined />} href={replaceRoute(routes.show, user.id)}>
+                                            Chi tiết
+                                        </Button>
+                                    )}
+                                    <Dropdown
+                                        menu={{ items: actionItems }}
+                                        trigger={['click']}
+                                        placement="bottomRight"
+                                        overlayClassName="customer-actions-dropdown"
+                                    >
+                                        <Button icon={<MoreOutlined />}>Thao tác</Button>
+                                    </Dropdown>
+                                </div>
+                                <span className="customer-mobile-card__index">#{((safePage - 1) * pageSize) + index + 1}</span>
+                            </article>
+                        );
+                    })}
                 </div>
 
                 <footer className="customer-list-footer">
