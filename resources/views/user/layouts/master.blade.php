@@ -58,10 +58,13 @@
 
         <footer>
             <div class="site-affiliation-disclaimer" role="note">
-                <p><strong>Disclaimer:</strong></p>
+                <p><strong>Brand &amp; Affiliation Notice:</strong></p>
                 <p>
-                    {{ $brandName }} is an independent platform and is not affiliated with or endorsed by third-party marketplaces or social platforms.<br>
-                    Third-party brand names, logos, and trademarks remain the property of their respective owners.
+                    {{ $brandName }} is an independent platform. TikTok, TikTok Shop, and other third-party names, logos, and trademarks shown on this website are used only to identify or reference those third-party brands.<br>
+                    {{ $brandName }} is not TikTok, TikTok Shop, ByteDance, or an official login portal for those services, and is not affiliated with, sponsored by, or endorsed by them unless explicitly stated otherwise.
+                </p>
+                <p>
+                    Accounts and credentials entered on this website are for {{ $brandName }} only. Do not enter your TikTok, TikTok Shop, Google, Facebook, or other third-party account passwords here.
                 </p>
                 <p><strong>Affiliate Disclosure:</strong></p>
                 <p>

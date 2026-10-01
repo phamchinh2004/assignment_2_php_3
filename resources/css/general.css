@@ -118,7 +118,7 @@
 }
 
 .auth-logo {
-    width: min(170px, 65vw);
+    width: min(100px, 60vw);
     margin: 0 auto 24px;
 }
 
@@ -791,6 +791,10 @@
 
     .auth-brand-logo {
         width: min(140px, 42vw);
+    }
+
+    .auth-logo {
+        width: min(80px, 38vw);
     }
 
     .container_login_register {
