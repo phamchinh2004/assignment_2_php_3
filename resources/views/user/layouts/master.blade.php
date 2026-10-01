@@ -58,6 +58,13 @@
 
         <footer>
             <div class="site-affiliation-disclaimer" role="note">
+                <nav class="site-trust-links" aria-label="Website information">
+                    <a href="{{ route('about') }}">About Us</a>
+                    <a href="{{ route('contact') }}">Contact Us</a>
+                    <a href="{{ route('privacy') }}">Privacy Policy</a>
+                    <a href="{{ route('terms') }}">Terms &amp; Conditions</a>
+                    <a href="{{ route('payment_refund_policy') }}">Payment &amp; Refund Policy</a>
+                </nav>
                 <p><strong>Brand &amp; Affiliation Notice:</strong></p>
                 <p>
                     {{ $brandName }} is an independent platform. TikTok, TikTok Shop, and other third-party names, logos, and trademarks shown on this website are used only to identify or reference those third-party brands.<br>

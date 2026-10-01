@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Background, FieldError, ServerNotice } from './AuthShared';
+import { Background, Disclaimer, FieldError, ServerNotice } from './AuthShared';
 
 export default function ForgotPasswordPage({ config }) {
     const [submitting, setSubmitting] = useState(false);
@@ -23,6 +23,7 @@ export default function ForgotPasswordPage({ config }) {
                 </form>
                 <div className="text-center"><a className="forgot-back" href={config.routes.login}><i className="fa-solid fa-arrow-left" /> Quay lại đăng nhập</a></div>
             </section></main>
+            <Disclaimer brandName={config.brandName} routes={config.legalRoutes} />
         </div>
     );
 }

@@ -22,6 +22,12 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+Route::view('/about-us', 'public.about')->name('about');
+Route::view('/contact-us', 'public.contact')->name('contact');
+Route::view('/privacy-policy', 'public.privacy')->name('privacy');
+Route::view('/terms-and-conditions', 'public.terms')->name('terms');
+Route::view('/payment-refund-policy', 'public.payment-refund')->name('payment_refund_policy');
+
 Route::middleware(['role:guest'])->group(function () {
     Route::get('register', [RegisterController::class, 'index'])->name('register');
     Route::post('register', [RegisterController::class, 'register'])->middleware('turnstile:register')->name('registerdone');

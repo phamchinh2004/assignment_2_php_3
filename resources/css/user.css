@@ -60,6 +60,24 @@ body {
     margin-bottom: 0;
 }
 
+.site-trust-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    margin-bottom: 14px;
+}
+
+.site-trust-links a {
+    color: #495057;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.site-trust-links a:hover {
+    color: #fe2c55;
+    text-decoration: underline;
+}
+
 .footer::before {
     content: '';
     position: absolute;

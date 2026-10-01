@@ -16,6 +16,13 @@ class ReactPageService
     {
         return $this->render('guest', 'react.guest', $page, array_merge([
             'csrf' => csrf_token(),
+            'legalRoutes' => [
+                'about' => route('about'),
+                'contact' => route('contact'),
+                'privacy' => route('privacy'),
+                'terms' => route('terms'),
+                'paymentRefund' => route('payment_refund_policy'),
+            ],
             'turnstile' => [
                 'enabled' => (bool) config('services.turnstile.enabled'),
                 'siteKey' => config('services.turnstile.site_key'),

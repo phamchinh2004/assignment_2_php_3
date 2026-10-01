@@ -8,11 +8,6 @@ use Illuminate\Http\Request;
 class BlockBots
 {
     protected $blockedUserAgents = [
-        'Googlebot',
-        'Bingbot',
-        'YandexBot',
-        'DuckDuckBot',
-        'Baiduspider',
         'curl',
         'wget',
         'python',
@@ -22,7 +17,6 @@ class BlockBots
         'PhishTank',
         'MJ12bot',
         'CensysInspect',
-        'Applebot',
     ];
 
 

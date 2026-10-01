@@ -93,7 +93,7 @@ export default function RegisterPage({ config }) {
         if (!values.email) return showFieldError('email', 'Email không được để trống!');
         if (!values.password) return showFieldError('password', 'Mật khẩu không được để trống!');
         if (!values.repassword) return showFieldError('repassword', 'Vui lòng nhập lại mật khẩu!');
-        if (!values.accept_terms) return showFieldError('accept_terms', 'Vui lòng chấp nhận điều khoản của chúng tôi!');
+        if (!values.accept_terms) return showFieldError('accept_terms', 'Please accept our Terms & Conditions and Privacy Policy.');
         if (values.username.length < 6 || values.username.length > 255) return showFieldError('username', 'Tên đăng nhập tối thiểu 6 ký tự và tối đa 255 ký tự!');
         if (!/^(0|\+84)[0-9]{9,10}$/.test(values.phone)) return showFieldError('phone', 'Số điện thoại không hợp lệ');
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)) return showFieldError('email', 'Email không hợp lệ');
@@ -181,15 +181,14 @@ export default function RegisterPage({ config }) {
                     <AuthField icon="fa-lock" label="Nhập lại mật khẩu" id="repassword_register" error={<FieldError errors={errors} name="repassword" />}><input className="form-control auth-input" id="repassword_register" name="repassword" type={repeatVisible ? 'text' : 'password'} placeholder="Nhập lại mật khẩu" onChange={() => clearFieldError('repassword')} /><PasswordToggle visible={repeatVisible} onClick={() => setRepeatVisible((value) => !value)} /></AuthField>
                     <AuthField icon="fa-gift" label={<>Mã giới thiệu <span className="text-white-50">(tuỳ chọn)</span></>} id="referral_code_register" error={<FieldError errors={errors} name="referral_code" />}><input className="form-control auth-input" id="referral_code_register" defaultValue={old.referral_code || ''} name="referral_code" type="text" placeholder="Nhập mã giới thiệu" onChange={() => clearFieldError('referral_code')} /></AuthField>
                     <input type="hidden" name="location_permission" value={location.permission} /><input type="hidden" name="location_latitude" value={location.latitude} /><input type="hidden" name="location_longitude" value={location.longitude} /><input type="hidden" name="location_accuracy" value={location.accuracy} /><input type="hidden" name="location_country_code" value={location.countryCode} /><input type="hidden" name="location_country" value={location.country} /><input type="hidden" name="location_city" value={location.city} />
-                    <div className="auth-helper form-check mt-2"><input className="form-check-input p-2" type="checkbox" name="accept_terms" value="1" id="accept_terms" onChange={() => clearFieldError('accept_terms')} /><label className="form-check-label" htmlFor="accept_terms">Đồng ý với <span className="text-decoration-underline">điều khoản</span> của chúng tôi.</label></div>
+                    <div className="auth-helper form-check mt-2"><input className="form-check-input p-2" type="checkbox" name="accept_terms" value="1" id="accept_terms" onChange={() => clearFieldError('accept_terms')} /><label className="form-check-label" htmlFor="accept_terms">I agree to the <a href={config.legalRoutes?.terms} target="_blank" rel="noopener noreferrer">Terms & Conditions</a> and <a href={config.legalRoutes?.privacy} target="_blank" rel="noopener noreferrer">Privacy Policy</a>.</label></div>
                     <FieldError errors={errors} name="accept_terms" />
                     <Turnstile config={config.turnstile} action="register" /><FieldError errors={errors} name="cf-turnstile-response" />
                     <div className="d-grid mt-4"><button type="submit" className="btn auth-submit" disabled={submitting}>{submitting ? 'Đang xử lý...' : <>Tạo tài khoản <i className="fa-solid fa-arrow-right ms-2" /></>}</button></div>
                 </form>
                 <div className="auth-switch text-center mt-4">Bạn đã có tài khoản? <a href={config.routes.login}>Đăng nhập ngay</a></div>
-                <div className="auth-social"><img src={config.assets.facebook} alt="Facebook" /><img src={config.assets.google} alt="Google" /></div>
             </section></main>
-            <Disclaimer brandName={config.brandName} />
+            <Disclaimer brandName={config.brandName} routes={config.legalRoutes} />
         </div>
     );
 }

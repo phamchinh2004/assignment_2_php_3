@@ -89,9 +89,16 @@ export function Turnstile({ config, action }) {
     return <div className="auth-turnstile"><div ref={hostRef} style={{ width: '100%' }} /></div>;
 }
 
-export function Disclaimer({ brandName = 'Dropshipping' }) {
+export function Disclaimer({ brandName = 'Dropshipping', routes = {} }) {
     return (
         <footer className="auth-affiliation-disclaimer" role="note">
+            <nav className="auth-trust-links" aria-label="Website information">
+                {routes.about && <a href={routes.about}>About Us</a>}
+                {routes.contact && <a href={routes.contact}>Contact Us</a>}
+                {routes.privacy && <a href={routes.privacy}>Privacy Policy</a>}
+                {routes.terms && <a href={routes.terms}>Terms & Conditions</a>}
+                {routes.paymentRefund && <a href={routes.paymentRefund}>Payment & Refund Policy</a>}
+            </nav>
             <p><strong>Disclaimer:</strong></p>
             <p>{brandName} is an independent platform and is not affiliated with or endorsed by third-party marketplaces or social platforms.<br />Third-party brand names, logos, and trademarks remain the property of their respective owners.</p>
             <p><strong>Affiliate Disclosure:</strong></p>

@@ -50,8 +50,6 @@ export default function LoginPage({ config }) {
         }
     };
 
-    const socialComingSoon = () => setNotice({ type: 'info', message: 'Chức năng đang được phát triển!' });
-
     return (
         <div className="container_login_register">
             <Background src={config.assets.background} />
@@ -85,10 +83,9 @@ export default function LoginPage({ config }) {
                         <div className="d-grid mt-4"><button className="btn auth-submit" type="submit" disabled={submitting}>{submitting ? 'Đang đăng nhập...' : <>Đăng nhập <i className="fa-solid fa-arrow-right ms-2" /></>}</button></div>
                     </form>
                     <div className="auth-switch text-center mt-4">Bạn chưa có tài khoản? <a href={config.routes.register}>Đăng ký ngay</a></div>
-                    <div className="auth-social"><button type="button" onClick={socialComingSoon} className="p-0 border-0 bg-transparent"><img src={config.assets.facebook} alt="Facebook" /></button><button type="button" onClick={socialComingSoon} className="p-0 border-0 bg-transparent"><img src={config.assets.google} alt="Google" /></button></div>
                 </section>
             </main>
-            <Disclaimer brandName={config.brandName} />
+            <Disclaimer brandName={config.brandName} routes={config.legalRoutes} />
         </div>
     );
 }

@@ -28,8 +28,6 @@ class LoginController extends Controller
             'assets' => [
                 'background' => asset('images/login_and_register/background.webp'),
                 'logo' => asset('images/login_and_register/tta.webp'),
-                'facebook' => asset('images/login_and_register/fb-logo.png'),
-                'google' => asset('images/login_and_register/gg-logo.png'),
             ],
             'clearLoginForm' => (bool) session('clear_login_form'),
         ], 'Đăng nhập');

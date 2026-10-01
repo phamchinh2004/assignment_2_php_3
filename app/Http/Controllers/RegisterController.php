@@ -28,8 +28,6 @@ class RegisterController extends Controller
             'assets' => [
                 'background' => asset('images/login_and_register/background.webp'),
                 'logo' => asset('images/login_and_register/tta.webp'),
-                'facebook' => asset('images/login_and_register/fb-logo.png'),
-                'google' => asset('images/login_and_register/gg-logo.png'),
             ],
         ], 'Đăng ký');
     }
