@@ -169,8 +169,8 @@ body {
     cursor: pointer;
 }
 
-/* Center Amazon button - Floating style */
-.amazon_btn {
+/* Center Dropshipping button - Floating style */
+.dropshipping_btn {
     width: 70px;
     height: 70px;
     background: #ffffff;
@@ -182,7 +182,7 @@ body {
     margin-top: -35px;
 }
 
-.amazon_btn::before {
+.dropshipping_btn::before {
     content: '';
     position: absolute;
     top: -50%;
@@ -204,12 +204,12 @@ body {
     100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
 }
 
-.amazon_btn:hover {
+.dropshipping_btn:hover {
     transform: translateY(-8px) scale(1.05);
     box-shadow: 0 10px 30px rgb(255 255 255 / 35%), 0 0 0 8px rgba(255, 255, 255, 0.9), 0 0 0 10px rgb(255 255 255 / 12%);
 }
 
-.amazon_btn:active {
+.dropshipping_btn:active {
     transform: translateY(-6px) scale(1.02);
 }
 
@@ -226,7 +226,7 @@ body {
     50% { transform: scale(1.05); }
 }
 
-.amazon_btn:hover .footer-logo {
+.dropshipping_btn:hover .footer-logo {
     animation: spin 0.6s ease;
 }
 
@@ -278,7 +278,7 @@ body {
         font-size: 20px;
     }
 
-    .amazon_btn {
+    .dropshipping_btn {
         width: 60px;
         height: 60px;
         margin-top: -30px;
@@ -323,7 +323,7 @@ body {
         font-size: 18px;
     }
 
-    .amazon_btn {
+    .dropshipping_btn {
         width: 55px;
         height: 55px;
     }

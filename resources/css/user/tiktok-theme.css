@@ -850,14 +850,14 @@ textarea:focus-visible {
     background: transparent !important;
 }
 
-.footer-item--distribution.active .amazon_btn {
+.footer-item--distribution.active .dropshipping_btn {
     box-shadow:
         0 10px 26px rgba(22, 24, 35, .22),
         0 0 0 4px #fff,
         0 0 0 7px rgba(254, 44, 85, .82) !important;
 }
 
-.amazon_btn {
+.dropshipping_btn {
     background: var(--shop-ink) !important;
     box-shadow: 0 8px 22px rgba(22, 24, 35, .18), 0 0 0 4px #fff !important;
 }

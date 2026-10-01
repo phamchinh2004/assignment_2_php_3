@@ -328,14 +328,14 @@
             <div class="home-section-heading">
                 <div>
                     <span class="home-kicker">Thông tin hệ thống</span>
-                    <h2 id="home-info-title">{{ __('home.TapDoanAmazon') }}</h2>
+                    <h2 id="home-info-title">{{ __('home.TapDoanDropshipping') }}</h2>
                 </div>
                 <span class="home-section-heading__icon"><i class="fa-solid fa-building"></i></span>
             </div>
 
             <div class="home-info-layout">
                 <div class="home-info-tabs" role="tablist" aria-label="Thông tin hệ thống">
-                    <button class="home-info-tab is-active" type="button" data-content-target="amazon_content" aria-selected="true">
+                    <button class="home-info-tab is-active" type="button" data-content-target="dropshipping_content" aria-selected="true">
                         <i class="fa-solid fa-circle-info"></i><span>Hệ thống</span>
                     </button>
                     <button class="home-info-tab" type="button" data-content-target="mo_ta_content" aria-selected="false">
@@ -350,7 +350,7 @@
                 </div>
 
                 <div class="home-info-panels">
-                    <article class="home-info-panel is-active" id="amazon_content">
+                    <article class="home-info-panel is-active" id="dropshipping_content">
                         <span class="home-info-panel__eyebrow">{{ __('home.GioiThieuNenTang') }}</span>
                         <div class="home-rich-content">{!! optional($homeSections->get('gioi_thieu_nen_tang'))->getTranslatedContent() ?? __('home.DangCapNhat') !!}</div>
                     </article>
@@ -414,7 +414,7 @@
         <section class="home-section home-ranks-section" aria-labelledby="home-ranks-title">
             <div class="home-section-heading">
                 <div>
-                    <span class="home-kicker">{{ __('home.ThanhVienAmazon') }}</span>
+                    <span class="home-kicker">{{ __('home.ThanhVienDropshipping') }}</span>
                     <h2 id="home-ranks-title">Thông tin gian hàng</h2>
                 </div>
                 <span class="home-section-heading__icon"><i class="fa-solid fa-layer-group"></i></span>
