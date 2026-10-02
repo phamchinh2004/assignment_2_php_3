@@ -373,7 +373,7 @@
 #chat-root .staff-empty-state { margin: 0; padding: 12px; }
 
 #chat-root .conversation-row { position: relative; }
-#chat-root .conversation-row:has(.conversation-action-menu) { z-index: 4; }
+#chat-root .conversation-row:has(.conversation-action-trigger[aria-expanded="true"]) { z-index: 4; }
 #chat-root .conversation-row:has(.conversation-action-trigger) .conversation-item { padding-right: 45px; }
 #chat-root .conversation-action-trigger {
     position: absolute;

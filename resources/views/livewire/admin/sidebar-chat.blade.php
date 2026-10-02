@@ -72,10 +72,12 @@
                     $isOnline = $conversation->user->last_seen && $conversation->user->last_seen->diffInMinutes(now()) <= 5;
                     $lastMessage = $conversation->messages->last();
                 @endphp
-                <div class="conversation-row" wire:key="{{ $keyPrefix }}{{ $canManageTeamChats ? 'manager' : 'staff' }}-conversation-{{ $conversation->id }}">
+                <div class="conversation-row" wire:key="{{ $keyPrefix }}{{ $canManageTeamChats ? 'manager' : 'staff' }}-conversation-{{ $conversation->id }}"
+                    x-data="{ menuOpen: false }" x-on:click.outside="menuOpen = false" x-on:keydown.escape.window="menuOpen = false">
                 <button type="button"
                     class="conversation-item {{ $isSelected ? 'is-selected active bg-primary' : '' }} {{ $hasUnread ? 'has-unread' : '' }} {{ $hasPenalty ? 'has-penalty' : '' }}"
-                    aria-current="{{ $isSelected ? 'true' : 'false' }}" wire:click="selectConversation({{ $conversation->id }})">
+                    aria-current="{{ $isSelected ? 'true' : 'false' }}" x-on:click="menuOpen = false"
+                    wire:click="selectConversation({{ $conversation->id }})">
                     <span class="conversation-avatar">
                         @if($conversation->user->avatar && Storage::disk('public')->exists($conversation->user->avatar))
                             <img src="{{ asset('storage/' . $conversation->user->avatar) }}" alt="" loading="lazy">
@@ -125,18 +127,21 @@
                     </span>
                 </button>
                 @if($canDispatchChats)
-                    <button type="button" class="conversation-action-trigger" wire:click="toggleConversationMenu({{ $conversation->id }})"
+                    <button type="button" class="conversation-action-trigger" x-on:click.stop="menuOpen = !menuOpen"
                         aria-label="Tùy chọn hội thoại với {{ $conversation->user->full_name }}"
-                        aria-expanded="{{ $conversationMenuId === $conversation->id ? 'true' : 'false' }}" title="Tùy chọn hội thoại">
-                        <i class="fas fa-ellipsis-h" aria-hidden="true"></i>
+                        x-bind:aria-expanded="menuOpen.toString()" title="Tùy chọn hội thoại"
+                        wire:loading.attr="disabled" wire:target="openDispatchDialog({{ $conversation->id }})">
+                        <i class="fas fa-ellipsis-h" aria-hidden="true"
+                            wire:loading.remove wire:target="openDispatchDialog({{ $conversation->id }})"></i>
+                        <i class="fas fa-spinner fa-spin" aria-hidden="true"
+                            wire:loading wire:target="openDispatchDialog({{ $conversation->id }})"></i>
                     </button>
-                    @if($conversationMenuId === $conversation->id)
-                        <div class="conversation-action-menu">
-                            <button type="button" wire:click="openDispatchDialog({{ $conversation->id }})">
-                                <i class="fas fa-share" aria-hidden="true"></i> Điều phối
-                            </button>
-                        </div>
-                    @endif
+                    <div class="conversation-action-menu" x-show="menuOpen" x-cloak>
+                        <button type="button" x-on:click="menuOpen = false"
+                            wire:click="openDispatchDialog({{ $conversation->id }})">
+                            <i class="fas fa-share" aria-hidden="true"></i> Điều phối
+                        </button>
+                    </div>
                 @endif
                 </div>
             @empty
@@ -204,10 +209,12 @@
                                         $lastMsg = isset($user['latest_conversation']) && !empty($user['latest_conversation']['messages'])
                                             ? end($user['latest_conversation']['messages']) : null;
                                     @endphp
-                                    <div class="conversation-row" wire:key="{{ $keyPrefix }}{{ $operatorSection['key'] }}-{{ $staff['id'] }}-user-{{ $user['id'] }}">
+                                    <div class="conversation-row" wire:key="{{ $keyPrefix }}{{ $operatorSection['key'] }}-{{ $staff['id'] }}-user-{{ $user['id'] }}"
+                                        x-data="{ menuOpen: false }" x-on:click.outside="menuOpen = false" x-on:keydown.escape.window="menuOpen = false">
                                     <button type="button"
                                         class="conversation-item {{ $isSelected ? 'is-selected active bg-primary' : '' }} {{ $userHasUnread ? 'has-unread' : '' }} {{ $userHasPenalty ? 'has-penalty' : '' }}"
-                                        aria-current="{{ $isSelected ? 'true' : 'false' }}" wire:click="selectUserForChat({{ $user['id'] }}, {{ $staff['id'] }})">
+                                        aria-current="{{ $isSelected ? 'true' : 'false' }}" x-on:click="menuOpen = false"
+                                        wire:click="selectUserForChat({{ $user['id'] }}, {{ $staff['id'] }})">
                                         <span class="conversation-avatar">
                                             @if($user['avatar'] && Storage::disk('public')->exists($user['avatar']))
                                                 <img src="{{ asset('storage/' . $user['avatar']) }}" alt="" loading="lazy">
@@ -258,18 +265,21 @@
                                     </button>
                                     @if($canDispatchChats && !empty($user['latest_conversation']['id']))
                                         <button type="button" class="conversation-action-trigger"
-                                            wire:click="toggleConversationMenu({{ $user['latest_conversation']['id'] }})"
+                                            x-on:click.stop="menuOpen = !menuOpen"
                                             aria-label="Tùy chọn hội thoại với {{ $user['full_name'] }}"
-                                            aria-expanded="{{ $conversationMenuId === $user['latest_conversation']['id'] ? 'true' : 'false' }}" title="Tùy chọn hội thoại">
-                                            <i class="fas fa-ellipsis-h" aria-hidden="true"></i>
+                                            x-bind:aria-expanded="menuOpen.toString()" title="Tùy chọn hội thoại"
+                                            wire:loading.attr="disabled" wire:target="openDispatchDialog({{ $user['latest_conversation']['id'] }})">
+                                            <i class="fas fa-ellipsis-h" aria-hidden="true"
+                                                wire:loading.remove wire:target="openDispatchDialog({{ $user['latest_conversation']['id'] }})"></i>
+                                            <i class="fas fa-spinner fa-spin" aria-hidden="true"
+                                                wire:loading wire:target="openDispatchDialog({{ $user['latest_conversation']['id'] }})"></i>
                                         </button>
-                                        @if($conversationMenuId === $user['latest_conversation']['id'])
-                                            <div class="conversation-action-menu">
-                                                <button type="button" wire:click="openDispatchDialog({{ $user['latest_conversation']['id'] }})">
-                                                    <i class="fas fa-share" aria-hidden="true"></i> Điều phối
-                                                </button>
-                                            </div>
-                                        @endif
+                                        <div class="conversation-action-menu" x-show="menuOpen" x-cloak>
+                                            <button type="button" x-on:click="menuOpen = false"
+                                                wire:click="openDispatchDialog({{ $user['latest_conversation']['id'] }})">
+                                                <i class="fas fa-share" aria-hidden="true"></i> Điều phối
+                                            </button>
+                                        </div>
                                     @endif
                                     </div>
                                 @empty

@@ -42,7 +42,6 @@ class ChatComponent extends Component
     public $staffUsers = [];
     public $adminUsers = [];
     public $expandedStaff = [];
-    public ?int $conversationMenuId = null;
     public ?int $dispatchConversationId = null;
     public $messagesPerPage = 20; // Tăng số tin nhắn mỗi lần tải
     public $currentPage = 1;
@@ -87,22 +86,11 @@ class ChatComponent extends Component
         return app(AuthorizationService::class)->canDispatchConversation(Auth::user(), $conversation);
     }
 
-    public function toggleConversationMenu(int $conversationId): void
-    {
-        $conversation = Conversation::with('staff:id,role')->find($conversationId);
-        abort_unless($conversation && $this->canDispatchConversation($conversation), 403);
-
-        $this->conversationMenuId = $this->conversationMenuId === $conversationId
-            ? null
-            : $conversationId;
-    }
-
     public function openDispatchDialog(int $conversationId): void
     {
         $conversation = Conversation::with('staff:id,role')->find($conversationId);
         abort_unless($conversation && $this->canDispatchConversation($conversation), 403);
 
-        $this->conversationMenuId = null;
         $this->dispatchConversationId = $conversationId;
     }
 

@@ -1,17 +1,14 @@
+import { formatLocalDateTime } from '../shared/datetime';
+
 // Hàm format datetime
 function formatDateTime(dateString) {
-    if (!dateString) return '';
-    
-    const date = new Date(dateString);
-    
-    // Option 1: Định dạng DD/MM/YYYY HH:mm
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    
-    return `${day}/${month}/${year} ${hours}:${minutes}`;
+    return formatLocalDateTime(dateString, {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+    }, '');
 }
 
 function finiteNumberOrNull(value) {
@@ -281,7 +278,7 @@ function initDistributionPage() {
         } else if (check_frozen.status == 200 && check_frozen.is_frozen == true && responseIsHighValueOrder == true && check_frozen.is_new_order == false) {
             spinner.hidden = true;
             const acknowledged = await AppDialog.alert({
-                title: trans.DonHangDangBiDongBang,
+                title: trans.donHangChuaXuLy,
                 text: check_frozen.message,
                 icon: "warning",
                 button: "OK",
@@ -533,7 +530,10 @@ function initDistributionPage() {
         document.getElementById('success_total_amount').textContent = '' + format_currency(totalAmount, 4, 4);
         document.getElementById('success_commission').textContent = '+' + format_currency(commission, 5, 5);
         document.getElementById('success_total_refund').textContent = '+' + format_currency(totalRefund, 4, 4);
-        document.getElementById('success_time').textContent = new Date().toLocaleString('vi-VN');
+        document.getElementById('success_time').textContent = formatLocalDateTime(new Date(), {
+            dateStyle: 'short',
+            timeStyle: 'medium',
+        });
         
         // Hiển thị/ẩn dòng thưởng đơn hàng giá trị cao
         const bonusRow = document.getElementById('success_bonus_row');

@@ -3,10 +3,11 @@ import { SearchOutlined } from '@ant-design/icons';
 import { spaNavigate } from '../../../navigation';
 import { AdminDataCard, AdminPage, AdminPageHeader } from '../../../components/admin/AdminUi';
 import { AdminDatePicker } from '../../../components/admin/AdminDatePicker';
+import { formatLocalDateTime } from '../../../../shared/datetime';
 
 const { Text, Title } = Typography;
 const routeFor = (template, id) => String(template || '').replace('__FROZEN_ID__', encodeURIComponent(String(id)));
-const formatDate = (value) => value ? new Intl.DateTimeFormat('vi-VN', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value)) : '—';
+const formatDate = (value) => formatLocalDateTime(value);
 const statusLabel = (statuses, value) => statuses.find((item) => item.name === value)?.display_name || (value === 'unknown' || !value ? 'Chưa ghi nhận' : value);
 
 export default function OrderDistributionListPage({ config }) {

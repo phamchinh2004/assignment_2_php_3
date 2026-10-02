@@ -39,7 +39,10 @@
                     <div class="od-eyebrow">Chi tiết đơn hàng</div>
                     <h1 class="od-title">{{ $frozen_order->display_order_code ?? '#' . $frozen_order->id }}</h1>
                     <div class="od-subtitle">Nhận lúc
-                        {{ optional($frozen_order->order_date ?? $frozen_order->created_at)->format('d/m/Y H:i') }}</div>
+                        <time
+                            data-local-datetime="{{ optional($frozen_order->order_date ?? $frozen_order->created_at)->toIso8601String() }}"
+                            data-local-format="short"
+                        >{{ optional($frozen_order->order_date ?? $frozen_order->created_at)->format('d/m/Y H:i') }}</time></div>
                 </div>
                 <div class="od-badges">@if($financial['has_penalty'])<span class="od-badge penalty"><i
                 class="fas fa-triangle-exclamation"></i> Có tiền phạt</span>@endif<span
@@ -128,7 +131,10 @@
                                     class="od-badge {{ $financial['settlement_state'] }}">{{ $financial['settlement_label'] }}</span></strong>
                         </div>@if($financial['settled_at'])
                             <div class="od-finance-row"><span>Thời điểm quyết
-                                    toán</span><strong>{{ \Carbon\Carbon::parse($financial['settled_at'])->format('d/m/Y H:i:s') }}</strong>
+                                    toán</span><strong><time
+                                        data-local-datetime="{{ \Carbon\Carbon::parse($financial['settled_at'])->toIso8601String() }}"
+                                        data-local-format="medium"
+                                    >{{ \Carbon\Carbon::parse($financial['settled_at'])->format('d/m/Y H:i:s') }}</time></strong>
                         </div>@endif
                         @if($financial['refund_amount'] !== null)
                             <div class="od-highlight">
@@ -148,7 +154,10 @@
                                 </div>
                                 <div class="od-field">
                                     <dt>Thời điểm huỷ</dt>
-                                    <dd>{{ optional($frozen_order->cancelled_at ?? $cancellation?->created_at)->format('d/m/Y H:i:s') ?? 'Không có dữ liệu' }}
+                                    <dd><time
+                                        data-local-datetime="{{ optional($frozen_order->cancelled_at ?? $cancellation?->created_at)->toIso8601String() }}"
+                                        data-local-format="medium"
+                                    >{{ optional($frozen_order->cancelled_at ?? $cancellation?->created_at)->format('d/m/Y H:i:s') ?? 'Không có dữ liệu' }}</time>
                                     </dd>
                                 </div>
                                 <div class="od-field">
@@ -184,7 +193,10 @@
                                 </thead>
                                 <tbody>@foreach($financial['transactions'] as $transaction)
                                     <tr>
-                                        <td>{{ optional($transaction->created_at)->format('d/m/Y H:i:s') }}</td>
+                                        <td><time
+                                            data-local-datetime="{{ optional($transaction->created_at)->toIso8601String() }}"
+                                            data-local-format="medium"
+                                        >{{ optional($transaction->created_at)->format('d/m/Y H:i:s') }}</time></td>
                                         <td class="od-type {{ $transaction->type }}">
                                             {{ $typeLabels[$transaction->type] ?? $transaction->type }}</td>
                                         <td>{{ $money($transaction->value, 5) }}</td>
@@ -227,7 +239,10 @@
                             <div class="od-event-title">
                                 {{ $event->status?->display_name ?? ($statusLabels[$event->status?->name] ?? 'Cập nhật trạng thái') }}
                             </div>
-                            <div class="od-event-meta">{{ optional($event->created_at)->format('d/m/Y H:i:s') }} ·
+                            <div class="od-event-meta"><time
+                                    data-local-datetime="{{ optional($event->created_at)->toIso8601String() }}"
+                                    data-local-format="medium"
+                                >{{ optional($event->created_at)->format('d/m/Y H:i:s') }}</time> ·
                                 {{ $event->changedBy?->full_name ?? $event->changedBy?->username ?? 'Hệ thống' }}</div>
                             @if($event->notes)
                             <div class="od-event-note">{{ $event->notes }}</div>@endif

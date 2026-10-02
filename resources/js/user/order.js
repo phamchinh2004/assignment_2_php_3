@@ -1,3 +1,5 @@
+import { formatLocalDateTime } from '../shared/datetime';
+
 (() => {
     let listRoute = '';
     let orderRoute = '/order';
@@ -66,19 +68,13 @@
         return `${new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 2 }).format(number)}%`;
     };
 
-    const formatDateTime = (dateString) => {
-        if (!dateString) return 'Không có dữ liệu';
-        const date = new Date(dateString);
-        if (Number.isNaN(date.getTime())) return 'Không có dữ liệu';
-
-        return new Intl.DateTimeFormat('vi-VN', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-        }).format(date);
-    };
+    const formatDateTime = (dateString) => formatLocalDateTime(dateString, {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+    }, 'Không có dữ liệu');
 
     const storageImage = (path) => {
         if (!path) return '';

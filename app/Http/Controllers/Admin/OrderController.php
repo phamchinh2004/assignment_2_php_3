@@ -533,7 +533,7 @@ class OrderController extends Controller
                 'name' => $partner->name,
             ])->values(),
             'imageUrl' => $order->image ? Storage::url($order->image) : null,
-            'createdAt' => optional($order->created_at)->format('d/m/Y H:i'),
+            'createdAt' => optional($order->created_at)->toISOString(),
         ], "Chỉnh sửa đơn hàng — {$order->order_code}");
     }
 
