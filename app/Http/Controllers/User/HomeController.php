@@ -91,7 +91,16 @@ class HomeController extends Controller
         $user = Auth::user();
         $current_spin = User_spin_progress::where('user_id', $user->id)->first();
         $get_rank = Rank::where('id', $user->rank_id)->first();
-        if (!$current_spin || !$get_rank) {
+        if (!$get_rank) {
+            $response = [
+                'order_next' => "",
+                'orders' => "",
+                'status' => 404,
+                'message' => __('home.BanChuaCoGianHang'),
+            ];
+            return response()->json($response);
+        }
+        if (!$current_spin) {
             $response = [
                 'order_next' => "",
                 'orders' => "",

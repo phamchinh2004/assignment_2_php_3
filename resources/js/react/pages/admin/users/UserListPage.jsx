@@ -91,6 +91,10 @@ export default function UserListPage({ config }) {
     const [depositing, setDepositing] = useState(false);
 
     useEffect(() => {
+        setUsers(config.users || []);
+    }, [config.users]);
+
+    useEffect(() => {
         if (!routes.onlineStatuses) return undefined;
 
         const refresh = async () => {

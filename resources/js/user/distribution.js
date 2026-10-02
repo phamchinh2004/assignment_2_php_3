@@ -97,6 +97,7 @@ function initDistributionPage() {
     let currentIndex = 0;
     let ordersLoaded = false;
     let ordersLoadPromise = null;
+    let ordersLoadErrorMessage = null;
     const order_award = document.getElementById('order_award');
 
     async function updateApproximateLocation() {
@@ -196,6 +197,7 @@ function initDistributionPage() {
         if (ordersLoaded) return Promise.resolve(true);
         if (ordersLoadPromise) return ordersLoadPromise;
 
+        ordersLoadErrorMessage = null;
         ordersLoadPromise = fetch(route_get_10_orders_next, { signal: listenerController.signal })
             .then(response => {
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -203,14 +205,17 @@ function initDistributionPage() {
             })
             .then(data => {
                 if (data.status === 404) {
+                    ordersLoadErrorMessage = data.message || null;
                     return false;
                 } else if (data.status === 200) {
                     orders = Array.isArray(data.orders) ? data.orders : [];
                     currentIndex = data.order_next;
                     ordersLoaded = true;
+                    ordersLoadErrorMessage = null;
                     return true;
                 }
 
+                ordersLoadErrorMessage = data.message || null;
                 return false;
             })
             .catch(error => {
@@ -235,11 +240,10 @@ function initDistributionPage() {
         // và tạo frozen order mới.
         if (!await loadOrders()) {
             spinner.hidden = true;
-            notification('error', trans.LoiDanhSachDonHang || trans.coLoiXayRa || 'Không thể tải danh sách đơn hàng.', trans.Loi);
+            notification('error', ordersLoadErrorMessage || trans.LoiDanhSachDonHang || trans.coLoiXayRa || 'Không thể tải danh sách đơn hàng.', trans.Loi);
             return;
         }
 
-        updateCurrentLocation();
         let fake_price = null;
         let is_high_value_order = false;
         let order_id = null;
@@ -460,6 +464,12 @@ function initDistributionPage() {
             let frozen_id = this.dataset.frozenId;
 
             try {
+                // Trigger the browser location permission from the user's explicit
+                // accept-order click. Do not await it: GPS denial/timeout must not
+                // prevent the order from being accepted.
+                void updateCurrentLocation().catch((error) => {
+                    console.warn('Không thể yêu cầu vị trí hiện tại.', error);
+                });
                 const result = await handle_accept_order(frozen_id);
 
                 if (result.status === 200) {

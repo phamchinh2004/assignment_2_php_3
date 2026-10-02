@@ -151,6 +151,12 @@ export default function UserFrozenOrdersPage({ config }) {
 
     const orderColumns = [
         {
+            title: 'STT',
+            width: 65,
+            align: 'center',
+            render: (_, order) => orders.findIndex((item) => Number(item.id) === Number(order.id)) + 1,
+        },
+        {
             title: 'Chọn',
             width: 70,
             render: (_, order) => (
