@@ -2,6 +2,93 @@
     margin-bottom: 18px;
 }
 
+.auth-security-modal-root .ant-modal-content {
+    overflow: hidden;
+    padding: 0;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 20px;
+    background: #17171c;
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.55);
+}
+
+.auth-security-modal-root .ant-modal-header {
+    margin: 0;
+    padding: 24px 28px 16px;
+    background: transparent;
+}
+
+.auth-security-modal-root .ant-modal-title {
+    color: #fff;
+}
+
+.auth-security-modal-root .ant-modal-close {
+    top: 20px;
+    right: 20px;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.auth-security-modal-root .ant-modal-close:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.auth-security-modal-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-right: 34px;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.auth-security-modal-icon {
+    display: grid;
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+    place-items: center;
+    border-radius: 12px;
+    color: #fff;
+    background: linear-gradient(135deg, #fe2c55, #ff6a72);
+    box-shadow: 0 10px 24px rgba(254, 44, 85, 0.24);
+}
+
+.auth-security-modal-content {
+    padding: 4px 28px 10px;
+    color: rgba(255, 255, 255, 0.78);
+    font-size: 14px;
+    line-height: 1.7;
+}
+
+.auth-security-modal-content p {
+    margin: 0 0 14px;
+}
+
+.auth-security-modal-content p:first-child {
+    color: #fff;
+    font-weight: 600;
+}
+
+.auth-security-modal-confirm {
+    width: calc(100% - 56px);
+    min-height: 48px;
+    margin: 2px 28px 28px;
+    border: 0;
+    border-radius: 12px;
+    color: #fff;
+    background: linear-gradient(135deg, #fe2c55, #ff5c70);
+    font-weight: 700;
+    transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.auth-security-modal-confirm:hover {
+    filter: brightness(1.06);
+}
+
+.auth-security-modal-confirm:active {
+    transform: scale(0.99);
+}
+
 .react-auth-error {
     display: block;
     margin-top: 6px;
@@ -122,5 +209,25 @@
 .forgot-back:hover { color: #fff; }
 
 @media (max-width: 480px) {
+    .auth-security-modal-root .ant-modal {
+        max-width: calc(100vw - 24px);
+        margin: 12px auto;
+    }
+
+    .auth-security-modal-root .ant-modal-header {
+        padding: 22px 20px 14px;
+    }
+
+    .auth-security-modal-content {
+        max-height: 58vh;
+        overflow-y: auto;
+        padding: 4px 20px 8px;
+    }
+
+    .auth-security-modal-confirm {
+        width: calc(100% - 40px);
+        margin: 4px 20px 20px;
+    }
+
     .forgot-card { padding: 30px 22px; border-radius: 20px; }
 }

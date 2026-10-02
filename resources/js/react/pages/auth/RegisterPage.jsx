@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Background, Disclaimer, FieldError, PasswordToggle, ServerNotice, Turnstile, postCheck } from './AuthShared';
+import { Background, Disclaimer, FieldError, PasswordToggle, SecurityAccessNotice, ServerNotice, Turnstile, postCheck } from './AuthShared';
 
 const emptyLocation = { permission: 'prompt', latitude: '', longitude: '', accuracy: '', countryCode: '', country: '', city: '' };
 
@@ -165,6 +165,7 @@ export default function RegisterPage({ config }) {
 
     return (
         <div className="container_register">
+            <SecurityAccessNotice />
             <Background src={config.assets.background} />
             <main className="auth-page"><section className="auth-card auth-card-wide">
                 <img className="auth-brand-logo auth-logo" src={config.assets.logo} alt={config.brandName || 'Dropshipping'} />

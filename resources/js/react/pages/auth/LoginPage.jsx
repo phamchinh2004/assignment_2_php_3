@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Background, Disclaimer, FieldError, PasswordToggle, ServerNotice, Turnstile, postCheck } from './AuthShared';
+import { Background, Disclaimer, FieldError, PasswordToggle, SecurityAccessNotice, ServerNotice, Turnstile, postCheck } from './AuthShared';
 
 export default function LoginPage({ config }) {
     const formRef = useRef(null);
@@ -52,6 +52,7 @@ export default function LoginPage({ config }) {
 
     return (
         <div className="container_login_register">
+            <SecurityAccessNotice />
             <Background src={config.assets.background} />
             <main className="auth-page">
                 <section className="auth-card">

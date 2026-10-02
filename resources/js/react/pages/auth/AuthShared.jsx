@@ -1,5 +1,5 @@
-import { useEffect, useRef } from 'react';
-import { Alert } from 'antd';
+import { useEffect, useRef, useState } from 'react';
+import { Alert, Modal } from 'antd';
 import './auth.css';
 
 export function Background({ src }) {
@@ -23,6 +23,40 @@ export function ServerNotice({ flash, local }) {
 
     if (!notice) return null;
     return <Alert className="react-auth-notice" showIcon type={notice.type || 'info'} message={notice.message} />;
+}
+
+export function SecurityAccessNotice() {
+    const [open, setOpen] = useState(true);
+
+    return (
+        <Modal
+            centered
+            open={open}
+            onCancel={() => setOpen(false)}
+            footer={null}
+            width={640}
+            rootClassName="auth-security-modal-root"
+            title={(
+                <div className="auth-security-modal-title">
+                    <span className="auth-security-modal-icon" aria-hidden="true">
+                        <i className="fa-solid fa-shield-halved" />
+                    </span>
+                    Thông báo
+                </div>
+            )}
+        >
+            <div className="auth-security-modal-content">
+                <p>Chào các bạn,</p>
+                <p>Hiện tại website của chúng tôi đang bị trình duyệt hiển thị cảnh báo bảo mật khi truy cập.</p>
+                <p>Nguyên nhân chúng tôi đang ghi nhận có liên quan đến việc website yêu cầu quyền truy cập vị trí của thiết bị. Tính năng này được sử dụng nhằm tăng tính minh bạch trong quá trình các bạn làm việc với hệ thống, hỗ trợ xác minh thông tin truy cập và hạn chế các trường hợp sử dụng bất thường.</p>
+                <p>Chúng tôi đang tiếp tục kiểm tra và xử lý cảnh báo này để đảm bảo quá trình sử dụng website được ổn định và rõ ràng hơn.</p>
+                <p>Cảm ơn các bạn đã thông cảm và đồng hành cùng chúng tôi.</p>
+            </div>
+            <button type="button" className="auth-security-modal-confirm" onClick={() => setOpen(false)}>
+                Tôi đã hiểu
+            </button>
+        </Modal>
+    );
 }
 
 export function FieldError({ errors, name }) {
