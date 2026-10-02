@@ -5,6 +5,8 @@
     @php
         $brandName = config('app.name', 'Dropshipping');
         $brandDescription = $brandName . ' là nền tảng độc lập hỗ trợ quản lý sản phẩm, đơn hàng và hoạt động giới thiệu.';
+        $brandIconPath = public_path('images/logo/tta.png');
+        $brandIconUrl = asset('images/logo/tta.png') . '?v=' . (is_file($brandIconPath) ? filemtime($brandIconPath) : '1');
     @endphp
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -21,7 +23,7 @@
     <meta name="author" content="">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title')</title>
-    <link rel="icon" href="{{ asset('images/logo/tta.png') }}">
+    <link rel="icon" href="{{ $brandIconUrl }}">
 
     <!-- Custom fonts for this template-->
     <link href="{{ asset('theme/admin/vendor/fontawesome-free/css/all.min.css') }}" rel="stylesheet" type="text/css">
@@ -330,6 +332,7 @@
         };
 
         // ===== HỆ THỐNG NOTIFICATION MỚI =====
+        const desktopNotificationIcon = @json($brandIconUrl);
         
         // Function phát âm thanh notification
         function playNotificationSound(soundFile = 'notification_fb.mp3') {
@@ -356,7 +359,7 @@
         }
 
         // Function hiển thị desktop notification
-        function showDesktopNotification(title, body, icon = '/images/logo.png', soundFile = 'notification_fb.mp3', chatUrl = null) {
+        function showDesktopNotification(title, body, icon = desktopNotificationIcon, soundFile = 'notification_fb.mp3', chatUrl = null) {
             // Kiểm tra browser support
             if (!("Notification" in window)) {
                 console.log("Browser không hỗ trợ Desktop Notifications");
@@ -431,7 +434,7 @@
                             
                             // Hiển thị cả toastr và desktop notification
                             notification('warning', body, title, 10000);
-                            showDesktopNotification(title, body, '/images/logo.png', 'notification_fb.mp3');
+                            showDesktopNotification(title, body, desktopNotificationIcon, 'notification_fb.mp3');
                         })
                         .listen('.MessageSent', function(e) {
                             // Chỉ show notification nếu không phải tin nhắn của mình
@@ -457,7 +460,7 @@
                                 
                                 // Hiển thị cả toastr và desktop notification (có thể click để chuyển đến chat)
                                 notification('success', messageText, title, 10000, chatUrl);
-                                showDesktopNotification(title, messageText, '/images/logo.png', 'notification_fb.mp3', chatUrl);
+                                showDesktopNotification(title, messageText, desktopNotificationIcon, 'notification_fb.mp3', chatUrl);
                             }
                         })
                         .listen('.StaffLocked', function(e) {
