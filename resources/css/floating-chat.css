@@ -211,6 +211,10 @@
     letter-spacing: .08em;
     text-transform: uppercase;
 }
+.chat-date-separator[hidden] {
+    display: none;
+}
+
 .chat-date-separator::before,
 .chat-date-separator::after {
     height: 1px;

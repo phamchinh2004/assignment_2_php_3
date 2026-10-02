@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-display-time-zone="Asia/Ho_Chi_Minh">
 
 <head>
     @php

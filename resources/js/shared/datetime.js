@@ -1,9 +1,16 @@
 ﻿const DEFAULT_LOCALE = 'vi-VN';
 
+export const ADMIN_TIME_ZONE = 'Asia/Ho_Chi_Minh';
+
 export function parseDateTime(value) {
     if (!value) return null;
 
-    const date = value instanceof Date ? value : new Date(value);
+    // Unzoned database timestamps belong to the application's Vietnam timezone.
+    const normalized = typeof value === 'string'
+        && /^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?$/.test(value)
+        ? `${value.replace(' ', 'T')}+07:00`
+        : value;
+    const date = normalized instanceof Date ? normalized : new Date(normalized);
     return Number.isNaN(date.getTime()) ? null : date;
 }
 
@@ -26,11 +33,29 @@ export function formatLocalDate(value, options = {}, fallback = '—') {
     );
 }
 
+export function formatAdminDateTime(value, options = {}, fallback = '—') {
+    return formatLocalDateTime(value, {
+        ...(Object.keys(options).length ? options : { dateStyle: 'short', timeStyle: 'short' }),
+        timeZone: ADMIN_TIME_ZONE,
+    }, fallback);
+}
+
+export function adminDateInput(value = new Date()) {
+    const date = parseDateTime(value);
+    if (!date) return '';
+    const parts = new Intl.DateTimeFormat('en-US', {
+        timeZone: ADMIN_TIME_ZONE, year: 'numeric', month: '2-digit', day: '2-digit',
+    }).formatToParts(date);
+    const part = (type) => parts.find((item) => item.type === type).value;
+    return `${part('year')}-${part('month')}-${part('day')}`;
+}
+
 const LOCAL_DATETIME_PRESETS = {
     short: { dateStyle: 'short', timeStyle: 'short' },
     medium: { dateStyle: 'short', timeStyle: 'medium' },
     date: { dateStyle: 'short' },
     time: { hour: '2-digit', minute: '2-digit' },
+    'chat-date': { day: 'numeric', month: 'short', year: 'numeric' },
 };
 
 export function hydrateLocalDateTimes(root = document) {
@@ -48,11 +73,28 @@ export function hydrateLocalDateTimes(root = document) {
         const preset = element.dataset.localFormat || 'short';
         const options = LOCAL_DATETIME_PRESETS[preset] || LOCAL_DATETIME_PRESETS.short;
 
-        element.textContent = formatLocalDateTime(
+        const timeZone = element.dataset.timeZone
+            || document.documentElement.dataset.displayTimeZone;
+        const text = formatLocalDateTime(
             element.dataset.localDatetime,
-            options,
+            timeZone ? { ...options, timeZone } : options,
             element.textContent || '—',
         );
+        if (element.textContent !== text) element.textContent = text;
+        element.title = timeZone || Intl.DateTimeFormat().resolvedOptions().timeZone;
+    });
+
+    const separators = [];
+    if (root instanceof Element && root.matches('[data-local-date-separator]')) separators.push(root);
+    if (typeof root.querySelectorAll === 'function') {
+        separators.push(...root.querySelectorAll('[data-local-date-separator]'));
+    }
+    separators.forEach((element) => {
+        const current = formatLocalDate(element.dataset.localDateSeparator);
+        const next = element.dataset.nextDatetime;
+        const hidden = Boolean(next && current === formatLocalDate(next));
+        if (element.hidden !== hidden) element.hidden = hidden;
+        element.setAttribute('aria-label', current);
     });
 }
 
@@ -63,14 +105,26 @@ export function observeLocalDateTimes(root = document.body) {
 
     const observer = new MutationObserver((records) => {
         records.forEach((record) => {
-            record.addedNodes.forEach((node) => {
-                if (node.nodeType === Node.ELEMENT_NODE) {
-                    hydrateLocalDateTimes(node);
+            // Livewire may update attributes or text on existing nodes during a morph.
+            if (record.type === 'attributes' && record.attributeName === 'hidden') {
+                if (record.target.matches('[data-local-date-separator]')) hydrateLocalDateTimes(record.target);
+            } else if (record.type === 'attributes' || record.type === 'characterData') {
+                hydrateLocalDateTimes(record.target.parentElement || record.target);
+            } else {
+                if (record.target instanceof Element && record.target.matches('[data-local-datetime]')) {
+                    hydrateLocalDateTimes(record.target);
+                } else {
+                    record.addedNodes.forEach((node) => {
+                        if (node.nodeType === Node.ELEMENT_NODE) hydrateLocalDateTimes(node);
+                    });
                 }
-            });
+            }
         });
     });
 
-    observer.observe(root, { childList: true, subtree: true });
+    observer.observe(root, {
+        childList: true, subtree: true, characterData: true, attributes: true,
+        attributeFilter: ['data-local-datetime', 'data-local-format', 'data-time-zone', 'data-local-date-separator', 'data-next-datetime', 'hidden'],
+    });
     return observer;
 }

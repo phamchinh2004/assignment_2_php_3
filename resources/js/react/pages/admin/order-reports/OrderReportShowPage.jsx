@@ -1,12 +1,12 @@
 import { Alert, Button, Card, Col, Descriptions, Image, Input, Row, Space, Tag, Timeline, Typography } from 'antd';
 import LaravelForm from '../../../components/LaravelForm';
 import { AdminPage, AdminPageHeader } from '../../../components/admin/AdminUi';
-import { formatLocalDateTime } from '../../../../shared/datetime';
+import { formatAdminDateTime } from '../../../../shared/datetime';
 
 const { Paragraph, Text, Title } = Typography;
 const { TextArea } = Input;
 const money = (value, digits = 2) => `${new Intl.NumberFormat('en-US', { minimumFractionDigits: digits, maximumFractionDigits: digits }).format(Number(value || 0))}$`;
-const dateTime = (value) => formatLocalDateTime(value, { dateStyle: 'short', timeStyle: 'medium' });
+const dateTime = (value) => formatAdminDateTime(value, { dateStyle: 'short', timeStyle: 'medium' });
 
 const reportStatus = {
     pending: { label: 'Chờ xử lý', color: 'warning' },

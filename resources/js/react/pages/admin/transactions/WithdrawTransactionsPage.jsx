@@ -1,3 +1,4 @@
+import { formatAdminDateTime } from '../../../../shared/datetime';
 import { Button, Card, Col, Modal, Radio, Row, Segmented, Space, Statistic, Table, Tag, Typography } from 'antd';
 import { useMemo, useState } from 'react';
 import LaravelForm from '../../../components/LaravelForm';
@@ -6,7 +7,7 @@ import { AdminDataCard, AdminPage, AdminPageHeader } from '../../../components/a
 const { Text, Title } = Typography;
 const routeFor = (template, token, id) => String(template || '').replace(token, encodeURIComponent(String(id)));
 const money = (value) => `${new Intl.NumberFormat('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}).format(Number(value || 0))}$`;
-const dateTime = (value) => value ? new Intl.DateTimeFormat('vi-VN',{dateStyle:'short',timeStyle:'short'}).format(new Date(value)) : '—';
+const dateTime = (value) => value ? formatAdminDateTime(value, {dateStyle:'short',timeStyle:'short'}) : '—';
 
 export default function WithdrawTransactionsPage({ config }) {
     const [filter, setFilter] = useState('all');

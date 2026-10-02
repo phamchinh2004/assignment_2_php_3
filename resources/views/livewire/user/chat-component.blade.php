@@ -166,7 +166,7 @@
                                         @endif
                                         <div class="text-end mt-1 d-flex align-items-center justify-content-end gap-1"
                                             style="font-size: 10px; color: #6c757d;">
-                                            <span>{{ \Carbon\Carbon::parse($createdAt)->setTimezone('Asia/Ho_Chi_Minh')->format('H:i') }}</span>
+                                            <time data-local-datetime="{{ $messageDate->toIso8601String() }}" data-local-format="time">{{ $messageDate->format('H:i') }}</time>
                                         </div>
                                     </div>
                                     <img src="https://ui-avatars.com/api/?name={{ urlencode($senderName) }}&background=667eea&color=ffffff&size=28&rounded=true"
@@ -202,18 +202,19 @@
                                                 style="display: inline-block; width: fit-content; max-width: 100%; margin: 0;">{{ trim($message) }}</div>
                                         @endif
                                         <div class="mt-1 ps-2" style="font-size: 10px; color: #6c757d;text-align:left;">
-                                            {{ __('home.HoTro') }} · {{ \Carbon\Carbon::parse($createdAt)->setTimezone('Asia/Ho_Chi_Minh')->format('H:i') }}
+                                            {{ __('home.HoTro') }} · <time data-local-datetime="{{ $messageDate->toIso8601String() }}" data-local-format="time">{{ $messageDate->format('H:i') }}</time>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         @endif
 
-                        @if($showDateSeparator)
-                            <div class="chat-date-separator" wire:key="date-separator-{{ $messageId }}" aria-label="{{ $messageDate->format('d/m/Y') }}">
-                                <span>{{ $messageDate->locale(app()->getLocale())->translatedFormat('d M Y') }}</span>
-                            </div>
-                        @endif
+                        <div class="chat-date-separator" wire:key="date-separator-{{ $messageId }}"
+                            data-local-date-separator="{{ $messageDate->toIso8601String() }}"
+                            data-next-datetime="{{ $nextCreatedAt ? \Carbon\Carbon::parse($nextCreatedAt)->toIso8601String() : '' }}"
+                            @if(!$showDateSeparator) hidden @endif aria-label="{{ $messageDate->format('d/m/Y') }}">
+                            <span data-local-datetime="{{ $messageDate->toIso8601String() }}" data-local-format="chat-date">{{ $messageDate->locale(app()->getLocale())->translatedFormat('d M Y') }}</span>
+                        </div>
                     @endforeach
 
                     <!-- Nút load more messages: Đặt sau foreach để lật lên đỉnh -->
@@ -327,14 +328,14 @@
                             @if($referenceTab === 'order')
                                 <button type="button" class="chat-reference-option" wire:click="sendOrderReference({{ $item['id'] }})" wire:loading.attr="disabled">
                                     <span class="reference-option-icon"><i class="fas fa-box"></i></span>
-                                    <span class="reference-option-copy"><strong>{{ $item['code'] }}</strong><small>{{ $item['name'] ?: 'Đơn hàng' }} · {{ \Carbon\Carbon::parse($item['created_at'])->format('d/m/Y') }}</small></span>
+                                    <span class="reference-option-copy"><strong>{{ $item['code'] }}</strong><small>{{ $item['name'] ?: 'Đơn hàng' }} · <time data-local-datetime="{{ \Carbon\Carbon::parse($item['created_at'])->toIso8601String() }}" data-local-format="date">{{ \Carbon\Carbon::parse($item['created_at'])->format('d/m/Y') }}</time></small></span>
                                     @if($item['amount'] !== null)<b>{{ format_money($item['amount'], 5) }}$</b>@endif
                                     <i class="fas fa-arrow-right"></i>
                                 </button>
                             @else
                                 <button type="button" class="chat-reference-option" wire:click="sendTransactionReference('{{ $item['source'] }}', {{ $item['id'] }})" wire:loading.attr="disabled">
                                     <span class="reference-option-icon"><i class="fas fa-receipt"></i></span>
-                                    <span class="reference-option-copy"><strong>{{ ['deposit'=>'Nạp tiền','withdraw'=>'Rút tiền','order'=>'Thanh toán đơn','profit'=>'Hoa hồng','penalty'=>'Tiền phạt'][$item['type']] ?? $item['type'] }}</strong><small>{{ strtoupper($item['source']) }}-{{ $item['id'] }} · {{ \Carbon\Carbon::parse($item['created_at'])->format('d/m/Y H:i') }}</small></span>
+                                    <span class="reference-option-copy"><strong>{{ ['deposit'=>'Nạp tiền','withdraw'=>'Rút tiền','order'=>'Thanh toán đơn','profit'=>'Hoa hồng','penalty'=>'Tiền phạt'][$item['type']] ?? $item['type'] }}</strong><small>{{ strtoupper($item['source']) }}-{{ $item['id'] }} · <time data-local-datetime="{{ \Carbon\Carbon::parse($item['created_at'])->toIso8601String() }}" data-local-format="short">{{ \Carbon\Carbon::parse($item['created_at'])->format('d/m/Y H:i') }}</time></small></span>
                                     <b>{{ format_money($item['amount'], 5) }}$</b>
                                     <i class="fas fa-arrow-right"></i>
                                 </button>

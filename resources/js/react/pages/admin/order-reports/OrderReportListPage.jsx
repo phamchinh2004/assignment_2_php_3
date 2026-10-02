@@ -1,11 +1,11 @@
 import { Button, Pagination, Segmented, Space, Table, Tag, Typography } from 'antd';
 import { spaNavigate } from '../../../navigation';
 import { AdminDataCard, AdminPage, AdminPageHeader } from '../../../components/admin/AdminUi';
-import { formatLocalDateTime } from '../../../../shared/datetime';
+import { formatAdminDateTime } from '../../../../shared/datetime';
 
 const { Text } = Typography;
 const routeFor = (template, id) => String(template || '').replace('__REPORT_ID__', encodeURIComponent(String(id)));
-const formatDate = (value) => formatLocalDateTime(value);
+const formatDate = (value) => formatAdminDateTime(value);
 
 const reportStatus = {
     pending: { label: 'Chờ xử lý', color: 'warning' },

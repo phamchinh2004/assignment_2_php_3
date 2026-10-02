@@ -1,3 +1,4 @@
+import { formatAdminDateTime } from '../../../../shared/datetime';
 import { Alert, Button, Card, Col, Descriptions, Image, Input, Row, Space, Tag, Typography } from 'antd';
 import LaravelForm from '../../../components/LaravelForm';
 import { AdminPage, AdminPageHeader } from '../../../components/admin/AdminUi';
@@ -5,7 +6,7 @@ import { AdminPage, AdminPageHeader } from '../../../components/admin/AdminUi';
 const { Paragraph, Text } = Typography;
 const { TextArea } = Input;
 const formatDate = (value) => value
-    ? new Intl.DateTimeFormat('vi-VN', { dateStyle: 'short', timeStyle: 'medium' }).format(new Date(value))
+    ? formatAdminDateTime(value, { dateStyle: 'short', timeStyle: 'medium' })
     : '—';
 
 const statusMeta = {

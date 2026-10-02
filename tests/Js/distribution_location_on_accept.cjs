@@ -1,7 +1,8 @@
 const fs = require('fs');
 const vm = require('vm');
 
-const source = fs.readFileSync('resources/js/user/distribution.js', 'utf8');
+const source = fs.readFileSync('resources/js/shared/datetime.js', 'utf8').replace(/\bexport /g, '')
+    + '\n' + fs.readFileSync('resources/js/user/distribution.js', 'utf8').replace(/^import .+;\r?$/gm, '');
 
 const listeners = {};
 const root = { dataset: {} };

@@ -1,3 +1,5 @@
+import { adminDateInput } from '../../../../shared/datetime';
+
 export function withQuery(url, params = {}) {
     const target = new URL(url, window.location.origin);
     Object.entries(params).forEach(([key, value]) => {
@@ -21,13 +23,11 @@ export function number(value) {
 }
 
 export function dateInput(date) {
-    const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
-    return local.toISOString().slice(0, 10);
+    return adminDateInput(date);
 }
 
 export function startOfMonth() {
-    const now = new Date();
-    return dateInput(new Date(now.getFullYear(), now.getMonth(), 1));
+    return today().slice(0, 8) + '01';
 }
 
 export function today() {
@@ -35,9 +35,9 @@ export function today() {
 }
 
 export function daysAgo(days) {
-    const date = new Date();
-    date.setDate(date.getDate() - days);
-    return dateInput(date);
+    const date = new Date(`${today()}T00:00:00Z`);
+    date.setUTCDate(date.getUTCDate() - days);
+    return date.toISOString().slice(0, 10);
 }
 
 export function invalidDateRange(startDate, endDate) {
@@ -49,8 +49,8 @@ export function inclusiveDays(startDate, endDate, fallback = 30) {
         return fallback;
     }
 
-    const start = new Date(`${startDate}T00:00:00`);
-    const end = new Date(`${endDate}T00:00:00`);
+    const start = new Date(`${startDate}T00:00:00Z`);
+    const end = new Date(`${endDate}T00:00:00Z`);
     const millisecondsPerDay = 24 * 60 * 60 * 1000;
 
     return Math.max(1, Math.round((end - start) / millisecondsPerDay) + 1);

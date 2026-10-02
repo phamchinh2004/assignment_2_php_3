@@ -81,7 +81,7 @@
                 <span class="section-kicker">Tổng quan trực tiếp</span>
                 <h2 id="ledger-title">Dòng tiền hôm nay</h2>
             </div>
-            <span class="ledger-date">{{ now()->format('d/m') }}</span>
+            <span class="ledger-date" title="Ngày chốt số liệu theo giờ Việt Nam (UTC+7)">{{ now()->format('d/m') }} · UTC+7</span>
         </div>
 
         <div class="balance-card stat-card">

@@ -1,3 +1,4 @@
+import { formatAdminDateTime } from '../../../../shared/datetime';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Button, Card, Segmented, Select, Skeleton, Table, Tag, Typography } from 'antd';
 import {
@@ -397,7 +398,7 @@ export default function OverviewStatisticsPage({ config }) {
         { title: 'Loại', dataIndex: 'type', width: 105, render: (value) => <Tag color={value === 'deposit' ? 'success' : 'warning'}>{value === 'deposit' ? 'Nạp tiền' : 'Rút tiền'}</Tag> },
         { title: 'Số tiền', dataIndex: 'value', width: 115, align: 'right', render: (value) => <Text strong>{money(value)}</Text> },
         { title: 'Trạng thái', dataIndex: 'status', width: 120, render: (value) => { const item = statusTag(value); return <Tag color={item.color}>{item.label}</Tag>; } },
-        { title: 'Thời gian', dataIndex: 'created_at', width: 165, render: (value) => value ? new Date(value).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' }) : '—' },
+        { title: 'Thời gian', dataIndex: 'created_at', width: 165, render: (value) => value ? formatAdminDateTime(value, { dateStyle: 'short', timeStyle: 'short' }) : '—' },
     ];
 
     const flowPercent = (value) => flowTotal > 0 ? Math.round((Number(value || 0) / flowTotal) * 100) : 0;

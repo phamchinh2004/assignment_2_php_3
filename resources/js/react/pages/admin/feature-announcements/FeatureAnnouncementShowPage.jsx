@@ -1,9 +1,10 @@
+import { formatAdminDateTime } from '../../../../shared/datetime';
 import { Button, Descriptions, Image, Progress, Space, Table, Tag, Typography } from 'antd';
 import { EditOutlined, NotificationOutlined } from '@ant-design/icons';
 import { AdminDataCard, AdminPage, AdminPageHeader, AdminSectionCard } from '../../../components/admin/AdminUi';
 
 const { Text, Paragraph } = Typography;
-const formatDate=(value)=>value?new Intl.DateTimeFormat('vi-VN',{dateStyle:'short',timeStyle:'short'}).format(new Date(value)):'—';
+const formatDate=(value)=>value?formatAdminDateTime(value, {dateStyle:'short',timeStyle:'short'}):'—';
 
 export default function FeatureAnnouncementShowPage({ config }) {
     const a=config.announcement||{}; const stats=config.stats||{}; const users=stats.users||[];

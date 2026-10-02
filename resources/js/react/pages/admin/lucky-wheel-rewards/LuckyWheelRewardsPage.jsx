@@ -1,3 +1,4 @@
+import { formatAdminDateTime } from '../../../../shared/datetime';
 import {
     Button,
     Card,
@@ -27,7 +28,7 @@ const replaceId = (template, token, id) => String(template || '').replace(token,
 const money = (value) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(value || 0));
 const integer = (value) => new Intl.NumberFormat('vi-VN').format(Number(value || 0));
 const dateTime = (value) => value
-    ? new Intl.DateTimeFormat('vi-VN', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value))
+    ? formatAdminDateTime(value, { dateStyle: 'short', timeStyle: 'short' })
     : '—';
 
 const statusMeta = {

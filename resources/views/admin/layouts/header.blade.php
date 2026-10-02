@@ -70,6 +70,7 @@
             <span class="admin-breadcrumb__separator" aria-hidden="true">/</span>
             <strong class="admin-breadcrumb__current">{{ $breadcrumbPage }}</strong>
         </nav>
+        <small class="text-muted ms-2">Giờ Việt Nam (UTC+7)</small>
     </div>
 
     <div class="admin-topbar__actions">

@@ -1,3 +1,4 @@
+import { formatLocalDateTime } from '../../../shared/datetime';
 import { useEffect } from 'react';
 import '../../../../css/user/balance_fluctuation.css';
 import { spaNavigate } from '../../navigation';
@@ -16,7 +17,7 @@ const detailLabels = { normal: 'Tiền nạp', bonus: 'Tiền thưởng', virtua
 const money = (value, precision = 2) => `${new Intl.NumberFormat('en-US', { maximumFractionDigits: precision }).format(Number(value || 0))}$`;
 const trend = (value) => `${Number(value || 0) > 0 ? '+' : ''}${new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 1 }).format(Number(value || 0))}%`;
 const number = (value) => new Intl.NumberFormat('vi-VN').format(Number(value || 0));
-const dateTime = (value) => value ? new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(value)) : '';
+const dateTime = (value) => value ? formatLocalDateTime(value, { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
 
 function withQuery(url, query) {
     const params = new URLSearchParams(Object.entries(query).filter(([, value]) => value !== '' && value !== null && value !== undefined));

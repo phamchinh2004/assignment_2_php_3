@@ -72,7 +72,9 @@
 
         @if($createdAt)
             <time datetime="{{ $createdAt->toIso8601String() }}">
-                {{ $isOrder ? 'Đặt lúc' : 'Ghi nhận lúc' }} {{ $createdAt->format('d/m/Y · H:i') }}
+                {{ $isOrder ? 'Đặt lúc' : 'Ghi nhận lúc' }}
+                <span data-local-datetime="{{ $createdAt->toIso8601String() }}"
+                    @if($audience !== 'user') data-time-zone="Asia/Ho_Chi_Minh" @endif>{{ $createdAt->format('d/m/Y · H:i') }}</span>
             </time>
         @endif
     </section>

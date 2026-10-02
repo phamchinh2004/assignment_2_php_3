@@ -1,3 +1,4 @@
+import { formatAdminDateTime } from '../../../../shared/datetime';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Button, Card, Col, Row, Segmented, Space, Statistic, Table, Tag, Typography } from 'antd';
 import { ReloadOutlined } from '@ant-design/icons';
@@ -43,7 +44,7 @@ export default function PersonalRevenuePage({ config }) {
         { title: 'Loại', dataIndex: 'type', render: (value) => <Tag color={value === 'deposit' ? 'success' : 'warning'}>{value === 'deposit' ? 'Nạp tiền' : 'Rút tiền'}</Tag> },
         { title: 'Số tiền', dataIndex: 'value', align: 'right', render: money },
         { title: 'Trạng thái', dataIndex: 'status', render: (value) => { const item = statusTag(value); return <Tag color={item.color}>{item.label}</Tag>; } },
-        { title: 'Thời gian', dataIndex: 'created_at', render: (value) => value ? new Date(value).toLocaleString('vi-VN') : '—' },
+        { title: 'Thời gian', dataIndex: 'created_at', render: (value) => value ? formatAdminDateTime(value, { dateStyle: 'short', timeStyle: 'medium' }) : '—' },
     ];
 
     const overview = stats?.overview_stats || {};

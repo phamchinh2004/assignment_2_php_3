@@ -258,7 +258,7 @@
                 </tr>
                 <tr>
                     <td>Thời gian:</td>
-                    <td>{{ date('d/m/Y H:i') }}</td>
+                    <td>{{ now('Asia/Ho_Chi_Minh')->format('d/m/Y H:i') }} (giờ Việt Nam, UTC+7)</td>
                 </tr>
                 <tr>
                     <td><strong>Số dư mới:</strong></td>

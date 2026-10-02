@@ -1,3 +1,4 @@
+import { formatAdminDateTime } from '../../../../shared/datetime';
 import { useEffect, useRef, useState } from 'react';
 import { Button, Checkbox, Col, Descriptions, Input, InputNumber, Modal, Row, Select, Space, Tag, Typography } from 'antd';
 import { SaveOutlined, UserOutlined } from '@ant-design/icons';
@@ -15,8 +16,7 @@ function FormFieldError({ form, name }) {
 
 function dateTime(value) {
     if (!value) return 'Chưa ghi nhận';
-    const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? value : date.toLocaleString('vi-VN');
+    return formatAdminDateTime(value, { dateStyle: 'short', timeStyle: 'medium' }, value);
 }
 
 export default function UserEditPage({ config }) {

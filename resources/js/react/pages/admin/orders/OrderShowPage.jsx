@@ -16,7 +16,7 @@ import {
     Typography,
 } from 'antd';
 import { AdminDataCard, AdminMetricGrid, AdminPage, AdminPageHeader, AdminSectionCard } from '../../../components/admin/AdminUi';
-import { formatLocalDateTime } from '../../../../shared/datetime';
+import { formatAdminDateTime } from '../../../../shared/datetime';
 import './order-show.css';
 
 const { Text } = Typography;
@@ -29,7 +29,7 @@ function formatMoney(value) {
 }
 
 function formatDateTime(value) {
-    return formatLocalDateTime(value, { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+    return formatAdminDateTime(value, { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
 }
 
 function routeFor(template, id) {

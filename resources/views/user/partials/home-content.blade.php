@@ -235,7 +235,7 @@
                             <div class="wheel-reward-row__main">
                                 <div>
                                     <strong>{{ $reward->prize }}</strong>
-                                    <small>{{ $reward->created_at?->format('d/m/Y · H:i') }}</small>
+                                    <small data-local-datetime="{{ $reward->created_at?->toIso8601String() }}">{{ $reward->created_at?->format('d/m/Y · H:i') }}</small>
                                 </div>
                                 <span class="wheel-reward-status is-{{ $reward->reward_status }}">
                                     <i class="fas {{ $statusIcon }}"></i>{{ $reward->rewardStatusLabel() }}

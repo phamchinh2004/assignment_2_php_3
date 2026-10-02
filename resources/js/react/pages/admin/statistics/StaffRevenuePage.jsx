@@ -1,3 +1,4 @@
+import { formatAdminDateTime } from '../../../../shared/datetime';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Button, Card, Col, Descriptions, Modal, Row, Select, Space, Statistic, Table, Tag, Typography } from 'antd';
 import { DownloadOutlined, EyeOutlined, ReloadOutlined } from '@ant-design/icons';
@@ -76,7 +77,7 @@ export default function StaffRevenuePage({ config }) {
         { title: 'Khách hàng', render: (_, row) => row.user?.full_name || '—' },
         { title: 'Email', render: (_, row) => row.user?.email || '—' },
         { title: 'Số tiền', dataIndex: 'value', align: 'right', render: money },
-        { title: 'Thời gian', dataIndex: 'created_at', render: (value) => value ? new Date(value).toLocaleString('vi-VN') : '—' },
+        { title: 'Thời gian', dataIndex: 'created_at', render: (value) => value ? formatAdminDateTime(value, { dateStyle: 'short', timeStyle: 'medium' }) : '—' },
     ];
 
     const summary = payload?.summary || {};

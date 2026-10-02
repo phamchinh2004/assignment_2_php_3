@@ -25,7 +25,7 @@ import {
 import { requestJson } from '../../../lib/http';
 import { spaNavigate } from '../../../navigation';
 import { AdminFormActions, AdminPage, AdminPageHeader, AdminSectionCard } from '../../../components/admin/AdminUi';
-import { formatLocalDateTime } from '../../../../shared/datetime';
+import { formatAdminDateTime } from '../../../../shared/datetime';
 import './order-edit.css';
 
 const { Text } = Typography;
@@ -150,7 +150,7 @@ export default function OrderEditPage({ config }) {
                 description="Cập nhật thông tin sản phẩm, người nhận và trạng thái thanh toán của đơn hàng."
                 backHref={config.routes.index}
                 backLabel="Danh sách đơn hàng"
-                meta={<><Tag>{order.order_code}</Tag><Tag color={Number(order.status) === 1 ? 'success' : 'error'}>{Number(order.status) === 1 ? 'Đang hoạt động' : 'Ngừng hoạt động'}</Tag><Text type="secondary">Tạo: {formatLocalDateTime(config.createdAt)}</Text></>}
+                meta={<><Tag>{order.order_code}</Tag><Tag color={Number(order.status) === 1 ? 'success' : 'error'}>{Number(order.status) === 1 ? 'Đang hoạt động' : 'Ngừng hoạt động'}</Tag><Text type="secondary">Tạo: {formatAdminDateTime(config.createdAt)}</Text></>}
             />
 
             {error && <Alert type="error" showIcon message={error} className="order-edit-alert" />}

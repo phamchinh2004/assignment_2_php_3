@@ -1,3 +1,4 @@
+import { formatAdminDateTime } from '../../../../shared/datetime';
 import { Avatar, Button, Col, Row, Space, Table, Tag } from 'antd';
 import {
     ArrowLeftOutlined,
@@ -39,8 +40,7 @@ function money(value, digits = 2) {
 
 function dateTime(value) {
     if (!value) return '—';
-    const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? value : date.toLocaleString('vi-VN');
+    return formatAdminDateTime(value, { dateStyle: 'short', timeStyle: 'medium' }, value);
 }
 
 function statusMeta(status) {

@@ -1,10 +1,10 @@
 import { Alert, Button, Card, Col, Descriptions, Image, Row, Space, Tag, Timeline, Typography } from 'antd';
 import LaravelForm from '../../../components/LaravelForm';
 import { AdminPage, AdminPageHeader } from '../../../components/admin/AdminUi';
-import { formatLocalDateTime } from '../../../../shared/datetime';
+import { formatAdminDateTime } from '../../../../shared/datetime';
 
 const { Paragraph, Text, Title } = Typography;
-const formatDate = (value) => formatLocalDateTime(value, { dateStyle: 'short', timeStyle: 'medium' });
+const formatDate = (value) => formatAdminDateTime(value, { dateStyle: 'short', timeStyle: 'medium' });
 const money = (value, digits = 2) => value === null || value === undefined ? 'Chưa có snapshot' : `${new Intl.NumberFormat('en-US',{minimumFractionDigits:digits,maximumFractionDigits:digits}).format(Number(value))}$`;
 const routeFor = (template, id) => String(template || '').replace('__ORDER_ID__', encodeURIComponent(String(id)));
 

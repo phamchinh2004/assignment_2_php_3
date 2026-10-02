@@ -1,3 +1,4 @@
+import { formatAdminDateTime } from '../../../../shared/datetime';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Button, Card, Col, Row, Select, Space, Statistic, Table, Tag, Typography } from 'antd';
 import { ReloadOutlined } from '@ant-design/icons';
@@ -52,7 +53,7 @@ export default function CustomerRevenuePage({ config }) {
         { title: 'Số điện thoại', dataIndex: 'phone' },
         { title: 'Giao dịch', dataIndex: 'transaction_count', align: 'right', render: number },
         { title: 'Doanh thu', dataIndex: 'total_revenue', align: 'right', render: money },
-        { title: 'Giao dịch gần nhất', dataIndex: 'last_transaction', render: (value) => value ? new Date(value).toLocaleString('vi-VN') : '—' },
+        { title: 'Giao dịch gần nhất', dataIndex: 'last_transaction', render: (value) => value ? formatAdminDateTime(value, { dateStyle: 'short', timeStyle: 'medium' }) : '—' },
     ];
 
     const overview = data.overview || {};

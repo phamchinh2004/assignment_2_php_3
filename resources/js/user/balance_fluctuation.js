@@ -1,3 +1,4 @@
+import { formatLocalDateTime } from '../shared/datetime';
 import ApexCharts from 'apexcharts';
 
 export const initTransactionCharts = () => {
@@ -8,7 +9,7 @@ export const initTransactionCharts = () => {
     const money = value => `${new Intl.NumberFormat('en-US', { maximumFractionDigits: 5 }).format(value)}$`;
     const axisMoney = value => `${new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 2 }).format(value)}$`;
     const signedMoney = value => `${value > 0 ? '+' : ''}${money(value)}`;
-    const dateTime = value => new Intl.DateTimeFormat('vi-VN', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value));
+    const dateTime = value => formatLocalDateTime(value, { dateStyle: 'short', timeStyle: 'short' });
     const escapeHtml = value => String(value ?? '').replace(/[&<>'"]/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#039;', '"': '&quot;' })[character]);
     const empty = target => {
         target.innerHTML = '<div class="empty-state"><i class="fas fa-chart-line"></i><strong>Chưa có dữ liệu biểu đồ</strong><span>Thử chọn khoảng thời gian khác.</span></div>';

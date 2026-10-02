@@ -301,7 +301,7 @@ class User extends Authenticatable
     }
     public function user_spin_progress()
     {
-        return $this->belongsTo(User_spin_progress::class, 'user_id');
+        return $this->hasOne(User_spin_progress::class, 'user_id');
     }
     public function conversations()
     {

@@ -1,3 +1,4 @@
+import { formatAdminDateTime } from '../../../shared/datetime';
 import { Button, Descriptions, Empty, Image, Popconfirm, Space, Table, Tag, Typography } from 'antd';
 import { ArrowLeftOutlined, EditOutlined, EyeOutlined, PlusOutlined, SaveOutlined } from '@ant-design/icons';
 import LaravelForm, { fieldError, oldValue } from '../LaravelForm';
@@ -23,8 +24,7 @@ export function storageUrl(base, path) {
 
 function formatDate(value) {
     if (!value) return '—';
-    const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? '—' : new Intl.DateTimeFormat('vi-VN', { dateStyle: 'short', timeStyle: 'short' }).format(date);
+    return formatAdminDateTime(value);
 }
 
 export function SimpleMediaList({ config, labels, token, secondaryKey, secondaryLabel, allowDelete = false }) {

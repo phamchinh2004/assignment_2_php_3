@@ -200,7 +200,7 @@
                     {{ $userMessage }}
                 </div>
                 <div class="timestamp">
-                    Gửi lúc: {{ now()->format('d/m/Y H:i') }}
+                    Gửi lúc: {{ now('Asia/Ho_Chi_Minh')->format('d/m/Y H:i') }} (giờ Việt Nam, UTC+7)
                 </div>
             </div>
 

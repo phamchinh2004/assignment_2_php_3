@@ -1,3 +1,4 @@
+import { formatAdminDateTime } from '../../../../shared/datetime';
 import { Button, Empty, Tag, Typography } from 'antd';
 import { EditOutlined, PictureOutlined } from '@ant-design/icons';
 import { AdminPage, AdminPageHeader, AdminSectionCard } from '../../../components/admin/AdminUi';
@@ -11,8 +12,7 @@ function assetUrl(base, path) {
 
 function formatDate(value) {
     if (!value) return '—';
-    const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? '—' : new Intl.DateTimeFormat('vi-VN', { dateStyle: 'short', timeStyle: 'short' }).format(date);
+    return formatAdminDateTime(value);
 }
 
 export default function BannerShowPage({ config }) {

@@ -1,3 +1,4 @@
+import { formatAdminDateTime } from '../../../../shared/datetime';
 import { Button, Pagination, Popconfirm, Space, Table, Tag, Typography } from 'antd';
 import { NotificationOutlined, PlusOutlined } from '@ant-design/icons';
 import LaravelForm from '../../../components/LaravelForm';
@@ -7,7 +8,7 @@ import { AdminDataCard, AdminPage, AdminPageHeader } from '../../../components/a
 const { Text } = Typography;
 const routeFor = (template,id) => String(template || '').replace('__ANNOUNCEMENT_ID__',encodeURIComponent(String(id)));
 const priorityLabel = { normal:'Bình thường', important:'Quan trọng', critical:'Khẩn cấp' };
-const formatDate = (value) => value ? new Intl.DateTimeFormat('vi-VN',{dateStyle:'short',timeStyle:'short'}).format(new Date(value)) : 'Không giới hạn';
+const formatDate = (value) => value ? formatAdminDateTime(value, {dateStyle:'short',timeStyle:'short'}) : 'Không giới hạn';
 
 export default function FeatureAnnouncementListPage({ config }) {
     const page = config.announcements || {};
