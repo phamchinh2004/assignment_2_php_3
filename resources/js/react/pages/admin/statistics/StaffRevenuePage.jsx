@@ -5,6 +5,7 @@ import { DownloadOutlined, EyeOutlined, ReloadOutlined } from '@ant-design/icons
 import { requestJson } from '../../../lib/http';
 import { AdminDatePicker } from '../../../components/admin/AdminDatePicker';
 import StatisticsChart from './StatisticsChart';
+import { CustomerIdentity } from '../../../components/admin/OperationsUi';
 import { invalidDateRange, money, number, startOfMonth, today, withQuery } from './statistics';
 
 const { Text, Title } = Typography;
@@ -74,7 +75,7 @@ export default function StaffRevenuePage({ config }) {
 
     const transactionColumns = [
         { title: 'Mã GD', dataIndex: 'id', render: (value) => `#${value}` },
-        { title: 'Khách hàng', render: (_, row) => row.user?.full_name || '—' },
+        { title: 'Khách hàng', render: (_, row) => <CustomerIdentity user={row.user} /> },
         { title: 'Email', render: (_, row) => row.user?.email || '—' },
         { title: 'Số tiền', dataIndex: 'value', align: 'right', render: money },
         { title: 'Thời gian', dataIndex: 'created_at', render: (value) => value ? formatAdminDateTime(value, { dateStyle: 'short', timeStyle: 'medium' }) : '—' },

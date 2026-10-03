@@ -1,6 +1,7 @@
 import { Alert, Button, Card, Col, Descriptions, Image, Row, Space, Tag, Timeline, Typography } from 'antd';
 import LaravelForm from '../../../components/LaravelForm';
 import { AdminPage, AdminPageHeader } from '../../../components/admin/AdminUi';
+import { CustomerIdentity } from '../../../components/admin/OperationsUi';
 import { formatAdminDateTime } from '../../../../shared/datetime';
 
 const { Paragraph, Text, Title } = Typography;
@@ -22,7 +23,7 @@ export default function OrderDistributionShowPage({ config }) {
 
     const history = [...(item.status_orders || [])].sort((a,b)=>Number(a.id)-Number(b.id)).map((event) => ({
         color: event.status?.color || 'blue',
-        children: <div><Text strong>{event.status?.display_name || event.status?.name || 'Trạng thái không còn tồn tại'}</Text><div><Text type="secondary">{formatDate(event.created_at)} · {event.changed_by?.full_name || event.changed_by?.username || 'Hệ thống / chưa ghi nhận'}</Text></div>{event.notes && <Paragraph style={{marginTop:4,marginBottom:0}}>{event.notes}</Paragraph>}</div>,
+        children: <div><Text strong>{event.status?.display_name || event.status?.name || 'Trạng thái không còn tồn tại'}</Text><div><Text type="secondary">{formatDate(event.created_at)}</Text></div>{event.changed_by ? <CustomerIdentity user={event.changed_by} /> : <Text type="secondary">Hệ thống / chưa ghi nhận</Text>}{event.notes && <Paragraph style={{marginTop:4,marginBottom:0}}>{event.notes}</Paragraph>}</div>,
     }));
 
     return <AdminPage>
@@ -32,7 +33,7 @@ export default function OrderDistributionShowPage({ config }) {
                 <Card title="Thông tin phân phối" extra={<Tag color={item.status === 'completed'?'success':'processing'}>{currentLabel}</Tag>} className="mb-3">
                     <Space align="start" size="large" style={{width:'100%'}}>{item.snapshot_image_url && <Image src={item.snapshot_image_url} width={120} height={120} style={{objectFit:'cover',borderRadius:8}}/>}<div style={{flex:1}}><Title level={4}>{item.snapshot_order_code || 'Chưa ghi nhận mã đơn'}</Title><Paragraph>{item.snapshot_name || 'Tên sản phẩm chưa được ghi nhận trong snapshot'}</Paragraph><Tag>{item.custom_price !== null ? 'Đơn giá trị cao' : 'Đơn thường'}</Tag></div></Space>
                     <Descriptions bordered column={{xs:1,md:2}} className="mt-3">
-                        <Descriptions.Item label="Người nhận">{assignee} · User #{item.user_id}</Descriptions.Item>
+                        <Descriptions.Item label="Người nhận"><CustomerIdentity user={item.user} name={assignee} secondary={`User #${item.user_id}`} /></Descriptions.Item>
                         <Descriptions.Item label="Người phân phối">{assigner}</Descriptions.Item>
                         <Descriptions.Item label="Nguồn">{item.assignment_source === 'admin' ? 'Giao thủ công' : item.assignment_source === 'spin' ? 'Người dùng tự nhận' : 'Không có dữ liệu nguồn lịch sử'}</Descriptions.Item>
                         <Descriptions.Item label="Thời gian phân phối">{formatDate(item.created_at)}</Descriptions.Item>

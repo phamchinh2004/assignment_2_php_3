@@ -1,5 +1,6 @@
 import { formatAdminDateTime } from '../../../../shared/datetime';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { CustomerIdentity } from '../../../components/admin/OperationsUi';
 import { Alert, Button, Card, Segmented, Select, Skeleton, Table, Tag, Typography } from 'antd';
 import {
     BarChartOutlined,
@@ -393,7 +394,7 @@ export default function OverviewStatisticsPage({ config }) {
 
     const transactionColumns = [
         { title: 'Mã GD', dataIndex: 'id', width: 86, render: (value) => <Text strong>#{value}</Text> },
-        { title: 'Khách hàng', width: 150, render: (_, row) => <Text strong>{row.user?.full_name || '—'}</Text> },
+        { title: 'Khách hàng', width: 235, render: (_, row) => <CustomerIdentity user={row.user} /> },
         { title: 'Số điện thoại', width: 135, render: (_, row) => row.user?.phone || '—' },
         { title: 'Loại', dataIndex: 'type', width: 105, render: (value) => <Tag color={value === 'deposit' ? 'success' : 'warning'}>{value === 'deposit' ? 'Nạp tiền' : 'Rút tiền'}</Tag> },
         { title: 'Số tiền', dataIndex: 'value', width: 115, align: 'right', render: (value) => <Text strong>{money(value)}</Text> },
@@ -530,7 +531,7 @@ export default function OverviewStatisticsPage({ config }) {
                         columns={transactionColumns}
                         dataSource={payload?.recent_transactions || []}
                         pagination={false}
-                        scroll={{ x: 900 }}
+                        scroll={{ x: 1000 }}
                         locale={{ emptyText: 'Chưa có giao dịch trong khoảng thời gian này.' }}
                     />
                 </Card>

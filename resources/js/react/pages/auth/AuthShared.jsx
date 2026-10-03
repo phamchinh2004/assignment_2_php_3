@@ -26,7 +26,7 @@ export function ServerNotice({ flash, local }) {
 }
 
 export function SecurityAccessNotice() {
-    const [open, setOpen] = useState(true);
+    const [open, setOpen] = useState(false);
 
     return (
         <Modal

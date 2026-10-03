@@ -44,7 +44,7 @@ class OrderDistributionController extends Controller
         ]);
 
         $query = Frozen_order::query()->with([
-            'user:id,full_name,username',
+            'user:id,full_name,username,avatar',
             'assignedBy:id,full_name,username',
             'latestStatusOrder.changedBy:id,full_name,username',
         ]);
@@ -59,6 +59,7 @@ class OrderDistributionController extends Controller
 
         $frozenOrders->getCollection()->each(function (Frozen_order $item) {
             $item->setAttribute('snapshot_image_url', $item->snapshot_image ? Storage::url($item->snapshot_image) : null);
+            $item->user?->setAttribute('avatar_url', get_user_avatar($item->user));
         });
 
         $base = Frozen_order::query();
@@ -100,13 +101,15 @@ class OrderDistributionController extends Controller
     {
         $this->authorizeFrozenOrderAccess($frozenOrder);
         $frozenOrder->load([
-            'user:id,full_name,username',
+            'user:id,full_name,username,avatar',
             'assignedBy:id,full_name,username',
             'order:id,order_code',
             'statusOrders.status',
-            'statusOrders.changedBy:id,full_name,username',
+            'statusOrders.changedBy:id,full_name,username,avatar',
         ]);
         $transition = $workflow->describe($frozenOrder);
+        $frozenOrder->user?->setAttribute('avatar_url', get_user_avatar($frozenOrder->user));
+        $frozenOrder->statusOrders->each(fn ($event) => $event->changedBy?->setAttribute('avatar_url', get_user_avatar($event->changedBy)));
         $actor = Auth::user();
         $canAdvance = $this->authorization->can(
             $actor,

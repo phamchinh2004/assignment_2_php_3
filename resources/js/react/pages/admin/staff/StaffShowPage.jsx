@@ -3,6 +3,7 @@ import { Button, Descriptions, Pagination, Space, Table, Tag, Typography } from 
 import { EditOutlined, SafetyCertificateOutlined, TeamOutlined } from '@ant-design/icons';
 import { spaNavigate } from '../../../navigation';
 import { AdminDataCard, AdminMetricGrid, AdminPage, AdminPageHeader, AdminSectionCard } from '../../../components/admin/AdminUi';
+import { CustomerIdentity } from '../../../components/admin/OperationsUi';
 
 const { Text } = Typography;
 const routeFor = (template, token, id) => String(template || '').replace(token, encodeURIComponent(String(id)));
@@ -21,7 +22,7 @@ export default function StaffShowPage({ config }) {
     };
 
     const columns = [
-        { title:'Khách hàng', render:(_,user)=><div><Text strong>{user.full_name || 'Chưa đặt tên'}</Text><div><Text type="secondary">@{user.username}</Text></div></div> },
+        { title:'Khách hàng', render:(_,user)=><CustomerIdentity user={user} /> },
         { title:'Số điện thoại', dataIndex:'phone', render:(value)=>value || '—' },
         { title:'Cấp độ', render:(_,user)=><Tag>{user.rank?.name || 'Mặc định'}</Tag> },
         { title:'Số dư', dataIndex:'balance', render:(value)=><Text strong>{money(value)}</Text> },

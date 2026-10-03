@@ -2,6 +2,7 @@ import { Button, Descriptions, Image, Pagination, Space, Table, Tag, Typography 
 import { CrownOutlined, EditOutlined } from '@ant-design/icons';
 import { spaNavigate } from '../../../navigation';
 import { AdminDataCard, AdminMetricGrid, AdminPage, AdminPageHeader, AdminSectionCard } from '../../../components/admin/AdminUi';
+import { CustomerIdentity } from '../../../components/admin/OperationsUi';
 
 const { Text } = Typography;
 const money = (value) => Number(value || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -12,7 +13,7 @@ export default function RankShowPage({ config }) {
     const usersPage = config.users || {};
     const users = usersPage.data || [];
     const columns = [
-        { title: 'Khách hàng', render: (_, user) => <div><Text strong>{user.full_name || 'Chưa đặt tên'}</Text><div><Text type="secondary">@{user.username}</Text></div></div> },
+        { title: 'Khách hàng', render: (_, user) => <CustomerIdentity user={user} /> },
         { title: 'Điện thoại', dataIndex: 'phone', render: (value) => value || '—' },
         { title: 'Số dư', dataIndex: 'balance', render: (value) => <Text strong>${money(value)}</Text> },
         { title: 'Trạng thái', dataIndex: 'status', render: (value) => <Tag color={value === 'activated' ? 'success' : 'error'}>{value === 'activated' ? 'Hoạt động' : 'Bị khóa'}</Tag> },

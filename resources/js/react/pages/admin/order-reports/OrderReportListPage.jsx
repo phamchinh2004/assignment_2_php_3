@@ -2,6 +2,7 @@ import { Button, Pagination, Segmented, Space, Table, Tag, Typography } from 'an
 import { spaNavigate } from '../../../navigation';
 import { AdminDataCard, AdminPage, AdminPageHeader } from '../../../components/admin/AdminUi';
 import { formatAdminDateTime } from '../../../../shared/datetime';
+import { CustomerIdentity } from '../../../components/admin/OperationsUi';
 
 const { Text } = Typography;
 const routeFor = (template, id) => String(template || '').replace('__REPORT_ID__', encodeURIComponent(String(id)));
@@ -32,8 +33,8 @@ export default function OrderReportListPage({ config }) {
     const columns = [
         { title: 'ID', dataIndex: 'id', width: 80, render: (id) => `#${id}` },
         { title: 'Mã đơn', dataIndex: 'order_code', render: (value) => <Text strong>{value || 'N/A'}</Text> },
-        { title: 'Người đặt', render: (_, row) => row.frozen_order?.user?.full_name || row.frozen_order?.user?.username || `#${row.frozen_order?.user?.id || 'N/A'}` },
-        { title: 'Người báo cáo', render: (_, row) => row.reporter?.full_name || row.reporter?.username || `#${row.reported_by}` },
+        { title: 'Người đặt', render: (_, row) => <CustomerIdentity user={row.frozen_order?.user} /> },
+        { title: 'Người báo cáo', render: (_, row) => <CustomerIdentity user={row.reporter} name={row.reporter?.full_name || row.reporter?.username || `#${row.reported_by}`} /> },
         { title: 'Lý do', dataIndex: 'reason', ellipsis: true, render: (value) => value || '—' },
         {
             title: 'Trạng thái',

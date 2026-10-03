@@ -40,6 +40,9 @@ class TransactionHistoryController extends Controller
         );
         $query->whereHas('user', fn ($q) => $q->visibleCustomersTo($actor, $canViewAll));
         $list_withdraw_transactions = $query->orderByDesc("wallet_balance_histories.id")->get();
+        $list_withdraw_transactions->each(function (Wallet_balance_history $transaction) {
+            $transaction->user?->setAttribute('avatar_url', get_user_avatar($transaction->user));
+        });
         return $this->reactPage->admin('admin.transactions.withdraw', [
             'transactions' => $list_withdraw_transactions,
             'routes' => [
@@ -137,6 +140,9 @@ class TransactionHistoryController extends Controller
         );
         $query->whereHas('user', fn ($q) => $q->visibleCustomersTo($actor, $canViewAll));
         $list_deposit_transactions = $query->orderByDesc('id')->get();
+        $list_deposit_transactions->each(function (Wallet_balance_history $transaction) {
+            $transaction->user?->setAttribute('avatar_url', get_user_avatar($transaction->user));
+        });
         return $this->reactPage->admin('admin.transactions.deposit', [
             'transactions' => $list_deposit_transactions,
             'routes' => [

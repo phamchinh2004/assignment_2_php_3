@@ -391,6 +391,7 @@ class StaffController extends Controller
             ->with('rank')
             ->latest()
             ->paginate(10);
+        $referrals->getCollection()->each(fn (User $customer) => $customer->setAttribute('avatar_url', get_user_avatar($customer)));
 
         $staff->setAttribute('is_online', $staff->isOnline());
         $staff->setAttribute('last_seen_text', $staff->last_seen_text);

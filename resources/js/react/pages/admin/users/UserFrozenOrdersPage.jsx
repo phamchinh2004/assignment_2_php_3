@@ -3,6 +3,7 @@ import { Button, Checkbox, Image, Input, InputNumber, Modal, Space, Table, Tag, 
 import { DeleteOutlined, EditOutlined, LockOutlined, PictureOutlined, SaveOutlined } from '@ant-design/icons';
 import LaravelForm from '../../../components/LaravelForm';
 import { AdminDataCard, AdminMetricGrid, AdminPage, AdminPageHeader } from '../../../components/admin/AdminUi';
+import { CustomerIdentity } from '../../../components/admin/OperationsUi';
 
 const { Text } = Typography;
 const ORDER_PAGE_SIZE = 20;
@@ -282,6 +283,7 @@ export default function UserFrozenOrdersPage({ config }) {
                 description={`${user.full_name || user.username} · @${user.username} · ID ${user.id}. Thiết lập giá, hoa hồng và thời gian xử lý riêng cho các đơn được chỉ định.`}
                 backHref={config.routes.index}
                 backLabel="Danh sách người dùng"
+                meta={<CustomerIdentity user={user} />}
             />
 
             <AdminMetricGrid min={3} items={[

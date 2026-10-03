@@ -4,6 +4,7 @@ import { Alert, Button, Card, Col, Row, Select, Space, Statistic, Table, Tag, Ty
 import { ReloadOutlined } from '@ant-design/icons';
 import { requestJson } from '../../../lib/http';
 import { AdminDatePicker } from '../../../components/admin/AdminDatePicker';
+import { CustomerIdentity } from '../../../components/admin/OperationsUi';
 import StatisticsChart from './StatisticsChart';
 import { invalidDateRange, money, number, startOfMonth, today, withQuery } from './statistics';
 
@@ -45,11 +46,10 @@ export default function CustomerRevenuePage({ config }) {
     useEffect(() => { loadData(); }, [loadData]);
 
     const revenueChart = useMemo(() => ({ type: 'line', data: { labels: data.chart.labels || [], datasets: [{ label: 'Doanh thu nạp', data: data.chart.values || [], borderColor: '#4f46e5', backgroundColor: 'rgba(79,70,229,.12)', fill: true, tension: .3 }] }, options: { responsive: true, maintainAspectRatio: false } }), [data.chart]);
-    const topChart = useMemo(() => ({ type: 'bar', data: { labels: data.top.labels || [], datasets: [{ label: 'Doanh thu', data: data.top.values || [], backgroundColor: '#0ea5e9', borderRadius: 6 }] }, options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false } } } }), [data.top]);
-    const distributionChart = useMemo(() => ({ type: 'doughnut', data: { labels: data.distribution.labels || [], datasets: [{ data: data.distribution.values || [], backgroundColor: ['#4f46e5', '#0ea5e9', '#16a34a', '#f59e0b', '#ef4444', '#64748b'] }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '62%' } }), [data.distribution]);
+    const distributionChart = useMemo(() => ({ type: 'doughnut', data: { labels: data.distribution.labels || [], datasets: [{ data: data.distribution.values || [], backgroundColor: ['#4f46e5', '#0ea5e9', '#16a34a', '#f59e0b', '#ef4444', '#64748b'] }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '62%', plugins: { legend: { display: false } } } }), [data.distribution]);
 
     const columns = [
-        { title: 'Khách hàng', dataIndex: 'full_name', render: (value) => <Text strong>{value || '—'}</Text> },
+        { title: 'Khách hàng', render: (_, row) => <CustomerIdentity user={row} /> },
         { title: 'Số điện thoại', dataIndex: 'phone' },
         { title: 'Giao dịch', dataIndex: 'transaction_count', align: 'right', render: number },
         { title: 'Doanh thu', dataIndex: 'total_revenue', align: 'right', render: money },
@@ -63,8 +63,31 @@ export default function CustomerRevenuePage({ config }) {
             <Row justify="space-between" align="middle" gutter={[16, 16]}><Col><Title level={2} style={{ margin: 0 }}>Doanh thu từ khách hàng</Title><Text type="secondary">Phân tích dòng tiền nạp, khách hàng nổi bật và phân bổ doanh số.</Text></Col><Col><Button icon={<ReloadOutlined />} loading={loading} onClick={loadData}>Làm mới</Button></Col></Row>
             {error && <Alert type="error" showIcon message={error} />}
             <Card><Row gutter={[12, 12]} align="bottom"><Col xs={24} md={6}><Text strong>Chế độ biểu đồ</Text><Select style={{ width: '100%' }} value={type} onChange={setType} options={[{ value: 'daily', label: 'Theo ngày' }, { value: 'monthly', label: 'Theo tháng' }, { value: 'yearly', label: 'Theo năm' }]} /></Col><Col xs={12} md={6}><Text strong>Từ ngày</Text><AdminDatePicker value={startDate} onChange={setStartDate} /></Col><Col xs={12} md={6}><Text strong>Đến ngày</Text><AdminDatePicker value={endDate} onChange={setEndDate} /></Col><Col xs={24} md={6}><Button block type="primary" loading={loading} onClick={loadData}>Áp dụng</Button></Col></Row></Card>
-            <Row gutter={[16, 16]}><Col xs={24} md={12} xl={6}><Card loading={loading}><Statistic title="Tổng doanh thu" value={overview.total_revenue || 0} formatter={(value) => money(value)} /><Tag color={Number(overview.revenue_growth) >= 0 ? 'success' : 'error'}>{Number(overview.revenue_growth || 0)}%</Tag></Card></Col><Col xs={24} md={12} xl={6}><Card loading={loading}><Statistic title="Giao dịch" value={overview.total_transactions || 0} formatter={number} /></Card></Col><Col xs={24} md={12} xl={6}><Card loading={loading}><Statistic title="Khách phát sinh" value={overview.total_customers || 0} formatter={number} /></Card></Col><Col xs={24} md={12} xl={6}><Card loading={loading}><Statistic title="TB giao dịch" value={overview.avg_transaction || 0} formatter={(value) => money(value)} /><Text type="secondary">Top: {overview.top_customer_name || 'Chưa có'} · {money(overview.top_customer_amount)}</Text></Card></Col></Row>
-            <Row gutter={[16, 16]}><Col xs={24} xl={14}><Card title="Xu hướng doanh thu"><StatisticsChart config={revenueChart} height={320} /></Card></Col><Col xs={24} xl={10}><Card title="Phân bổ doanh thu"><StatisticsChart config={distributionChart} height={320} /></Card></Col><Col xs={24} xl={10}><Card title="Top khách hàng"><StatisticsChart config={topChart} height={360} /></Card></Col><Col xs={24} xl={14}><Card title="Chi tiết khách hàng"><Table rowKey={(row) => `${row.phone}-${row.full_name}`} loading={loading} columns={columns} dataSource={data.details} pagination={{ pageSize: 10 }} scroll={{ x: 800 }} /></Card></Col></Row>
+            <Row gutter={[16, 16]}><Col xs={24} md={12} xl={6}><Card loading={loading}><Statistic title="Tổng doanh thu" value={overview.total_revenue || 0} formatter={(value) => money(value)} /><Tag color={Number(overview.revenue_growth) >= 0 ? 'success' : 'error'}>{Number(overview.revenue_growth || 0)}%</Tag></Card></Col><Col xs={24} md={12} xl={6}><Card loading={loading}><Statistic title="Giao dịch" value={overview.total_transactions || 0} formatter={number} /></Card></Col><Col xs={24} md={12} xl={6}><Card loading={loading}><Statistic title="Khách phát sinh" value={overview.total_customers || 0} formatter={number} /></Card></Col><Col xs={24} md={12} xl={6}><Card loading={loading}><Statistic title="TB giao dịch" value={overview.avg_transaction || 0} formatter={(value) => money(value)} />{overview.top_customer ? <div className="customer-revenue-top"><CustomerIdentity user={overview.top_customer} meta={`Top · ${money(overview.top_customer_amount)}`} /></div> : <Text type="secondary">Top: Chưa có</Text>}</Card></Col></Row>
+            <Row gutter={[16, 16]}>
+                <Col xs={24} xl={14}><Card title="Xu hướng doanh thu"><StatisticsChart config={revenueChart} height={320} /></Card></Col>
+                <Col xs={24} xl={10}><Card title="Phân bổ doanh thu">
+                    <StatisticsChart config={distributionChart} height={260} />
+                    <CustomerRevenueRanking customers={data.distribution.customers || []} distribution={data.distribution} />
+                </Card></Col>
+                <Col xs={24} xl={10}><Card title="Top khách hàng" loading={loading}><CustomerRevenueRanking customers={data.top.customers || []} ranked /></Card></Col>
+                <Col xs={24} xl={14}><Card title="Chi tiết khách hàng"><Table rowKey="user_id" loading={loading} columns={columns} dataSource={data.details} pagination={{ pageSize: 10 }} scroll={{ x: 800 }} /></Card></Col>
+            </Row>
         </Space>
     );
+}
+
+export function CustomerRevenueRanking({ customers, ranked = false, distribution }) {
+    const colors = ['#4f46e5', '#0ea5e9', '#16a34a', '#f59e0b', '#ef4444', '#64748b'];
+    return <div className="customer-revenue-ranking">
+        {customers.map((customer, index) => <div className="customer-revenue-ranking__row" key={customer.id}>
+            {ranked ? <span className="customer-revenue-ranking__position">{index + 1}</span> : <i className="customer-revenue-ranking__color" style={{ background: colors[index] }} aria-hidden="true" />}
+            <CustomerIdentity user={customer} />
+            <strong className="customer-revenue-ranking__amount">{money(customer.total_revenue)}</strong>
+        </div>)}
+        {distribution?.labels?.length > customers.length && <div className="customer-revenue-ranking__row">
+            <i className="customer-revenue-ranking__color" style={{ background: colors[5] }} aria-hidden="true" /><span>Khác</span><strong className="customer-revenue-ranking__amount">{money(distribution.values?.[customers.length])}</strong>
+        </div>}
+        {!customers.length && !distribution?.labels?.length && <Text type="secondary">Chưa có dữ liệu khách hàng trong kỳ.</Text>}
+    </div>;
 }

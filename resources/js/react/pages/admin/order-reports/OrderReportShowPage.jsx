@@ -1,6 +1,7 @@
 import { Alert, Button, Card, Col, Descriptions, Image, Input, Row, Space, Tag, Timeline, Typography } from 'antd';
 import LaravelForm from '../../../components/LaravelForm';
 import { AdminPage, AdminPageHeader } from '../../../components/admin/AdminUi';
+import { CustomerIdentity } from '../../../components/admin/OperationsUi';
 import { formatAdminDateTime } from '../../../../shared/datetime';
 
 const { Paragraph, Text, Title } = Typography;
@@ -39,7 +40,7 @@ export default function OrderReportShowPage({ config }) {
         const itemStatus = entry.status || {};
         const statusOrder = entry.statusOrder || entry.status_order;
         const reached = Boolean(entry.isReached ?? entry.is_reached);
-        return { key: `${itemStatus.id || index}`, color: reached ? (itemStatus.color || 'blue') : 'gray', children: <div><Text strong={reached}>{itemStatus.display_name || itemStatus.name || 'N/A'}</Text>{statusOrder && <div><Text type="secondary">{dateTime(statusOrder.created_at)}{statusOrder.changed_by ? ` · ${statusOrder.changed_by.full_name || statusOrder.changed_by.username}` : ''}</Text></div>}</div> };
+        return { key: `${itemStatus.id || index}`, color: reached ? (itemStatus.color || 'blue') : 'gray', children: <div><Text strong={reached}>{itemStatus.display_name || itemStatus.name || 'N/A'}</Text>{statusOrder && <div><Text type="secondary">{dateTime(statusOrder.created_at)}</Text>{statusOrder.changed_by && <CustomerIdentity user={statusOrder.changed_by} />}</div>}</div> };
     });
 
     if (!frozen) {
@@ -56,8 +57,8 @@ export default function OrderReportShowPage({ config }) {
                         <Descriptions bordered column={{ xs: 1, md: 2 }}>
                             <Descriptions.Item label="ID báo cáo">#{report.id}</Descriptions.Item>
                             <Descriptions.Item label="Mã đơn">{display.order_code || 'N/A'}</Descriptions.Item>
-                            <Descriptions.Item label="Người báo cáo">{reporter.full_name || reporter.username || `#${report.reported_by}`}</Descriptions.Item>
-                            <Descriptions.Item label="Người đặt hàng">{owner.full_name || owner.username || `#${owner.id || 'N/A'}`}</Descriptions.Item>
+                            <Descriptions.Item label="Người báo cáo"><CustomerIdentity user={reporter} name={reporter.full_name || reporter.username || `#${report.reported_by}`} /></Descriptions.Item>
+                            <Descriptions.Item label="Người đặt hàng"><CustomerIdentity user={owner} /></Descriptions.Item>
                             <Descriptions.Item label="Thời gian báo cáo">{dateTime(report.created_at)}</Descriptions.Item>
                             <Descriptions.Item label="Người xử lý">{report.resolved_at ? (resolver.full_name || resolver.username || `#${report.resolved_by}`) : '—'}</Descriptions.Item>
                             <Descriptions.Item label="Lý do" span={2}>{report.reason || '—'}</Descriptions.Item>
@@ -77,7 +78,7 @@ export default function OrderReportShowPage({ config }) {
                                     <Descriptions.Item label={`Hoa hồng (${display.commission_percentage || 0}%)`}>{money(display.commission_amount, 5)}</Descriptions.Item>
                                     {Number(display.penalty_amount || 0) > 0 && <Descriptions.Item label="Tiền phạt">-{money(display.penalty_amount)}</Descriptions.Item>}
                                     <Descriptions.Item label="Nền tảng">{display.partner_name || '—'}</Descriptions.Item>
-                                    <Descriptions.Item label="Khách hàng">{display.customer_name || '—'}</Descriptions.Item>
+                                    <Descriptions.Item label="Khách hàng"><CustomerIdentity name={display.customer_name || '—'} secondary="" /></Descriptions.Item>
                                     <Descriptions.Item label="SĐT">{display.customer_phone || '—'}</Descriptions.Item>
                                     <Descriptions.Item label="Địa chỉ" span={2}>{display.customer_address || '—'}</Descriptions.Item>
                                     <Descriptions.Item label="Thanh toán">{display.payment_method || '—'} {display.payment_method && <Tag color={display.is_paid ? 'success' : 'warning'}>{display.is_paid ? 'Đã thanh toán' : 'Chưa thanh toán'}</Tag>}</Descriptions.Item>

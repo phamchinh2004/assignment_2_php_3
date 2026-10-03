@@ -24,6 +24,7 @@ import {
     UnlockOutlined,
 } from '@ant-design/icons';
 import { AdminPage } from '../../../components/admin/AdminUi';
+import { CustomerIdentity } from '../../../components/admin/OperationsUi';
 import { formatAdminDateTime } from '../../../../shared/datetime';
 import '../../../../../css/admin/order/index.css';
 
@@ -245,7 +246,7 @@ export default function OrderListPage({ config }) {
 
                 return (
                     <Space direction="vertical" size={3}>
-                        <Text strong>{order.customer_name || '—'}</Text>
+                        <CustomerIdentity name={order.customer_name || '—'} secondary="" />
                         {order.customer_phone && <Text copyable={{ text: order.customer_phone }}>{order.customer_phone}</Text>}
                         {order.customer_address && (
                             <Text type="secondary" ellipsis={{ tooltip: order.customer_address }} className="order-react-address">

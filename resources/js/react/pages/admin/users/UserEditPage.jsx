@@ -4,6 +4,7 @@ import { Button, Checkbox, Col, Descriptions, Input, InputNumber, Modal, Row, Se
 import { SaveOutlined, UserOutlined } from '@ant-design/icons';
 import LaravelForm, { fieldError, oldValue } from '../../../components/LaravelForm';
 import { AdminFormActions, AdminFormSection, AdminPage, AdminPageHeader, AdminSectionCard } from '../../../components/admin/AdminUi';
+import { CustomerIdentity } from '../../../components/admin/OperationsUi';
 
 const { Text } = Typography;
 
@@ -82,7 +83,7 @@ export default function UserEditPage({ config }) {
                 description={`@${user.username} · Chỉ hiển thị các nhóm nghiệp vụ mà tài khoản quản trị hiện tại được phép thay đổi.`}
                 backHref={config.routes.index}
                 backLabel="Danh sách người dùng"
-                meta={<Tag color={user.is_online ? 'success' : 'default'}>{user.is_online ? 'Online' : 'Offline'}</Tag>}
+                meta={<><CustomerIdentity user={user} /><Tag color={user.is_online ? 'success' : 'default'}>{user.is_online ? 'Online' : 'Offline'}</Tag></>}
             />
 
             <Row gutter={[20, 20]}>

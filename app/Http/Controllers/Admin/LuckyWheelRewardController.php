@@ -48,6 +48,9 @@ class LuckyWheelRewardController extends Controller
         }
 
         $rewards = $query->latest('id')->paginate(20)->withQueryString();
+        $rewards->getCollection()->each(function (LuckyWheelSpin $reward) {
+            $reward->user?->setAttribute('avatar_url', get_user_avatar($reward->user));
+        });
 
         $baseQuery = LuckyWheelSpin::query()->where('reward_type', LuckyWheelSpin::REWARD_CASH);
         $this->scopeToVisibleCustomers($baseQuery, $request->user());

@@ -44,6 +44,7 @@ class AdminTeamScopeModulesTest extends TestCase
             $table->id();
             $table->string('full_name');
             $table->string('username')->unique();
+            $table->string('avatar')->nullable();
             $table->string('role');
             $table->string('status')->default('activated');
             $table->unsignedBigInteger('referrer_id')->nullable();
@@ -125,6 +126,7 @@ class AdminTeamScopeModulesTest extends TestCase
         $directCustomer = $this->user(User::ROLE_MEMBER, $adminA->id);
         $staffCustomer = $this->user(User::ROLE_MEMBER, $staffA->id);
         $otherCustomer = $this->user(User::ROLE_MEMBER, $staffB->id);
+        $directCustomer->forceFill(['avatar' => 'uploads/avatars/reward-customer.jpg'])->save();
 
         foreach ([$directCustomer, $staffCustomer, $otherCustomer] as $customer) {
             LuckyWheelSpin::query()->create([
@@ -145,6 +147,9 @@ class AdminTeamScopeModulesTest extends TestCase
             $adminProps['rewards']->getCollection()->pluck('user_id')->all()
         );
         $this->assertSame(2, $adminProps['counts']['total']);
+        $serializedRewards = collect($adminProps['rewards']->toArray()['data'])->keyBy('user_id');
+        $this->assertSame(asset('storage/uploads/avatars/reward-customer.jpg'), $serializedRewards[$directCustomer->id]['user']['avatar_url']);
+        $this->assertSame(asset('images/default-avatar-gray.svg'), $serializedRewards[$staffCustomer->id]['user']['avatar_url']);
 
         $otherSpin = LuckyWheelSpin::query()->where('user_id', $otherCustomer->id)->firstOrFail();
         try {
@@ -164,6 +169,7 @@ class AdminTeamScopeModulesTest extends TestCase
     {
         [$owner, $adminA, , $staffA, $staffB] = $this->managementTree();
         $directCustomer = $this->user(User::ROLE_MEMBER, $adminA->id);
+        $directCustomer->forceFill(['avatar' => 'uploads/avatars/report-customer.jpg'])->save();
         $staffCustomer = $this->user(User::ROLE_MEMBER, $staffA->id);
         $otherCustomer = $this->user(User::ROLE_MEMBER, $staffB->id);
 
@@ -177,6 +183,10 @@ class AdminTeamScopeModulesTest extends TestCase
             $ownReports->pluck('id')->all(),
             $adminProps['reports']->getCollection()->pluck('id')->all()
         );
+        $rows = collect($adminProps['reports']->toArray()['data'])->keyBy('reported_by');
+        $this->assertSame(asset('storage/uploads/avatars/report-customer.jpg'), $rows[$directCustomer->id]['reporter']['avatar_url']);
+        $this->assertSame(asset('storage/uploads/avatars/report-customer.jpg'), $rows[$directCustomer->id]['frozen_order']['user']['avatar_url']);
+        $this->assertSame(asset('images/default-avatar-gray.svg'), $rows[$staffCustomer->id]['reporter']['avatar_url']);
 
         try {
             app(OrderReportController::class)->show($otherReport);

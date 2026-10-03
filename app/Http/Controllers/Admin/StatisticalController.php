@@ -281,7 +281,7 @@ class StatisticalController extends Controller
      */
     private function getRecentTransactions($startDate, $endDate)
     {
-        return $this->scopedWalletHistories()->with('user:id,full_name,phone')
+        return $this->scopedWalletHistories()->with('user:id,full_name,username,phone,avatar')
             ->whereHas('user', function ($q) {
                 $q->where('clone_account', 0);
             })
@@ -296,6 +296,8 @@ class StatisticalController extends Controller
                     'user' => [
                         'id' => $transaction->user->id,
                         'full_name' => $transaction->user->full_name,
+                        'username' => $transaction->user->username,
+                        'avatar_url' => get_user_avatar($transaction->user),
                         'phone' => $transaction->user->phone
                     ],
                     'type' => $transaction->type,
@@ -328,6 +330,8 @@ class StatisticalController extends Controller
                 'users.id',
                 'users.full_name',
                 'users.phone',
+                'users.username',
+                'users.avatar',
                 DB::raw('SUM(CASE WHEN wbh.type = "deposit" AND wbh.status = "completed" THEN wbh.value ELSE 0 END) as total_deposit'),
                 DB::raw('SUM(CASE WHEN wbh.type = "withdraw" AND wbh.status = "completed" THEN wbh.value ELSE 0 END) as total_withdraw'),
                 DB::raw('COUNT(wbh.id) as total_transactions')
@@ -338,10 +342,12 @@ class StatisticalController extends Controller
                         ->where('wbh.transaction_type', 'normal');
                 })
                 ->where('users.clone_account', 0)
-                ->groupBy('users.id', 'users.full_name', 'users.phone')
+                ->groupBy('users.id', 'users.full_name', 'users.phone', 'users.username', 'users.avatar')
                 ->having('total_transactions', '>', 0)
                 ->orderBy('total_deposit', 'desc')
                 ->paginate(20);
+
+            $userStats->getCollection()->each(fn ($user) => $user->setAttribute('avatar_url', get_user_avatar($user)));
 
             return response()->json([
                 'success' => true,
@@ -717,11 +723,12 @@ class StatisticalController extends Controller
                 ->where('status', 'completed')
                 ->where('transaction_type', 'normal')
                 ->whereBetween('created_at', [$dateFrom, $dateTo])
-                ->with('user:id,full_name,email')
+                ->with('user:id,full_name,username,email,avatar')
                 ->orderBy('created_at', 'desc')
                 ->get();
 
             // Tính toán thống kê
+            $transactions->each(fn ($transaction) => $transaction->user?->setAttribute('avatar_url', get_user_avatar($transaction->user)));
             $statistics = [
                 'invited_users' => $transactions->pluck('user_id')->unique()->count(),
                 'total_transactions' => $transactions->count(),
@@ -887,8 +894,8 @@ class StatisticalController extends Controller
                 ->where('wallet_balance_histories.status', 'completed')
                 ->where('wallet_balance_histories.transaction_type', 'normal')
                 ->whereBetween('wallet_balance_histories.created_at', [$startDateObj, $endDateObj])
-                ->select('users.full_name', DB::raw('SUM(wallet_balance_histories.value) as total_spent'))
-                ->groupBy('users.id', 'users.full_name')
+                ->select('users.id as user_id', 'users.full_name', 'users.username', 'users.avatar', DB::raw('SUM(wallet_balance_histories.value) as total_spent'))
+                ->groupBy('users.id', 'users.full_name', 'users.username', 'users.avatar')
                 ->orderBy('total_spent', 'desc')
                 ->first();
 
@@ -902,6 +909,7 @@ class StatisticalController extends Controller
                     'customers_growth' => $customersGrowth,
                     'avg_transaction' => (float) ($revenueData->avg_transaction ?? 0),
                     'top_customer_name' => $topCustomer ? $topCustomer->full_name : 'Chưa có',
+                    'top_customer' => $topCustomer ? $this->revenueCustomerIdentity($topCustomer) : null,
                     'top_customer_amount' => $topCustomer ? (float) $topCustomer->total_spent : 0
                 ]
             ]);
@@ -983,10 +991,13 @@ class StatisticalController extends Controller
                     Carbon::parse($endDate)->endOfDay()
                 ])
                 ->select(
+                    'users.id as user_id',
                     'users.full_name',
+                    'users.username',
+                    'users.avatar',
                     DB::raw('SUM(wallet_balance_histories.value) as total_revenue')
                 )
-                ->groupBy('users.id', 'users.full_name')
+                ->groupBy('users.id', 'users.full_name', 'users.username', 'users.avatar')
                 ->orderBy('total_revenue', 'desc')
                 ->limit($limit)
                 ->get();
@@ -998,7 +1009,11 @@ class StatisticalController extends Controller
                 'success' => true,
                 'data' => [
                     'labels' => $labels,
-                    'values' => $values
+                    'values' => $values,
+                    'customers' => $topCustomers->map(fn ($customer) => [
+                        ...$this->revenueCustomerIdentity($customer),
+                        'total_revenue' => (float) $customer->total_revenue,
+                    ]),
                 ]
             ]);
         } catch (\Exception $e) {
@@ -1029,10 +1044,13 @@ class StatisticalController extends Controller
                     Carbon::parse($endDate)->endOfDay()
                 ])
                 ->select(
+                    'users.id as user_id',
                     'users.full_name',
+                    'users.username',
+                    'users.avatar',
                     DB::raw('SUM(wallet_balance_histories.value) as total_revenue')
                 )
-                ->groupBy('users.id', 'users.full_name')
+                ->groupBy('users.id', 'users.full_name', 'users.username', 'users.avatar')
                 ->orderBy('total_revenue', 'desc')
                 ->limit(5)
                 ->get();
@@ -1065,7 +1083,11 @@ class StatisticalController extends Controller
                 'success' => true,
                 'data' => [
                     'labels' => $labels,
-                    'values' => $values
+                    'values' => $values,
+                    'customers' => $topCustomers->map(fn ($customer) => [
+                        ...$this->revenueCustomerIdentity($customer),
+                        'total_revenue' => (float) $customer->total_revenue,
+                    ]),
                 ]
             ]);
         } catch (\Exception $e) {
@@ -1095,16 +1117,20 @@ class StatisticalController extends Controller
                     Carbon::parse($endDate)->endOfDay()
                 ])
                 ->select(
+                    'users.id as user_id',
                     'users.full_name',
+                    'users.username',
+                    'users.avatar',
                     'users.phone',
                     DB::raw('COUNT(wallet_balance_histories.id) as transaction_count'),
                     DB::raw('SUM(wallet_balance_histories.value) as total_revenue'),
                     DB::raw('MAX(wallet_balance_histories.created_at) as last_transaction')
                 )
-                ->groupBy('users.id', 'users.full_name', 'users.phone')
+                ->groupBy('users.id', 'users.full_name', 'users.username', 'users.avatar', 'users.phone')
                 ->orderBy('total_revenue', 'desc')
                 ->get();
 
+            $customerRevenue->each(fn ($customer) => $customer->setAttribute('avatar_url', get_user_avatar($customer)));
             return response()->json([
                 'success' => true,
                 'data' => $customerRevenue
@@ -1679,6 +1705,16 @@ class StatisticalController extends Controller
         return $result;
     }
 
+    private function revenueCustomerIdentity($customer): array
+    {
+        return [
+            'id' => (int) $customer->user_id,
+            'full_name' => $customer->full_name,
+            'username' => $customer->username,
+            'avatar_url' => get_user_avatar($customer),
+        ];
+    }
+
     /**
      * API lấy danh sách giao dịch chi tiết
      */
@@ -1690,7 +1726,7 @@ class StatisticalController extends Controller
         $status = $request->get('status'); // processing, completed, cancelled
 
         $query = $this->attributedTransactions((int) $userId)
-            ->with(['user:id,full_name,username'])
+            ->with(['user:id,full_name,username,avatar'])
             ->where('transaction_type', 'normal')
             ->orderBy('created_at', 'desc');
 
@@ -1703,6 +1739,7 @@ class StatisticalController extends Controller
         }
 
         $transactions = $query->paginate($perPage);
+        $transactions->getCollection()->each(fn ($transaction) => $transaction->user?->setAttribute('avatar_url', get_user_avatar($transaction->user)));
         return response()->json([
             'success' => true,
             'data' => $transactions

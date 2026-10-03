@@ -21,6 +21,7 @@ import {
 import LaravelForm from '../../../components/LaravelForm';
 import { spaNavigate } from '../../../navigation';
 import { AdminDataCard, AdminMetricGrid, AdminPage, AdminPageHeader } from '../../../components/admin/AdminUi';
+import { OperationsIdentity } from '../../../components/admin/OperationsUi';
 
 const { Text } = Typography;
 
@@ -63,16 +64,14 @@ export default function LuckyWheelRewardsPage({ config }) {
             render: (_, reward) => {
                 const user = reward.user;
                 const displayName = user?.full_name || user?.username || `Người dùng #${reward.user_id}`;
-                const content = (
-                    <Space direction="vertical" size={0}>
-                        <Text strong>{displayName}</Text>
-                        <Text type="secondary">#{reward.user_id}</Text>
-                    </Space>
-                );
-
-                return user && permissions.viewCustomerDetail
-                    ? <a href={replaceId(config.routes.customerShow, '__USER_ID__', reward.user_id)}>{content}</a>
-                    : content;
+                return <OperationsIdentity
+                    name={displayName}
+                    secondary={`#${reward.user_id}`}
+                    avatarUrl={user?.avatar_url}
+                    href={user && permissions.viewCustomerDetail
+                        ? replaceId(config.routes.customerShow, '__USER_ID__', reward.user_id)
+                        : undefined}
+                />;
             },
         },
         {

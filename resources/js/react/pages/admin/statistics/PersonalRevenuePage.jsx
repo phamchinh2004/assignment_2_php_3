@@ -4,6 +4,7 @@ import { Alert, Button, Card, Col, Row, Segmented, Space, Statistic, Table, Tag,
 import { ReloadOutlined } from '@ant-design/icons';
 import { requestJson } from '../../../lib/http';
 import StatisticsChart from './StatisticsChart';
+import { CustomerIdentity } from '../../../components/admin/OperationsUi';
 import { money, number, statusTag, withQuery } from './statistics';
 
 const { Text, Title } = Typography;
@@ -40,7 +41,7 @@ export default function PersonalRevenuePage({ config }) {
 
     const columns = [
         { title: 'Mã GD', dataIndex: 'id', render: (value) => `#${value}` },
-        { title: 'Khách hàng', render: (_, row) => <div><Text strong>{row.user?.full_name || '—'}</Text><div><Text type="secondary">@{row.user?.username || '—'}</Text></div></div> },
+        { title: 'Khách hàng', render: (_, row) => <CustomerIdentity user={row.user} /> },
         { title: 'Loại', dataIndex: 'type', render: (value) => <Tag color={value === 'deposit' ? 'success' : 'warning'}>{value === 'deposit' ? 'Nạp tiền' : 'Rút tiền'}</Tag> },
         { title: 'Số tiền', dataIndex: 'value', align: 'right', render: money },
         { title: 'Trạng thái', dataIndex: 'status', render: (value) => { const item = statusTag(value); return <Tag color={item.color}>{item.label}</Tag>; } },

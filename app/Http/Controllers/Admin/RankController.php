@@ -72,6 +72,7 @@ class RankController extends Controller
     {
         $rank->loadCount('orders');
         $users = \App\Models\User::where('rank_id', $rank->id)->latest()->paginate(10);
+        $users->getCollection()->each(fn ($customer) => $customer->setAttribute('avatar_url', get_user_avatar($customer)));
         $user = auth()->user();
 
         return $this->reactPage->admin('admin.ranks.show', [

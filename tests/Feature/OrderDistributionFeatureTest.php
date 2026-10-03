@@ -29,6 +29,7 @@ class OrderDistributionFeatureTest extends TestCase
             $table->id();
             $table->string('full_name')->nullable();
             $table->string('username')->nullable();
+            $table->string('avatar')->nullable();
             $table->string('role');
             $table->string('status');
             $table->foreignId('referrer_id')->nullable();
@@ -161,6 +162,30 @@ class OrderDistributionFeatureTest extends TestCase
         $view = app(OrderDistributionController::class)->index($request);
         $props = $view->getData()['reactPageBootstrap']['props'];
         $this->assertSame([$match->id], $props['frozenOrders']->pluck('id')->all());
+    }
+
+    public function test_distribution_list_serializes_recipient_avatar_urls(): void
+    {
+        $this->actingAs($this->user(User::ROLE_OWNER));
+        $withAvatar = $this->user(User::ROLE_MEMBER);
+        $withAvatar->forceFill(['avatar' => 'uploads/avatars/recipient.jpg'])->save();
+        $withoutAvatar = $this->user(User::ROLE_MEMBER);
+        $distribution = $this->frozenOrder($withAvatar);
+        DB::table('status_orders')->insert([
+            'frozen_order_id' => $distribution->id,
+            'status_id' => DB::table('statuses')->where('name', 'confirmed')->value('id'),
+            'changed_by' => $withAvatar->id, 'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $this->frozenOrder($withoutAvatar);
+
+        $view = app(OrderDistributionController::class)->index(Request::create('/admin/order-distributions', 'GET'));
+        $props = $view->getData()['reactPageBootstrap']['props'];
+        $rows = collect($props['frozenOrders']->toArray()['data'])->keyBy('user_id');
+        $this->assertSame(asset('storage/uploads/avatars/recipient.jpg'), $rows[$withAvatar->id]['user']['avatar_url']);
+        $this->assertSame(asset('images/default-avatar-gray.svg'), $rows[$withoutAvatar->id]['user']['avatar_url']);
+        $detail = app(OrderDistributionController::class)->show($distribution, app(AdminOrderTransitionService::class))->getData()['reactPageBootstrap']['props'];
+        $this->assertSame(asset('storage/uploads/avatars/recipient.jpg'), $detail['frozenOrder']['user']['avatar_url']);
+        $this->assertSame(asset('storage/uploads/avatars/recipient.jpg'), $detail['frozenOrder']->toArray()['status_orders'][0]['changed_by']['avatar_url']);
     }
 
     public function test_empty_filters_are_serialized_as_an_object_for_the_react_form(): void

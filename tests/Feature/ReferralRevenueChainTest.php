@@ -36,6 +36,7 @@ class ReferralRevenueChainTest extends TestCase
             $table->string('username')->unique();
             $table->string('email')->unique()->nullable();
             $table->string('phone')->nullable();
+            $table->string('avatar')->nullable();
             $table->string('password');
             $table->unsignedInteger('referral_code')->nullable()->unique();
             $table->string('role')->default(User::ROLE_MEMBER);
@@ -458,6 +459,63 @@ class ReferralRevenueChainTest extends TestCase
             ->getData(true);
         $this->assertEquals(130, $ownerOverview['data']['total_revenue']);
         $this->assertSame(3, $ownerOverview['data']['total_customers']);
+    }
+
+    public function test_customer_avatars_are_consistent_across_statistics_and_remain_team_scoped(): void
+    {
+        $owner = $this->user(User::ROLE_OWNER, 120000, 'avatar_owner');
+        $admin = $this->user(User::ROLE_ADMIN, 120001, 'avatar_admin', ['referrer_id' => $owner->id]);
+        $staff = $this->user(User::ROLE_STAFF, 120002, 'avatar_staff', ['referrer_id' => $admin->id]);
+        $otherStaff = $this->user(User::ROLE_STAFF, 120003, 'avatar_other_staff');
+        $customer = $this->user(User::ROLE_MEMBER, 220001, 'avatar_customer', [
+            'referrer_id' => $staff->id,
+        ]);
+        $customer->forceFill(['avatar' => 'uploads/avatars/statistics.jpg'])->save();
+        $defaultCustomer = $this->user(User::ROLE_MEMBER, 220002, 'avatar_default', ['referrer_id' => $staff->id]);
+        $hiddenCustomer = $this->user(User::ROLE_MEMBER, 220003, 'avatar_hidden', [
+            'referrer_id' => $otherStaff->id,
+        ]);
+        $hiddenCustomer->forceFill(['avatar' => 'uploads/avatars/hidden.jpg'])->save();
+        $this->deposit($customer, 200);
+        $this->deposit($defaultCustomer, 100);
+        $this->deposit($hiddenCustomer, 900);
+        $period = ['start_date' => now()->subDay()->format('Y-m-d'), 'end_date' => now()->addDay()->format('Y-m-d')];
+        $controller = app(StatisticalController::class);
+        $this->actingAs($admin);
+
+        $expected = [
+            $customer->id => asset('storage/uploads/avatars/statistics.jpg'),
+            $defaultCustomer->id => asset('images/default-avatar-gray.svg'),
+        ];
+        foreach (['topCustomers', 'revenueDistribution'] as $method) {
+            $response = $controller->$method(Request::create('/test', 'GET', $period))->getData(true);
+            $this->assertTrue($response['success']);
+            $this->assertSame($expected, collect($response['data']['customers'])->pluck('avatar_url', 'id')->all());
+            $this->assertEquals([200, 100], $response['data']['values']);
+        }
+        $overview = $controller->revenueOverview(Request::create('/test', 'GET', $period))->getData(true);
+        $this->assertSame($expected[$customer->id], $overview['data']['top_customer']['avatar_url']);
+        $this->assertEquals(300, $overview['data']['total_revenue']);
+        $detail = $controller->customerRevenueDetail(Request::create('/test', 'GET', $period))->getData(true);
+        $this->assertSame($expected, collect($detail['data'])->pluck('avatar_url', 'user_id')->all());
+        $userStats = $controller->getUserRevenueStats(Request::create('/test', 'GET', $period))->getData(true);
+        $this->assertSame($expected, collect($userStats['data']['data'])->pluck('avatar_url', 'id')->all());
+        $recent = (new \ReflectionMethod(StatisticalController::class, 'getRecentTransactions'))
+            ->invoke($controller, now()->subDay(), now()->addDay());
+        $this->assertEqualsCanonicalizing($expected, $recent->pluck('user.avatar_url', 'user.id')->all());
+        $staffDetail = $controller->getRevenueDetail(Request::create('/test', 'GET', [
+            'staff_id' => $staff->id, 'date_from' => $period['start_date'], 'date_to' => $period['end_date'],
+        ]))->getData(true);
+        $this->assertTrue($staffDetail['success']);
+        $this->assertEqualsCanonicalizing($expected, collect($staffDetail['transactions'])->pluck('user.avatar_url', 'user.id')->all());
+
+        $this->actingAs($staff);
+        $personal = $controller->getPersonalTransactions(Request::create('/test'))->getData(true);
+        $this->assertEqualsCanonicalizing($expected, collect($personal['data']['data'])->pluck('user.avatar_url', 'user.id')->all());
+        $this->actingAs($owner);
+        $all = $controller->topCustomers(Request::create('/test', 'GET', $period))->getData(true);
+        $this->assertSame(asset('storage/uploads/avatars/hidden.jpg'), $all['data']['customers'][0]['avatar_url']);
+        $this->assertCount(3, $all['data']['customers']);
     }
 
     private function user(string $role, int $referralCode, string $username, array $attributes = []): User

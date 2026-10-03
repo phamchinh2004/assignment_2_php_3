@@ -16,6 +16,7 @@ import {
     Typography,
 } from 'antd';
 import { AdminDataCard, AdminMetricGrid, AdminPage, AdminPageHeader, AdminSectionCard } from '../../../components/admin/AdminUi';
+import { CustomerIdentity } from '../../../components/admin/OperationsUi';
 import { formatAdminDateTime } from '../../../../shared/datetime';
 import './order-show.css';
 
@@ -155,7 +156,7 @@ export default function OrderShowPage({ config }) {
                 <Col xs={24} xl={10}>
                     <AdminSectionCard title="Thông tin khách hàng nhận" description="Thông tin nhận hàng đang gắn với đơn." className="order-show-card">
                         <Descriptions column={1} size="small">
-                            <Descriptions.Item label="Người nhận">{order.customer_name || '—'}</Descriptions.Item>
+                            <Descriptions.Item label="Người nhận"><CustomerIdentity name={order.customer_name || '—'} secondary="" /></Descriptions.Item>
                             <Descriptions.Item label="Số điện thoại">
                                 {order.customer_phone ? (
                                     <a href={`tel:${order.customer_phone}`}><PhoneOutlined /> {order.customer_phone}</a>

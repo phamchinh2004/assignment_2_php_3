@@ -171,7 +171,7 @@ class AdminHeaderService
 
         $conversationsQuery = Conversation::query()
             ->with([
-                'user:id,full_name,username',
+                'user:id,full_name,username,avatar',
                 'latestMessage.sender:id,full_name,username,role',
             ])
             ->withCount([
@@ -198,6 +198,7 @@ class AdminHeaderService
                         'participant_name' => $conversation->user?->full_name
                             ?: $conversation->user?->username
                             ?: 'Người dùng',
+                        'participant_avatar_url' => $conversation->user ? get_user_avatar($conversation->user) : null,
                         'sender_name' => $message?->sender?->full_name
                             ?: $message?->sender?->username,
                         'preview' => ($message && (int) $message->sender_id === (int) $user->id ? 'Bạn: ' : '') . match ($message?->kind ?? $message?->type) {

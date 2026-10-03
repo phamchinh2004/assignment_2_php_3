@@ -42,7 +42,7 @@
                     <div class="chat-dispatch-heading">
                         <div>
                             <h2 id="chat-dispatch-title">Điều phối hội thoại</h2>
-                            <p>Chọn người tiếp nhận hội thoại với <strong>{{ $dispatchingConversation->user->full_name }}</strong>.</p>
+                            <p>Chọn người tiếp nhận hội thoại với <img src="{{ get_user_avatar($dispatchingConversation->user) }}" alt="" width="28" height="28" class="rounded-circle" style="object-fit: cover;"> <strong>{{ $dispatchingConversation->user->full_name }}</strong>.</p>
                         </div>
                         <button type="button" class="chat-dispatch-close" wire:click="closeDispatchDialog"
                             x-ref="dispatchClose" x-init="$nextTick(() => $refs.dispatchClose.focus())" aria-label="Đóng điều phối">

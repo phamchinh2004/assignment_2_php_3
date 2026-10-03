@@ -29,6 +29,7 @@ class WithdrawalManagementTest extends TestCase
             $table->string('full_name')->nullable();
             $table->string('username')->nullable();
             $table->string('email')->nullable();
+            $table->string('avatar')->nullable();
             $table->decimal('balance', 16, 6)->default(0);
             $table->decimal('frozen_balance', 16, 6)->default(0);
             $table->foreignId('referrer_id')->nullable();
@@ -251,6 +252,35 @@ class WithdrawalManagementTest extends TestCase
             [$ownCustomer->id, $otherCustomer->id],
             collect($withdrawProps['transactions'])->pluck('user_id')->all()
         );
+    }
+
+    public function test_transaction_lists_serialize_customer_avatar_urls(): void
+    {
+        $owner = $this->user(User::ROLE_OWNER);
+        $withAvatar = $this->user(User::ROLE_MEMBER);
+        $withAvatar->forceFill(['avatar' => 'uploads/avatars/customer.jpg'])->save();
+        $withoutAvatar = $this->user(User::ROLE_MEMBER);
+
+        foreach ([$withAvatar, $withoutAvatar] as $customer) {
+            Wallet_balance_history::query()->create([
+                'user_id' => $customer->id,
+                'value' => 10,
+                'type' => 'deposit',
+                'status' => 'completed',
+                'transaction_type' => 'normal',
+            ]);
+            $this->withdrawal($customer);
+        }
+
+        $this->actingAs($owner);
+        $controller = app(TransactionHistoryController::class);
+        $authorization = app(AuthorizationService::class);
+        foreach (['index_deposit', 'index_withdraw'] as $method) {
+            $props = $controller->{$method}($authorization)->getData()['reactPageBootstrap']['props'];
+            $rows = collect($props['transactions']->toArray())->keyBy('user_id');
+            $this->assertSame(asset('storage/uploads/avatars/customer.jpg'), $rows[$withAvatar->id]['user']['avatar_url']);
+            $this->assertSame(asset('images/default-avatar-gray.svg'), $rows[$withoutAvatar->id]['user']['avatar_url']);
+        }
     }
 
     private function user(string $role, array $attributes = []): User

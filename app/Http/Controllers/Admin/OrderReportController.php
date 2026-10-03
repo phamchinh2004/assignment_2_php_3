@@ -46,6 +46,8 @@ class OrderReportController extends Controller
 
         $reports->getCollection()->each(function (OrderReport $report) {
             $report->setAttribute('order_code', $report->frozenOrder?->display_order_code ?? 'N/A');
+            $report->frozenOrder?->user?->setAttribute('avatar_url', get_user_avatar($report->frozenOrder->user));
+            $report->reporter?->setAttribute('avatar_url', get_user_avatar($report->reporter));
         });
 
         return $this->reactPage->admin('admin.order-reports.index', [
@@ -72,6 +74,8 @@ class OrderReportController extends Controller
         ]);
 
         $frozenOrder = $orderReport->frozenOrder;
+        $frozenOrder?->user?->setAttribute('avatar_url', get_user_avatar($frozenOrder->user));
+        $orderReport->reporter?->setAttribute('avatar_url', get_user_avatar($orderReport->reporter));
         
         // Load lịch sử thay đổi trạng thái
         $statusHistory = [];
@@ -87,6 +91,7 @@ class OrderReportController extends Controller
             
             // Lấy lịch sử thay đổi trạng thái
             $statusHistory = OrderStatusService::getStatusHistory($frozenOrder->id);
+            $statusHistory->each(fn ($event) => $event->changedBy?->setAttribute('avatar_url', get_user_avatar($event->changedBy)));
             
             // Lấy tất cả các trạng thái theo thứ tự
             $allStatuses = Status::active()

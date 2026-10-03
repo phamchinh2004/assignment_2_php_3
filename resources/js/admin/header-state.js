@@ -278,6 +278,16 @@ if (headerRoot) {
             const avatar = document.createElement('span');
             avatar.className = 'admin-header-avatar';
             avatar.textContent = (conversation.participant_name || '?').trim().charAt(0).toUpperCase();
+            if (conversation.participant_avatar_url) {
+                const avatarImage = document.createElement('img');
+                avatarImage.src = conversation.participant_avatar_url;
+                avatarImage.alt = '';
+                avatarImage.loading = 'lazy';
+                avatarImage.addEventListener('error', () => {
+                    avatar.textContent = (conversation.participant_name || '?').trim().charAt(0).toUpperCase();
+                }, { once: true });
+                avatar.replaceChildren(avatarImage);
+            }
 
             const content = document.createElement('span');
             content.className = 'admin-header-item__content';

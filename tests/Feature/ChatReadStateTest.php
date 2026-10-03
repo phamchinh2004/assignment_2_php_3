@@ -48,6 +48,7 @@ class ChatReadStateTest extends TestCase
             $table->id();
             $table->string('full_name');
             $table->string('username');
+            $table->string('avatar')->nullable();
             $table->string('role');
             $table->string('status');
             $table->timestamps();
@@ -199,6 +200,19 @@ class ChatReadStateTest extends TestCase
 
         $this->assertSame('Bạn: I will take over', $header->state($owner)['messages']['conversations'][0]['preview']);
         $this->assertSame('I will take over', $header->state($staff)['messages']['conversations'][0]['preview']);
+    }
+
+    public function test_header_customer_avatar_uses_the_stored_image_or_default_and_keeps_chat_visibility(): void
+    {
+        $method = new \ReflectionMethod(AdminHeaderService::class, 'messages');
+        $header = app(AdminHeaderService::class);
+        $staff = User::findOrFail(2);
+        $state = $method->invoke($header, $staff, 6);
+        $this->assertSame(asset('images/default-avatar-gray.svg'), $state['conversations'][0]['participant_avatar_url']);
+        DB::table('users')->where('id', 1)->update(['avatar' => 'uploads/avatars/chat.jpg']);
+        $state = $method->invoke($header, $staff, 6);
+        $this->assertSame(asset('storage/uploads/avatars/chat.jpg'), $state['conversations'][0]['participant_avatar_url']);
+        $this->assertSame([], $method->invoke($header, User::findOrFail(5), 6)['conversations']);
     }
 
     public function test_customer_receipt_requires_customer_to_read_staff_reply(): void

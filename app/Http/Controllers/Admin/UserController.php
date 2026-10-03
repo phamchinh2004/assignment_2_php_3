@@ -461,6 +461,7 @@ class UserController extends Controller
             $userPayload['frozen_balance'] = (float) ($user->frozen_balance ?? 0);
         }
 
+        $userPayload['avatar_url'] = get_user_avatar($user);
         return $this->reactPage->admin('admin.users.edit', [
             'user' => $userPayload,
             'ranks' => $list_ranks,
@@ -673,6 +674,7 @@ class UserController extends Controller
         return $this->reactPage->admin('admin.users.frozen-orders', [
             'user' => [
                 'id' => $user->id,
+                'avatar_url' => get_user_avatar($user),
                 'full_name' => $user->full_name,
                 'username' => $user->username,
                 'rank_id' => $user->rank_id,
