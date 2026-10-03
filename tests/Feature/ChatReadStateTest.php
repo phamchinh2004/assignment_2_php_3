@@ -51,6 +51,7 @@ class ChatReadStateTest extends TestCase
             $table->string('avatar')->nullable();
             $table->string('role');
             $table->string('status');
+            $table->unsignedBigInteger('referrer_id')->nullable();
             $table->timestamps();
         });
         Schema::create('conversations', function (Blueprint $table) {
@@ -94,6 +95,7 @@ class ChatReadStateTest extends TestCase
         });
         Schema::create('wallet_balance_histories', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('user_id')->nullable();
             $table->string('type');
             $table->string('status');
         });
@@ -103,6 +105,10 @@ class ChatReadStateTest extends TestCase
             $table->string('reward_status');
         });
         Schema::create('order_reports', function (Blueprint $table) {
+            $table->id();
+            $table->string('status');
+        });
+        Schema::create('bug_reports', function (Blueprint $table) {
             $table->id();
             $table->string('status');
         });
@@ -310,6 +316,72 @@ class ChatReadStateTest extends TestCase
 
         $this->assertSame([], $component->messages);
         $this->assertDatabaseMissing('message_reads', ['message_id' => 10, 'user_id' => 5]);
+    }
+
+    public function test_admin_chat_lists_header_and_dispatch_only_include_managed_and_shared_staff(): void
+    {
+        DB::table('users')->insert([
+            'id' => 6, 'full_name' => 'Other admin', 'username' => 'other_admin',
+            'role' => User::ROLE_ADMIN, 'status' => 'activated',
+        ]);
+        DB::table('users')->where('id', 1)->update(['referrer_id' => 2]);
+        DB::table('users')->where('id', 2)->update(['referrer_id' => 3]);
+        DB::table('users')->where('id', 5)->update(['referrer_id' => 6]);
+        $permissionId = DB::table('manager_settings')->insertGetId(['manager_code' => config('authorization.capabilities.chats_view_all')]);
+        foreach ([3, 6] as $adminId) {
+            DB::table('user_manager_settings')->insert([
+                'user_id' => $adminId, 'manager_setting_id' => $permissionId, 'is_active' => true,
+            ]);
+        }
+        $headerMessages = new \ReflectionMethod(AdminHeaderService::class, 'messages');
+        $authorization = app(\App\Services\AuthorizationService::class);
+        $this->actingAs(User::findOrFail(3));
+        $component = $this->chatComponent();
+        $component->loadStaffUsersAlternative();
+        $component->loadConversations();
+        $this->assertSame([2], array_column($component->staffUsers, 'id'));
+        $this->assertSame([1], $component->conversations->pluck('id')->all());
+        $component->dispatchConversationId = 1;
+        $this->assertSame([2], $component->getDispatchCandidatesProperty()->pluck('id')->all());
+        $this->assertFalse($authorization->canReceiveDispatchedConversation(auth()->user(), User::findOrFail(5)));
+        $recipients = app(\App\Services\ManagementRecipientResolver::class);
+        $this->assertSame([2, 3, 4], $recipients->forUser(User::findOrFail(1))->pluck('id')->all());
+        $this->assertSame(
+            ['private-chat.conversation.1', 'private-staff.2', 'private-staff.3', 'private-staff.4'],
+            array_map(fn ($channel) => $channel->name, (new \App\Events\MessageSent(10))->broadcastOn())
+        );
+
+        $this->actingAs(User::findOrFail(6));
+        $component = $this->chatComponent();
+        $component->loadStaffUsersAlternative();
+        $component->loadConversations();
+        $this->assertSame([5], array_column($component->staffUsers, 'id'));
+        $this->assertCount(0, $component->conversations);
+        $this->assertSame([], $headerMessages->invoke(app(AdminHeaderService::class), auth()->user(), 6)['conversations']);
+        try {
+            $component->selectConversation(1);
+            $this->fail('Other admin team conversations must be forbidden.');
+        } catch (HttpException $exception) {
+            $this->assertSame(403, $exception->getStatusCode());
+        }
+
+        DB::table('users')->where('id', 2)->update(['referrer_id' => null]);
+        $component->loadStaffUsersAlternative();
+        $component->loadConversations();
+        $this->assertSame([2, 5], array_column($component->staffUsers, 'id'));
+        $this->assertSame([1], $component->conversations->pluck('id')->all());
+        $this->assertTrue($authorization->canViewConversation(auth()->user(), Conversation::findOrFail(1)));
+        $this->assertCount(1, $headerMessages->invoke(app(AdminHeaderService::class), auth()->user(), 6)['conversations']);
+        $this->assertSame([2, 3, 6, 4], $recipients->forUser(User::findOrFail(1))->pluck('id')->all());
+
+        DB::table('user_manager_settings')->where('user_id', 6)->update(['is_active' => false]);
+        $this->actingAs(User::findOrFail(6));
+        $component->loadStaffUsersAlternative();
+        $component->loadConversations();
+        $this->assertSame([], $component->staffUsers);
+        $this->assertCount(0, $component->conversations);
+        $this->assertFalse($authorization->canViewConversation(auth()->user(), Conversation::findOrFail(1)));
+        $this->assertSame([2, 3, 4], $recipients->forUser(User::findOrFail(1))->pluck('id')->all());
     }
 
     private function chatComponent(): ChatComponent

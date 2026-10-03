@@ -88,7 +88,7 @@ class ChatComponent extends Component
 
     public function openDispatchDialog(int $conversationId): void
     {
-        $conversation = Conversation::with('staff:id,role')->find($conversationId);
+        $conversation = Conversation::with('staff:id,role,referrer_id')->find($conversationId);
         abort_unless($conversation && $this->canDispatchConversation($conversation), 403);
 
         $this->dispatchConversationId = $conversationId;
@@ -110,15 +110,16 @@ class ChatComponent extends Component
             : [User::ROLE_STAFF];
 
         return User::query()
+            ->visibleOperatorsTo(Auth::user())
             ->whereIn('role', $roles)
             ->where('status', 'activated')
             ->orderBy('full_name')
-            ->get(['id', 'full_name', 'role', 'status']);
+            ->get(['id', 'full_name', 'role', 'status', 'referrer_id']);
     }
 
     public function dispatchConversationTo(int $operatorId): void
     {
-        $conversation = Conversation::with('staff:id,role')->find($this->dispatchConversationId);
+        $conversation = Conversation::with('staff:id,role,referrer_id')->find($this->dispatchConversationId);
         abort_unless($conversation && $this->canDispatchConversation($conversation), 403);
 
         $target = $this->dispatchCandidates->firstWhere('id', $operatorId);
@@ -198,7 +199,7 @@ class ChatComponent extends Component
 
     private function muteConversation(int $conversationId, string $duration): void
     {
-        $conversation = Conversation::with('staff:id,role')->find($conversationId);
+        $conversation = Conversation::with('staff:id,role,referrer_id')->find($conversationId);
         abort_unless($conversation && $this->canViewConversation($conversation), 403);
 
         $mutedUntil = match ($duration) {
@@ -228,7 +229,7 @@ class ChatComponent extends Component
 
     public function unmuteSelectedConversation(): void
     {
-        $conversation = Conversation::with('staff:id,role')->find($this->selectedConversationId);
+        $conversation = Conversation::with('staff:id,role,referrer_id')->find($this->selectedConversationId);
         abort_unless($conversation && $this->canViewConversation($conversation), 403);
 
         ConversationNotificationMute::query()
@@ -464,7 +465,7 @@ class ChatComponent extends Component
     {
         abort_unless(Str::isUuid($publicId), 404);
 
-        $conversation = Conversation::with('staff:id,role')
+        $conversation = Conversation::with('staff:id,role,referrer_id')
             ->where('public_id', $publicId)
             ->first();
 
@@ -498,7 +499,7 @@ class ChatComponent extends Component
         }
 
         if ($this->selectedConversationId) {
-            $selected = Conversation::with('staff:id,role')->find($this->selectedConversationId);
+            $selected = Conversation::with('staff:id,role,referrer_id')->find($this->selectedConversationId);
             if (!$selected || !$this->canViewConversation($selected)) {
                 $this->clearConversationSelection();
                 $this->conversationPublicId = null;
@@ -514,7 +515,7 @@ class ChatComponent extends Component
 
         // Livewire can hydrate a conversation from an earlier request. Recheck the
         // current assignment before exposing messages or accepting a reply.
-        $current = Conversation::with('staff:id,role')->find($this->selectedConversationId);
+        $current = Conversation::with('staff:id,role,referrer_id')->find($this->selectedConversationId);
         if (!$current || !$this->canViewConversation($current)) {
             return null;
         }
@@ -535,7 +536,7 @@ class ChatComponent extends Component
         $query = Conversation::query()
             ->with([
                 'user',
-                'staff:id,full_name,username,role',
+                'staff:id,full_name,username,role,referrer_id',
                 'messages' => function ($query) {
                     $query->select('id', 'conversation_id', 'sender_id', 'message', 'type', 'kind', 'created_at')->latest()->limit(1);
                 }
@@ -559,8 +560,8 @@ class ChatComponent extends Component
         } elseif ($user->role === User::ROLE_ADMIN && $this->canManageAllChats()) {
             $query->where(function ($conversationQuery) use ($user) {
                 $conversationQuery->where('staff_id', $user->id)
-                    ->orWhereHas('staff', function ($staffQuery) {
-                        $staffQuery->where('role', User::ROLE_STAFF);
+                    ->orWhereHas('staff', function ($staffQuery) use ($user) {
+                        $staffQuery->visibleOperatorsTo($user);
                     });
             });
         } else {
@@ -600,6 +601,7 @@ class ChatComponent extends Component
         $currentUserId = Auth::id();
 
         $staffData = User::whereIn('role', $visibleRoles)
+            ->visibleOperatorsTo(Auth::user())
             ->select('id', 'full_name', 'role') // Optimize fields
             ->orderBy('id', 'asc')
             ->get();
@@ -710,7 +712,7 @@ class ChatComponent extends Component
 
     public function selectConversation($conversationId)
     {
-        $conversation = Conversation::with('staff:id,role')->find($conversationId);
+        $conversation = Conversation::with('staff:id,role,referrer_id')->find($conversationId);
         abort_unless($conversation && $this->canViewConversation($conversation), 403);
 
         $this->conversationPublicId = $conversation->public_id;
@@ -807,7 +809,7 @@ class ChatComponent extends Component
      */
     private function markMessagesAsRead($conversationId)
     {
-        $conversation = Conversation::with('staff:id,role')->find($conversationId);
+        $conversation = Conversation::with('staff:id,role,referrer_id')->find($conversationId);
         if (!$conversation || !$this->canViewConversation($conversation)) {
             return;
         }
@@ -1067,7 +1069,7 @@ class ChatComponent extends Component
     public function openConversationFromNotification($conversationId, $userId, $staffId)
     {
         $currentUserId = Auth::id();
-        $conversation = Conversation::with('staff:id,role')->find($conversationId);
+        $conversation = Conversation::with('staff:id,role,referrer_id')->find($conversationId);
         abort_unless($conversation && $this->canViewConversation($conversation), 403);
 
         $userId = $conversation->user_id;
@@ -1347,7 +1349,7 @@ class ChatComponent extends Component
             return;
         }
 
-        $conversation = Conversation::with(['user', 'staff:id,role'])->find($message['conversation_id']);
+        $conversation = Conversation::with(['user', 'staff:id,role,referrer_id'])->find($message['conversation_id']);
         if (!$conversation || !$this->canViewConversation($conversation)) {
             return;
         }
@@ -1460,7 +1462,7 @@ class ChatComponent extends Component
      */
     public function markSingleMessageAsRead($messageId, $conversationId)
     {
-        $message = Message::with('conversation.staff:id,role')->find($messageId);
+        $message = Message::with('conversation.staff:id,role,referrer_id')->find($messageId);
         if (!$message || (int) $message->conversation_id !== (int) $conversationId) {
             return;
         }

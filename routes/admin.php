@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\ManagerSettingController;
 use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\OrderDistributionController;
 use App\Http\Controllers\Admin\OrderReportController;
+use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\PartnerController;
 use App\Http\Controllers\Admin\RankController;
 use App\Http\Controllers\Admin\SectionController;
@@ -29,6 +30,9 @@ Route::middleware(['role:staff|admin|own', 'checkBanned', 'auth'])->group(functi
         ->name('admin.dashboard');
 
     Route::get('/authorization-state', [AuthorizationController::class, 'state'])->name('authorization.state');
+    Route::put('/account', [ProfileController::class, 'update'])
+        ->middleware('permission:' . $capabilities['account_update_profile'])
+        ->name('admin.account.update');
     Route::get('/header-state', [HeaderStateController::class, 'show'])->name('header.state');
     Route::post('/header/notifications/read-all', [HeaderStateController::class, 'markAllNotificationsRead'])
         ->name('header.notifications.read-all');

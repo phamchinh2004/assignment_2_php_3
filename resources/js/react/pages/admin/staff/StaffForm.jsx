@@ -24,8 +24,8 @@ export default function StaffForm({ config, mode }) {
     const [managerId, setManagerId] = useState(() => String(oldValue(
         form,
         'manager_id',
-        staff.referrer_id || config.managerCandidates?.[0]?.id || '',
-    )));
+        editing ? (staff.referrer_id ?? '') : (config.managerCandidates?.[0]?.id || ''),
+    ) ?? ''));
 
     if (!editing) {
         const usernameError = fieldError(form, 'username');
@@ -297,15 +297,17 @@ export default function StaffForm({ config, mode }) {
                     </Form.Item>
                 )}
 
-                {config.canChooseRole && editRole === 'staff' && config.managerCandidates?.length > 0 && (
+                {config.canChooseManager && editRole === 'staff' && config.managerCandidates?.length > 0 && (
                     <Form.Item
                         label="Admin quản lý"
                         validateStatus={fieldError(form, 'manager_id') ? 'error' : ''}
-                        help={fieldError(form, 'manager_id') || 'Staff chỉ hiển thị dữ liệu cho Admin được chọn và tài khoản Own.'}
+                        help={fieldError(form, 'manager_id') || 'Để trống: tất cả Admin và Own đều quản lý được nhân viên này. Khi chọn người quản lý: chỉ Admin được chọn (nếu có) và các tài khoản Own quản lý được.'}
                     >
                         <Select
+                            allowClear
+                            placeholder="Tất cả Admin và Own"
                             value={managerId || undefined}
-                            onChange={(value) => setManagerId(String(value))}
+                            onChange={(value) => setManagerId(value == null ? '' : String(value))}
                             options={config.managerCandidates.map((manager) => ({
                                 value: String(manager.id),
                                 label: manager.role === 'own'

@@ -60,7 +60,7 @@ export default function StaffShowPage({ config }) {
                 <Descriptions.Item label="Trạng thái"><Tag color={staff.status==='activated'?'success':staff.status==='inactivated'?'warning':'error'}>{staff.status}</Tag></Descriptions.Item>
                 <Descriptions.Item label="Mã giới thiệu">{staff.referral_code || '—'}</Descriptions.Item>
                 <Descriptions.Item label="IP đăng ký">{staff.register_ip || 'Chưa ghi nhận'}</Descriptions.Item>
-                <Descriptions.Item label="Người quản lý / tạo">{staff.referrer ? `${staff.referrer.full_name || staff.referrer.username} (@${staff.referrer.username})` : 'Quản trị viên tối cao'}</Descriptions.Item>
+                <Descriptions.Item label="Người quản lý / tạo">{staff.referrer ? `${staff.referrer.full_name || staff.referrer.username} (@${staff.referrer.username})` : staff.role === 'staff' ? 'Tất cả Admin và Own' : 'Quản trị viên tối cao'}</Descriptions.Item>
                 <Descriptions.Item label="Ngày khởi tạo">{dateTime(staff.created_at)}</Descriptions.Item>
             </Descriptions></AdminSectionCard></div>
             <div className="col-lg-5"><AdminSectionCard title="Quyền hệ thống đang hoạt động" description="Chỉ liệt kê các quyền đang bật cho tài khoản này.">{activePermissions.length?<Space wrap>{activePermissions.map((permission)=><Tag color="success" key={permission.id}>{permission.label}</Tag>)}</Space>:<Text type="secondary">Chưa được cấp quyền hạn nào.</Text>}</AdminSectionCard></div>

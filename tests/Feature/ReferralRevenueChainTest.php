@@ -466,7 +466,7 @@ class ReferralRevenueChainTest extends TestCase
         $owner = $this->user(User::ROLE_OWNER, 120000, 'avatar_owner');
         $admin = $this->user(User::ROLE_ADMIN, 120001, 'avatar_admin', ['referrer_id' => $owner->id]);
         $staff = $this->user(User::ROLE_STAFF, 120002, 'avatar_staff', ['referrer_id' => $admin->id]);
-        $otherStaff = $this->user(User::ROLE_STAFF, 120003, 'avatar_other_staff');
+        $otherStaff = $this->user(User::ROLE_STAFF, 120003, 'avatar_other_staff', ['referrer_id' => $owner->id]);
         $customer = $this->user(User::ROLE_MEMBER, 220001, 'avatar_customer', [
             'referrer_id' => $staff->id,
         ]);
@@ -516,6 +516,42 @@ class ReferralRevenueChainTest extends TestCase
         $all = $controller->topCustomers(Request::create('/test', 'GET', $period))->getData(true);
         $this->assertSame(asset('storage/uploads/avatars/hidden.jpg'), $all['data']['customers'][0]['avatar_url']);
         $this->assertCount(3, $all['data']['customers']);
+    }
+
+    public function test_shared_staff_are_visible_to_all_admins_in_customers_statistics_and_team_totals(): void
+    {
+        $owner = $this->user(User::ROLE_OWNER, 130000, 'shared_owner');
+        $adminA = $this->user(User::ROLE_ADMIN, 130001, 'shared_admin_a');
+        $adminB = $this->user(User::ROLE_ADMIN, 130002, 'shared_admin_b');
+        $shared = $this->user(User::ROLE_STAFF, 130003, 'shared_staff');
+        $private = $this->user(User::ROLE_STAFF, 130004, 'private_staff', ['referrer_id' => $adminA->id]);
+        $sharedCustomer = $this->user(User::ROLE_MEMBER, 230001, 'shared_customer', ['referrer_id' => $shared->id]);
+        $privateCustomer = $this->user(User::ROLE_MEMBER, 230002, 'private_customer', ['referrer_id' => $private->id]);
+        $this->deposit($sharedCustomer, 40);
+        $this->deposit($privateCustomer, 70);
+        $period = ['start_date' => now()->subDay()->format('Y-m-d'), 'end_date' => now()->addDay()->format('Y-m-d')];
+        $controller = app(StatisticalController::class);
+
+        foreach ([[$adminA, [$shared->id, $private->id], 110], [$adminB, [$shared->id], 40]] as [$actor, $staffIds, $total]) {
+            $this->actingAs($actor);
+            $this->assertEqualsCanonicalizing($staffIds, User::query()->visibleOperatorsTo($actor)->pluck('id')->all());
+            $this->assertEqualsCanonicalizing($staffIds, collect($controller->getStaffList()->getData(true)['data'])->pluck('id')->all());
+            $this->assertTrue($actor->canAccessCustomer($sharedCustomer));
+            $overview = $controller->revenueOverview(Request::create('/test', 'GET', $period))->getData(true);
+            $this->assertEquals($total, $overview['data']['total_revenue']);
+            $byStaff = $controller->getRevenueByStaff(Request::create('/test', 'GET', [
+                'date_from' => $period['start_date'], 'date_to' => $period['end_date'],
+            ]))->getData(true);
+            $this->assertEqualsCanonicalizing($staffIds, collect($byStaff['table_data'])->pluck('staff_id')->all());
+        }
+        $totals = (new \ReflectionMethod(\App\Http\Controllers\Admin\StaffController::class, 'depositTotalsByStaff'))
+            ->invoke(app(\App\Http\Controllers\Admin\StaffController::class), [$adminA->id, $adminB->id, $shared->id]);
+        $this->assertEquals(110, $totals->get($adminA->id));
+        $this->assertEquals(40, $totals->get($adminB->id));
+        $this->assertEquals(40, $totals->get($shared->id));
+        $this->assertFalse($adminB->canAccessCustomer($privateCustomer));
+        $this->assertTrue($owner->canAccessCustomer($privateCustomer));
+        $this->assertFalse($private->canAccessCustomer($sharedCustomer));
     }
 
     private function user(string $role, int $referralCode, string $username, array $attributes = []): User

@@ -440,6 +440,7 @@ class StaffController extends Controller
         return $this->reactPage->admin('admin.staff.edit', [
             'staff' => $get_staff_old,
             'canChooseRole' => $authorization->isSuperuser(Auth::user()),
+            'canChooseManager' => in_array(Auth::user()->role, [User::ROLE_OWNER, User::ROLE_ADMIN], true),
             'managerCandidates' => $this->managerCandidates(Auth::user(), $authorization),
             'routes' => [
                 'index' => route('staff.index'),
@@ -469,17 +470,17 @@ class StaffController extends Controller
             'role' => $authorization->isSuperuser($actor)
                 ? ['required', Rule::in([User::ROLE_STAFF, User::ROLE_ADMIN])]
                 : ['prohibited'],
-            'manager_id' => $authorization->isSuperuser($actor)
+            'manager_id' => in_array($actor->role, [User::ROLE_OWNER, User::ROLE_ADMIN], true)
                 ? ['nullable', 'integer', Rule::exists('users', 'id')->where(fn ($query) => $query->whereIn('role', [User::ROLE_OWNER, User::ROLE_ADMIN]))]
                 : ['prohibited'],
         ]);
         $oldRole = $get_user->role;
         $roleChanged = isset($data['role']) && $data['role'] !== $oldRole;
-        if ($authorization->isSuperuser($actor)) {
-            $targetRole = $data['role'] ?? $get_user->role;
-            $data['referrer_id'] = $targetRole === User::ROLE_STAFF
-                ? (int) ($data['manager_id'] ?? $actor->id)
-                : (int) $actor->id;
+        $targetRole = $data['role'] ?? $get_user->role;
+        if ($targetRole === User::ROLE_STAFF && $request->has('manager_id')) {
+            $data['referrer_id'] = isset($data['manager_id']) ? (int) $data['manager_id'] : null;
+        } elseif ($authorization->isSuperuser($actor) && $targetRole === User::ROLE_ADMIN) {
+            $data['referrer_id'] = (int) $actor->id;
         }
         unset($data['manager_id']);
         $get_user->update($data);
@@ -506,15 +507,12 @@ class StaffController extends Controller
 
     private function managerCandidates(User $actor, AuthorizationService $authorization): array
     {
-        if (!$authorization->isSuperuser($actor)) {
+        if (!in_array($actor->role, [User::ROLE_OWNER, User::ROLE_ADMIN], true)) {
             return [];
         }
 
         return User::query()
-            ->where(function ($query) use ($actor) {
-                $query->whereKey($actor->id)
-                    ->orWhere('role', User::ROLE_ADMIN);
-            })
+            ->whereIn('role', [User::ROLE_OWNER, User::ROLE_ADMIN])
             ->orderByRaw('CASE WHEN id = ? THEN 0 ELSE 1 END', [$actor->id])
             ->orderBy('full_name')
             ->get(['id', 'full_name', 'username', 'role'])
@@ -582,7 +580,9 @@ class StaffController extends Controller
         if ($adminIds->isNotEmpty()) {
             $staffByAdmin = User::query()
                 ->where('role', User::ROLE_STAFF)
-                ->whereIn('referrer_id', $adminIds)
+                ->where(function ($query) use ($adminIds) {
+                    $query->whereIn('referrer_id', $adminIds)->orWhereNull('referrer_id');
+                })
                 ->get(['id', 'referrer_id'])
                 ->groupBy(fn (User $staff) => (int) $staff->referrer_id);
         }
@@ -617,6 +617,7 @@ class StaffController extends Controller
 
             if ($operator->role === User::ROLE_ADMIN) {
                 $childStaffIds = collect($staffByAdmin->get($operatorId, collect()))
+                    ->merge($staffByAdmin->get(0, collect()))
                     ->pluck('id')
                     ->map(fn ($id) => (int) $id);
 

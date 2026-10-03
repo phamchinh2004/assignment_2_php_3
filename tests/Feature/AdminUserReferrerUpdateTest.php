@@ -321,6 +321,79 @@ class AdminUserReferrerUpdateTest extends TestCase
         $this->assertFalse((bool) DB::table('user_manager_settings')->where('id', $hiddenId)->value('is_active'));
     }
 
+    public function test_staff_edit_lists_every_admin_and_owner_for_owner_and_admin(): void
+    {
+        $owner = $this->user(User::ROLE_OWNER);
+        $otherOwner = $this->user(User::ROLE_OWNER);
+        $admin = $this->user(User::ROLE_ADMIN);
+        $otherAdmin = $this->user(User::ROLE_ADMIN);
+        $staff = $this->user(User::ROLE_STAFF, ['referrer_id' => $admin->id]);
+        $this->grant($admin, ['staff_update']);
+
+        foreach ([$owner, $admin] as $actor) {
+            $response = $this->actingAs($actor)->getJson(route('staff.edit', $staff), ['X-React-Navigation' => '1'])
+                ->assertOk()
+                ->assertJsonPath('props.canChooseManager', true)
+                ->assertJsonPath('props.canChooseRole', $actor->role === User::ROLE_OWNER)
+                ->assertJsonCount(4, 'props.managerCandidates');
+            $props = $response->json('props');
+            $this->assertEqualsCanonicalizing(
+                [$owner->id, $otherOwner->id, $admin->id, $otherAdmin->id],
+                collect($props['managerCandidates'])->pluck('id')->all()
+            );
+        }
+    }
+
+    public function test_clearing_staff_manager_shares_access_and_preserves_permission_assignments(): void
+    {
+        $owner = $this->user(User::ROLE_OWNER);
+        $admin = $this->user(User::ROLE_ADMIN);
+        $otherAdmin = $this->user(User::ROLE_ADMIN);
+        $staff = $this->user(User::ROLE_STAFF, ['referrer_id' => $admin->id]);
+        $this->grant($admin, ['staff_update']);
+        $this->grant($staff, ['orders_view', 'orders_view_detail']);
+        DB::table('user_manager_settings')->where('id', $this->assignmentId($staff, 'orders.view-detail'))
+            ->update(['is_active' => false]);
+        $assignments = DB::table('user_manager_settings')->where('user_id', $staff->id)->pluck('is_active', 'id');
+
+        $this->actingAs($admin)->put(route('staff.update', $staff), [
+            'full_name' => $staff->full_name, 'username' => $staff->username,
+            'email' => $staff->email, 'manager_id' => '',
+        ])->assertRedirect(route('staff.index'));
+        $this->assertNull($staff->fresh()->referrer_id);
+        foreach ([$owner, $admin, $otherAdmin] as $actor) {
+            $this->assertTrue(app(AuthorizationService::class)->canManageOperator($actor, $staff->fresh()));
+        }
+        foreach ($assignments as $id => $active) {
+            $this->assertSame($active, DB::table('user_manager_settings')->where('id', $id)->value('is_active'));
+        }
+
+        $this->actingAs($owner)->put(route('staff.update', $staff), [
+            'full_name' => $staff->full_name, 'username' => $staff->username,
+            'email' => $staff->email, 'role' => User::ROLE_STAFF, 'manager_id' => $otherAdmin->id,
+        ])->assertRedirect(route('staff.index'));
+        $this->assertSame($otherAdmin->id, $staff->fresh()->referrer_id);
+        $this->assertFalse(app(AuthorizationService::class)->canManageOperator($admin, $staff->fresh()));
+    }
+
+    public function test_staff_update_requires_permission_team_access_and_valid_manager(): void
+    {
+        $admin = $this->user(User::ROLE_ADMIN);
+        $otherAdmin = $this->user(User::ROLE_ADMIN);
+        $staff = $this->user(User::ROLE_STAFF, ['referrer_id' => $admin->id]);
+        $otherStaff = $this->user(User::ROLE_STAFF, ['referrer_id' => $otherAdmin->id]);
+        $payload = ['full_name' => $staff->full_name, 'username' => $staff->username, 'email' => $staff->email];
+        $this->actingAs($admin)->putJson(route('staff.update', $staff), $payload + ['manager_id' => null])
+            ->assertForbidden();
+        $this->grant($admin, ['staff_update']);
+        $this->actingAs($admin->fresh());
+        $this->putJson(route('staff.update', $otherStaff), $payload + ['manager_id' => null])->assertForbidden();
+        $this->putJson(route('staff.update', $staff), $payload + ['manager_id' => $otherStaff->id])
+            ->assertUnprocessable()->assertJsonValidationErrors('manager_id');
+        $this->put(route('staff.update', $staff), $payload)->assertRedirect(route('staff.index'));
+        $this->assertSame($admin->id, $staff->fresh()->referrer_id);
+    }
+
     private function user(string $role, array $attributes = []): User
     {
         static $sequence = 0;

@@ -168,6 +168,7 @@ class AuthorizationService
             }
 
             return $operator->role === User::ROLE_STAFF
+                && $this->canManageOperator($actor, $operator)
                 && $this->can($actor, config('authorization.capabilities.chats_view_all'));
         }
 
@@ -182,7 +183,7 @@ class AuthorizationService
             return (int) $conversation->user_id === (int) $actor->id;
         }
 
-        $conversation->loadMissing('staff:id,role');
+        $conversation->loadMissing('staff:id,role,referrer_id');
 
         return $conversation->staff
             ? $this->canViewOperatorChats($actor, $conversation->staff)
@@ -200,6 +201,7 @@ class AuthorizationService
         return $target->status === 'activated' && (
             $target->role === User::ROLE_STAFF
                 && in_array($actor->role, [User::ROLE_ADMIN, User::ROLE_OWNER], true)
+                && $this->canManageOperator($actor, $target)
             || $target->role === User::ROLE_ADMIN && $actor->role === User::ROLE_OWNER
         );
     }
@@ -228,7 +230,7 @@ class AuthorizationService
 
         return $actor->role === User::ROLE_ADMIN
             && $target->role === User::ROLE_STAFF
-            && (int) $target->referrer_id === (int) $actor->id;
+            && ($target->referrer_id === null || (int) $target->referrer_id === (int) $actor->id);
     }
 
     public function canManageOperatorPermissions(User $actor, User $target): bool

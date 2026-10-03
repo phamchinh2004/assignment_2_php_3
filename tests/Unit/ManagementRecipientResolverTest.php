@@ -59,7 +59,7 @@ class ManagementRecipientResolverTest extends TestCase
         );
     }
 
-    public function test_conversation_manager_targets_manager_all_admins_and_all_owners_without_duplicates(): void
+    public function test_conversation_manager_recipients_follow_manager_role_without_duplicates(): void
     {
         $staff = new User();
         $staff->id = 10;
@@ -79,14 +79,24 @@ class ManagementRecipientResolverTest extends TestCase
         );
 
         $this->assertSame(
-            [20, 21, 30, 31],
+            [20, 30, 31],
             $this->resolver->idsForConversationManager($admin, [20, 21], [30, 31, 20])
         );
 
         $this->assertSame(
-            [30, 20, 21, 31],
+            [30],
             $this->resolver->idsForConversationManager($owner, [20, 21], [30, 31, 30])
         );
+    }
+
+    public function test_private_staff_targets_only_assigned_admin_and_owners(): void
+    {
+        $staff = new User(['role' => User::ROLE_STAFF, 'referrer_id' => 20]);
+        $staff->id = 10;
+        $this->assertSame([10, 20, 30, 31], $this->resolver->idsForReferrer($staff, [20, 21], [30, 31]));
+        $this->assertSame([10, 20, 30, 31], $this->resolver->idsForConversationManager($staff, [20, 21], [30, 31]));
+        $staff->referrer_id = 30;
+        $this->assertSame([10, 30, 31], $this->resolver->idsForConversationManager($staff, [20, 21], [30, 31]));
     }
 
 }

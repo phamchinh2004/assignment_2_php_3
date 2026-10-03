@@ -1,6 +1,12 @@
 <?php
 
 $modules = [
+    'account' => [
+        'label' => 'Tài khoản cá nhân',
+        'permissions' => [
+            'update_profile' => ['code' => 'account.update-profile', 'label' => 'Cập nhật họ tên và email của bản thân'],
+        ],
+    ],
     'statistics' => [
         'label' => 'Thống kê hệ thống',
         'permissions' => [

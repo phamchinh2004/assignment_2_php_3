@@ -32,7 +32,9 @@ class ManagementRecipientResolver
             ? $this->idsForReferrer($referrer, $adminIds, $ownerIds)
             : $this->idsForLegacyFallback($user->conversation?->staff, $adminIds);
 
-        return User::query()->whereIn('id', $ids)->get()
+        return User::query()->with('user_manager_settings.manager_setting')->whereIn('id', $ids)->get()
+            ->filter(fn (User $recipient) => !$referrer
+                || app(AuthorizationService::class)->canViewOperatorChats($recipient, $referrer))
             ->sortBy(fn (User $recipient) => array_search((int) $recipient->id, $ids, true))
             ->values();
     }
@@ -53,13 +55,19 @@ class ManagementRecipientResolver
 
         $ids = $this->idsForConversationManager($manager, $adminIds, $ownerIds);
 
-        return User::query()->whereIn('id', $ids)->get()
+        return User::query()->with('user_manager_settings.manager_setting')->whereIn('id', $ids)->get()
+            ->filter(fn (User $recipient) => !$manager
+                || app(AuthorizationService::class)->canViewOperatorChats($recipient, $manager))
             ->sortBy(fn (User $recipient) => array_search((int) $recipient->id, $ids, true))
             ->values();
     }
 
     public function idsForConversationManager(?User $manager, array $adminIds, array $ownerIds): array
     {
+        if ($manager) {
+            return $this->idsForReferrer($manager, $adminIds, $ownerIds);
+        }
+
         $ids = [
             ...($manager ? [(int) $manager->id] : []),
             ...$adminIds,
@@ -72,8 +80,15 @@ class ManagementRecipientResolver
     public function idsForReferrer(User $referrer, array $adminIds, array $ownerIds): array
     {
         $ids = match ($referrer->role) {
-            User::ROLE_STAFF => [(int) $referrer->id, ...$adminIds, ...$ownerIds],
+            User::ROLE_STAFF => [
+                (int) $referrer->id,
+                ...($referrer->referrer_id === null
+                    ? $adminIds
+                    : array_values(array_intersect($adminIds, [(int) $referrer->referrer_id]))),
+                ...$ownerIds,
+            ],
             User::ROLE_ADMIN => [(int) $referrer->id, ...$ownerIds],
+            User::ROLE_OWNER => [(int) $referrer->id],
             default => [],
         };
 

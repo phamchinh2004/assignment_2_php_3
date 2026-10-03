@@ -1,6 +1,17 @@
+import './account-profile.js';
+
 const headerRoot = document.getElementById('adminHeaderState');
 
 if (headerRoot) {
+    const profileDropdown = headerRoot.querySelector('.admin-profile-dropdown');
+    if (profileDropdown) {
+        window.jQuery(profileDropdown.parentElement).on('hide.bs.dropdown', (event) => {
+            if (event.clickEvent && profileDropdown.contains(event.clickEvent.target)) {
+                event.preventDefault();
+            }
+        });
+    }
+
     const notificationList = document.getElementById('adminNotificationList');
     const messageList = document.getElementById('adminMessageList');
     const notificationBadge = document.getElementById('adminNotificationBadge');

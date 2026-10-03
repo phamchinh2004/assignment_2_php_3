@@ -1477,7 +1477,7 @@ class StatisticalController extends Controller
         }
 
         if ($actor->role === User::ROLE_ADMIN) {
-            return $query->where('referrer_id', $actor->id);
+            return $query->visibleOperatorsTo($actor);
         }
 
         if ($actor->role === User::ROLE_STAFF) {

@@ -24,7 +24,7 @@ class MessageSent implements ShouldBroadcastNow
     public function broadcastOn()
     {
         // Load message từ database với relationships
-        $message = \App\Models\Message::with(['sender', 'conversation.user'])->find($this->messageId);
+        $message = \App\Models\Message::with(['sender', 'conversation.staff'])->find($this->messageId);
 
         if (!$message) {
             return [];
@@ -34,9 +34,9 @@ class MessageSent implements ShouldBroadcastNow
             new PrivateChannel('chat.conversation.' . $message->conversation_id)
         ];
 
-        $customer = $message->conversation?->user;
-        if ($customer) {
-            foreach (app(ManagementRecipientResolver::class)->forUser($customer) as $recipient) {
+        $manager = $message->conversation?->staff;
+        if ($manager) {
+            foreach (app(ManagementRecipientResolver::class)->forConversationManager($manager) as $recipient) {
                 $channels[] = new PrivateChannel('staff.' . $recipient->id);
             }
         }

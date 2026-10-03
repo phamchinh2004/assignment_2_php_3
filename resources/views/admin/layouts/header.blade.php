@@ -40,6 +40,8 @@
     ];
     $currentRole = Auth::user()->role ?? 'admin';
     $authorization = app(\App\Services\AuthorizationService::class);
+    $profilePermission = config('authorization.capabilities.account_update_profile');
+    $canUpdateProfile = $authorization->can(Auth::user(), $profilePermission);
     $isBugReporterRole = in_array($currentRole, [\App\Models\User::ROLE_ADMIN, \App\Models\User::ROLE_STAFF], true);
     $canSubmitBugReport = $isBugReporterRole
         && $authorization->can(Auth::user(), config('authorization.capabilities.bug_reports_create'));
@@ -164,6 +166,11 @@
                     @endif
                 </div>
                 <div class="dropdown-divider"></div>
+                <button class="dropdown-item" type="button" data-toggle="modal" data-target="#updateAccountModal"
+                    data-permission="{{ $profilePermission }}" @unless($canUpdateProfile) hidden @endunless>
+                    <i class="fas fa-user-pen" aria-hidden="true"></i>
+                    Cập nhật thông tin tài khoản
+                </button>
                 <a class="dropdown-item" href="#" data-toggle="modal" data-target="#changePasswordModal">
                     <i class="fas fa-key" aria-hidden="true"></i>
                     Đổi mật khẩu
@@ -176,6 +183,45 @@
         </div>
     </div>
 </nav>
+
+<div class="modal fade" id="updateAccountModal" tabindex="-1" role="dialog" aria-labelledby="updateAccountModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <form id="adminAccountForm" action="{{ route('admin.account.update') }}" method="POST" novalidate>
+                @csrf
+                @method('PUT')
+                <div class="modal-header">
+                    <h5 class="modal-title" id="updateAccountModalTitle">Cập nhật thông tin tài khoản</h5>
+                    <button class="close" type="button" data-dismiss="modal" aria-label="Đóng">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div id="adminAccountStatus" class="alert d-none" role="status" aria-live="polite"></div>
+                    <div class="form-group">
+                        <label for="adminAccountFullName">Họ và tên <span class="text-danger">*</span></label>
+                        <input id="adminAccountFullName" name="full_name" type="text" class="form-control"
+                            value="{{ Auth::user()->full_name }}" autocomplete="name" maxlength="255" required
+                            aria-describedby="adminAccountFullNameError">
+                        <div id="adminAccountFullNameError" class="invalid-feedback" aria-live="polite"></div>
+                    </div>
+                    <div class="form-group mb-0">
+                        <label for="adminAccountEmail">Email <span class="text-danger">*</span></label>
+                        <input id="adminAccountEmail" name="email" type="email" class="form-control"
+                            value="{{ Auth::user()->email }}" autocomplete="email" maxlength="255" required
+                            aria-describedby="adminAccountEmailError">
+                        <div id="adminAccountEmailError" class="invalid-feedback" aria-live="polite"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" type="button" data-dismiss="modal">Hủy</button>
+                    <button id="adminAccountSubmit" class="btn btn-primary" type="submit"
+                        data-permission="{{ $profilePermission }}" @unless($canUpdateProfile) hidden @endunless>Lưu thay đổi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
 @if ($canSubmitBugReport)
     <div class="modal fade" id="bugReportModal" tabindex="-1" role="dialog" aria-labelledby="bugReportModalTitle" aria-hidden="true">

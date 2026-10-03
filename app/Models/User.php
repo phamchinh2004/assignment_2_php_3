@@ -167,7 +167,10 @@ class User extends Authenticatable
 
         if ($actor->role === self::ROLE_ADMIN) {
             return $query->where('role', self::ROLE_STAFF)
-                ->where('referrer_id', $actor->id);
+                ->where(function (Builder $staffQuery) use ($actor) {
+                    $staffQuery->where('referrer_id', $actor->id)
+                        ->orWhereNull('referrer_id');
+                });
         }
 
         return $query->whereRaw('1 = 0');
@@ -193,7 +196,7 @@ class User extends Authenticatable
             return [];
         }
 
-        return $this->managedStaff()
+        return self::query()->visibleOperatorsTo($this)
             ->pluck('id')
             ->map(fn ($id) => (int) $id)
             ->prepend((int) $this->id)

@@ -238,7 +238,7 @@ class AdminHeaderService
         ) {
             $query->where(function ($conversation) use ($user) {
                 $conversation->where('staff_id', $user->id)
-                    ->orWhereHas('staff', fn ($staff) => $staff->where('role', User::ROLE_STAFF));
+                    ->orWhereHas('staff', fn ($staff) => $staff->visibleOperatorsTo($user));
             });
             return;
         }

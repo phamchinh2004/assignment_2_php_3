@@ -43,7 +43,7 @@ class UserController extends Controller
             'rank',
             'memberConversations' => fn ($conversationQuery) => $conversationQuery
                 ->select('id', 'user_id', 'staff_id', 'public_id', 'updated_at')
-                ->with('staff:id,role')
+                ->with('staff:id,role,referrer_id')
                 ->latest('updated_at'),
         ])->where('role', 'member');
         $actor = Auth::user();
@@ -959,7 +959,7 @@ class UserController extends Controller
             ? $member->memberConversations
             : $member->memberConversations()
                 ->select('id', 'user_id', 'staff_id', 'public_id', 'updated_at')
-                ->with('staff:id,role')
+                ->with('staff:id,role,referrer_id')
                 ->latest('updated_at')
                 ->get();
 
