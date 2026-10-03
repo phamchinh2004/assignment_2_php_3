@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\Conversation;
-use App\Models\User;
 use App\Services\AuthorizationService;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Log;

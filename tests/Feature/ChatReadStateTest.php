@@ -175,6 +175,44 @@ class ChatReadStateTest extends TestCase
         $this->assertSame(0, $ownerState['messages']['conversations'][0]['unread_count']);
     }
 
+    public function test_notification_totals_include_items_beyond_the_preview_and_are_scoped_to_the_account(): void
+    {
+        $staff = User::findOrFail(2);
+        $method = new \ReflectionMethod(AdminHeaderService::class, 'notifications');
+        $header = app(AdminHeaderService::class);
+        $empty = $method->invoke($header, $staff, 1);
+        $this->assertSame(0, $empty['total_count']);
+        $this->assertSame(0, $empty['unread_count']);
+        $this->assertSame([], $empty['items']);
+
+        foreach ([null, now(), null] as $readAt) {
+            $staff->notifications()->create([
+                'id' => (string) \Illuminate\Support\Str::uuid(),
+                'type' => 'test', 'data' => ['title' => 'Notice'], 'read_at' => $readAt,
+            ]);
+        }
+        User::findOrFail(4)->notifications()->create([
+            'id' => (string) \Illuminate\Support\Str::uuid(),
+            'type' => 'test', 'data' => [], 'read_at' => null,
+        ]);
+
+        DB::enableQueryLog();
+        try {
+            $state = $method->invoke($header, $staff, 1);
+            $countQueries = collect(DB::getQueryLog())->filter(
+                fn ($query) => str_contains(strtolower($query['query']), 'count(')
+            );
+        } finally {
+            DB::disableQueryLog();
+            DB::flushQueryLog();
+        }
+        $this->assertSame(3, $state['total_count']);
+        $this->assertSame(2, $state['unread_count']);
+        $this->assertCount(1, $state['items']);
+        $this->assertCount(1, $countQueries);
+        $this->assertStringNotContainsString('order by', strtolower($countQueries->first()['query']));
+    }
+
     public function test_header_preview_only_prefixes_the_signed_in_users_messages(): void
     {
         $header = app(AdminHeaderService::class);

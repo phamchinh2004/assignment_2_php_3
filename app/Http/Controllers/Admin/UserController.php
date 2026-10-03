@@ -9,7 +9,6 @@ use App\Http\Requests\StoreFrozenOrderRequest;
 use App\Models\FrozenOrderSetting;
 use App\Models\User;
 use App\Http\Requests\StoreUserRequest;
-use App\Http\Requests\UpdateFrozenOrderRequest;
 use App\Http\Requests\UpdateUserRequest;
 use App\Models\Conversation;
 use App\Models\Frozen_order;

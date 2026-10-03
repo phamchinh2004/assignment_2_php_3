@@ -4,7 +4,6 @@ namespace App\Console\Commands;
 
 use App\Models\Frozen_order;
 use App\Models\OrderStatusTiming;
-use App\Services\OrderStatusService;
 use App\Jobs\PrepareOrder;
 use App\Jobs\TransitOrder;
 use App\Jobs\ShipOrder;

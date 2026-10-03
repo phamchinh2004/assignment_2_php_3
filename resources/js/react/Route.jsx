@@ -81,112 +81,110 @@ function RouteLoader() {
 }
 
 export default function AppRoutes({ bootstrap }) {
+    const renderPage = (Page) => (
+        <Suspense fallback={<RouteLoader />}>
+            <Page config={bootstrap.props || {}} />
+        </Suspense>
+    );
+
     return (
         <Routes>
-            <Route path="/" element={<Suspense fallback={<RouteLoader />}><LegacyUserPage config={bootstrap.props || {}} /></Suspense>} />
-            <Route path="/login" element={<Suspense fallback={<RouteLoader />}><LoginPage config={bootstrap.props || {}} /></Suspense>} />
-            <Route path="/register" element={<Suspense fallback={<RouteLoader />}><RegisterPage config={bootstrap.props || {}} /></Suspense>} />
-            <Route path="/forgot-password" element={<Suspense fallback={<RouteLoader />}><ForgotPasswordPage config={bootstrap.props || {}} /></Suspense>} />
-            <Route path="/balance-fluctuation" element={<Suspense fallback={<RouteLoader />}><BalanceFluctuationPage config={bootstrap.props || {}} /></Suspense>} />
-            <Route path="/vip" element={<Suspense fallback={<RouteLoader />}><VipPage config={bootstrap.props || {}} /></Suspense>} />
-            <Route path="/me" element={<Suspense fallback={<RouteLoader />}><MePage config={bootstrap.props || {}} /></Suspense>} />
-            <Route path="/order" element={<Suspense fallback={<RouteLoader />}><UserOrderPage config={bootstrap.props || {}} /></Suspense>} />
-            <Route path="/order/:frozenOrderId" element={<Suspense fallback={<RouteLoader />}><LegacyUserPage config={bootstrap.props || {}} /></Suspense>} />
-            <Route path="/distribution" element={<Suspense fallback={<RouteLoader />}><LegacyUserPage config={bootstrap.props || {}} /></Suspense>} />
-            <Route path="/withdraw" element={<Suspense fallback={<RouteLoader />}><LegacyUserPage config={bootstrap.props || {}} /></Suspense>} />
-            <Route path="/personal-information" element={<Suspense fallback={<RouteLoader />}><LegacyUserPage config={bootstrap.props || {}} /></Suspense>} />
+            <Route path="/" element={renderPage(LegacyUserPage)} />
+            <Route path="/login" element={renderPage(LoginPage)} />
+            <Route path="/register" element={renderPage(RegisterPage)} />
+            <Route path="/forgot-password" element={renderPage(ForgotPasswordPage)} />
+            <Route path="/balance-fluctuation" element={renderPage(BalanceFluctuationPage)} />
+            <Route path="/vip" element={renderPage(VipPage)} />
+            <Route path="/me" element={renderPage(MePage)} />
+            <Route path="/order" element={renderPage(UserOrderPage)} />
+            <Route path="/order/:frozenOrderId" element={renderPage(LegacyUserPage)} />
+            <Route path="/distribution" element={renderPage(LegacyUserPage)} />
+            <Route path="/withdraw" element={renderPage(LegacyUserPage)} />
+            <Route path="/personal-information" element={renderPage(LegacyUserPage)} />
             <Route path="/admin" element={<AdminLayout />}>
-                <Route index element={<Suspense fallback={<RouteLoader />}><AdminDashboardPage config={bootstrap.props || {}} /></Suspense>} />
-                <Route path="chat-panel" element={<Suspense fallback={<RouteLoader />}><AdminChatPage config={bootstrap.props || {}} /></Suspense>} />
-                <Route path="banner" element={<Suspense fallback={<RouteLoader />}><BannerListPage config={bootstrap.props || {}} /></Suspense>} />
-                <Route path="banner/create" element={<Suspense fallback={<RouteLoader />}><BannerCreatePage config={bootstrap.props || {}} /></Suspense>} />
-                <Route path="banner/:bannerId/edit" element={<Suspense fallback={<RouteLoader />}><BannerEditPage config={bootstrap.props || {}} /></Suspense>} />
-                <Route path="banner/:bannerId" element={<Suspense fallback={<RouteLoader />}><BannerShowPage config={bootstrap.props || {}} /></Suspense>} />
-                <Route path="partner" element={<Suspense fallback={<RouteLoader />}><PartnerListPage config={bootstrap.props || {}} /></Suspense>} />
-                <Route path="partner/create" element={<Suspense fallback={<RouteLoader />}><PartnerCreatePage config={bootstrap.props || {}} /></Suspense>} />
-                <Route path="partner/:partnerId/edit" element={<Suspense fallback={<RouteLoader />}><PartnerEditPage config={bootstrap.props || {}} /></Suspense>} />
-                <Route path="partner/:partnerId" element={<Suspense fallback={<RouteLoader />}><PartnerShowPage config={bootstrap.props || {}} /></Suspense>} />
-                <Route path="language" element={<Suspense fallback={<RouteLoader />}><LanguageListPage config={bootstrap.props || {}} /></Suspense>} />
-                <Route path="language/create" element={<Suspense fallback={<RouteLoader />}><LanguageCreatePage config={bootstrap.props || {}} /></Suspense>} />
-                <Route path="language/:languageId/edit" element={<Suspense fallback={<RouteLoader />}><LanguageEditPage config={bootstrap.props || {}} /></Suspense>} />
-                <Route path="language/:languageId" element={<Suspense fallback={<RouteLoader />}><LanguageShowPage config={bootstrap.props || {}} /></Suspense>} />
-                <Route path="rank" element={<Suspense fallback={<RouteLoader />}><RankListPage config={bootstrap.props || {}} /></Suspense>} />
-                <Route path="rank/create" element={<Suspense fallback={<RouteLoader />}><RankCreatePage config={bootstrap.props || {}} /></Suspense>} />
-                <Route path="rank/:rankId/edit" element={<Suspense fallback={<RouteLoader />}><RankEditPage config={bootstrap.props || {}} /></Suspense>} />
-                <Route path="rank/:rankId" element={<Suspense fallback={<RouteLoader />}><RankShowPage config={bootstrap.props || {}} /></Suspense>} />
-                <Route path="section" element={<Suspense fallback={<RouteLoader />}><SectionListPage config={bootstrap.props || {}} /></Suspense>} />
-                <Route path="section/create" element={<Suspense fallback={<RouteLoader />}><SectionCreatePage config={bootstrap.props || {}} /></Suspense>} />
-                <Route path="section/:sectionId/edit" element={<Suspense fallback={<RouteLoader />}><SectionEditPage config={bootstrap.props || {}} /></Suspense>} />
-                <Route path="section/:sectionId" element={<Suspense fallback={<RouteLoader />}><SectionShowPage config={bootstrap.props || {}} /></Suspense>} />
-                <Route path="manager_setting" element={<Suspense fallback={<RouteLoader />}><ManagerSettingListPage config={bootstrap.props || {}} /></Suspense>} />
-                <Route path="manager_setting/create" element={<Suspense fallback={<RouteLoader />}><ManagerSettingCreatePage config={bootstrap.props || {}} /></Suspense>} />
-                <Route path="manager_setting/:settingId/edit" element={<Suspense fallback={<RouteLoader />}><ManagerSettingEditPage config={bootstrap.props || {}} /></Suspense>} />
-                <Route path="manager_setting/:settingId" element={<Suspense fallback={<RouteLoader />}><ManagerSettingShowPage config={bootstrap.props || {}} /></Suspense>} />
-                <Route path="order-status-timing" element={<Suspense fallback={<RouteLoader />}><OrderStatusTimingListPage config={bootstrap.props || {}} /></Suspense>} />
-                <Route path="order-status-timing/:timingId/edit" element={<Suspense fallback={<RouteLoader />}><OrderStatusTimingEditPage config={bootstrap.props || {}} /></Suspense>} />
-                <Route path="frozen-order-settings" element={<Suspense fallback={<RouteLoader />}><FrozenOrderSettingsPage config={bootstrap.props || {}} /></Suspense>} />
-                <Route path="feature-announcements" element={<Suspense fallback={<RouteLoader />}><FeatureAnnouncementListPage config={bootstrap.props || {}} /></Suspense>} />
-                <Route path="feature-announcements/create" element={<Suspense fallback={<RouteLoader />}><FeatureAnnouncementCreatePage config={bootstrap.props || {}} /></Suspense>} />
-                <Route path="feature-announcements/:announcementId/edit" element={<Suspense fallback={<RouteLoader />}><FeatureAnnouncementEditPage config={bootstrap.props || {}} /></Suspense>} />
-                <Route path="feature-announcements/:announcementId" element={<Suspense fallback={<RouteLoader />}><FeatureAnnouncementShowPage config={bootstrap.props || {}} /></Suspense>} />
-                <Route path="lucky-wheel-rewards" element={<Suspense fallback={<RouteLoader />}><LuckyWheelRewardsPage config={bootstrap.props || {}} /></Suspense>} />
-                <Route path="order-reports" element={<Suspense fallback={<RouteLoader />}><OrderReportListPage config={bootstrap.props || {}} /></Suspense>} />
-                <Route path="order-reports/:reportId" element={<Suspense fallback={<RouteLoader />}><OrderReportShowPage config={bootstrap.props || {}} /></Suspense>} />
-                <Route path="bug-reports" element={<Suspense fallback={<RouteLoader />}><BugReportListPage config={bootstrap.props || {}} /></Suspense>} />
-                <Route path="bug-reports/:reportId" element={<Suspense fallback={<RouteLoader />}><BugReportShowPage config={bootstrap.props || {}} /></Suspense>} />
-                <Route path="order-distributions" element={<Suspense fallback={<RouteLoader />}><OrderDistributionListPage config={bootstrap.props || {}} /></Suspense>} />
-                <Route path="order-distributions/:frozenOrderId" element={<Suspense fallback={<RouteLoader />}><OrderDistributionShowPage config={bootstrap.props || {}} /></Suspense>} />
-                <Route path="withdraw-transaction" element={<Suspense fallback={<RouteLoader />}><WithdrawTransactionsPage config={bootstrap.props || {}} /></Suspense>} />
-                <Route path="deposit-transaction" element={<Suspense fallback={<RouteLoader />}><DepositTransactionsPage config={bootstrap.props || {}} /></Suspense>} />
-                <Route path="staff" element={<Suspense fallback={<RouteLoader />}><StaffListPage config={bootstrap.props || {}} /></Suspense>} />
-                <Route path="staff/create" element={<Suspense fallback={<RouteLoader />}><StaffCreatePage config={bootstrap.props || {}} /></Suspense>} />
-                <Route path="staff/:staffId/edit" element={<Suspense fallback={<RouteLoader />}><StaffEditPage config={bootstrap.props || {}} /></Suspense>} />
-                <Route path="staff/:staffId" element={<Suspense fallback={<RouteLoader />}><StaffShowPage config={bootstrap.props || {}} /></Suspense>} />
-                <Route path="staff/edit-permissions/:staffId" element={<Suspense fallback={<RouteLoader />}><StaffPermissionsPage config={bootstrap.props || {}} /></Suspense>} />
-                <Route path="staffs" element={<Suspense fallback={<RouteLoader />}><StaffListPage config={bootstrap.props || {}} /></Suspense>} />
-                <Route path="staffs/create" element={<Suspense fallback={<RouteLoader />}><StaffCreatePage config={bootstrap.props || {}} /></Suspense>} />
-                <Route path="staffs/:staffId/edit" element={<Suspense fallback={<RouteLoader />}><StaffEditPage config={bootstrap.props || {}} /></Suspense>} />
-                <Route path="staffs/:staffId" element={<Suspense fallback={<RouteLoader />}><StaffShowPage config={bootstrap.props || {}} /></Suspense>} />
-                <Route path="user" element={<Suspense fallback={<RouteLoader />}><UserListPage config={bootstrap.props || {}} /></Suspense>} />
-                <Route path="user/create" element={<Suspense fallback={<RouteLoader />}><UserCreatePage config={bootstrap.props || {}} /></Suspense>} />
-                <Route path="user/frozen-order/:userId" element={<Suspense fallback={<RouteLoader />}><UserFrozenOrdersPage config={bootstrap.props || {}} /></Suspense>} />
-                <Route path="user/:userId/edit" element={<Suspense fallback={<RouteLoader />}><UserEditPage config={bootstrap.props || {}} /></Suspense>} />
-                <Route path="user/:userId" element={<Suspense fallback={<RouteLoader />}><UserShowPage config={bootstrap.props || {}} /></Suspense>} />
-                <Route path="tong-doanh-thu" element={<Suspense fallback={<RouteLoader />}><OverviewStatisticsPage config={bootstrap.props || {}} /></Suspense>} />
-                <Route path="statistical/revenue" element={<Suspense fallback={<RouteLoader />}><OverviewStatisticsPage config={bootstrap.props || {}} /></Suspense>} />
-                <Route path="doanh-thu-theo-nhan-vien" element={<Suspense fallback={<RouteLoader />}><StaffRevenuePage config={bootstrap.props || {}} /></Suspense>} />
-                <Route path="doanh-thu-tu-khach-hang" element={<Suspense fallback={<RouteLoader />}><CustomerRevenuePage config={bootstrap.props || {}} /></Suspense>} />
-                <Route path="doanh-thu-ban-than" element={<Suspense fallback={<RouteLoader />}><PersonalRevenuePage config={bootstrap.props || {}} /></Suspense>} />
+                <Route index element={renderPage(AdminDashboardPage)} />
+                <Route path="chat-panel" element={renderPage(AdminChatPage)} />
+                <Route path="banner" element={renderPage(BannerListPage)} />
+                <Route path="banner/create" element={renderPage(BannerCreatePage)} />
+                <Route path="banner/:bannerId/edit" element={renderPage(BannerEditPage)} />
+                <Route path="banner/:bannerId" element={renderPage(BannerShowPage)} />
+                <Route path="partner" element={renderPage(PartnerListPage)} />
+                <Route path="partner/create" element={renderPage(PartnerCreatePage)} />
+                <Route path="partner/:partnerId/edit" element={renderPage(PartnerEditPage)} />
+                <Route path="partner/:partnerId" element={renderPage(PartnerShowPage)} />
+                <Route path="language" element={renderPage(LanguageListPage)} />
+                <Route path="language/create" element={renderPage(LanguageCreatePage)} />
+                <Route path="language/:languageId/edit" element={renderPage(LanguageEditPage)} />
+                <Route path="language/:languageId" element={renderPage(LanguageShowPage)} />
+                <Route path="rank" element={renderPage(RankListPage)} />
+                <Route path="rank/create" element={renderPage(RankCreatePage)} />
+                <Route path="rank/:rankId/edit" element={renderPage(RankEditPage)} />
+                <Route path="rank/:rankId" element={renderPage(RankShowPage)} />
+                <Route path="section" element={renderPage(SectionListPage)} />
+                <Route path="section/create" element={renderPage(SectionCreatePage)} />
+                <Route path="section/:sectionId/edit" element={renderPage(SectionEditPage)} />
+                <Route path="section/:sectionId" element={renderPage(SectionShowPage)} />
+                <Route path="manager_setting" element={renderPage(ManagerSettingListPage)} />
+                <Route path="manager_setting/create" element={renderPage(ManagerSettingCreatePage)} />
+                <Route path="manager_setting/:settingId/edit" element={renderPage(ManagerSettingEditPage)} />
+                <Route path="manager_setting/:settingId" element={renderPage(ManagerSettingShowPage)} />
+                <Route path="order-status-timing" element={renderPage(OrderStatusTimingListPage)} />
+                <Route path="order-status-timing/:timingId/edit" element={renderPage(OrderStatusTimingEditPage)} />
+                <Route path="frozen-order-settings" element={renderPage(FrozenOrderSettingsPage)} />
+                <Route path="feature-announcements" element={renderPage(FeatureAnnouncementListPage)} />
+                <Route path="feature-announcements/create" element={renderPage(FeatureAnnouncementCreatePage)} />
+                <Route path="feature-announcements/:announcementId/edit" element={renderPage(FeatureAnnouncementEditPage)} />
+                <Route path="feature-announcements/:announcementId" element={renderPage(FeatureAnnouncementShowPage)} />
+                <Route path="lucky-wheel-rewards" element={renderPage(LuckyWheelRewardsPage)} />
+                <Route path="order-reports" element={renderPage(OrderReportListPage)} />
+                <Route path="order-reports/:reportId" element={renderPage(OrderReportShowPage)} />
+                <Route path="bug-reports" element={renderPage(BugReportListPage)} />
+                <Route path="bug-reports/:reportId" element={renderPage(BugReportShowPage)} />
+                <Route path="order-distributions" element={renderPage(OrderDistributionListPage)} />
+                <Route path="order-distributions/:frozenOrderId" element={renderPage(OrderDistributionShowPage)} />
+                <Route path="withdraw-transaction" element={renderPage(WithdrawTransactionsPage)} />
+                <Route path="deposit-transaction" element={renderPage(DepositTransactionsPage)} />
+                <Route path="staff" element={renderPage(StaffListPage)} />
+                <Route path="staff/create" element={renderPage(StaffCreatePage)} />
+                <Route path="staff/:staffId/edit" element={renderPage(StaffEditPage)} />
+                <Route path="staff/:staffId" element={renderPage(StaffShowPage)} />
+                <Route path="staff/edit-permissions/:staffId" element={renderPage(StaffPermissionsPage)} />
+                <Route path="staffs" element={renderPage(StaffListPage)} />
+                <Route path="staffs/create" element={renderPage(StaffCreatePage)} />
+                <Route path="staffs/:staffId/edit" element={renderPage(StaffEditPage)} />
+                <Route path="staffs/:staffId" element={renderPage(StaffShowPage)} />
+                <Route path="user" element={renderPage(UserListPage)} />
+                <Route path="user/create" element={renderPage(UserCreatePage)} />
+                <Route path="user/frozen-order/:userId" element={renderPage(UserFrozenOrdersPage)} />
+                <Route path="user/:userId/edit" element={renderPage(UserEditPage)} />
+                <Route path="user/:userId" element={renderPage(UserShowPage)} />
+                <Route path="tong-doanh-thu" element={renderPage(OverviewStatisticsPage)} />
+                <Route path="statistical/revenue" element={renderPage(OverviewStatisticsPage)} />
+                <Route path="doanh-thu-theo-nhan-vien" element={renderPage(StaffRevenuePage)} />
+                <Route path="doanh-thu-tu-khach-hang" element={renderPage(CustomerRevenuePage)} />
+                <Route path="doanh-thu-ban-than" element={renderPage(PersonalRevenuePage)} />
                 <Route
                     path="order"
                     element={
-                        <Suspense fallback={<RouteLoader />}>
-                            <OrderListPage config={bootstrap.props || {}} />
-                        </Suspense>
+                        renderPage(OrderListPage)
                     }
                 />
                 <Route
                     path="order/create"
                     element={
-                        <Suspense fallback={<RouteLoader />}>
-                            <OrderCreatePage config={bootstrap.props || {}} />
-                        </Suspense>
+                        renderPage(OrderCreatePage)
                     }
                 />
                 <Route
                     path="order/:orderId/edit"
                     element={
-                        <Suspense fallback={<RouteLoader />}>
-                            <OrderEditPage config={bootstrap.props || {}} />
-                        </Suspense>
+                        renderPage(OrderEditPage)
                     }
                 />
                 <Route
                     path="order/:orderId"
                     element={
-                        <Suspense fallback={<RouteLoader />}>
-                            <OrderShowPage config={bootstrap.props || {}} />
-                        </Suspense>
+                        renderPage(OrderShowPage)
                     }
                 />
             </Route>

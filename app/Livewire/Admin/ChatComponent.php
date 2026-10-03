@@ -2,7 +2,6 @@
 
 namespace App\Livewire\Admin;
 
-use App\Events\MessageSent;
 use App\Events\MessageRead;
 use App\Events\MessageUpdated;
 use App\Events\MessageDeleted;
@@ -18,7 +17,6 @@ use App\Models\Message;
 use App\Services\AuthorizationService;
 use App\Services\ChatReadService;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Livewire\Attributes\On;
@@ -1512,32 +1510,6 @@ class ChatComponent extends Component
             $message['is_read'] = $statuses[$message['id']] ?? false;
             return $message;
         }, $this->messages);
-    }
-
-    /**
-     * Cập nhật trạng thái is_read của tin nhắn trong $this->messages array
-     */
-    private function updateMessageReadStatus($messageId, $isRead)
-    {
-        if (!is_array($this->messages)) {
-            return;
-        }
-
-        $updated = false;
-        $newMessages = [];
-
-        foreach ($this->messages as $key => $message) {
-            if (isset($message['id']) && $message['id'] == $messageId) {
-                $message['is_read'] = $isRead;
-                $updated = true;
-            }
-            $newMessages[] = $message;
-        }
-
-        // Force Livewire to detect the change by completely reassigning
-        if ($updated) {
-            $this->messages = $newMessages;
-        }
     }
 
     public function render()

@@ -7,8 +7,6 @@ use App\Http\Controllers\LoginController;
 use App\Http\Controllers\RegisterController;
 use App\Http\Controllers\User\BalanceFluctuationController;
 use App\Http\Controllers\User\MeController;
-use App\Models\Order;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 /*

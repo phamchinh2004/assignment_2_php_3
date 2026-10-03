@@ -2,7 +2,6 @@
 
 namespace App\Livewire\User;
 
-use App\Events\MessageSent;
 use App\Events\MessageRead;
 use App\Events\UserJoinChat;
 use App\Events\UserSentMessage;
@@ -13,7 +12,6 @@ use App\Services\ChatReferenceService;
 use App\Services\ChatReadService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Livewire\Component;
@@ -512,29 +510,6 @@ class ChatComponent extends Component
         if ($messageId) {
             $this->refreshReadReceipts();
         }
-    }
-
-    /**
-     * Cập nhật trạng thái is_read của tin nhắn trong $this->chatMessages collection
-     */
-    private function updateMessageReadStatus($messageId, $isRead)
-    {
-        if (!$this->chatMessages instanceof \Illuminate\Support\Collection) {
-            $this->chatMessages = collect($this->chatMessages);
-        }
-
-        // Convert to array để modify, sau đó convert lại thành collection
-        $messages = $this->chatMessages->toArray();
-
-        foreach ($messages as &$message) {
-            if (isset($message['id']) && $message['id'] == $messageId) {
-                $message['is_read'] = $isRead;
-                break;
-            }
-        }
-        unset($message); // Break reference
-
-        $this->chatMessages = collect($messages);
     }
 
     public function onConversationRead($data)

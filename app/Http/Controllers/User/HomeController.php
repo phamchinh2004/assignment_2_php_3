@@ -17,7 +17,6 @@ use App\Models\User_spin_progress;
 use App\Models\Wallet_balance_history;
 use App\Services\LuckyWheelRewardService;
 use App\Services\ReactPageService;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;

@@ -36,7 +36,18 @@ class AuthorizationService
             return true;
         }
 
-        return in_array($permission, $this->permissionCodes($user), true);
+        // Preserve Collection::unique() comparison for legacy numeric codes.
+        if (is_numeric($permission)) {
+            return in_array($permission, $this->permissionCodes($user), true);
+        }
+
+        $user->loadMissing('user_manager_settings.manager_setting');
+
+        return $user->user_manager_settings->contains(
+            fn ($assignment) => (bool) $assignment->is_active
+                && $assignment->manager_setting?->manager_code
+                && $assignment->manager_setting?->manager_code === $permission
+        );
     }
 
     public function canAny(User $user, array $permissions): bool

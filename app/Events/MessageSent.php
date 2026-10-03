@@ -2,7 +2,6 @@
 
 namespace App\Events;
 
-use App\Models\User;
 use App\Services\ManagementRecipientResolver;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;

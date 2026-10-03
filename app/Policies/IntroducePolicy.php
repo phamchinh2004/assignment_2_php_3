@@ -4,7 +4,6 @@ namespace App\Policies;
 
 use App\Models\Introduce;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
 
 class IntroducePolicy
 {

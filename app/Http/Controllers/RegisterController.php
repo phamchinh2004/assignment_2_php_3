@@ -3,9 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Conversation;
-use App\Models\Rank;
 use App\Models\User;
-use App\Models\User_spin_progress;
 use App\Services\ApproximateLocationService;
 use App\Services\ReactPageService;
 use Illuminate\Http\Request;

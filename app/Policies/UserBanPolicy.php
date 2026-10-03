@@ -4,7 +4,6 @@ namespace App\Policies;
 
 use App\Models\User;
 use App\Models\User_ban;
-use Illuminate\Auth\Access\Response;
 
 class UserBanPolicy
 {

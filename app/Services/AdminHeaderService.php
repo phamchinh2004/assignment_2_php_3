@@ -100,9 +100,15 @@ class AdminHeaderService
                 ->whereIn('id', $conversationIds)
                 ->pluck('public_id', 'id');
 
+        $counts = $user->notifications()
+            ->reorder()
+            ->selectRaw('COUNT(*) as total_count, COUNT(*) - COUNT(read_at) as unread_count')
+            ->toBase()
+            ->first();
+
         return [
-            'unread_count' => $user->unreadNotifications()->count(),
-            'total_count' => $user->notifications()->count(),
+            'unread_count' => (int) $counts->unread_count,
+            'total_count' => (int) $counts->total_count,
             'items' => $notifications
                 ->map(fn (DatabaseNotification $notification) => $this->notificationItem(
                     $notification,

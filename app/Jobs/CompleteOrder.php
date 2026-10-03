@@ -3,7 +3,6 @@
 namespace App\Jobs;
 
 use App\Models\Frozen_order;
-use App\Models\Order;
 use App\Models\OrderStatusTiming;
 use App\Models\Transaction_history;
 use App\Models\User;

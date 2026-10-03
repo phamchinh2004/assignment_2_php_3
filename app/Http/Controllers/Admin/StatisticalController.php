@@ -203,7 +203,6 @@ class StatisticalController extends Controller
     private function getChartData($startDate, $endDate, $period)
     {
         // Xác định format ngày dựa trên khoảng thời gian
-        $dateFormat = $period <= 30 ? '%Y-%m-%d' : '%Y-%m';
         $groupBy = $period <= 30 ? 'DATE(created_at)' : 'DATE_FORMAT(created_at, "%Y-%m")';
 
         // Lấy dữ liệu theo ngày/tháng
@@ -933,7 +932,6 @@ class StatisticalController extends Controller
 
             // Xác định format ngày và group by theo loại thống kê
             $dateFormat = $this->getDateFormat($type);
-            $groupBy = $this->getGroupBy($type);
 
             $revenueData = $this->scopedWalletHistories()->where('type', 'deposit')
                 ->whereHas('user', function ($q) {
@@ -1221,33 +1219,11 @@ class StatisticalController extends Controller
      */
     private function getDateFormat($type)
     {
-        switch ($type) {
-            case 'daily':
-                return '%Y-%m-%d';
-            case 'monthly':
-                return '%Y-%m';
-            case 'yearly':
-                return '%Y';
-            default:
-                return '%Y-%m-%d';
-        }
-    }
-
-    /**
-     * Helper: Lấy group by theo loại thống kê
-     */
-    private function getGroupBy($type)
-    {
-        switch ($type) {
-            case 'daily':
-                return 'DATE(created_at)';
-            case 'monthly':
-                return 'YEAR(created_at), MONTH(created_at)';
-            case 'yearly':
-                return 'YEAR(created_at)';
-            default:
-                return 'DATE(created_at)';
-        }
+        return match ($type) {
+            'monthly' => '%Y-%m',
+            'yearly' => '%Y',
+            default => '%Y-%m-%d',
+        };
     }
 
     /**

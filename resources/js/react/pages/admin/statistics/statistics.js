@@ -1,5 +1,10 @@
 import { adminDateInput } from '../../../../shared/datetime';
 
+const moneyFormatter = new Intl.NumberFormat('en-US', {
+    style: 'currency', currency: 'USD', maximumFractionDigits: 2,
+});
+const numberFormatter = new Intl.NumberFormat('vi-VN');
+
 export function withQuery(url, params = {}) {
     const target = new URL(url, window.location.origin);
     Object.entries(params).forEach(([key, value]) => {
@@ -11,15 +16,11 @@ export function withQuery(url, params = {}) {
 }
 
 export function money(value) {
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-        maximumFractionDigits: 2,
-    }).format(Number(value || 0));
+    return moneyFormatter.format(Number(value || 0));
 }
 
 export function number(value) {
-    return new Intl.NumberFormat('vi-VN').format(Number(value || 0));
+    return numberFormatter.format(Number(value || 0));
 }
 
 export function dateInput(date) {

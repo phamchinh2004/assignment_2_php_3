@@ -9,7 +9,6 @@ use App\Http\Requests\UpdateOrderRequest;
 use App\Models\Rank;
 use App\Models\Partner;
 use App\Services\AuthorizationService;
-use App\Services\OrderStatusService;
 use App\Services\ReactPageService;
 use Illuminate\Support\Facades\Storage;
 
@@ -28,7 +27,6 @@ class OrderController extends Controller
     {
         $status = request()->input('status');
         $rank = request()->input('rank');
-        $list_ranks = Rank::withCount('orders')->get();
         
         // Kiểm tra nếu là request AJAX (có tham số status hoặc rank trong query string)
         // hoặc nếu cả hai đều rỗng nhưng vẫn có request (JavaScript sẽ gửi cả hai là "")
@@ -51,10 +49,14 @@ class OrderController extends Controller
             // Load trang lần đầu
             // Chỉ cần đếm tổng số đơn hàng để hiển thị trong nút "Tất cả"
             // Dữ liệu sẽ được load qua JavaScript
-            $total_orders_count = Order::count();
-            $active_orders_count = Order::where('status', '1')->count();
-            $inactive_orders_count = Order::where('status', '0')->count();
-            $total_orders_value = Order::sum('price');
+            $list_ranks = Rank::withCount('orders')->get();
+            $stats = Order::query()
+                ->selectRaw('COUNT(*) as total')
+                ->selectRaw('COUNT(CASE WHEN status = ? THEN 1 END) as active', ['1'])
+                ->selectRaw('COUNT(CASE WHEN status = ? THEN 1 END) as inactive', ['0'])
+                ->selectRaw('COALESCE(SUM(price), 0) as total_value')
+                ->toBase()
+                ->first();
             $user = auth()->user();
 
             return $this->reactPage->admin('admin.orders.index', [
@@ -67,10 +69,10 @@ class OrderController extends Controller
                 ],
                 'storageBaseUrl' => asset('storage'),
                 'stats' => [
-                    'total' => $total_orders_count,
-                    'active' => $active_orders_count,
-                    'inactive' => $inactive_orders_count,
-                    'totalValue' => $total_orders_value,
+                    'total' => (int) $stats->total,
+                    'active' => (int) $stats->active,
+                    'inactive' => (int) $stats->inactive,
+                    'totalValue' => $stats->total_value,
                 ],
                 'ranks' => $list_ranks->map(fn ($rank) => [
                     'id' => $rank->id,

@@ -2,6 +2,30 @@
 
 export const ADMIN_TIME_ZONE = 'Asia/Ho_Chi_Minh';
 
+const fixedTimeZoneFormatters = new Map();
+const adminInputFormatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: ADMIN_TIME_ZONE, year: 'numeric', month: '2-digit', day: '2-digit',
+});
+
+function dateTimeFormatter(options) {
+    // Keep device time live; only reuse formatters with an explicit timezone.
+    const cacheable = Object.getPrototypeOf(options) === Object.prototype
+        && Object.values(Object.getOwnPropertyDescriptors(options)).every(({ value, enumerable, get, set }) =>
+            enumerable && !get && !set && (value === undefined
+                || typeof value === 'string' || typeof value === 'boolean'
+                || (typeof value === 'number' && Number.isFinite(value))))
+        && typeof options.timeZone === 'string';
+    if (!cacheable) return new Intl.DateTimeFormat(DEFAULT_LOCALE, options);
+
+    const key = JSON.stringify(Object.entries(options));
+    if (!fixedTimeZoneFormatters.has(key)) {
+        const formatter = new Intl.DateTimeFormat(DEFAULT_LOCALE, options);
+        if (fixedTimeZoneFormatters.size >= 32) fixedTimeZoneFormatters.delete(fixedTimeZoneFormatters.keys().next().value);
+        fixedTimeZoneFormatters.set(key, formatter);
+    }
+    return fixedTimeZoneFormatters.get(key);
+}
+
 export function parseDateTime(value) {
     if (!value) return null;
 
@@ -22,7 +46,7 @@ export function formatLocalDateTime(value, options = {}, fallback = '—') {
         ? options
         : { dateStyle: 'short', timeStyle: 'short' };
 
-    return new Intl.DateTimeFormat(DEFAULT_LOCALE, formatOptions).format(date);
+    return dateTimeFormatter(formatOptions).format(date);
 }
 
 export function formatLocalDate(value, options = {}, fallback = '—') {
@@ -43,9 +67,7 @@ export function formatAdminDateTime(value, options = {}, fallback = '—') {
 export function adminDateInput(value = new Date()) {
     const date = parseDateTime(value);
     if (!date) return '';
-    const parts = new Intl.DateTimeFormat('en-US', {
-        timeZone: ADMIN_TIME_ZONE, year: 'numeric', month: '2-digit', day: '2-digit',
-    }).formatToParts(date);
+    const parts = adminInputFormatter.formatToParts(date);
     const part = (type) => parts.find((item) => item.type === type).value;
     return `${part('year')}-${part('month')}-${part('day')}`;
 }

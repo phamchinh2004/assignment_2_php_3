@@ -120,6 +120,31 @@ class AuthorizationServiceTest extends TestCase
         $this->assertFalse($this->authorization->canDeleteChatMessages($admin));
     }
 
+    public function test_single_permission_checks_match_codes_and_reflect_changes_to_loaded_assignments(): void
+    {
+        $staff = $this->staffWithPermissions(['orders.view', 'orders.view', '', '0', '1', '01', '1.0'], ['orders.delete']);
+        $orphan = new User_manager_setting(['is_active' => true]);
+        $orphan->setRelation('manager_setting', null);
+        $staff->user_manager_settings->push($orphan);
+
+        foreach (['orders.view', 'orders.delete', 'unknown', '', '0', '1', '01', '1.0'] as $code) {
+            $this->assertSame(
+                in_array($code, $this->authorization->permissionCodes($staff), true),
+                $this->authorization->can($staff, $code)
+            );
+        }
+
+        foreach ($staff->user_manager_settings as $assignment) {
+            $assignment->is_active = false;
+        }
+        $this->assertFalse($this->authorization->can($staff, 'orders.view'));
+        $staff->user_manager_settings->last()->setRelation('manager_setting', new Manager_setting([
+            'manager_code' => 'orders.view',
+        ]));
+        $staff->user_manager_settings->last()->is_active = true;
+        $this->assertTrue($this->authorization->can($staff, 'orders.view'));
+    }
+
     public function test_admin_permissions_are_resolved_like_staff_permissions(): void
     {
         $admin = $this->userWithPermissions(User::ROLE_ADMIN, ['orders.manage'], ['orders.delete']);

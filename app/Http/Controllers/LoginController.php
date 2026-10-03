@@ -10,7 +10,6 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\SendMail;
 use App\Services\ReactPageService;
-use Str;
 
 class LoginController extends Controller
 {
