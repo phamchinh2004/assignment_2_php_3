@@ -1251,7 +1251,8 @@
         }
     });
 
-    document.addEventListener('DOMContentLoaded', function () {
+    // React mounts this markup after DOMContentLoaded and then signals Livewire readiness.
+    document.addEventListener('livewire:initialized', function () {
         const boundTextareas = new WeakSet();
 
         // ===== Xử lý textarea tự động điều chỉnh chiều cao =====
@@ -1601,7 +1602,7 @@
                 timer: 2500,
             });
         });
-    });
+    }, { once: true });
 
     function confirmChangeStatusOfUser(id, status) {
         let title = "";
