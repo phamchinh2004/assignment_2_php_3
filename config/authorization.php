@@ -32,6 +32,7 @@ $modules = [
             'manage_frozen_orders' => ['code' => 'customers.manage-frozen-orders', 'label' => 'Quản lý đơn hàng đóng băng'],
             'adjust_balance' => ['code' => 'customers.adjust-balance', 'label' => 'Điều chỉnh và nạp số dư'],
             'manage_spin' => ['code' => 'customers.manage-spin', 'label' => 'Quản lý lượt quay và tiến trình'],
+            'auto_spin' => ['code' => 'customers.auto-spin', 'label' => 'Tự động nhận và xác nhận đơn hàng'],
         ],
     ],
     'orders' => [
@@ -195,6 +196,7 @@ $modules = [
         'label' => 'Tin nhắn',
         'permissions' => [
             'view_all' => ['code' => 'chats.view-all', 'label' => 'Xem tin nhắn của nhân viên khác'],
+            'view_context' => ['code' => 'chats.view-context', 'label' => 'Xem đơn hàng và giao dịch trong hội thoại'],
         ],
     ],
 ];

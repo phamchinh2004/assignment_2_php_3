@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Services\ChatTypingService;
 use App\Services\ReactPageService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class ConversationController extends Controller
@@ -20,6 +22,22 @@ class ConversationController extends Controller
         return $reactPageService->admin('admin.chat', [
             'html' => app('livewire')->mount('admin.chat-component'),
         ], 'Chat System');
+    }
+
+    public function typing(Request $request, ChatTypingService $typing)
+    {
+        $validated = $request->validate([
+            'conversation_id' => ['required', 'integer'],
+            'typing' => ['required', 'boolean'],
+        ]);
+
+        $typing->update(
+            $request->user(),
+            (int) $validated['conversation_id'],
+            (bool) $validated['typing']
+        );
+
+        return response()->noContent();
     }
 
 }

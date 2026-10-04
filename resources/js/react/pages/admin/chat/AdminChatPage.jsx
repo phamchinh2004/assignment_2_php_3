@@ -41,6 +41,39 @@ function waitForLivewireComponent(container, callback) {
     };
 }
 
+function trackChatViewport(container) {
+    const viewport = window.visualViewport;
+    if (!viewport) return () => {};
+
+    let frame = 0;
+    const update = () => {
+        frame = 0;
+        if (window.innerWidth >= 992) {
+            container.style.removeProperty('--chat-viewport-height');
+            return;
+        }
+
+        const top = Math.max(0, container.getBoundingClientRect().top - viewport.offsetTop);
+        container.style.setProperty('--chat-viewport-height', `${Math.max(0, viewport.height - top)}px`);
+    };
+    const schedule = () => {
+        if (!frame) frame = window.requestAnimationFrame(update);
+    };
+
+    update();
+    viewport.addEventListener('resize', schedule);
+    viewport.addEventListener('scroll', schedule);
+    window.addEventListener('resize', schedule);
+
+    return () => {
+        if (frame) window.cancelAnimationFrame(frame);
+        viewport.removeEventListener('resize', schedule);
+        viewport.removeEventListener('scroll', schedule);
+        window.removeEventListener('resize', schedule);
+        container.style.removeProperty('--chat-viewport-height');
+    };
+}
+
 export default function AdminChatPage({ config }) {
     const containerRef = useRef(null);
 
@@ -50,6 +83,7 @@ export default function AdminChatPage({ config }) {
 
         let cancelled = false;
         let stopWaiting = () => {};
+        const stopTrackingViewport = trackChatViewport(container);
 
         Promise.all([
             import('../../../../admin/chat.js'),
@@ -63,6 +97,7 @@ export default function AdminChatPage({ config }) {
                 if (initializedNow) {
                     document.dispatchEvent(new CustomEvent('livewire:initialized'));
                 }
+                document.dispatchEvent(new CustomEvent('admin-chat:mounted'));
             });
         }).catch((error) => {
             console.error('Unable to initialize admin chat page.', error);
@@ -71,6 +106,7 @@ export default function AdminChatPage({ config }) {
         return () => {
             cancelled = true;
             stopWaiting();
+            stopTrackingViewport();
         };
     }, [config.html]);
 

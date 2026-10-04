@@ -71,6 +71,7 @@ class MessageSent implements ShouldBroadcastNow
                     'id' => $message->sender->id,
                     'full_name' => $message->sender->full_name,
                     'role' => $message->sender->role,
+                    'avatar' => $message->sender->avatar,
                 ] : null
             ]
         ];

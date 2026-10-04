@@ -1,4 +1,4 @@
-<div id="chat-root">
+<div id="chat-root" data-chat-conversation="{{ $conversation->id ?? '' }}" data-chat-viewer="{{ auth()->id() }}">
     <div class="floating-chat-container" wire:ignore.self x-data="{
         isOpen: @entangle('showBox'),
         isLoading: false,
@@ -127,24 +127,43 @@
                             $imagePath = is_array($msg) ? $msg['image_path'] : $msg->image_path;
                             $createdAt = is_array($msg) ? $msg['created_at'] : $msg->created_at;
                             $messageId = is_array($msg) ? $msg['id'] : $msg->id;
+                            $senderId = is_array($msg) ? $msg['sender_id'] : $msg->sender_id;
                             $senderName = is_array($msg)
                                 ? ($msg['sender']['full_name'] ?? 'User')
                                 : ($msg->sender->full_name ?? 'User');
                             $messageDate = \Carbon\Carbon::parse($createdAt)->setTimezone('Asia/Ho_Chi_Minh');
+                            $messageMinute = $messageDate->format('Y-m-d H:i');
+                            $newerMessage = $chatMessages->get($loop->index - 1);
+                            $newerSenderId = $newerMessage
+                                ? (is_array($newerMessage) ? $newerMessage['sender_id'] : $newerMessage->sender_id)
+                                : null;
+                            $newerCreatedAt = $newerMessage
+                                ? (is_array($newerMessage) ? $newerMessage['created_at'] : $newerMessage->created_at)
+                                : null;
+                            $isGroupedWithNewer = $newerMessage
+                                && (int) $newerSenderId === (int) $senderId
+                                && \Carbon\Carbon::parse($newerCreatedAt)->setTimezone('Asia/Ho_Chi_Minh')->format('Y-m-d H:i') === $messageMinute;
+                            $isGroupFooter = !$isGroupedWithNewer;
                             $nextMessage = $chatMessages->get($loop->index + 1);
                             $nextCreatedAt = $nextMessage
                                 ? (is_array($nextMessage) ? $nextMessage['created_at'] : $nextMessage->created_at)
                                 : null;
+                            $nextSenderId = $nextMessage
+                                ? (is_array($nextMessage) ? $nextMessage['sender_id'] : $nextMessage->sender_id)
+                                : null;
+                            $isGroupedWithOlder = $nextMessage
+                                && (int) $nextSenderId === (int) $senderId
+                                && \Carbon\Carbon::parse($nextCreatedAt)->setTimezone('Asia/Ho_Chi_Minh')->format('Y-m-d H:i') === $messageMinute;
                             $showDateSeparator = !$nextCreatedAt
                                 || !$messageDate->isSameDay(\Carbon\Carbon::parse($nextCreatedAt)->setTimezone('Asia/Ho_Chi_Minh'));
                         @endphp
 
                         @if($isCurrentUser)
                             <!-- Tin nhắn của user -->
-                            <div class="d-flex justify-content-end mb-3 chat-message-row {{ $isReference ? 'has-structured-message' : '' }}"
+                            <div class="d-flex justify-content-end chat-message-row {{ $isReference ? 'has-structured-message' : '' }} {{ $isGroupedWithNewer ? 'is-grouped-with-newer' : 'is-message-group-footer' }} {{ $isGroupedWithOlder ? 'is-grouped-with-older' : 'is-message-group-start' }}"
                                 wire:key="msg-{{ is_array($msg) ? $msg['id'] : $msg->id }}" style="min-width: 0;">
                                 <div class="d-flex align-items-end chat-message-track {{ $isReference ? 'has-structured-message' : '' }}">
-                                    <div class="me-2 chat-message-stack chat-message-stack--sent {{ $isReference ? 'chat-message-stack--structured' : '' }}">
+                                    <div class="chat-message-stack chat-message-stack--sent {{ $isReference ? 'chat-message-stack--structured' : '' }}">
                                         @if($isReference)
                                             <div class="chat-structured-message">
                                                 <x-chat.reference-card :message="$msg" audience="user" />
@@ -164,22 +183,27 @@
                                         @else
                                             <div class="message-bubble text-start" style="display: inline-block; width: fit-content; max-width: 100%; margin: 0; border-radius: 16px;">{{ trim($message) }}</div>
                                         @endif
-                                        <div class="text-end mt-1 d-flex align-items-center justify-content-end gap-1"
-                                            style="font-size: 10px; color: #6c757d;">
-                                            <time data-local-datetime="{{ $messageDate->toIso8601String() }}" data-local-format="time">{{ $messageDate->format('H:i') }}</time>
-                                        </div>
+                                        @if($isGroupFooter)
+                                            <div class="chat-group-meta text-end mt-1 d-flex align-items-center justify-content-end gap-1">
+                                                <time data-local-datetime="{{ $messageDate->toIso8601String() }}" data-local-format="time">{{ $messageDate->format('H:i') }}</time>
+                                            </div>
+                                        @endif
                                     </div>
-                                    <img src="https://ui-avatars.com/api/?name={{ urlencode($senderName) }}&background=667eea&color=ffffff&size=28&rounded=true"
-                                        alt="You" class="rounded-circle flex-shrink-0" width="28" height="28">
                                 </div>
                             </div>
                         @else
                             <!-- Tin nhắn của support -->
-                            <div class="d-flex justify-content-start mb-3 chat-message-row {{ $isReference ? 'has-structured-message' : '' }}"
+                            <div class="d-flex justify-content-start chat-message-row {{ $isReference ? 'has-structured-message' : '' }} {{ $isGroupedWithNewer ? 'is-grouped-with-newer' : 'is-message-group-footer' }} {{ $isGroupedWithOlder ? 'is-grouped-with-older' : 'is-message-group-start' }}"
                                 wire:key="msg-{{ is_array($msg) ? $msg['id'] : $msg->id }}" style="min-width: 0;">
                                 <div class="d-flex align-items-end chat-message-track {{ $isReference ? 'has-structured-message' : '' }}">
-                                    <img src="https://ui-avatars.com/api/?name=Support&background=28a745&color=ffffff&size=28&rounded=true&bold=true"
-                                        alt="Support" class="rounded-circle flex-shrink-0" width="28" height="28">
+                                    @if($isGroupFooter)
+                                        <span class="chat-support-mark chat-support-message-mark chat-group-avatar flex-shrink-0"
+                                            aria-label="{{ __('home.HoTroKhachHang') }}">
+                                            <i class="fa-solid fa-headset" aria-hidden="true"></i>
+                                        </span>
+                                    @else
+                                        <span class="chat-group-avatar-spacer flex-shrink-0" aria-hidden="true"></span>
+                                    @endif
                                     <div class="ms-2 chat-message-stack chat-message-stack--received {{ $isReference ? 'chat-message-stack--structured' : '' }}">
                                         @if($isReference)
                                             <div class="chat-structured-message">
@@ -201,9 +225,11 @@
                                             <div class="message-bubble rounded-4 position-relative member-message text-start"
                                                 style="display: inline-block; width: fit-content; max-width: 100%; margin: 0;">{{ trim($message) }}</div>
                                         @endif
-                                        <div class="mt-1 ps-2" style="font-size: 10px; color: #6c757d;text-align:left;">
-                                            {{ __('home.HoTro') }} · <time data-local-datetime="{{ $messageDate->toIso8601String() }}" data-local-format="time">{{ $messageDate->format('H:i') }}</time>
-                                        </div>
+                                        @if($isGroupFooter)
+                                            <div class="chat-group-meta mt-1 ps-2 text-start">
+                                                {{ __('home.HoTro') }} · <time data-local-datetime="{{ $messageDate->toIso8601String() }}" data-local-format="time">{{ $messageDate->format('H:i') }}</time>
+                                            </div>
+                                        @endif
                                     </div>
                                 </div>
                             </div>
@@ -370,8 +396,10 @@
                           input.style.height = 'auto';
                       }
                       
-                      // Gọi Livewire
-                      $wire.set('newMessage', val);
+                      // Cập nhật state cục bộ và gửi cùng request sendMessage.
+                      // Tránh tạo 2 request Livewire cạnh tranh nhau khiến response cũ
+                      // ghi đè DOM sau khi tin nhắn đã được lưu thành công.
+                      $wire.set('newMessage', val, false);
                       $wire.call('sendMessage').finally(() => {
                           formSending = false;
                           if (input) input.focus();
@@ -443,7 +471,7 @@
                             style="display: none;" @change="hasImage = $event.target.files.length > 0; attachmentMenuOpen = false">
                     </div>
 
-                    <textarea wire:model="newMessage" class="form-control border-0 bg-transparent flex-grow-1"
+                    <textarea wire:model="newMessage" data-chat-typing-input class="form-control border-0 bg-transparent flex-grow-1"
                         placeholder="{{__('home.NhapTinNhanCuaBan')}}" id="chat-input-field" autocomplete="off" rows="1"
                         title="Enter để gửi · Shift+Enter để xuống dòng"
                         style="font-size: 13px; resize: none; overflow-y: hidden; max-height: 100px; padding: 8px 0; line-height: 1.5; box-shadow: none;"
@@ -1024,3 +1052,7 @@
     });
 
 </script>
+
+@push('scripts')
+    @vite('resources/js/chat-typing.js')
+@endpush

@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Events\ConversationRead;
 use App\Events\MessageRead;
 use App\Livewire\Admin\ChatComponent;
+use App\Livewire\User\ChatComponent as UserChatComponent;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
@@ -17,6 +18,7 @@ use Illuminate\Foundation\Testing\TestCase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Schema;
+use Livewire\Livewire;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class ChatReadStateTest extends TestCase
@@ -64,6 +66,9 @@ class ChatReadStateTest extends TestCase
         Schema::create('manager_settings', function (Blueprint $table) {
             $table->id();
             $table->string('manager_code');
+            $table->string('manager_name')->nullable();
+            $table->unsignedBigInteger('parent_manager_setting_id')->nullable();
+            $table->timestamps();
         });
         Schema::create('user_manager_settings', function (Blueprint $table) {
             $table->id();
@@ -111,6 +116,27 @@ class ChatReadStateTest extends TestCase
         Schema::create('bug_reports', function (Blueprint $table) {
             $table->id();
             $table->string('status');
+        });
+        Schema::create('chat_quick_messages', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('user_id');
+            $table->string('message_key', 64);
+            $table->text('content');
+            $table->boolean('is_deleted')->default(false);
+            $table->timestamps();
+        });
+        Schema::create('frozen_orders', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('user_id');
+            $table->boolean('is_frozen')->default(true);
+            $table->decimal('penalty_amount', 10, 2)->nullable();
+        });
+        Schema::create('conversation_notification_mutes', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('user_id');
+            $table->unsignedBigInteger('conversation_id');
+            $table->timestamp('muted_until')->nullable();
+            $table->timestamps();
         });
 
         (require __DIR__ . '/../../database/migrations/2026_09_23_140000_create_message_reads_table.php')->up();
@@ -160,6 +186,28 @@ class ChatReadStateTest extends TestCase
         $this->assertFalse($reads->markMessageRead(10, $this->conversation, 2));
         $this->assertSame(0, Message::unreadFor(2)->count());
         $this->assertTrue($reads->sentReadStatuses(collect([$message]), $this->conversation)[10]);
+    }
+
+    public function test_user_sent_message_is_immediately_rendered_after_send(): void
+    {
+        config()->set('chat.quick_replies.enabled', false);
+        config()->set('chat.auto_reply.enabled', false);
+        Event::fake();
+        $this->actingAs(User::findOrFail(1));
+
+        $component = Livewire::test(UserChatComponent::class)
+            ->set('newMessage', 'Tin nhắn vừa gửi')
+            ->call('sendMessage');
+
+        $component->assertSet('newMessage', '')
+            ->assertSee('Tin nhắn vừa gửi');
+
+        $this->assertDatabaseHas('messages', [
+            'conversation_id' => 1,
+            'sender_id' => 1,
+            'message' => 'Tin nhắn vừa gửi',
+        ]);
+        $this->assertSame('Tin nhắn vừa gửi', collect($component->get('chatMessages'))->first()['message']);
     }
 
     public function test_header_badges_are_specific_to_the_signed_in_account(): void
@@ -299,6 +347,7 @@ class ChatReadStateTest extends TestCase
 
     public function test_opening_chat_updates_visible_receipts_immediately(): void
     {
+        DB::table('users')->where('id', 1)->update(['avatar' => 'avatars/customer.png']);
         Event::fake([ConversationRead::class, MessageRead::class]);
         $this->actingAs(User::findOrFail(2));
         $component = $this->chatComponent();
@@ -306,8 +355,58 @@ class ChatReadStateTest extends TestCase
 
         $component->selectConversation(1);
 
+        $this->assertSame('avatars/customer.png', $component->messages[0]['sender']['avatar']);
+        $this->assertSame('avatars/customer.png', (new \App\Events\MessageSent(10))->broadcastWith()['message']['sender']['avatar']);
+
         $this->assertTrue($component->messages[0]['is_read']);
         $this->assertDatabaseHas('message_reads', ['message_id' => 10, 'user_id' => 2]);
+    }
+
+    public function test_selecting_another_conversation_preserves_other_sidebar_badges(): void
+    {
+        Event::fake([ConversationRead::class, MessageRead::class]);
+        DB::table('users')->insert([
+            'id' => 20,
+            'full_name' => 'Second customer',
+            'username' => 'second_customer',
+            'role' => User::ROLE_MEMBER,
+            'status' => 'activated',
+        ]);
+        DB::table('conversations')->insert([
+            'id' => 2,
+            'user_id' => 20,
+            'staff_id' => 2,
+            'public_id' => '22222222-2222-4222-8222-222222222222',
+            'created_at' => now(),
+            'updated_at' => now()->addSecond(),
+        ]);
+        DB::table('messages')->insert([
+            'id' => 20,
+            'conversation_id' => 2,
+            'sender_id' => 20,
+            'message' => 'Second conversation',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->actingAs(User::findOrFail(2));
+        $component = Livewire::test(ChatComponent::class);
+
+        $before = collect($component->get('conversations'))->firstWhere('id', 1);
+        $this->assertSame(1, (int) $before->unread_count);
+        $this->assertTrue((bool) $before->awaiting_reply);
+
+        $component->call('selectConversation', 2);
+
+        $databaseState = Conversation::withInboxStateFor(2)->findOrFail(1);
+        $this->assertSame(1, (int) $databaseState->unread_count);
+        $this->assertTrue((bool) $databaseState->awaiting_reply);
+
+        $untouched = collect($component->get('conversations'))->firstWhere('id', 1);
+        $this->assertSame(1, (int) $untouched->unread_count);
+        $this->assertTrue((bool) $untouched->awaiting_reply);
+        $this->assertStringContainsString('conversation-awaiting', $component->html());
+        $this->assertStringContainsString('conversation-unread', $component->html());
     }
 
     public function test_new_customer_message_is_shown_as_read_by_assigned_staff(): void
@@ -420,6 +519,113 @@ class ChatReadStateTest extends TestCase
         $this->assertCount(0, $component->conversations);
         $this->assertFalse($authorization->canViewConversation(auth()->user(), Conversation::findOrFail(1)));
         $this->assertSame([2, 3, 4], $recipients->forUser(User::findOrFail(1))->pluck('id')->all());
+    }
+
+    public function test_inbox_pending_badge_and_three_personal_unread_counts_are_independent(): void
+    {
+        foreach ([11, 12] as $id) {
+            DB::table('messages')->insert(['id' => $id, 'conversation_id' => 1, 'sender_id' => 1, 'message' => 'New message']);
+        }
+        $state = fn ($viewer) => Conversation::withInboxStateFor($viewer)->findOrFail(1);
+        foreach ([2, 3, 4] as $viewer) {
+            $this->assertSame(3, $state($viewer)->unread_count);
+            $this->assertTrue((bool) $state($viewer)->awaiting_reply);
+        }
+        $reads = app(ChatReadService::class);
+        $reads->markConversationRead($this->conversation, 4);
+        $this->assertSame(0, $state(4)->unread_count);
+        $this->assertTrue((bool) $state(4)->awaiting_reply);
+        $this->assertSame(3, $state(2)->unread_count);
+        $this->assertSame(3, $state(3)->unread_count);
+        $reads->markConversationRead($this->conversation, 2);
+        foreach ([2, 3, 4] as $viewer) $this->assertFalse((bool) $state($viewer)->awaiting_reply);
+        $this->assertSame(3, $state(3)->unread_count);
+        $this->assertSame(0, $state(2)->unread_count);
+
+        // Reassignment follows the new operator's receipt, without rewriting history.
+        DB::table('conversations')->where('id', 1)->update(['staff_id' => 5]);
+        $this->assertTrue((bool) $state(5)->awaiting_reply);
+        $this->assertSame(3, $state(5)->unread_count);
+    }
+
+    public function test_chat_context_requires_permission_and_conversation_scope(): void
+    {
+        $service = app(\App\Services\ChatContextService::class);
+        DB::table('messages')->where('id', 10)->update(['image_path' => 'chat/visible.png']);
+        $context = $service->forConversation(User::findOrFail(2), $this->conversation);
+        $this->assertCount(1, $context['images']);
+        $this->assertFalse($context['can_view_context']);
+        $this->assertSame([], $context['orders']);
+        $this->assertSame([], $context['transactions']);
+
+        $permission = DB::table('manager_settings')->insertGetId(['manager_code' => 'chats.view-context']);
+        foreach ([2, 5] as $id) DB::table('user_manager_settings')->insert(['user_id' => $id, 'manager_setting_id' => $permission, 'is_active' => true]);
+        $this->mock(\App\Services\ChatReferenceService::class, function ($mock) {
+            $mock->shouldReceive('recentOrders')->once()->with(1, 8)->andReturn([['id' => 91]]);
+            $mock->shouldReceive('recentTransactions')->once()->with(1, 8)->andReturn([['id' => 92]]);
+        });
+        $context = $service->forConversation(User::findOrFail(2), $this->conversation);
+        $this->assertTrue($context['can_view_context']);
+        $this->assertSame([['id' => 91]], $context['orders']);
+        $this->assertSame([['id' => 92]], $context['transactions']);
+        foreach ([1, 5] as $actor) {
+            try {
+                $service->forConversation(User::findOrFail($actor), $this->conversation);
+                $this->fail('Customer or unrelated staff must not access admin context.');
+            } catch (HttpException $exception) {
+                $this->assertSame(403, $exception->getStatusCode());
+            }
+        }
+        DB::table('user_manager_settings')->where('user_id', 2)->update(['is_active' => false]);
+        $this->assertFalse($service->forConversation(User::findOrFail(2), $this->conversation)['can_view_context']);
+    }
+
+    public function test_typing_is_scoped_throttled_and_carries_authenticated_identity(): void
+    {
+        \Illuminate\Support\Facades\Cache::setDefaultDriver('array');
+        Event::fake([\App\Events\ChatTyping::class]);
+        $service = app(\App\Services\ChatTypingService::class);
+        $actor = User::findOrFail(2);
+        $service->update($actor, 1, true);
+        $service->update($actor, 1, true);
+        $service->update($actor, 1, false);
+        $service->update(User::findOrFail(1), 1, true);
+        Event::assertDispatchedTimes(\App\Events\ChatTyping::class, 3);
+        Event::assertDispatched(\App\Events\ChatTyping::class, fn ($event) => $event->userId === 2 && $event->name === 'Assigned staff' && $event->broadcastOn()[0]->name === 'private-chat.conversation.1');
+        $this->expectException(HttpException::class);
+        $service->update(User::findOrFail(5), 1, true);
+    }
+
+    public function test_typing_endpoint_is_independent_from_livewire_chat_state_and_keeps_conversation_scope(): void
+    {
+        \Illuminate\Support\Facades\Cache::setDefaultDriver('array');
+        Event::fake([\App\Events\ChatTyping::class]);
+        $this->withoutMiddleware(\App\Http\Middleware\UpdateLastSeen::class);
+
+        $this->actingAs(User::findOrFail(1))
+            ->postJson(route('chat.typing'), ['conversation_id' => 1, 'typing' => true])
+            ->assertNoContent();
+
+        Event::assertDispatched(\App\Events\ChatTyping::class, fn ($event) => $event->userId === 1 && $event->typing === true);
+
+        $this->actingAs(User::findOrFail(5))
+            ->postJson(route('chat.typing'), ['conversation_id' => 1, 'typing' => true])
+            ->assertForbidden();
+    }
+
+    public function test_context_permission_migration_repairs_group_without_changing_grants(): void
+    {
+        $permission = DB::table('manager_settings')->insertGetId(['manager_code' => 'chats.view-context']);
+        foreach ([2 => false, 3 => true] as $id => $active) DB::table('user_manager_settings')->insert(['user_id' => $id, 'manager_setting_id' => $permission, 'is_active' => $active]);
+        $before = DB::table('user_manager_settings')->orderBy('id')->get()->toArray();
+        $migration = require __DIR__.'/../../database/migrations/2026_10_04_000002_add_chat_context_permission.php';
+        $migration->up();
+        $migration->up();
+        $group = DB::table('manager_settings')->where('manager_code', 'permission-group.chats')->sole();
+        $this->assertNull($group->parent_manager_setting_id);
+        $this->assertSame($group->id, DB::table('manager_settings')->find($permission)->parent_manager_setting_id);
+        $this->assertEquals($before, DB::table('user_manager_settings')->orderBy('id')->get()->toArray());
+        $this->assertSame(1, DB::table('manager_settings')->where('manager_code', 'chats.view-context')->count());
     }
 
     private function chatComponent(): ChatComponent

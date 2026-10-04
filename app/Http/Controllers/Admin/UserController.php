@@ -40,6 +40,7 @@ class UserController extends Controller
             'frozen_orders',
             'referrer',
             'rank',
+            'user_spin_progress',
             'memberConversations' => fn ($conversationQuery) => $conversationQuery
                 ->select('id', 'user_id', 'staff_id', 'public_id', 'updated_at')
                 ->with('staff:id,role,referrer_id')
@@ -53,10 +54,14 @@ class UserController extends Controller
 
         $users = $query->latest('id')->get();
         $canViewFinancials = $authorization->can($actor, $capabilities['customers_view_financials']);
+        $canAutoSpin = $authorization->can($actor, $capabilities['customers_auto_spin']);
 
-        $items = $users->values()->map(function (User $user, int $index) use ($actor, $authorization, $canViewFinancials) {
+        $items = $users->values()->map(function (User $user, int $index) use ($actor, $authorization, $canViewFinancials, $canAutoSpin) {
             $hasFrozenOrder = $user->frozen_orders->contains(
                 fn ($frozenOrder) => $frozenOrder->custom_price !== null && (bool) $frozenOrder->is_frozen
+            );
+            $hasPenalizedOrder = $user->frozen_orders->contains(
+                fn ($frozenOrder) => (bool) $frozenOrder->is_frozen && (float) ($frozenOrder->penalty_amount ?? 0) > 0
             );
 
             $item = [
@@ -67,6 +72,8 @@ class UserController extends Controller
                 'phone' => $user->phone,
                 'status' => $user->status,
                 'clone_account' => (bool) $user->clone_account,
+                'current_spin' => (int) ($user->user_spin_progress?->current_spin ?? 0),
+                'total_spins' => (int) ($user->rank?->spin_count ?? 0),
                 'rank' => $user->rank ? [
                     'id' => $user->rank->id,
                     'name' => $user->rank->name,
@@ -88,6 +95,8 @@ class UserController extends Controller
                 'created_at' => $user->created_at?->toISOString(),
                 'updated_at' => $user->updated_at?->toISOString(),
                 'has_frozen_order' => $hasFrozenOrder,
+                'has_penalized_order' => $hasPenalizedOrder,
+                'can_auto_spin' => $canAutoSpin && $actor->canAccessCustomer($user),
                 'chat_url' => $this->chatUrlForUser($user, $authorization, $actor),
             ];
 
@@ -119,6 +128,7 @@ class UserController extends Controller
                 'changeStatus' => $authorization->can($actor, $capabilities['customers_change_status']),
                 'manageFrozenOrders' => $authorization->can($actor, $capabilities['customers_manage_frozen_orders']),
                 'update' => $authorization->can($actor, $capabilities['customers_update']),
+                'autoSpin' => $canAutoSpin,
             ],
             'routes' => [
                 'create' => route('user.create'),
@@ -128,6 +138,7 @@ class UserController extends Controller
                 'changeStatus' => route('user.change.status', ['user' => '__USER_ID__']),
                 'frozenOrders' => route('user.frozen.order.interface', ['user' => '__USER_ID__']),
                 'onlineStatuses' => route('user.online.statuses'),
+                'autoSpin' => route('user.auto-spin.state', ['user' => '__USER_ID__']),
                 'plusMoney' => route('plus_money'),
             ],
         ], 'Danh sách người dùng');
@@ -950,6 +961,35 @@ class UserController extends Controller
             'status' => 200,
             'message' => $message
         ]);
+    }
+
+    public function autoSpinState(User $user, AuthorizationService $authorization, \App\Services\CustomerAutoSpinService $autoSpin)
+    {
+        $this->authorizeMemberAccess($user, $authorization);
+        abort_unless($authorization->can(Auth::user(), config('authorization.capabilities.customers_auto_spin')), 403);
+
+        return response()->json($autoSpin->state($user));
+    }
+
+    public function autoSpinStep(Request $request, User $user, AuthorizationService $authorization, \App\Services\CustomerAutoSpinService $autoSpin)
+    {
+        $this->authorizeMemberAccess($user, $authorization);
+        abort_unless($authorization->can(Auth::user(), config('authorization.capabilities.customers_auto_spin')), 403);
+        $data = $request->validate([
+            'target_spin' => ['required', 'integer', 'min:1'],
+            'expected_spin' => ['required', 'integer', 'min:0'],
+            'expected_pending_order_id' => ['present', 'nullable', 'integer', 'min:1'],
+        ]);
+
+        $result = $autoSpin->step(
+            $user,
+            (int) $data['target_spin'],
+            (int) $data['expected_spin'],
+            isset($data['expected_pending_order_id']) ? (int) $data['expected_pending_order_id'] : null,
+            (int) Auth::id(),
+        );
+
+        return response()->json($result, $result['status']);
     }
 
     private function chatUrlForUser(User $member, AuthorizationService $authorization, User $actor): ?string

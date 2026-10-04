@@ -1,3 +1,4 @@
+import '../chat-typing.js';
 // Chat Component JavaScript Functions
 
 /**
@@ -8,10 +9,11 @@ function copyQuickMessage(message) {
     if (textarea) {
         textarea.value = message;
         textarea.style.height = 'auto';
-        textarea.style.height = textarea.scrollHeight + 'px';
+        textarea.style.height = Math.min(textarea.scrollHeight, 150) + 'px';
         
         // Trigger input event để Livewire nhận được giá trị
         textarea.dispatchEvent(new Event('input', { bubbles: true }));
+        window.dispatchEvent(new CustomEvent('chat-quick-message-selected'));
         
         // Focus vào textarea
         textarea.focus();

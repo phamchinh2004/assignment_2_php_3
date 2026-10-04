@@ -49,7 +49,6 @@ class ChatComponent extends Component
     public $maxMessageLength = 1000;
     public $staffUsersUpdateKey = 0; // Key để force re-render
     public array $quickMessages = [];
-    public array $customQuickMessageKeys = [];
     public ?string $editingQuickMessageKey = null;
     public string $editingQuickMessageText = '';
     public bool $addingQuickMessage = false;
@@ -255,13 +254,6 @@ class ChatComponent extends Component
         }
     }
 
-    private function quickMessageDefaults(): array
-    {
-        return collect(config('chat.admin_quick_messages', []))
-            ->mapWithKeys(fn ($message, $key) => [$key => (string) ($message['content'] ?? '')])
-            ->all();
-    }
-
     private function ensureQuickMessageAccess(): void
     {
         abort_unless(
@@ -274,37 +266,17 @@ class ChatComponent extends Component
     {
         $this->ensureQuickMessageAccess();
 
-        $defaults = $this->quickMessageDefaults();
-        $records = ChatQuickMessage::query()
+        $this->quickMessages = ChatQuickMessage::query()
             ->where('user_id', Auth::id())
+            ->where('is_deleted', false)
             ->orderBy('id')
-            ->get(['message_key', 'content', 'is_deleted']);
-
-        $messages = $defaults;
-        $customKeys = [];
-
-        foreach ($records as $record) {
-            if ($record->is_deleted) {
-                unset($messages[$record->message_key]);
-                continue;
-            }
-
-            $messages[$record->message_key] = $record->content;
-            if (!array_key_exists($record->message_key, $defaults)) {
-                $customKeys[] = $record->message_key;
-            }
-        }
-
-        $this->quickMessages = $messages;
-        $this->customQuickMessageKeys = array_values(array_unique($customKeys));
+            ->pluck('content', 'message_key')
+            ->map(fn ($content) => (string) $content)
+            ->all();
     }
 
     private function quickMessageKeyBelongsToCurrentUser(string $key): bool
     {
-        if (array_key_exists($key, $this->quickMessageDefaults())) {
-            return true;
-        }
-
         return ChatQuickMessage::query()
             ->where('user_id', Auth::id())
             ->where('message_key', $key)
@@ -398,7 +370,6 @@ class ChatComponent extends Component
         ]);
 
         $this->quickMessages[$message->message_key] = $message->content;
-        $this->customQuickMessageKeys[] = $message->message_key;
         $this->addingQuickMessage = false;
         $this->newQuickMessageText = '';
         $this->resetErrorBag('newQuickMessageText');
@@ -416,24 +387,10 @@ class ChatComponent extends Component
         $this->ensureQuickMessageAccess();
         abort_unless($this->quickMessageKeyBelongsToCurrentUser($key), 404);
 
-        $defaults = $this->quickMessageDefaults();
-        if (array_key_exists($key, $defaults)) {
-            ChatQuickMessage::updateOrCreate(
-                [
-                    'user_id' => Auth::id(),
-                    'message_key' => $key,
-                ],
-                [
-                    'content' => $this->quickMessages[$key] ?? $defaults[$key],
-                    'is_deleted' => true,
-                ]
-            );
-        } else {
-            ChatQuickMessage::query()
-                ->where('user_id', Auth::id())
-                ->where('message_key', $key)
-                ->delete();
-        }
+        ChatQuickMessage::query()
+            ->where('user_id', Auth::id())
+            ->where('message_key', $key)
+            ->delete();
 
         if ($this->editingQuickMessageKey === $key) {
             $this->cancelQuickMessageEdit();
@@ -539,11 +496,7 @@ class ChatComponent extends Component
                     $query->select('id', 'conversation_id', 'sender_id', 'message', 'type', 'kind', 'created_at')->latest()->limit(1);
                 }
             ])
-            ->withCount([
-                'messages as unread_count' => function ($query) use ($user) {
-                    $query->unreadFor($user->id);
-                }
-            ])
+            ->withInboxStateFor((int) $user->id)
             ->orderByDesc('updated_at');
 
         $authorization = app(AuthorizationService::class);
@@ -630,11 +583,7 @@ class ChatComponent extends Component
                                     ->limit(1);
                             }
                         ])
-                        ->withCount([
-                            'messages as unread_count' => function ($qu) use ($currentUserId) {
-                                $qu->unreadFor($currentUserId);
-                            }
-                        ]);
+                        ->withInboxStateFor((int) $currentUserId);
                 }
             ])
             ->get();
@@ -670,6 +619,7 @@ class ChatComponent extends Component
                         'id' => $latestConv->id,
                         'updated_at' => $latestConv->updated_at,
                         'unread_count' => $latestConv->unread_count,
+                        'awaiting_reply' => (bool) $latestConv->awaiting_reply,
                         'messages' => $latestConv->messages->toArray(),
                     ];
                     $userData['conv_updated_at_timestamp'] = $latestConv->updated_at->timestamp;
@@ -760,10 +710,15 @@ class ChatComponent extends Component
      */
     private function updateConversationUnreadCount($conversationId)
     {
+        // Livewire rehydrates Eloquent models without query-only aggregate fields.
+        // Reload the sidebar source so untouched conversations keep their badges.
+        $this->loadConversations();
+
         // Tìm conversation trong danh sách hiện tại và set unread_count = 0
         foreach ($this->conversations as $conv) {
             if ($conv->id == $conversationId) {
                 $conv->unread_count = 0;
+                if ((int) $conv->staff_id === (int) Auth::id()) $conv->awaiting_reply = false;
                 break;
             }
         }
@@ -787,6 +742,7 @@ class ChatComponent extends Component
                     && $user['latest_conversation']['id'] == $conversationId
                 ) {
                     $user['latest_conversation']['unread_count'] = 0;
+                    if ((int) $operator['id'] === (int) Auth::id()) $user['latest_conversation']['awaiting_reply'] = false;
                     break;
                 }
             }
@@ -969,7 +925,7 @@ class ChatComponent extends Component
 
         // Load messages với phân trang, sắp xếp từ mới nhất
         $messages = $conversation->messages()
-            ->with('sender:id,full_name,role')
+            ->with('sender:id,full_name,role,avatar')
             ->select('id', 'message', 'type', 'kind', 'image_path', 'reference_type', 'reference_id', 'reference_payload', 'sender_id', 'conversation_id', 'is_read', 'created_at')
             ->orderBy('created_at', 'desc')
             ->skip(($page - 1) * $this->messagesPerPage)
@@ -1006,6 +962,7 @@ class ChatComponent extends Component
                         'id' => $message->sender->id,
                         'full_name' => $message->sender->full_name,
                         'role' => $message->sender->role,
+                        'avatar' => $message->sender->avatar,
                     ]
                 ];
             })->toArray();
@@ -1304,6 +1261,7 @@ class ChatComponent extends Component
                     'id' => $userId,
                     'full_name' => $userName,
                     'role' => $userRole,
+                    'avatar' => Auth::user()->avatar,
                 ]
             ];
 
@@ -1515,5 +1473,19 @@ class ChatComponent extends Component
     public function render()
     {
         return view('livewire.admin.chat-component');
+    }
+
+    #[Computed]
+    public function customerContext(): array
+    {
+        $conversation = $this->selectedConversation;
+        return $conversation ? app(\App\Services\ChatContextService::class)->forConversation(Auth::user(), $conversation)
+            : ['images' => [], 'orders' => [], 'transactions' => [], 'can_view_context' => false];
+    }
+
+    #[\Livewire\Attributes\Renderless]
+    public function setTyping(int $conversationId, bool $typing): void
+    {
+        app(\App\Services\ChatTypingService::class)->update(Auth::user(), $conversationId, $typing);
     }
 }

@@ -6,7 +6,6 @@
     $authorization = app(\App\Services\AuthorizationService::class);
     $visibleTeamRoles = $authorization->visibleTeamChatRoles(auth()->user());
     $canManageTeamChats = !empty($visibleTeamRoles);
-    $canDispatchChats = in_array(auth()->user()->role, [\App\Models\User::ROLE_ADMIN, \App\Models\User::ROLE_OWNER], true);
     $operatorSections = [];
 
     if (in_array(\App\Models\User::ROLE_STAFF, $visibleTeamRoles, true)) {
@@ -34,7 +33,7 @@
     @vite('resources/css/admin/sidebar-chat.css')
 @endpush
 
-<div class="chat-sidebar">
+<div class="chat-sidebar" wire:poll.visible.15s="refreshChatState">
     <div class="chat-sidebar-heading">
         <div class="chat-sidebar-heading-icon" aria-hidden="true"><i class="fas fa-comments"></i></div>
         <div>
@@ -48,7 +47,7 @@
         <div class="chat-sidebar-search-field">
             <i class="fas fa-search chat-search-icon" aria-hidden="true"></i>
             <input id="{{ $keyPrefix }}chat-search" type="search" class="form-control sidebar-search-input"
-                placeholder="Tìm kiếm người dùng..." autocomplete="off" wire:model.debounce.300ms="searchTerm" />
+                placeholder="Tìm tên hoặc tài khoản..." autocomplete="off" x-ref="inboxSearch" wire:model.live.debounce.300ms="searchTerm" />
             <span class="chat-search-loading" wire:loading.delay wire:target="searchTerm" role="status">
                 <i class="fas fa-circle-notch fa-spin" aria-hidden="true"></i>
                 <span class="visually-hidden">Đang tìm kiếm...</span>
@@ -72,77 +71,17 @@
                     $isOnline = $conversation->user->last_seen && $conversation->user->last_seen->diffInMinutes(now()) <= 5;
                     $lastMessage = $conversation->messages->last();
                 @endphp
-                <div class="conversation-row" wire:key="{{ $keyPrefix }}{{ $canManageTeamChats ? 'manager' : 'staff' }}-conversation-{{ $conversation->id }}"
-                    x-data="{ menuOpen: false }" x-on:click.outside="menuOpen = false" x-on:keydown.escape.window="menuOpen = false">
+                <div class="conversation-row" wire:key="{{ $keyPrefix }}{{ $canManageTeamChats ? 'manager' : 'staff' }}-conversation-{{ $conversation->id }}">
                 <button type="button"
                     class="conversation-item {{ $isSelected ? 'is-selected active bg-primary' : '' }} {{ $hasUnread ? 'has-unread' : '' }} {{ $hasPenalty ? 'has-penalty' : '' }}"
-                    aria-current="{{ $isSelected ? 'true' : 'false' }}" x-on:click="menuOpen = false"
+                    aria-current="{{ $isSelected ? 'true' : 'false' }}" x-on:click="mobileListOpen = false; contextOpen = wide"
                     wire:click="selectConversation({{ $conversation->id }})">
-                    <span class="conversation-avatar">
-                        @if($conversation->user->avatar && Storage::disk('public')->exists($conversation->user->avatar))
-                            <img src="{{ asset('storage/' . $conversation->user->avatar) }}" alt="" loading="lazy">
-                        @else
-                            <i class="fas fa-user" aria-hidden="true"></i>
-                        @endif
-                        <span class="conversation-presence {{ $isOnline ? 'is-online' : '' }}" aria-hidden="true"></span>
-                    </span>
-                    <span class="conversation-details">
-                        <span class="conversation-topline">
-                            <span class="conversation-name" title="{{ $conversation->user->full_name }}">{{ $conversation->user->full_name }}</span>
-                            @if($hasPenalty)
-                                <span class="conversation-penalty" title="Đang bị phạt" aria-label="Đang bị phạt"><i class="fas fa-exclamation-triangle" aria-hidden="true"></i></span>
-                            @endif
-                            @if($hasUnread)
-                                <span class="conversation-unread" aria-label="{{ $unreadCount }} tin nhắn chưa đọc">{{ $unreadCount > 99 ? '99+' : $unreadCount }}</span>
-                            @endif
-                        </span>
-                        <span class="conversation-username">{{ $conversation->user->username }}</span>
-                        <span class="conversation-preview">
-                            @if($lastMessage)
-                                @php
-                                    $lastKind = $lastMessage->kind ?: $lastMessage->type;
-                                    $lastPreview = match($lastKind) {
-                                        'order_reference' => 'Đơn hàng liên quan',
-                                        'transaction_reference' => 'Giao dịch liên quan',
-                                        'image' => 'Hình ảnh',
-                                        default => trim($lastMessage->message ?? ''),
-                                    };
-                                @endphp
-                                @if((int) $lastMessage->sender_id === (int) auth()->id())Bạn: @endif
-                                @if($lastKind !== 'text')<i class="far {{ $lastKind === 'image' ? 'fa-image' : 'fa-rectangle-list' }}" aria-hidden="true"></i>@endif
-                                {{ $lastPreview }}
-                            @else
-                                <span class="conversation-no-messages">Chưa có tin nhắn</span>
-                            @endif
-                        </span>
-                        <span class="conversation-status {{ $isOnline ? 'is-online' : '' }}">
-                            @if($isOnline)
-                                Đang hoạt động
-                            @elseif($conversation->user->last_seen)
-                                {{ $conversation->user->last_seen->diffForHumans() }}
-                            @else
-                                Ngoại tuyến
-                            @endif
-                        </span>
-                    </span>
+                    @include('livewire.admin.partials.conversation-summary', [
+                        'contact' => $conversation->user, 'previewMessage' => $lastMessage,
+                        'unread' => $unreadCount, 'awaitingReply' => $conversation->awaiting_reply,
+                        'penalized' => $hasPenalty,
+                    ])
                 </button>
-                @if($canDispatchChats)
-                    <button type="button" class="conversation-action-trigger" x-on:click.stop="menuOpen = !menuOpen"
-                        aria-label="Tùy chọn hội thoại với {{ $conversation->user->full_name }}"
-                        x-bind:aria-expanded="menuOpen.toString()" title="Tùy chọn hội thoại"
-                        wire:loading.attr="disabled" wire:target="openDispatchDialog({{ $conversation->id }})">
-                        <i class="fas fa-ellipsis-h" aria-hidden="true"
-                            wire:loading.remove wire:target="openDispatchDialog({{ $conversation->id }})"></i>
-                        <i class="fas fa-spinner fa-spin" aria-hidden="true"
-                            wire:loading wire:target="openDispatchDialog({{ $conversation->id }})"></i>
-                    </button>
-                    <div class="conversation-action-menu" x-show="menuOpen" x-cloak>
-                        <button type="button" x-on:click="menuOpen = false"
-                            wire:click="openDispatchDialog({{ $conversation->id }})">
-                            <i class="fas fa-share" aria-hidden="true"></i> Điều phối
-                        </button>
-                    </div>
-                @endif
                 </div>
             @empty
                 <div class="sidebar-empty-state {{ $canManageTeamChats ? 'sidebar-empty-state-compact' : '' }}">
@@ -209,78 +148,17 @@
                                         $lastMsg = isset($user['latest_conversation']) && !empty($user['latest_conversation']['messages'])
                                             ? end($user['latest_conversation']['messages']) : null;
                                     @endphp
-                                    <div class="conversation-row" wire:key="{{ $keyPrefix }}{{ $operatorSection['key'] }}-{{ $staff['id'] }}-user-{{ $user['id'] }}"
-                                        x-data="{ menuOpen: false }" x-on:click.outside="menuOpen = false" x-on:keydown.escape.window="menuOpen = false">
+                                    <div class="conversation-row" wire:key="{{ $keyPrefix }}{{ $operatorSection['key'] }}-{{ $staff['id'] }}-user-{{ $user['id'] }}">
                                     <button type="button"
                                         class="conversation-item {{ $isSelected ? 'is-selected active bg-primary' : '' }} {{ $userHasUnread ? 'has-unread' : '' }} {{ $userHasPenalty ? 'has-penalty' : '' }}"
-                                        aria-current="{{ $isSelected ? 'true' : 'false' }}" x-on:click="menuOpen = false"
+                                        aria-current="{{ $isSelected ? 'true' : 'false' }}" x-on:click="mobileListOpen = false; contextOpen = wide"
                                         wire:click="selectUserForChat({{ $user['id'] }}, {{ $staff['id'] }})">
-                                        <span class="conversation-avatar">
-                                            @if($user['avatar'] && Storage::disk('public')->exists($user['avatar']))
-                                                <img src="{{ asset('storage/' . $user['avatar']) }}" alt="" loading="lazy">
-                                            @else
-                                                <i class="fas fa-user" aria-hidden="true"></i>
-                                            @endif
-                                            <span class="conversation-presence {{ $isUserOnline ? 'is-online' : '' }}" aria-hidden="true"></span>
-                                        </span>
-                                        <span class="conversation-details">
-                                            <span class="conversation-topline">
-                                                <span class="conversation-name" title="{{ $user['full_name'] }}">{{ $user['full_name'] }}</span>
-                                                @if($userHasPenalty)
-                                                    <span class="conversation-penalty" title="Đang bị phạt" aria-label="Đang bị phạt"><i class="fas fa-exclamation-triangle" aria-hidden="true"></i></span>
-                                                @endif
-                                                @if($userHasUnread)
-                                                    <span class="conversation-unread" aria-label="{{ $userUnreadCount }} tin nhắn chưa đọc">{{ $userUnreadCount > 99 ? '99+' : $userUnreadCount }}</span>
-                                                @endif
-                                            </span>
-                                            <span class="conversation-username">{{ $user['username'] }}</span>
-                                            <span class="conversation-preview">
-                                                @if($lastMsg)
-                                                    @php
-                                                        $lastKind = $lastMsg['kind'] ?? $lastMsg['type'] ?? 'text';
-                                                        $lastPreview = match($lastKind) {
-                                                            'order_reference' => 'Đơn hàng liên quan',
-                                                            'transaction_reference' => 'Giao dịch liên quan',
-                                                            'image' => 'Hình ảnh',
-                                                            default => trim($lastMsg['message'] ?? ''),
-                                                        };
-                                                    @endphp
-                                                    @if((int) ($lastMsg['sender_id'] ?? 0) === (int) auth()->id())Bạn: @endif
-                                                    @if($lastKind !== 'text')<i class="far {{ $lastKind === 'image' ? 'fa-image' : 'fa-rectangle-list' }}" aria-hidden="true"></i>@endif
-                                                    {{ $lastPreview }}
-                                                @else
-                                                    <span class="conversation-no-messages">Chưa có tin nhắn</span>
-                                                @endif
-                                            </span>
-                                            <span class="conversation-status {{ $isUserOnline ? 'is-online' : '' }}">
-                                                @if($isUserOnline)
-                                                    Đang hoạt động
-                                                @elseif($user['last_seen'])
-                                                    {{ $user['last_seen']->diffForHumans() }}
-                                                @else
-                                                    Ngoại tuyến
-                                                @endif
-                                            </span>
-                                        </span>
+                                        @include('livewire.admin.partials.conversation-summary', [
+                                            'contact' => $user, 'previewMessage' => $lastMsg,
+                                            'unread' => $userUnreadCount, 'awaitingReply' => $user['latest_conversation']['awaiting_reply'] ?? false,
+                                            'penalized' => $userHasPenalty,
+                                        ])
                                     </button>
-                                    @if($canDispatchChats && !empty($user['latest_conversation']['id']))
-                                        <button type="button" class="conversation-action-trigger"
-                                            x-on:click.stop="menuOpen = !menuOpen"
-                                            aria-label="Tùy chọn hội thoại với {{ $user['full_name'] }}"
-                                            x-bind:aria-expanded="menuOpen.toString()" title="Tùy chọn hội thoại"
-                                            wire:loading.attr="disabled" wire:target="openDispatchDialog({{ $user['latest_conversation']['id'] }})">
-                                            <i class="fas fa-ellipsis-h" aria-hidden="true"
-                                                wire:loading.remove wire:target="openDispatchDialog({{ $user['latest_conversation']['id'] }})"></i>
-                                            <i class="fas fa-spinner fa-spin" aria-hidden="true"
-                                                wire:loading wire:target="openDispatchDialog({{ $user['latest_conversation']['id'] }})"></i>
-                                        </button>
-                                        <div class="conversation-action-menu" x-show="menuOpen" x-cloak>
-                                            <button type="button" x-on:click="menuOpen = false"
-                                                wire:click="openDispatchDialog({{ $user['latest_conversation']['id'] }})">
-                                                <i class="fas fa-share" aria-hidden="true"></i> Điều phối
-                                            </button>
-                                        </div>
-                                    @endif
                                     </div>
                                 @empty
                                     <p class="staff-empty-state">Chưa có khách hàng trong danh sách.</p>
@@ -297,4 +175,5 @@
             </section>
         @endforeach
     </div>
+    <div class="chat-sidebar-footer"><i class="fas fa-shield-halved" aria-hidden="true"></i> Hội thoại trong phạm vi quản lý của bạn</div>
 </div>

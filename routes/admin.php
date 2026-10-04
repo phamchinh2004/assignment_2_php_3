@@ -166,6 +166,12 @@ Route::middleware(['role:staff|admin|own', 'checkBanned', 'auth'])->group(functi
         Route::get('/user-online-statuses', [UserController::class, 'getOnlineStatuses'])
             ->middleware('permission:' . $capabilities['customers_view'])
             ->name('user.online.statuses');
+        Route::get('/user/{user}/auto-spin', [UserController::class, 'autoSpinState'])
+            ->middleware('permission:' . $capabilities['customers_auto_spin'])
+            ->name('user.auto-spin.state');
+        Route::post('/user/{user}/auto-spin', [UserController::class, 'autoSpinStep'])
+            ->middleware('permission:' . $capabilities['customers_auto_spin'])
+            ->name('user.auto-spin.step');
         Route::post('/user/{user}/location/refresh', [UserController::class, 'refreshApproximateLocation'])
             ->middleware('permission:' . $capabilities['customers_manage_location'])
             ->name('user.location.refresh');

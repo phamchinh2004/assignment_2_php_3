@@ -22,6 +22,12 @@ class ChatComponent extends Component
     use WithFileUploads;
 
     public $newMessage = '';
+
+    #[\Livewire\Attributes\Renderless]
+    public function setTyping(int $conversationId, bool $typing): void
+    {
+        app(\App\Services\ChatTypingService::class)->update(Auth::user(), $conversationId, $typing);
+    }
     public $selectedImage;
     public $chatMessages;
     public $showBox = false;

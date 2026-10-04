@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
     Avatar,
     Button,
@@ -37,6 +37,7 @@ import {
 import { requestJson } from '../../../lib/http';
 import { spaGetAction, spaRefresh } from '../../../navigation';
 import { AdminPage } from '../../../components/admin/AdminUi';
+import CustomerAutoSpinModal from './CustomerAutoSpinModal';
 
 function replaceRoute(template, id) {
     return template.replace('__USER_ID__', String(id));
@@ -89,6 +90,15 @@ export default function UserListPage({ config }) {
     const [depositAmount, setDepositAmount] = useState(null);
     const [depositType, setDepositType] = useState('real');
     const [depositing, setDepositing] = useState(false);
+    const [autoSpinUser, setAutoSpinUser] = useState(null);
+
+    const updateSpinProgress = useCallback((userId, progress) => {
+        setUsers((current) => current.map((user) => user.id === userId ? {
+            ...user,
+            current_spin: progress.current_spin,
+            total_spins: progress.total_spins,
+        } : user));
+    }, []);
 
     useEffect(() => {
         setUsers(config.users || []);
@@ -254,6 +264,12 @@ export default function UserListPage({ config }) {
     };
 
     const getUserActionItems = (user) => [
+        ...(permissions.autoSpin && user.can_auto_spin ? [{
+            key: 'auto-spin',
+            icon: <SortAscendingOutlined />,
+            label: 'Tự động quay đơn',
+            onClick: () => setAutoSpinUser(user),
+        }] : []),
         {
             key: 'chat',
             icon: <MessageOutlined />,
@@ -315,6 +331,10 @@ export default function UserListPage({ config }) {
                         <span className="customer-identity__meta">@{user.username}</span>
                         <div className="customer-badges">
                             {user.rank?.name && <Tag className="customer-badge customer-badge--rank">{user.rank.name}</Tag>}
+                            <Tag className="customer-badge customer-badge--spin" title="Lượt quay hiện tại / tổng lượt quay">Đơn {user.current_spin ?? 0}/{user.total_spins ?? 0}</Tag>
+                            <Tag color={user.has_penalized_order ? 'error' : 'success'} className="customer-badge">
+                                {user.has_penalized_order ? 'Có đơn bị phạt' : 'Không bị phạt'}
+                            </Tag>
                             {user.referrer && (
                                 <span className="customer-manager-note">
                                     QL: {user.referrer.full_name || `@${user.referrer.username}`}
@@ -607,6 +627,10 @@ export default function UserListPage({ config }) {
                                                     {user.is_online ? 'Online' : (user.last_seen_diff || 'Chưa từng online')}
                                                 </span>
                                                 {user.rank?.name && <Tag className="customer-badge customer-badge--rank">{user.rank.name}</Tag>}
+                                                <Tag className="customer-badge customer-badge--spin" title="Lượt quay hiện tại / tổng lượt quay">Đơn {user.current_spin ?? 0}/{user.total_spins ?? 0}</Tag>
+                                                <Tag color={user.has_penalized_order ? 'error' : 'success'} className="customer-badge">
+                                                    {user.has_penalized_order ? 'Có đơn bị phạt' : 'Không bị phạt'}
+                                                </Tag>
                                             </div>
                                         </div>
                                     </div>
@@ -793,6 +817,16 @@ export default function UserListPage({ config }) {
                     </div>
                 </div>
             </Modal>
+            {autoSpinUser && (
+                <CustomerAutoSpinModal
+                    user={autoSpinUser}
+                    url={replaceRoute(routes.autoSpin, autoSpinUser.id)}
+                    onProgress={updateSpinProgress}
+                    onClose={() => {
+                        setAutoSpinUser(null);
+                    }}
+                />
+            )}
         </AdminPage>
     );
 }

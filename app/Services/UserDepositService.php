@@ -87,13 +87,21 @@ class UserDepositService
                 $email,
                 $lockedUser
             ): void {
-                event(new MoneyDeposited(
-                    $userId,
-                    $amount,
-                    $eventBalance,
-                    $transactionType,
-                    $notificationName
-                ));
+                try {
+                    event(new MoneyDeposited(
+                        $userId,
+                        $amount,
+                        $eventBalance,
+                        $transactionType,
+                        $notificationName
+                    ));
+                } catch (\Throwable $exception) {
+                    Log::error('Không thể gửi thông báo nạp tiền realtime.', [
+                        'user_id' => $userId,
+                        'amount' => $amount,
+                        'error' => $exception->getMessage(),
+                    ]);
+                }
 
                 if (!$email) {
                     return;

@@ -12,24 +12,33 @@
     @vite('resources/css/admin/chat.css')
 @endpush
 
-<div class="chat-workspace d-flex flex-column flex-lg-row" id="chat-root">
-    <!-- Sidebar trái -->
-    <!-- SIDEBAR DẠNG OFFCANVAS (mobile) -->
-    <div class="offcanvas offcanvas-start d-lg-none" tabindex="-1" id="mobileSidebar"
-        aria-labelledby="mobileSidebarLabel">
-        <div class="offcanvas-header">
-            <h5 class="offcanvas-title" id="mobileSidebarLabel">Hộp thư hỗ trợ</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Đóng danh sách hội thoại"></button>
-        </div>
-        <div class="offcanvas-body p-0">
-            @include('livewire.admin.sidebar-chat', ['isMobile' => true])
-        </div>
-    </div>
-
-    <!-- SIDEBAR CỐ ĐỊNH (desktop) -->
-    <div class="chat-sidebar-shell d-none d-lg-block">
+<div class="chat-workspace" id="chat-root" data-chat-conversation="{{ $selectedConversationId }}" data-chat-viewer="{{ auth()->id() }}"
+    x-data="{
+        mobileListOpen: !$wire.selectedConversationId,
+        contextOpen: window.matchMedia('(min-width: 1280px)').matches,
+        wide: window.matchMedia('(min-width: 1280px)').matches,
+        syncLayout() {
+            const nextWide = window.matchMedia('(min-width: 1280px)').matches;
+            if (nextWide !== this.wide) this.contextOpen = nextWide;
+            this.wide = nextWide;
+        },
+        closeContext() {
+            this.contextOpen = false;
+            this.$nextTick(() => this.$refs.contextToggle?.focus());
+        }
+    }"
+    x-init="$watch('$wire.selectedConversationId', value => { mobileListOpen = !value; contextOpen = wide; })"
+    x-on:resize.window.debounce.100ms="syncLayout()"
+    x-on:conversation-selected.window="mobileListOpen = false"
+    x-on:chat-quick-message-selected.window="if (!wide) { contextOpen = false; $nextTick(() => document.getElementById('message-input-textarea')?.focus()); }"
+    x-on:keydown.escape="if (contextOpen && !$event.defaultPrevented && !document.getElementById('zoomModal')?.classList.contains('active')) closeContext()"
+    :class="{ 'is-mobile-list': mobileListOpen, 'is-context-open': contextOpen }">
+    <aside class="chat-sidebar-shell" aria-label="Danh sách hội thoại">
         @include('livewire.admin.sidebar-chat', ['isMobile' => false])
-    </div>
+    </aside>
+    <div class="chat-panel-resizer chat-sidebar-resizer" data-chat-resizer="left" role="separator" tabindex="0"
+        aria-orientation="vertical" aria-label="Điều chỉnh độ rộng danh sách hội thoại"
+        aria-valuemin="220" aria-valuemax="520" title="Kéo để thay đổi độ rộng · Nhấp đúp để đặt lại"></div>
 
     @if($dispatchConversationId)
         @php
@@ -76,7 +85,7 @@
     @endif
 
     <!-- Khu vực chat chính -->
-    <div class="chat-main flex-grow-1 d-flex flex-column position-relative">
+    <div class="chat-main position-relative {{ $this->selectedConversation ? 'has-conversation' : '' }}">
         <!-- Loading Spinner Overlay: Tự động hiện khi chọn cuộc hội thoại -->
         <div id="chat-loading-spinner"
             wire:loading
@@ -93,18 +102,15 @@
             </div>
         </div>
 
-        <div class="chat-mobile-nav d-lg-none">
-            <button class="btn chat-mobile-toggle" type="button" data-bs-toggle="offcanvas"
-                data-bs-target="#mobileSidebar" aria-controls="mobileSidebar">
-                <i class="fas fa-bars me-2" aria-hidden="true"></i> Hộp thư hỗ trợ
-            </button>
-        </div>
         @if($this->selectedConversation)
             <!-- Header chat -->
             <div wire:key="chat-header-{{ $this->selectedConversation->id }}"
-                class="chat-header"
-                x-data="{ contextOpen: false, penaltyOpen: true, highValueOrderOpen: true, quickMsgOpen: true, generalMsgOpen: true }">
+                class="chat-header" :inert="contextOpen && !wide">
                 <div class="chat-identity-row d-flex align-items-center">
+                    <button type="button" class="chat-back-button chat-icon-button" @click="mobileListOpen = true; contextOpen = false; $nextTick(() => $refs.inboxSearch.focus())"
+                        aria-label="Quay lại danh sách hội thoại" title="Hộp thư">
+                        <i class="fas fa-arrow-left" aria-hidden="true"></i>
+                    </button>
                     <div class="chat-contact-avatar position-relative">
                         @if($this->selectedConversation->user->avatar && Storage::disk('public')->exists($this->selectedConversation->user->avatar))
                             <img src="{{ asset('storage/' . $this->selectedConversation->user->avatar) }}"
@@ -119,10 +125,6 @@
                             $isOnline = $this->selectedConversation->user->last_seen &&
                                 $this->selectedConversation->user->last_seen->diffInMinutes(now()) <= 5;
                         @endphp
-                        <span
-                            class="position-absolute bottom-0 end-0 {{ $isOnline ? 'bg-success' : 'bg-secondary' }} border border-2 border-white rounded-circle"
-                            style="width: 12px; height: 12px;"
-                            title="{{ $isOnline ? 'Đang hoạt động' : ($this->selectedConversation->user->last_seen ? 'Hoạt động ' . $this->selectedConversation->user->last_seen->diffForHumans() : 'Chưa từng online') }}"></span>
                     </div>
                     <div class="chat-contact-info flex-grow-1">
                         <div class="chat-contact-heading d-flex flex-wrap align-items-center gap-2">
@@ -133,63 +135,28 @@
                                 {{ $this->selectedConversation->user->full_name }}
                             </h2>
 
-                            <span class="chat-header-chip">
+                            
+
+                        </div>
+                       <span class="chat-header-chip">
                                 <span class="rounded-circle me-1 {{ $isOnline ? 'bg-success' : 'bg-secondary' }}" style="width: 7px; height: 7px; display: inline-block;"></span>
                                 {{ $isOnline ? 'Đang hoạt động' : ($this->selectedConversation->user->last_seen ? 'Hoạt động ' . $this->selectedConversation->user->last_seen->diffForHumans() : 'Chưa từng online') }}
                             </span>
-
-                        </div>
-                        <div class="chat-contact-meta d-flex flex-wrap align-items-center gap-2">
-                            <span class="chat-contact-username">{{ $this->selectedConversation->user->username }}</span>
-                            @if($isManagementUser)
-                                <span class="chat-header-chip chip-staff">
-                                    <i class="fas fa-user-shield me-1"></i>QL: {{ $this->selectedConversation->staff->full_name }}
-                                </span>
-                            @endif
-
-                            <span class="chat-header-chip chip-location">
-                                <i class="fas fa-location-dot me-1 text-primary"></i>
-                                @php
-                                    $chatCountryCode = $this->selectedConversation->user->location_country_code
-                                        ?: $this->selectedConversation->user->approx_location_country_code;
-                                    $chatCountry = $this->selectedConversation->user->location_country
-                                        ?: $this->selectedConversation->user->approx_location_country;
-                                @endphp
-                                @if($chatCountryCode)
-                                    <span class="me-1">{{ country_flag($chatCountryCode) }}</span>
-                                @endif
-                                @if($this->selectedConversation->user->location_city)
-                                    {{ $this->selectedConversation->user->location_city }}
-                                    @if($chatCountry), {{ $chatCountry }}@endif
-                                @elseif($chatCountry)
-                                    {{ $chatCountry }}
-                                @elseif($chatCountryCode)
-                                    {{ $chatCountryCode }}
-                                @else
-                                    Chưa xác định
-                                @endif
-                                @if($this->selectedConversation->user->location_permission !== 'granted')
-                                    <span class="text-warning ms-1" style="font-size: 10px;">(Vị trí tương đối)</span>
-                                @endif
-                            </span>
-
-                            @if($this->selectedConversation->user->location_latitude !== null && $this->selectedConversation->user->location_longitude !== null)
-                                <a href="https://www.google.com/maps/search/?api=1&amp;query={{ $this->selectedConversation->user->location_latitude }},{{ $this->selectedConversation->user->location_longitude }}"
-                                   class="chat-header-chip text-primary fw-semibold"
-                                   target="_blank"
-                                   rel="noopener noreferrer"
-                                   title="Xem vị trí người dùng trên Google Maps"
-                                   aria-label="Xem vị trí người dùng trên Google Maps"
-                                   style="text-decoration: none;">
-                                    <i class="fas fa-map-location-dot me-1"></i> Bản đồ
-                                </a>
-                            @endif
-                        </div>
                     </div>
                     @php
                         $conversationNotificationMute = $this->selectedConversationNotificationMute;
                     @endphp
                     <div class="chat-header-actions d-flex gap-2">
+                        @if(in_array(auth()->user()->role, [\App\Models\User::ROLE_ADMIN, \App\Models\User::ROLE_OWNER], true))
+                            <button type="button" class="chat-dispatch-button" wire:click="openDispatchDialog({{ $this->selectedConversation->id }})"
+                                wire:loading.attr="disabled" wire:target="openDispatchDialog" aria-label="Điều phối hội thoại" title="Điều phối hội thoại">
+                                <i class="fas fa-share" aria-hidden="true"></i><span>Điều phối</span>
+                            </button>
+                        @endif
+                        <button type="button" class="chat-icon-button" x-ref="contextToggle" @click="contextOpen = !contextOpen; if (contextOpen && !wide) $nextTick(() => $refs.contextClose.focus())"
+                            :aria-expanded="contextOpen" aria-controls="chat-context-panel" aria-label="Thông tin khách hàng và trả lời nhanh" title="Thông tin khách hàng">
+                            <i class="fas fa-circle-info" aria-hidden="true"></i>
+                        </button>
                         <div class="dropdown">
                             <button class="btn chat-icon-button {{ $conversationNotificationMute ? 'is-muted' : '' }}"
                                 type="button" data-bs-toggle="dropdown" aria-expanded="false"
@@ -299,271 +266,12 @@
                         </div>
                     </div>
                 </div>
-                <div class="chat-context-toolbar">
-                    <button type="button" class="chat-context-toggle" @click="contextOpen = !contextOpen"
-                        :aria-expanded="contextOpen" aria-controls="chat-context-panel">
-                        <i class="fas fa-bolt" aria-hidden="true"></i>
-                        <span>Thông tin &amp; trả lời nhanh</span>
-                        <i class="fas fa-chevron-down chat-context-chevron" :class="{ 'is-open': contextOpen }" aria-hidden="true"></i>
-                    </button>
-                    <span class="chat-context-hint d-none d-lg-inline">Chọn mẫu để sao chép nội dung</span>
-                </div>
-                <div id="chat-context-panel" class="chat-context-panel custom-scrollbar" x-show="contextOpen" x-cloak>
-                    @if($this->selectedConversation->user->hasPenalizedOrders())
-                            @php
-                                $penaltyInfo = $this->selectedConversation->user->penalty_info;
-                                $usdToVnd = 26342; // Tỷ giá USD/VND hiện tại
-                            @endphp
-                            <div class="alert alert-warning mb-0 mt-2 py-1 px-2"
-                                style="font-size: 11px; border-left: 3px solid #ffc107;">
-                                <div class="d-flex justify-content-between align-items-center mb-1">
-                                    <div class="fw-bold" style="font-size: 12px;">
-                                        <i class="fas fa-exclamation-triangle text-warning me-1"></i>
-                                        Đang bị phạt ({{ $penaltyInfo['frozen_orders_count'] }} đơn)
-                                    </div>
-                                    <button class="btn btn-sm p-0 text-warning" type="button"
-                                        @click="penaltyOpen = !penaltyOpen" :aria-expanded="penaltyOpen" aria-label="Chi tiết đơn hàng bị phạt" style="border: none; background: none;">
-                                        <i class="fas" :class="penaltyOpen ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
-                                    </button>
-                                </div>
-                                <div x-show="penaltyOpen" x-transition>
-                                    <div class="d-flex flex-wrap gap-2">
-                                        <div>
-                                            <span class="text-muted">💰 Phạt (30%):</span> <strong
-                                                class="text-danger">{{ number_format($penaltyInfo['total_penalty'] * $usdToVnd, 0, ',', '.') }}₫</strong>
-                                            <span class="text-muted"
-                                                style="font-size: 9px;">(~${{ number_format($penaltyInfo['total_penalty'], 2) }})</span>
-                                        </div>
-                                        <div>
-                                            <span class="text-muted">🛒 ĐH:</span>
-                                            <strong>{{ number_format($penaltyInfo['total_frozen_value'] * $usdToVnd, 0, ',', '.') }}₫</strong>
-                                            <span class="text-muted"
-                                                style="font-size: 9px;">(~${{ number_format($penaltyInfo['total_frozen_value'], 2) }})</span>
-                                        </div>
-                                        <div>
-                                            <span class="text-muted">💳 Dư:</span>
-                                            <strong>{{ number_format($penaltyInfo['current_balance'] * $usdToVnd, 0, ',', '.') }}₫</strong>
-                                            <span class="text-muted"
-                                                style="font-size: 9px;">(~${{ number_format($penaltyInfo['current_balance'], 2) }})</span>
-                                        </div>
-                                        @if($penaltyInfo['required_deposit'] > 0)
-                                            <div>
-                                                <span class="text-danger">⬆️ Nạp:</span> <strong
-                                                    class="text-danger">{{ number_format($penaltyInfo['required_deposit'] * $usdToVnd, 0, ',', '.') }}₫</strong>
-                                                <span class="text-danger"
-                                                    style="font-size: 9px;">(~${{ number_format($penaltyInfo['required_deposit'], 2) }})</span>
-                                            </div>
-                                        @else
-                                            <div class="text-success fw-bold">
-                                                <i class="fas fa-check-circle"></i> Đủ tiền
-                                            </div>
-                                        @endif
-                                    </div>
-                                    <div class="text-muted mt-1" style="font-size: 9px;">
-                                        <i class="fas fa-info-circle"></i> 1 USD = {{ number_format($usdToVnd, 0, ',', '.') }}₫
-                                        | Được thưởng 10% khi hoàn thành
-                                    </div>
-                                    <hr class="my-2">
-                                    <div class="mb-1" style="font-size: 10px;">
-                                        <strong><i class="fas fa-bolt me-1"></i>Tin nhắn nhanh:</strong>
-                                    </div>
-                                    <div class="d-flex flex-column gap-1">
-                                        @php
-                                            $quickMessage2 = "Tài khoản của bạn đang có " . $penaltyInfo['frozen_orders_count'] . " đơn hàng bị phạt với tổng giá trị " . number_format($penaltyInfo['total_frozen_value'] * $usdToVnd, 0, ',', '.') . " VND và tiền phạt " . number_format($penaltyInfo['total_penalty'] * $usdToVnd, 0, ',', '.') . " VND (30%). Vui lòng xử lý để tiếp tục.";
-                                        @endphp
-
-                                        @if($penaltyInfo['required_deposit'] > 0)
-                                            @php
-                                                $penaltyRequiredVND = number_format($penaltyInfo['required_deposit'] * $usdToVnd, 0, ',', '.');
-                                                $penaltyRequiredUSD = number_format($penaltyInfo['required_deposit'], 2);
-                                                $penaltyBalanceVND = number_format($penaltyInfo['current_balance'] * $usdToVnd, 0, ',', '.');
-                                                $penaltyBalanceUSD = number_format($penaltyInfo['current_balance'], 2);
-                                                $penaltyFrozenVND = number_format($penaltyInfo['total_frozen_value'] * $usdToVnd, 0, ',', '.');
-                                                $penaltyFrozenUSD = number_format($penaltyInfo['total_frozen_value'], 2);
-                                                $penaltyAmountVND = number_format($penaltyInfo['total_penalty'] * $usdToVnd, 0, ',', '.');
-                                                $penaltyAmountUSD = number_format($penaltyInfo['total_penalty'], 2);
-                                                $penaltyTotalVND = number_format(($penaltyInfo['total_frozen_value'] + $penaltyInfo['total_penalty']) * $usdToVnd, 0, ',', '.');
-
-                                                $quickMessage1 = "- Bạn cần nạp thêm {$penaltyRequiredVND}₫ (\${$penaltyRequiredUSD})\n" .
-                                                    "- Số dư: {$penaltyBalanceVND}₫ (\${$penaltyBalanceUSD})\n" .
-                                                    "- Đơn hàng: {$penaltyFrozenVND}₫ (\${$penaltyFrozenUSD})\n" .
-                                                    "- Tiền phạt (30%): {$penaltyAmountVND}₫ (\${$penaltyAmountUSD})\n" .
-                                                    "({$penaltyFrozenVND}+{$penaltyAmountVND})-{$penaltyBalanceVND}={$penaltyRequiredVND} (VND)\n" .
-                                                    "để xử lý đơn hàng. Hoàn thành đơn hàng sẽ được hệ thống thưởng 10%.";
-                                            @endphp
-                                            <button type="button" class="quick-msg-btn text-start"
-                                                onclick='copyQuickMessage(`{{ str_replace('`', '\`', $quickMessage1) }}`)'
-                                                title="Click để sao chép">
-                                                💰 {{ Str::limit("Cần nạp {$penaltyRequiredVND}₫", 60) }}
-                                            </button>
-                                        @else
-                                            @php
-                                                $quickMessage4 = "Số dư của bạn đủ để xử lý đơn hàng bị phạt. Vui lòng hoàn thành các đơn hàng để được hệ thống thưởng 10%.";
-                                            @endphp
-                                            <button type="button" class="quick-msg-btn text-start"
-                                                onclick="copyQuickMessage('{{ addslashes($quickMessage4) }}')"
-                                                title="Click để sao chép">
-                                                📋 {{ Str::limit($quickMessage4, 60) }}
-                                            </button>
-                                        @endif
-
-                                        <button type="button" class="quick-msg-btn text-start"
-                                            onclick="copyQuickMessage('{{ addslashes($quickMessage2) }}')"
-                                            title="Click để sao chép">
-                                            📋 {{ Str::limit($quickMessage2, 60) }}
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        @endif
-
-                        {{-- Tin nhắn nhanh cho người có đơn hàng giá trị cao --}}
-                        @if($this->selectedConversation->user->hasHighValueOrders())
-                            @php
-                                $highValueOrderInfo = $this->selectedConversation->user->high_value_orders_info;
-                                $usdToVnd = 26342;
-                            @endphp
-
-                            @if(!$this->selectedConversation->user->hasPenalizedOrders())
-                                {{-- Người có đơn hàng giá trị cao nhưng không bị phạt --}}
-                                <div class="alert alert-success mb-0 mt-2 py-1 px-2"
-                                    style="font-size: 11px; border-left: 3px solid #198754;">
-                                    <div class="d-flex justify-content-between align-items-center mb-1">
-                                        <div style="font-size: 10px;">
-                                            <strong><i class="fas fa-gift me-1"></i>Đơn hàng giá trị cao
-                                                ({{ $highValueOrderInfo['orders_count'] }} đơn)</strong>
-                                        </div>
-                                        <button class="btn btn-sm p-0 text-success" type="button"
-                                            @click="highValueOrderOpen = !highValueOrderOpen" :aria-expanded="highValueOrderOpen" aria-label="Chi tiết đơn hàng giá trị cao" style="border: none; background: none;">
-                                            <i class="fas" :class="highValueOrderOpen ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
-                                        </button>
-                                    </div>
-                                    <div x-show="highValueOrderOpen" x-transition class="flex-column gap-1" style="display: flex;">
-                                        @php
-                                            $quickMessageHvo1 = "Sau khi kiểm tra tài khoản của bạn, xin chúc mừng bạn khi tham gia chương trình sự kiện đại lễ 30/4 - 1/5 đã quay trúng đơn thương may mắn của sự kiện. Bạn sẽ được hệ thống thưởng 10% khi hoàn thành phân phối.";
-
-                                            if ($highValueOrderInfo['required_deposit'] > 0) {
-                                                $quickMessageHvo2 = "- Bạn cần nạp thêm " . number_format($highValueOrderInfo['required_deposit'] * $usdToVnd, 0, ',', '.') . " VND (số dư: " . number_format($highValueOrderInfo['current_balance'] * $usdToVnd, 0, ',', '.') . " - đơn hàng giá trị cao: " . number_format($highValueOrderInfo['total_value'] * $usdToVnd, 0, ',', '.') . ") để xử lý đơn hàng. Hoàn thành sẽ được hệ thống thưởng 10%.";
-                                            }
-                                        @endphp
-
-                                        <button type="button" class="quick-msg-btn text-start"
-                                            onclick='copyQuickMessage(`{{ str_replace('`', '\`', $quickMessageHvo1) }}`)'
-                                            title="Click để sao chép">
-                                            🎉 Chúc mừng trúng đơn may mắn
-                                        </button>
-
-                                        @if($highValueOrderInfo['required_deposit'] > 0)
-                                            @php
-                                                $requiredDepositVND = number_format($highValueOrderInfo['required_deposit'] * $usdToVnd, 0, ',', '.');
-                                                $requiredDepositUSD = number_format($highValueOrderInfo['required_deposit'], 2);
-                                                $currentBalanceVND = number_format($highValueOrderInfo['current_balance'] * $usdToVnd, 0, ',', '.');
-                                                $currentBalanceUSD = number_format($highValueOrderInfo['current_balance'], 2);
-                                                $totalValueVND = number_format($highValueOrderInfo['total_value'] * $usdToVnd, 0, ',', '.');
-                                                $totalValueUSD = number_format($highValueOrderInfo['total_value'], 2);
-
-                                                $quickMessageHvo3 = "- Bạn cần nạp thêm {$requiredDepositVND}₫ (\${$requiredDepositUSD})\n" .
-                                                    "- Số dư: {$currentBalanceVND}₫ (\${$currentBalanceUSD})\n" .
-                                                    "- Đơn hàng: {$totalValueVND}₫ (\${$totalValueUSD})\n" .
-                                                    "{$totalValueVND}-{$currentBalanceVND}={$requiredDepositVND} (VND)\n" .
-                                                    "để xử lý đơn hàng. Hoàn thành đơn hàng sẽ được hệ thống thưởng 10%.";
-                                            @endphp
-
-                                            <button type="button" class="quick-msg-btn text-start"
-                                                onclick='copyQuickMessage(`{{ str_replace('`', '\`', $quickMessageHvo3) }}`)'
-                                                title="Click để sao chép">
-                                                💰 {{ Str::limit("Cần nạp {$requiredDepositVND}₫", 60) }}
-                                            </button>
-
-                                            <button type="button" class="quick-msg-btn text-start"
-                                                onclick="copyQuickMessage('{{ addslashes($quickMessageHvo2) }}')"
-                                                title="Click để sao chép">
-                                                📋 {{ Str::limit($quickMessageHvo2, 60) }}
-                                            </button>
-                                        @endif
-                                    </div>
-                                </div>
-                            @endif
-
-                            {{-- Tin nhắn chung cho người có đơn hàng giá trị cao --}}
-                            <div class="alert alert-info mb-0 mt-2 py-1 px-2"
-                                style="font-size: 11px; border-left: 3px solid #0dcaf0;">
-                                <div class="d-flex justify-content-between align-items-center mb-1">
-                                    <div style="font-size: 10px;">
-                                        <strong><i class="fas fa-bolt me-1"></i>Tin nhắn nhanh:</strong>
-                                    </div>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <button class="quick-msg-add-btn" type="button" wire:click="startAddingQuickMessage"
-                                            title="Thêm tin nhắn nhanh" aria-label="Thêm tin nhắn nhanh">
-                                            <i class="fas fa-plus" aria-hidden="true"></i>
-                                        </button>
-                                        <button class="btn btn-sm p-0 text-info" type="button" @click="quickMsgOpen = !quickMsgOpen" :aria-expanded="quickMsgOpen" aria-label="Mẫu trả lời nhanh"
-                                            style="border: none; background: none;">
-                                            <i class="fas" :class="quickMsgOpen ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                                <div x-show="quickMsgOpen" x-transition class="flex-column gap-1" style="display: flex;">
-                                    @php
-                                        $highValueQuickMessageKeys = array_values(array_filter(
-                                            array_merge(['bank_account', 'transaction_verification'], $customQuickMessageKeys),
-                                            fn ($key) => array_key_exists($key, $quickMessages)
-                                        ));
-                                    @endphp
-                                    @foreach($highValueQuickMessageKeys as $messageKey)
-                                        @include('livewire.admin.partials.quick-message-item', [
-                                            'messageKey' => $messageKey,
-                                            'messageText' => $quickMessages[$messageKey],
-                                            'context' => 'high-value',
-                                        ])
-                                    @endforeach
-                                    @include('livewire.admin.partials.quick-message-create', ['context' => 'high-value'])
-                                </div>
-                            </div>
-                        @else
-                            {{-- Tin nhắn chung cho người không có đơn hàng giá trị cao --}}
-                            <div class="alert alert-secondary mb-0 mt-2 py-1 px-2"
-                                style="font-size: 11px; border-left: 3px solid #6c757d;">
-                                <div class="d-flex justify-content-between align-items-center mb-1">
-                                    <div style="font-size: 10px;">
-                                        <strong><i class="fas fa-comments me-1"></i>Tin nhắn nhanh:</strong>
-                                    </div>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <button class="quick-msg-add-btn" type="button" wire:click="startAddingQuickMessage"
-                                            title="Thêm tin nhắn nhanh" aria-label="Thêm tin nhắn nhanh">
-                                            <i class="fas fa-plus" aria-hidden="true"></i>
-                                        </button>
-                                        <button class="btn btn-sm p-0 text-secondary" type="button"
-                                            @click="generalMsgOpen = !generalMsgOpen" :aria-expanded="generalMsgOpen" aria-label="Mẫu trả lời nhanh" style="border: none; background: none;">
-                                            <i class="fas" :class="generalMsgOpen ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                                <div x-show="generalMsgOpen" x-transition class="flex-column gap-1" style="display: flex;">
-                                    @php
-                                        $generalQuickMessageKeys = array_values(array_filter(
-                                            array_merge(['general_1', 'general_2', 'general_3', 'bank_account'], $customQuickMessageKeys),
-                                            fn ($key) => array_key_exists($key, $quickMessages)
-                                        ));
-                                    @endphp
-                                    @foreach($generalQuickMessageKeys as $messageKey)
-                                        @include('livewire.admin.partials.quick-message-item', [
-                                            'messageKey' => $messageKey,
-                                            'messageText' => $quickMessages[$messageKey],
-                                            'context' => 'general',
-                                        ])
-                                    @endforeach
-                                    @include('livewire.admin.partials.quick-message-create', ['context' => 'general'])
-                                </div>
-                            </div>
-                        @endif
-                </div>
             </div>
 
             <!-- Khu vực tin nhắn -->
             <div wire:key="messages-container-{{ $this->selectedConversation->id }}"
                 class="chat-message-list flex-grow-1 overflow-auto custom-scrollbar position-relative" id="messages-container"
-                aria-label="Tin nhắn trong hội thoại">
+                aria-label="Tin nhắn trong hội thoại" :inert="contextOpen && !wide">
 
                 @if (empty($messages))
                     <div class="w-100 h-100 d-flex justify-content-center align-items-center">
@@ -589,6 +297,20 @@
                                 $messageKind = $message['kind'] ?? $message['type'] ?? 'text';
                                 $isReferenceMessage = str_ends_with($messageKind, '_reference');
                                 $isImageMessage = !$isReferenceMessage && !empty($message['image_path']);
+                                $messageDate = \Carbon\Carbon::parse($message['created_at'])->setTimezone('Asia/Ho_Chi_Minh');
+                                $messageMinute = $messageDate->format('Y-m-d H:i');
+                                $newerMessage = $messages[$index - 1] ?? null;
+                                $olderMessage = $messages[$index + 1] ?? null;
+                                $isGroupedWithNewer = $newerMessage
+                                    && (int) ($newerMessage['sender_id'] ?? 0) === (int) $message['sender_id']
+                                    && \Carbon\Carbon::parse($newerMessage['created_at'])->setTimezone('Asia/Ho_Chi_Minh')->format('Y-m-d H:i') === $messageMinute;
+                                $isGroupedWithOlder = $olderMessage
+                                    && (int) ($olderMessage['sender_id'] ?? 0) === (int) $message['sender_id']
+                                    && \Carbon\Carbon::parse($olderMessage['created_at'])->setTimezone('Asia/Ho_Chi_Minh')->format('Y-m-d H:i') === $messageMinute;
+                                $isGroupFooter = !$isGroupedWithNewer;
+                                $olderCreatedAt = $olderMessage['created_at'] ?? null;
+                                $showDateSeparator = !$olderCreatedAt
+                                    || !$messageDate->isSameDay(\Carbon\Carbon::parse($olderCreatedAt)->setTimezone('Asia/Ho_Chi_Minh'));
 
                                 // Xác định classes cho message
                                 if ($isCurrentUser) {
@@ -625,25 +347,23 @@
                                 }
                             @endphp
 
-                            <div class="message-item d-flex {{ $containerClass }}"
+                            <div class="message-item d-flex {{ $containerClass }} {{ $isCurrentUser ? 'is-own-message' : 'is-other-message' }} {{ $isGroupedWithNewer ? 'is-grouped-with-newer' : 'is-message-group-footer' }} {{ $isGroupedWithOlder ? 'is-grouped-with-older' : 'is-message-group-start' }}"
                                 wire:key="message-{{ $message['id'] ?? $index }}">
-                                <div class="position-relative {{ $isReferenceMessage ? 'chat-structured-message admin-chat-structured-message' : ($isImageMessage ? 'admin-chat-image-message ' . ($isCurrentUser ? 'is-sent' : 'is-received') : 'message-bubble ' . $bubbleClass) }}">
-
-                                    <!-- Hiển thị tên người gửi và role (chỉ với tin nhắn của người khác) -->
-                                    @if(!$isCurrentUser)
-                                        <div class="d-flex align-items-center justify-content-between mb-1">
-                                            <small class="fw-bold opacity-90">
-                                                {{ $message['sender']['full_name'] ?? 'Unknown User' }}
-                                            </small>
-                                            <span class="role-badge ms-2">
-                                                @if($senderRole === 'own') Chủ hệ thống
-                                                @elseif($senderRole === 'admin') Quản trị viên
-                                                @elseif($senderRole === 'staff') Nhân viên
-                                                @else Khách hàng
-                                                @endif
-                                            </span>
-                                        </div>
+                                @if(!$isCurrentUser)
+                                    @if($isGroupFooter)
+                                        <span class="chat-message-avatar avatar-tone-{{ abs(crc32((string) $message['sender_id'])) % 6 }}" title="{{ $message['sender']['full_name'] ?? 'Người gửi' }}">
+                                            @if(!empty($message['sender']['avatar']) && Storage::disk('public')->exists($message['sender']['avatar']))
+                                                <img src="{{ Storage::disk('public')->url($message['sender']['avatar']) }}" alt="{{ $message['sender']['full_name'] ?? 'Người gửi' }}" loading="lazy">
+                                            @else
+                                                <span aria-label="{{ $message['sender']['full_name'] ?? 'Người gửi' }}">{{ mb_strtoupper(mb_substr($message['sender']['full_name'] ?? '?', 0, 1)) }}</span>
+                                            @endif
+                                        </span>
+                                    @else
+                                        <span class="chat-message-avatar-spacer" aria-hidden="true"></span>
                                     @endif
+                                @endif
+                                <div class="chat-message-body">
+                                <div class="position-relative {{ $isReferenceMessage ? 'chat-structured-message admin-chat-structured-message' : ($isImageMessage ? 'admin-chat-image-message ' . ($isCurrentUser ? 'is-sent' : 'is-received') : 'message-bubble ' . $bubbleClass) }}">
 
                                     <!-- Nội dung tin nhắn -->
                                     @if($isReferenceMessage)
@@ -680,32 +400,29 @@
                                     </div>
                                     @endif
 
-                                    <!-- Thời gian và trạng thái -->
-                                    <div class="chat-message-meta d-flex flex-wrap align-items-center justify-content-end gap-2">
-                                        <time datetime="{{ \Carbon\Carbon::parse($message['created_at'])->toIso8601String() }}">
-                                            {{ \Carbon\Carbon::parse($message['created_at'])->setTimezone('Asia/Ho_Chi_Minh')->format('d/m/Y H:i') }}
-                                        </time>
-                                        <span class="chat-read-status" data-message-id="{{ $message['id'] }}"
-                                            data-seen-status="{{ ($message['is_read'] ?? false) ? 'true' : 'false' }}"
-                                            title="{{ (int) $message['sender_id'] === (int) $this->selectedConversation->user_id ? 'Trạng thái đọc của nhân viên phụ trách' : 'Trạng thái đọc của khách hàng' }}">
-                                            <i class="fas {{ ($message['is_read'] ?? false) ? 'fa-check-double' : 'fa-check' }}" aria-hidden="true"></i>
-                                            <span>{{ ($message['is_read'] ?? false) ? 'Đã đọc' : 'Chưa đọc' }}</span>
-                                        </span>
-                                    </div>
-
-                                    <!-- Message tail -->
-
-                                    <div class="message-tail position-absolute {{ $tailClass }}"
-                                        style="@if($tailClass === 'message-tail-left') 
-                                            left: -8px; border-right: 8px solid {{ $tailColor }};
-                                        @else 
-                                                        right: -8px; border-left: 8px solid {{ $isCurrentUser ? '#0d6efd' : $tailColor }};
-                                                    @endif
-                                                                                                                top: 50%; transform: translateY(-50%); 
-                                                                                                                border-top: 8px solid transparent; 
-                                                                                                                border-bottom: 8px solid transparent;">
-                                    </div>
                                 </div>
+                                    @if($isGroupFooter)
+                                        <!-- Thời gian và trạng thái của tin nhắn cuối cụm -->
+                                        <div class="chat-message-meta d-flex flex-wrap align-items-center gap-2">
+                                            <time datetime="{{ $messageDate->toIso8601String() }}" title="{{ $messageDate->format('d/m/Y H:i') }}">
+                                                {{ $messageDate->format('H:i') }}
+                                            </time>
+                                            <span class="chat-read-status" data-message-id="{{ $message['id'] }}"
+                                                data-seen-status="{{ ($message['is_read'] ?? false) ? 'true' : 'false' }}"
+                                                title="{{ (int) $message['sender_id'] === (int) $this->selectedConversation->user_id ? 'Trạng thái đọc của nhân viên phụ trách' : 'Trạng thái đọc của khách hàng' }}">
+                                                <i class="fas {{ ($message['is_read'] ?? false) ? 'fa-check-double' : 'fa-check' }}" aria-hidden="true"></i>
+                                                <!-- <span>{{ ($message['is_read'] ?? false) ? 'Đã đọc' : 'Chưa đọc' }}</span> -->
+                                            </span>
+                                        </div>
+                                    @endif
+
+                                </div>
+                            </div>
+
+                            <div class="chat-date-separator" wire:key="date-separator-{{ $message['id'] ?? $index }}"
+                                @if(!$showDateSeparator) hidden @endif aria-label="{{ $messageDate->format('d/m/Y') }}">
+                                <span data-local-datetime="{{ $messageDate->toIso8601String() }}"
+                                    data-local-format="chat-date" data-time-zone="Asia/Ho_Chi_Minh">{{ $messageDate->locale('vi')->translatedFormat('d M Y') }}</span>
                             </div>
                         @endforeach
 
@@ -731,7 +448,22 @@
 
             <!-- Input tin nhắn -->
             <div wire:key="message-input-{{ $this->selectedConversation->id }}"
-                class="message-input position-relative">
+                class="message-input position-relative" :inert="contextOpen && !wide">
+                <div class="chat-typing-status" data-chat-typing-status wire:ignore hidden role="status" aria-live="polite">
+                    <span class="chat-typing-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+                    <span data-chat-typing-label></span>
+                </div>
+                @if(count($quickMessages) > 0)
+                    <div class="chat-quick-strip" aria-label="Tin nhắn nhanh">
+                        @foreach($quickMessages as $messageKey => $messageText)
+                            <button type="button" class="chat-quick-chip" data-message="{{ $messageText }}"
+                                onclick="copyQuickMessage(this.dataset.message)" title="{{ $messageText }}" aria-label="{{ $messageText }}">
+                                {{ implode(' ', array_slice(preg_split('/\s+/u', trim($messageText)), 0, 2)) }}...
+                            </button>
+                        @endforeach
+                        <button type="button" class="chat-quick-access" @click="contextOpen = true; $nextTick(() => { $refs.quickMessages.scrollIntoView({ block: 'nearest' }); $refs.quickMessages.focus(); })" aria-label="Quản lý tin nhắn nhanh" title="Quản lý tin nhắn nhanh"><i class="fas fa-sliders" aria-hidden="true"></i></button>
+                    </div>
+                @endif
 
                 @if($editingMessageId)
                     <div class="editing-banner bg-light p-2 mb-2 border rounded-3 d-flex justify-content-between align-items-center">
@@ -752,39 +484,147 @@
                         <span>Ảnh đính kèm <small class="d-block text-muted">Sẵn sàng gửi</small></span>
                     </div>
                 @endif
-                <form wire:submit.prevent="{{ $editingMessageId ? 'updateMessage' : 'sendMessage' }}" class="chat-composer d-flex align-items-end gap-2">
+                <form wire:submit.prevent="{{ $editingMessageId ? 'updateMessage' : 'sendMessage' }}" class="chat-composer {{ $editingMessageId ? 'is-editing' : '' }} d-flex align-items-end gap-2"
+                    x-data="{ emojiOpen: false, insertEmoji(value) { const input = document.getElementById('message-input-textarea'); input.setRangeText(value, input.selectionStart, input.selectionEnd, 'end'); input.dispatchEvent(new Event('input', { bubbles: true })); input.focus(); this.emojiOpen = false; } }"
+                    @keydown.escape.stop="emojiOpen = false" @click.outside="emojiOpen = false">
                     @if(!$editingMessageId)
                         <input type="file" wire:model="image" accept="image/*" class="visually-hidden" id="upload-image-admin" aria-label="Chọn ảnh để gửi">
-                        <label for="upload-image-admin"
+                        <button type="button" onclick="document.getElementById('upload-image-admin').click()" aria-label="Gửi ảnh"
                             class="btn chat-attachment-button d-flex align-items-center justify-content-center m-0 position-relative"
                             title="Đính kèm ảnh">
                             <i class="fas fa-image" style="font-size: 16px;" wire:loading.remove wire:target="image"></i>
                             <span class="spinner-border spinner-border-sm text-primary" wire:loading wire:target="image"></span>
-                        </label>
+                        </button>
                     @endif
-                    <div class="flex-grow-1 position-relative">
-                        <textarea id="message-input-textarea" wire:model="{{ $editingMessageId ? 'editingMessageText' : 'messageText' }}"
-                            placeholder="{{ $editingMessageId ? 'Sửa nội dung tin nhắn...' : 'Viết tin nhắn cho khách hàng...' }}" class="form-control"
+                    <div class="chat-composer-input flex-grow-1 position-relative">
+                        <textarea id="message-input-textarea" @if(!$editingMessageId) data-chat-typing-input @endif wire:model="{{ $editingMessageId ? 'editingMessageText' : 'messageText' }}"
+                            placeholder="{{ $editingMessageId ? 'Sửa nội dung tin nhắn...' : 'Nhập tin nhắn cho khách hàng...' }}" class="form-control"
                             aria-label="{{ $editingMessageId ? 'Nội dung tin nhắn cần sửa' : 'Nội dung tin nhắn' }}"
-                            aria-describedby="chat-composer-hint"
                             rows="1"
                             ></textarea>
                     </div>
+                    <button type="button" class="chat-emoji-toggle chat-icon-button" @click="emojiOpen = !emojiOpen" :aria-expanded="emojiOpen" aria-controls="chat-emoji-picker" aria-label="Chọn emoji" title="Emoji"><i class="far fa-face-smile" aria-hidden="true"></i></button>
+                    <div id="chat-emoji-picker" class="chat-emoji-picker" x-show="emojiOpen" x-cloak role="group" aria-label="Emoji">
+                        @foreach(['😀' => 'Cười', '😊' => 'Vui vẻ', '😍' => 'Yêu thích', '🥰' => 'Yêu mến', '😄' => 'Cười tươi', '😅' => 'Cười ngại', '😂' => 'Cười lớn', '😉' => 'Nháy mắt', '👍' => 'Đồng ý', '👏' => 'Vỗ tay', '🙏' => 'Cảm ơn', '❤️' => 'Trái tim', '🎉' => 'Chúc mừng', '✅' => 'Hoàn tất', '🤝' => 'Bắt tay', '👋' => 'Xin chào', '😢' => 'Buồn', '🤔' => 'Suy nghĩ', '👌' => 'Được', '💐' => 'Bó hoa'] as $emoji => $emojiLabel)
+                            <button type="button" @click="insertEmoji('{{ $emoji }}')" aria-label="{{ $emojiLabel }}" title="{{ $emojiLabel }}">{{ $emoji }}</button>
+                        @endforeach
+                    </div>
                     <button type="submit"
+                        wire:loading.attr="disabled" wire:target="sendMessage, updateMessage, image"
                         class="btn chat-send-button {{ $editingMessageId ? 'btn-success' : 'send-btn-gradient' }} d-flex align-items-center justify-content-center position-relative"
                         title="{{ $editingMessageId ? 'Cập nhật' : 'Gửi tin nhắn' }}"
                         aria-label="{{ $editingMessageId ? 'Cập nhật tin nhắn' : 'Gửi tin nhắn' }}">
                         <i class="fas {{ $editingMessageId ? 'fa-check' : 'fa-paper-plane' }}" style="font-size: 15px;" wire:loading.remove wire:target="{{ $editingMessageId ? 'updateMessage' : 'sendMessage' }}"></i>
                         <span class="spinner-border spinner-border-sm text-white" wire:loading wire:target="{{ $editingMessageId ? 'updateMessage' : 'sendMessage' }}"></span>
+                        <span class="chat-send-label">{{ $editingMessageId ? 'Lưu' : 'Gửi' }}</span>
+                        @if(!$editingMessageId)
+                            <span class="chat-send-shortcut" aria-hidden="true">Enter ↵</span>
+                        @endif
                     </button>
                 </form>
-                <div class="chat-composer-hint" id="chat-composer-hint">
-                    <span><i class="far fa-comment-dots me-1" aria-hidden="true"></i>{{ $editingMessageId ? 'Chỉnh sửa nội dung và nhấn nút cập nhật' : 'Enter để gửi · Shift + Enter để xuống dòng' }}</span>
-                </div>
                 @error('image') <div class="chat-input-error" role="alert">{{ $message }}</div> @enderror
                 @error('messageText') <div class="chat-input-error" role="alert">{{ $message }}</div> @enderror
                 @error('editingMessageText') <div class="chat-input-error" role="alert">{{ $message }}</div> @enderror
             </div>
+            <aside id="chat-context-panel" class="chat-context-panel" x-show="contextOpen" x-cloak
+                aria-label="Thông tin khách hàng và trả lời nhanh">
+                <div class="chat-panel-resizer chat-context-resizer" data-chat-resizer="right" role="separator" tabindex="0"
+                    aria-orientation="vertical" aria-label="Điều chỉnh độ rộng thông tin khách hàng"
+                    aria-valuemin="280" aria-valuemax="520" title="Kéo để thay đổi độ rộng · Nhấp đúp để đặt lại"></div>
+                <div class="chat-details-heading">
+                    <h3>Thông tin khách hàng</h3>
+                    <button type="button" class="chat-icon-button" x-ref="contextClose" @click="closeContext()"
+                        aria-label="Đóng thông tin khách hàng" title="Đóng thông tin">
+                        <i class="fas fa-xmark" aria-hidden="true"></i>
+                    </button>
+                </div>
+                <div class="chat-details-scroll custom-scrollbar">
+                    <section class="chat-customer-profile">
+                        <div class="chat-customer-profile-main">
+                            <img src="{{ get_user_avatar($this->selectedConversation->user) }}" alt="" class="chat-profile-avatar">
+                            <div class="chat-customer-profile-copy">
+                                <h4>{{ $this->selectedConversation->user->full_name }}</h4>
+                                <span>{{ $this->selectedConversation->user->username }}</span>
+                            </div>
+                        </div>
+                        <a class="chat-profile-link" href="{{ route('user.index') }}#user-{{ $this->selectedConversation->user->id }}">
+                            <i class="far fa-user" aria-hidden="true"></i> Xem hồ sơ
+                        </a>
+                    </section>
+                    <section class="chat-customer-overview">
+                        <h4>Thông tin hội thoại</h4>
+                        <div class="chat-contact-meta d-flex flex-wrap align-items-center gap-2">
+                            <span class="chat-contact-username">{{ $this->selectedConversation->user->username }}</span>
+                            @if($isManagementUser)
+                                <span class="chat-header-chip chip-staff">
+                                    <i class="fas fa-user-shield me-1"></i>Phụ trách: {{ $this->selectedConversation->staff->full_name }}
+                                </span>
+                            @endif
+
+                            <span class="chat-header-chip chip-location">
+                                <i class="fas fa-location-dot me-1 text-primary"></i>
+                                @php
+                                    $chatCountryCode = $this->selectedConversation->user->location_country_code
+                                        ?: $this->selectedConversation->user->approx_location_country_code;
+                                    $chatCountry = $this->selectedConversation->user->location_country
+                                        ?: $this->selectedConversation->user->approx_location_country;
+                                @endphp
+                                @if($chatCountryCode)
+                                    <span class="me-1">{{ country_flag($chatCountryCode) }}</span>
+                                @endif
+                                @if($this->selectedConversation->user->location_city)
+                                    {{ $this->selectedConversation->user->location_city }}
+                                    @if($chatCountry), {{ $chatCountry }}@endif
+                                @elseif($chatCountry)
+                                    {{ $chatCountry }}
+                                @elseif($chatCountryCode)
+                                    {{ $chatCountryCode }}
+                                @else
+                                    Chưa xác định
+                                @endif
+                                @if($this->selectedConversation->user->location_permission !== 'granted')
+                                    <span class="text-warning ms-1" style="font-size: 10px;">(Vị trí tương đối)</span>
+                                @endif
+                            </span>
+
+                            @if($this->selectedConversation->user->location_latitude !== null && $this->selectedConversation->user->location_longitude !== null)
+                                <a href="https://www.google.com/maps/search/?api=1&amp;query={{ $this->selectedConversation->user->location_latitude }},{{ $this->selectedConversation->user->location_longitude }}"
+                                   class="chat-header-chip text-primary fw-semibold"
+                                   target="_blank"
+                                   rel="noopener noreferrer"
+                                   title="Xem vị trí người dùng trên Google Maps"
+                                   aria-label="Xem vị trí người dùng trên Google Maps"
+                                   style="text-decoration: none;">
+                                    <i class="fas fa-map-location-dot me-1"></i> Bản đồ
+                                </a>
+                            @endif
+                        </div>
+                    </section>
+                    @include('livewire.admin.partials.customer-context', ['context' => $this->customerContext])
+                    <section class="chat-quick-section" x-ref="quickMessages" tabindex="-1">
+                        <div class="chat-quick-section-heading">
+                            <h4><i class="fas fa-bolt" aria-hidden="true"></i> Trả lời nhanh</h4>
+                            <button class="quick-msg-add-btn chat-quick-add-btn" type="button" wire:click="startAddingQuickMessage"
+                                title="Thêm tin nhắn nhanh" aria-label="Thêm tin nhắn nhanh">
+                                <i class="fas fa-plus" aria-hidden="true"></i>
+                                <span>Thêm</span>
+                            </button>
+                        </div>
+                        <p class="chat-details-hint">Chọn mẫu để đưa vào ô soạn tin.</p>
+                        <div class="quick-msg-list">
+                            @foreach($quickMessages as $messageKey => $messageText)
+                                @include('livewire.admin.partials.quick-message-item', [
+                                    'messageKey' => $messageKey,
+                                    'messageText' => $messageText,
+                                    'messageNumber' => $loop->iteration,
+                                    'context' => 'database',
+                                ])
+                            @endforeach
+                            @include('livewire.admin.partials.quick-message-create', ['context' => 'database'])
+                        </div>
+                    </section>
+                </div>
+            </aside>
         @else
             <!-- Trạng thái chưa chọn conversation -->
             <div class="chat-welcome flex-grow-1 d-flex align-items-center justify-content-center p-4">
@@ -795,7 +635,7 @@
                     <span class="chat-eyebrow">HỘP THƯ HỖ TRỢ</span>
                     <h2>Chọn một cuộc trò chuyện</h2>
                     <p>Chọn một hội thoại trong danh sách để xem tin nhắn và tiếp tục hỗ trợ khách hàng.</p>
-                    <button type="button" class="btn chat-empty-action d-lg-none" data-bs-toggle="offcanvas" data-bs-target="#mobileSidebar" aria-controls="mobileSidebar">
+                    <button type="button" class="btn chat-empty-action d-lg-none" @click="mobileListOpen = true">
                         <i class="fas fa-comments me-2" aria-hidden="true"></i>Mở danh sách hội thoại
                     </button>
                 </div>
@@ -1134,22 +974,22 @@
                 .listen('.MessageSent', (e) => {
                     const root = document.getElementById('chat-root');
                     const component = Livewire.find(root.getAttribute('wire:id'));
+                    const isAutoReply = e.message.kind === 'auto_reply';
 
                     // Lấy selectedConversationId từ component
                     const selectedConversationId = component.get('selectedConversationId');
 
                     // Nếu tin nhắn thuộc conversation đang focus
-                    // → KHÔNG làm gì cả, để conversation channel xử lý toàn bộ
-                    // → (thêm tin nhắn, scroll, đánh dấu đã đọc, update sidebar)
+                    // staff channel đóng vai trò fallback để UI vẫn realtime ngay cả khi
+                    // conversation channel chưa kịp subscribe sau một lần React mount.
                     if (selectedConversationId && selectedConversationId == e.message.conversation_id) {
-                        // KHÔNG reload sidebar để tránh mất focus
-                        // Conversation channel sẽ xử lý tất cả (kể cả tin nhắn của mình chưa có trong UI)
+                        component.call('messageReceived', e.message);
                         return;
                     }
 
-                    // Tin nhắn KHÔNG thuộc conversation đang focus
-                    // Bỏ qua tin nhắn của chính mình (đã được thêm qua sendMessage và broadcast qua conversation channel)
-                    if (e.message.sender_id === currentUserId) {
+                    // Tin nhắn thủ công của chính staff đã được sendMessage thêm vào UI.
+                    // Auto-reply do queue tạo dùng sender_id của staff nên vẫn phải đi qua realtime.
+                    if (e.message.sender_id === currentUserId && !isAutoReply) {
                         // Chỉ reload sidebar, không hiển thị notification
                         component.call('loadConversations');
                         @if($canManageAllChats)
@@ -1205,14 +1045,23 @@
                 .listen('.MessageSent', (e) => {
                     const message = e.message;
                     const currentUserId = {{ auth()->id() }};
+                    const isAutoReply = message.kind === 'auto_reply';
+                    const root = document.getElementById('chat-root');
 
-                    // Chỉ giải quyết tin nhắn của khách đến (tin nhắn gửi đi đã được hàm sendMessage xử lý thẳng)
-                    if (message.sender_id !== currentUserId) {
-                        if (!window.isAdminConversationMuted?.(message.conversation_id)) {
+                    // React keeps this Echo callback alive after leaving the chat page.
+                    // Ignore it once the chat DOM is gone so the global admin listener
+                    // remains the single owner of notification sound off this page.
+                    if (!root) {
+                        return;
+                    }
+
+                    // Tin nhắn gửi thủ công của chính mình đã được sendMessage thêm vào UI.
+                    // Auto-reply được job tạo với sender_id của staff nên vẫn phải nhận realtime tại đây.
+                    if (message.sender_id !== currentUserId || isAutoReply) {
+                        if (!isAutoReply && !window.isAdminConversationMuted?.(message.conversation_id)) {
                             playNotificationSound();
                         }
 
-                        const root = document.getElementById('chat-root');
                         const component = Livewire.find(root.getAttribute('wire:id'));
 
                         // Đẩy cho Backend Livewire xử lý (update Array, mark as read, scroll, update Sidebar)
@@ -1232,6 +1081,7 @@
                 .error((error) => {
                     console.error('Echo error:', error);
                 }));
+            window.dispatchEvent(new CustomEvent('chat:channel-changed'));
         });
 
         Livewire.on('leave-conversation-channel', () => {
@@ -1251,9 +1101,203 @@
         }
     });
 
+    // AdminChatPage mounts the Livewire markup after the component has already
+    // produced its initial browser events. Re-emit the current conversation after
+    // each React mount so the persistent listener above always subscribes it.
+    document.addEventListener('admin-chat:mounted', () => {
+        const root = document.getElementById('chat-root');
+        const conversationId = Number(root?.dataset.chatConversation || 0);
+        if (!conversationId || !window.Livewire) return;
+
+        window.Livewire.dispatch('join-conversation-channel', { conversationId });
+    });
+
     // React mounts this markup after DOMContentLoaded and then signals Livewire readiness.
     document.addEventListener('livewire:initialized', function () {
         const boundTextareas = new WeakSet();
+        const CHAT_PANEL_LIMITS = {
+            left: { min: 220, max: 520, contentMin: 480, cssVar: '--chat-sidebar-width' },
+            right: { min: 280, max: 520, contentMin: 420, cssVar: '--chat-context-width' },
+        };
+        let activePanelResize = null;
+
+        function chatPanelStorageKey(side) {
+            const viewerId = document.getElementById('chat-root')?.dataset.chatViewer || 'guest';
+            return `admin-chat:${viewerId}:${side}-panel-width`;
+        }
+
+        function readStoredPanelWidth(side) {
+            try {
+                const value = Number(window.localStorage.getItem(chatPanelStorageKey(side)));
+                return Number.isFinite(value) && value > 0 ? value : null;
+            } catch (_) {
+                return null;
+            }
+        }
+
+        function storePanelWidth(side, width) {
+            try {
+                window.localStorage.setItem(chatPanelStorageKey(side), String(Math.round(width)));
+            } catch (_) {
+                // localStorage can be unavailable in restricted browsing modes.
+            }
+        }
+
+        function clearStoredPanelWidth(side) {
+            try {
+                window.localStorage.removeItem(chatPanelStorageKey(side));
+            } catch (_) {
+                // localStorage can be unavailable in restricted browsing modes.
+            }
+        }
+
+        function getPanelBounds(side, root) {
+            const config = CHAT_PANEL_LIMITS[side];
+            if (!config || !root) return null;
+
+            const container = side === 'right' ? root.querySelector('.chat-main') : root;
+            const availableWidth = container?.getBoundingClientRect().width || root.getBoundingClientRect().width;
+            const maxByContent = Math.max(config.min, availableWidth - config.contentMin);
+
+            return {
+                min: config.min,
+                max: Math.max(config.min, Math.min(config.max, maxByContent)),
+            };
+        }
+
+        function setPanelWidth(side, requestedWidth, persist = false) {
+            const root = document.getElementById('chat-root');
+            const config = CHAT_PANEL_LIMITS[side];
+            const bounds = getPanelBounds(side, root);
+            if (!root || !config || !bounds) return null;
+
+            const width = Math.min(bounds.max, Math.max(bounds.min, requestedWidth));
+            root.style.setProperty(config.cssVar, `${Math.round(width)}px`);
+
+            const handle = root.querySelector(`[data-chat-resizer="${side}"]`);
+            if (handle) {
+                handle.setAttribute('aria-valuemin', String(Math.round(bounds.min)));
+                handle.setAttribute('aria-valuemax', String(Math.round(bounds.max)));
+                handle.setAttribute('aria-valuenow', String(Math.round(width)));
+            }
+
+            if (persist) storePanelWidth(side, width);
+            return width;
+        }
+
+        function applyStoredPanelWidths() {
+            const root = document.getElementById('chat-root');
+            if (!root) return;
+
+            if (window.innerWidth >= 992) {
+                const leftWidth = readStoredPanelWidth('left');
+                if (leftWidth !== null) setPanelWidth('left', leftWidth);
+            }
+
+            if (window.innerWidth >= 1280) {
+                const rightWidth = readStoredPanelWidth('right');
+                if (rightWidth !== null) setPanelWidth('right', rightWidth);
+            }
+        }
+
+        function currentPanelWidth(side, root) {
+            if (side === 'right') {
+                return root.querySelector('.chat-context-panel')?.getBoundingClientRect().width || CHAT_PANEL_LIMITS.right.min;
+            }
+            return root.querySelector('.chat-sidebar-shell')?.getBoundingClientRect().width || CHAT_PANEL_LIMITS.left.min;
+        }
+
+        document.addEventListener('pointerdown', (event) => {
+            const handle = event.target.closest?.('[data-chat-resizer]');
+            const root = handle?.closest('#chat-root');
+            const side = handle?.dataset.chatResizer;
+            if (!root || !CHAT_PANEL_LIMITS[side] || event.button !== 0) return;
+            if (side === 'left' && window.innerWidth < 992) return;
+            if (side === 'right' && window.innerWidth < 1280) return;
+
+            activePanelResize = { side, handle, root };
+            root.classList.add('is-resizing-panels');
+            handle.classList.add('is-active');
+            handle.setPointerCapture?.(event.pointerId);
+            event.preventDefault();
+        });
+
+        document.addEventListener('pointermove', (event) => {
+            if (!activePanelResize) return;
+
+            const { side, root } = activePanelResize;
+            const container = side === 'right' ? root.querySelector('.chat-main') : root;
+            const rect = container.getBoundingClientRect();
+            const requestedWidth = side === 'right' ? rect.right - event.clientX : event.clientX - rect.left;
+            setPanelWidth(side, requestedWidth);
+        });
+
+        function finishPanelResize() {
+            if (!activePanelResize) return;
+
+            const { side, root, handle } = activePanelResize;
+            const width = currentPanelWidth(side, root);
+            setPanelWidth(side, width, true);
+            root.classList.remove('is-resizing-panels');
+            handle.classList.remove('is-active');
+            activePanelResize = null;
+        }
+
+        document.addEventListener('pointerup', finishPanelResize);
+        document.addEventListener('pointercancel', finishPanelResize);
+
+        document.addEventListener('keydown', (event) => {
+            const handle = event.target.closest?.('[data-chat-resizer]');
+            const root = handle?.closest('#chat-root');
+            const side = handle?.dataset.chatResizer;
+            if (!root || !CHAT_PANEL_LIMITS[side] || !['ArrowLeft', 'ArrowRight'].includes(event.key)) return;
+
+            const direction = event.key === 'ArrowRight' ? 1 : -1;
+            const signedDirection = side === 'right' ? -direction : direction;
+            const step = event.shiftKey ? 50 : 20;
+            setPanelWidth(side, currentPanelWidth(side, root) + (signedDirection * step), true);
+            event.preventDefault();
+        });
+
+        document.addEventListener('dblclick', (event) => {
+            const handle = event.target.closest?.('[data-chat-resizer]');
+            const root = handle?.closest('#chat-root');
+            const side = handle?.dataset.chatResizer;
+            const config = CHAT_PANEL_LIMITS[side];
+            if (!root || !config) return;
+
+            root.style.removeProperty(config.cssVar);
+            handle.removeAttribute('aria-valuenow');
+            clearStoredPanelWidth(side);
+            event.preventDefault();
+        });
+
+        window.addEventListener('resize', () => {
+            const root = document.getElementById('chat-root');
+            if (!root) return;
+
+            if (window.innerWidth >= 992) {
+                const inlineLeftWidth = root.style.getPropertyValue(CHAT_PANEL_LIMITS.left.cssVar);
+                const storedLeftWidth = readStoredPanelWidth('left');
+                if (inlineLeftWidth) {
+                    setPanelWidth('left', currentPanelWidth('left', root));
+                } else if (storedLeftWidth !== null) {
+                    setPanelWidth('left', storedLeftWidth);
+                }
+            }
+            if (window.innerWidth >= 1280) {
+                const inlineRightWidth = root.style.getPropertyValue(CHAT_PANEL_LIMITS.right.cssVar);
+                const storedRightWidth = readStoredPanelWidth('right');
+                if (inlineRightWidth) {
+                    setPanelWidth('right', currentPanelWidth('right', root));
+                } else if (storedRightWidth !== null) {
+                    setPanelWidth('right', storedRightWidth);
+                }
+            }
+        });
+
+        document.addEventListener('admin-chat:mounted', applyStoredPanelWidths);
+        applyStoredPanelWidths();
 
         // ===== Xử lý textarea tự động điều chỉnh chiều cao =====
         function autoResizeTextarea() {
@@ -1266,19 +1310,12 @@
 
         // Xử lý Enter và Shift+Enter
         function handleTextareaKeydown(e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
+            if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
                 e.preventDefault();
                 const form = e.target.closest('form');
-                if (form) {
-                    // Trigger submit
-                    const root = document.getElementById('chat-root');
-                    const component = Livewire.find(root.getAttribute('wire:id'));
-                    component.call('sendMessage').then(() => {
-                        // Reset textarea sau khi gửi
-                        e.target.value = '';
-                        e.target.style.height = 'auto';
-                        autoResizeTextarea();
-                    });
+                if (form && !form.querySelector('button[type="submit"]')?.disabled) {
+                    // Respect the form's send/update action and retain text on validation errors.
+                    form.requestSubmit();
                 }
             }
         }
@@ -1325,7 +1362,7 @@
 
         function collectViewerImages() {
             const seen = new Set();
-            return Array.from(document.querySelectorAll('#messages-container .zoomable-image'))
+            return Array.from(document.querySelectorAll('#messages-container .zoomable-image, #chat-context-panel .zoomable-image'))
                 .map(img => img.currentSrc || img.src)
                 .filter(src => src && !seen.has(src) && seen.add(src));
         }
@@ -1378,6 +1415,7 @@
                 syncThumbnailImage(image);
                 bindViewerImage(image);
             });
+            document.querySelectorAll('#chat-context-panel .zoomable-image').forEach(bindViewerImage);
         }
 
         function scheduleConversationLifecycleSync() {
@@ -1385,6 +1423,7 @@
 
             lifecycleSyncFrame = window.requestAnimationFrame(() => {
                 lifecycleSyncFrame = null;
+                applyStoredPanelWidths();
                 syncConversationImages();
                 attachTextareaEvents();
             });

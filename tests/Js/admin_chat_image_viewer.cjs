@@ -47,6 +47,7 @@ function element() {
 const ids = [...template.matchAll(/document.getElementById\('([^']+)'\)/g)].map(match => match[1]);
 const elements = new Map(ids.map(id => [id, element()]));
 let images = [];
+let sharedImages = [];
 function addImage(src) {
     const image = element();
     image.src = src;
@@ -62,7 +63,7 @@ document.readyState = 'complete';
 document.body = element();
 document.body.style.overflow = '';
 document.getElementById = id => elements.get(id) || null;
-document.querySelectorAll = () => images;
+document.querySelectorAll = selector => selector === '#chat-context-panel .zoomable-image' ? sharedImages : [...images, ...sharedImages];
 const window = element();
 const frames = [];
 const timers = [];
@@ -87,6 +88,20 @@ function closeWithEscape() {
 vm.runInNewContext(source, { document, window, Livewire, AppDialog: {} });
 // React inserts the Blade scripts after DOMContentLoaded has already fired.
 document.emit('livewire:initialized');
+// Enter uses the current form action (send OR edit), without clearing failed drafts.
+const textarea = elements.get('message-input-textarea');
+let submits = 0;
+const submitButton = { disabled: false };
+textarea.value = 'Draft being edited';
+textarea.closest = () => ({ querySelector: () => submitButton, requestSubmit: () => submits++ });
+textarea.emit('keydown', { key: 'Enter', preventDefault() {} });
+assert.equal(submits, 1);
+assert.equal(textarea.value, 'Draft being edited');
+textarea.emit('keydown', { key: 'Enter', shiftKey: true });
+textarea.emit('keydown', { key: 'Enter', isComposing: true });
+submitButton.disabled = true;
+textarea.emit('keydown', { key: 'Enter', preventDefault() {} });
+assert.equal(submits, 1, 'Newlines, IME confirmation and an in-flight request must not submit');
 first.emit('click');
 const modal = elements.get('zoomModal');
 const modalImage = elements.get('zoomModalImage');
@@ -114,6 +129,16 @@ assert.equal(modalImage.src, second.src);
 assert.equal(elements.get('adminImageViewerCounter').textContent, '1 / 2');
 elements.get('adminImageViewerNext').emit('click');
 assert.equal(modalImage.src, third.src);
+closeWithEscape();
+
+const shared = element();
+shared.src = '/uploads/chat/shared-only.png';
+sharedImages = [shared];
+hooks.get('morph.updated')({ el: elements.get('chat-root') });
+flushFrames();
+shared.emit('click');
+assert.equal(modalImage.src, shared.src, 'Images outside the loaded messages open from customer context');
+assert.equal(elements.get('adminImageViewerCounter').textContent, '3 / 3');
 closeWithEscape();
 
 // Repeated initialization must not register the controls twice.

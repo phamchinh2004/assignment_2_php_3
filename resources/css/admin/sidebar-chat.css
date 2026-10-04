@@ -13,11 +13,11 @@
     align-items: center;
     gap: 12px;
     flex-shrink: 0;
-    padding: 24px 20px 18px;
+    padding: 22px 18px 18px;
 }
 
 #chat-root .chat-sidebar-heading-icon {
-    display: grid;
+    display: none;
     place-items: center;
     width: 42px;
     height: 42px;
@@ -90,7 +90,7 @@
     overflow-y: auto;
     overflow-x: hidden;
     overscroll-behavior: contain;
-    padding: 18px 12px;
+    padding: 18px 0;
     scrollbar-width: thin;
     scrollbar-color: #cbd5e1 transparent;
 }
@@ -109,7 +109,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 8px;
-    margin: 0 6px 10px;
+    margin: 0 18px 10px;
     color: #64748b;
     font-size: 11px;
     font-weight: 700;
@@ -136,13 +136,14 @@
 #chat-root .conversation-item {
     position: relative;
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     gap: 11px;
     width: 100%;
-    margin: 0 0 5px;
-    padding: 13px 11px;
-    border: 1px solid transparent;
-    border-radius: 12px;
+    margin: 0;
+    padding: 15px 18px;
+    border: 0;
+    border-bottom: 1px solid #f1f5f9;
+    border-radius: 0;
     background: #fff;
     color: #0f172a;
     font-family: inherit;
@@ -177,25 +178,27 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    flex: 0 0 40px;
-    width: 40px;
-    height: 40px;
+    flex: 0 0 50px;
+    width: 50px;
+    height: 50px;
     margin-top: 2px;
-    border-radius: 13px;
-    background: #f1f5f9;
-    color: #64748b;
-    font-size: 16px;
+    border-radius: 50%;
+    background: #eef2ff;
+    color: #4f46e5;
+    font-size: 18px;
 }
 
 #chat-root .conversation-avatar img { width: 100%; height: 100%; border-radius: inherit; object-fit: cover; }
-#chat-root .is-selected .conversation-avatar { background: #e0e7ff; color: #4f46e5; }
+#chat-root .conversation-offline { position: absolute; bottom: -7px; left: 50%; transform: translateX(-50%); padding: 1px 4px; border: 2px solid #fff; border-radius: 8px; background: #e2e8f0; color: #475569; font-size: 9px; font-weight: 600; white-space: nowrap; }
+#chat-root .conversation-trailing { display: flex; flex: 0 0 auto; flex-direction: column; align-items: flex-end; gap: 7px; margin-left: auto; font-size: 11px; color: #64748b; }
+#chat-root .conversation-awaiting { align-self: flex-start; margin-top: 4px; padding: 1px 6px; border-radius: 5px; background: #fef3c7; color: #b45309; font-size: 10px; white-space: nowrap; }
 
 #chat-root .conversation-presence {
     position: absolute;
-    right: -2px;
-    bottom: -2px;
-    width: 11px;
-    height: 11px;
+    right: 3px;
+    bottom: -1px;
+    width: 13px;
+    height: 13px;
     border: 2px solid #fff;
     border-radius: 50%;
     background: #cbd5e1;
@@ -243,9 +246,9 @@
 }
 
 #chat-root .conversation-username { margin-top: 1px; color: #64748b; font-size: 11px; line-height: 1.5; }
-#chat-root .conversation-preview { margin-top: 5px; color: #64748b; font-size: 12px; line-height: 1.55; }
+#chat-root .conversation-preview { margin-top: 5px; color: #64748b; font-size: 12px; line-height: 1.55; margin: 0;}
 #chat-root .conversation-preview > i { margin-right: 4px; }
-#chat-root .has-unread .conversation-preview { color: #334155; font-weight: 600; }
+#chat-root .has-unread .conversation-preview { color: #334155; font-weight: 600; margin: 0;}
 #chat-root .conversation-no-messages { font-weight: 400; }
 #chat-root .conversation-status { display: block; margin-top: 5px; color: #64748b; font-size: 10px; line-height: 1.5; }
 #chat-root .conversation-status.is-online { color: #047857; }
@@ -269,6 +272,9 @@
 #chat-root .has-penalty:not(.is-selected) { background: #fffbeb; }
 #chat-root .has-penalty:not(.is-selected):hover { border-color: #fde68a; }
 #chat-root .sidebar-staff-group + .sidebar-staff-group { margin-top: 6px; }
+#chat-root .sidebar-staff-group { margin-inline: 12px; }
+#chat-root .chat-sidebar-footer { flex-shrink: 0; padding: 14px 18px; border-top: 1px solid #e2e8f0; color: #64748b; font-size: 11px; line-height: 1.5; }
+#chat-root .chat-sidebar-footer i { margin-right: 5px; color: #818cf8; }
 
 #chat-root .staff-header {
     display: flex;
@@ -342,7 +348,7 @@
 
 #chat-root .staff-users-list.collapsed { display: none; }
 #chat-root .staff-users-list .conversation-item { gap: 9px; padding: 11px 8px; }
-#chat-root .staff-users-list .conversation-avatar { flex-basis: 34px; width: 34px; height: 34px; border-radius: 11px; font-size: 14px; }
+#chat-root .staff-users-list .conversation-avatar { flex-basis: 44px; width: 44px; height: 44px; border-radius: 50%; font-size: 16px; }
 
 #chat-root .sidebar-empty-state {
     padding: 25px 14px;

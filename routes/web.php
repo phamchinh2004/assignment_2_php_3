@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\LanguageController;
+use App\Http\Controllers\ConversationController;
 use App\Http\Controllers\User\OrderController;
 use App\Http\Controllers\User\HomeController;
 use App\Http\Controllers\LoginController;
@@ -70,6 +71,9 @@ Route::middleware(['role:member', 'checkBanned'])->group(function () {
 Route::post('change-password', [LoginController::class, 'change_password'])
     ->name('change_password')
     ->middleware('auth');
+Route::post('/chat/typing', [ConversationController::class, 'typing'])
+    ->name('chat.typing')
+    ->middleware(['auth', 'checkBanned']);
 Route::get('/log-out', [LoginController::class, 'log_out'])->name('logout')->middleware('auth');
 Route::get('/log-out-by-locked', [LoginController::class, 'log_out_by_locked'])->name('log_out_by_locked')->middleware('auth');
 Route::post('/change-language', [LanguageController::class, 'change'])->name('language.change');
