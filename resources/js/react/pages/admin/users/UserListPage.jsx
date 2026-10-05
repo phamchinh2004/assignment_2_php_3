@@ -12,7 +12,6 @@ import {
     message,
 } from 'antd';
 import {
-    CheckCircleOutlined,
     ClockCircleOutlined,
     CloseOutlined,
     CreditCardOutlined,
@@ -24,12 +23,10 @@ import {
     GlobalOutlined,
     LeftOutlined,
     MessageOutlined,
-    MoreOutlined,
     PlusOutlined,
     RightOutlined,
     SearchOutlined,
     SortAscendingOutlined,
-    StopOutlined,
     TeamOutlined,
     UserOutlined,
     WalletOutlined,
@@ -37,7 +34,10 @@ import {
 import { requestJson } from '../../../lib/http';
 import { spaGetAction, spaRefresh } from '../../../navigation';
 import { AdminPage } from '../../../components/admin/AdminUi';
+import AccountStatusConfirm, { accountStatusAction } from '../../../components/admin/AccountStatusConfirm';
 import CustomerAutoSpinModal from './CustomerAutoSpinModal';
+import { EllipsisVertical, X } from 'lucide';
+import AdminMorphIcon from '../../../components/admin/AdminMorphIcon';
 
 function replaceRoute(template, id) {
     return template.replace('__USER_ID__', String(id));
@@ -54,6 +54,11 @@ function statusMeta(status) {
     if (status === 'activated') return { color: 'success', label: 'Đã kích hoạt' };
     if (status === 'inactivated') return { color: 'warning', label: 'Chưa kích hoạt' };
     return { color: 'error', label: 'Bị khóa' };
+}
+
+function AccountStatusIcon({ status, className }) {
+    const Icon = accountStatusAction(status).icon;
+    return <Icon className={className} aria-hidden="true" />;
 }
 
 function percentage(value, total) {
@@ -91,6 +96,12 @@ export default function UserListPage({ config }) {
     const [depositType, setDepositType] = useState('real');
     const [depositing, setDepositing] = useState(false);
     const [autoSpinUser, setAutoSpinUser] = useState(null);
+    const [statusUser, setStatusUser] = useState(null);
+    const [openActionsId, setOpenActionsId] = useState(null);
+
+    const handleActionsOpenChange = (key, open) => {
+        setOpenActionsId((current) => open ? key : current === key ? null : current);
+    };
 
     const updateSpinProgress = useCallback((userId, progress) => {
         setUsers((current) => current.map((user) => user.id === userId ? {
@@ -206,18 +217,10 @@ export default function UserListPage({ config }) {
         .filter((user) => !user.clone_account)
         .reduce((total, user) => total + Number(user.frozen_balance || 0), 0);
 
-    const changeStatus = (user) => {
-        Modal.confirm({
-            title: 'Thay đổi trạng thái tài khoản?',
-            content: 'Trạng thái hiện tại: ' + statusMeta(user.status).label + '.',
-            okText: 'Tiếp tục',
-            cancelText: 'Hủy',
-            onOk: async () => {
-                const payload = await spaGetAction(replaceRoute(routes.changeStatus, user.id));
-                const text = payload?.props?.flash?.success || payload?.props?.flash?.error;
-                if (text) message[payload?.props?.flash?.error ? 'error' : 'success'](text);
-            },
-        });
+    const changeStatus = async (user) => {
+        const payload = await spaGetAction(replaceRoute(routes.changeStatus, user.id));
+        if (payload?.props?.flash?.error) throw new Error(payload.props.flash.error);
+        if (payload?.props?.flash?.success) message.success(payload.props.flash.success);
     };
 
     const submitDeposit = async () => {
@@ -293,10 +296,10 @@ export default function UserListPage({ config }) {
         }] : []),
         ...(permissions.changeStatus ? [{
             key: 'status',
-            icon: user.status === 'activated' ? <StopOutlined /> : <CheckCircleOutlined />,
-            label: user.status === 'activated' ? 'Khóa tài khoản' : 'Kích hoạt tài khoản',
+            icon: <AccountStatusIcon status={user.status} />,
+            label: accountStatusAction(user.status).label,
             danger: user.status === 'activated',
-            onClick: () => changeStatus(user),
+            onClick: () => setStatusUser(user),
         }] : []),
     ];
 
@@ -333,7 +336,7 @@ export default function UserListPage({ config }) {
                             {user.rank?.name && <Tag className="customer-badge customer-badge--rank">{user.rank.name}</Tag>}
                             <Tag className="customer-badge customer-badge--spin" title="Lượt quay hiện tại / tổng lượt quay">Đơn {user.current_spin ?? 0}/{user.total_spins ?? 0}</Tag>
                             <Tag color={user.has_penalized_order ? 'error' : 'success'} className="customer-badge">
-                                {user.has_penalized_order ? 'Có đơn bị phạt' : 'Không bị phạt'}
+                                {user.has_penalized_order ? 'Có đơn bị phạt' : ''}
                             </Tag>
                             {user.referrer && (
                                 <span className="customer-manager-note">
@@ -412,12 +415,16 @@ export default function UserListPage({ config }) {
                             trigger={['click']}
                             placement="bottomRight"
                             overlayClassName="customer-actions-dropdown"
+                            open={openActionsId === `desktop-${user.id}`}
+                            onOpenChange={(open) => handleActionsOpenChange(`desktop-${user.id}`, open)}
                         >
                             <Button
                                 className="customer-actions-more"
-                                aria-label="Mở danh sách thao tác"
+                                aria-label={openActionsId === `desktop-${user.id}` ? 'Đóng danh sách thao tác' : 'Mở danh sách thao tác'}
+                                aria-expanded={openActionsId === `desktop-${user.id}`}
+                                aria-haspopup="menu"
                                 title="Thao tác khác"
-                                icon={<MoreOutlined />}
+                                icon={<AdminMorphIcon icon={openActionsId === `desktop-${user.id}` ? X : EllipsisVertical} />}
                             />
                         </Dropdown>
                     </div>
@@ -444,6 +451,7 @@ export default function UserListPage({ config }) {
 
     return (
         <AdminPage className="customer-admin-page">
+            <AccountStatusConfirm account={statusUser} onCancel={() => setStatusUser(null)} onConfirm={changeStatus} />
             <header className="customer-page-header">
                 <div className="customer-page-heading">
                     <span className="customer-page-heading__icon" aria-hidden="true"><TeamOutlined /></span>
@@ -629,7 +637,7 @@ export default function UserListPage({ config }) {
                                                 {user.rank?.name && <Tag className="customer-badge customer-badge--rank">{user.rank.name}</Tag>}
                                                 <Tag className="customer-badge customer-badge--spin" title="Lượt quay hiện tại / tổng lượt quay">Đơn {user.current_spin ?? 0}/{user.total_spins ?? 0}</Tag>
                                                 <Tag color={user.has_penalized_order ? 'error' : 'success'} className="customer-badge">
-                                                    {user.has_penalized_order ? 'Có đơn bị phạt' : 'Không bị phạt'}
+                                                    {user.has_penalized_order ? 'Có đơn bị phạt' : ''}
                                                 </Tag>
                                             </div>
                                         </div>
@@ -673,8 +681,14 @@ export default function UserListPage({ config }) {
                                         trigger={['click']}
                                         placement="bottomRight"
                                         overlayClassName="customer-actions-dropdown"
+                                        open={openActionsId === `mobile-${user.id}`}
+                                        onOpenChange={(open) => handleActionsOpenChange(`mobile-${user.id}`, open)}
                                     >
-                                        <Button icon={<MoreOutlined />}>Thao tác</Button>
+                                        <Button
+                                            aria-expanded={openActionsId === `mobile-${user.id}`}
+                                            aria-haspopup="menu"
+                                            icon={<AdminMorphIcon icon={openActionsId === `mobile-${user.id}` ? X : EllipsisVertical} />}
+                                        >Thao tác</Button>
                                     </Dropdown>
                                 </div>
                                 <span className="customer-mobile-card__index">#{((safePage - 1) * pageSize) + index + 1}</span>

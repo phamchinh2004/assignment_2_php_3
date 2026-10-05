@@ -1,3 +1,6 @@
+import { createMorph } from 'morphicons/dom';
+import { ChevronDown, ChevronUp, ChevronsLeft, ChevronsRight } from 'lucide';
+
 (() => {
     'use strict';
 
@@ -16,6 +19,40 @@
     const storageKey = 'admin-sidebar-collapsed';
     let lastMobileTrigger = null;
 
+    const mountMorphIcon = (container, icon, size = 16) => {
+        if (!container) return null;
+
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('viewBox', '0 0 24 24');
+        svg.setAttribute('width', String(size));
+        svg.setAttribute('height', String(size));
+        svg.setAttribute('fill', 'none');
+        svg.setAttribute('stroke', 'currentColor');
+        svg.setAttribute('stroke-width', '2');
+        svg.setAttribute('stroke-linecap', 'round');
+        svg.setAttribute('stroke-linejoin', 'round');
+        svg.setAttribute('aria-hidden', 'true');
+        svg.setAttribute('focusable', 'false');
+        svg.style.verticalAlign = 'middle';
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        svg.appendChild(path);
+        const morph = createMorph(path, icon, { reducedMotion: 'user' });
+        container.replaceChildren(svg);
+        container.setAttribute('data-morph-icon', '');
+        return morph;
+    };
+
+    // Bootstrap and React navigation both update aria-expanded on these triggers.
+    // Observe that shared state so accordion changes never depend on icon animation.
+    sidebar.querySelectorAll('.admin-sidebar__submenu-trigger').forEach((trigger) => {
+        const expandedIcon = () => trigger.getAttribute('aria-expanded') === 'true' ? ChevronUp : ChevronDown;
+        const morph = mountMorphIcon(trigger.querySelector('.admin-sidebar__chevron'), expandedIcon(), 14);
+        if (!morph) return;
+
+        const observer = new MutationObserver(() => morph.morphTo(expandedIcon(), 'snappy'));
+        observer.observe(trigger, { attributes: true, attributeFilter: ['aria-expanded'] });
+    });
+
     const readCollapsedPreference = () => {
         try {
             return window.localStorage.getItem(storageKey) === '1';
@@ -23,6 +60,8 @@
             return false;
         }
     };
+
+    const collapseMorph = mountMorphIcon(collapseButton, readCollapsedPreference() ? ChevronsRight : ChevronsLeft);
 
     const persistCollapsedPreference = (collapsed) => {
         try {
@@ -44,6 +83,7 @@
 
     const setCollapsed = (collapsed, persist = true) => {
         body.classList.toggle('admin-sidebar-collapsed', collapsed);
+        collapseMorph?.morphTo(collapsed ? ChevronsRight : ChevronsLeft, 'snappy');
         closePeek();
 
         if (collapseButton) {

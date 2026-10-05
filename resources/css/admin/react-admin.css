@@ -1,3 +1,5 @@
+@import './staff-directory.css';
+
 .admin-react-shell {
     --admin-primary: #4f46e5;
     --admin-primary-hover: #4338ca;

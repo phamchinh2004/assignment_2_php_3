@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Alert, Modal } from 'antd';
+import { MorphIcon } from 'morphicons/react';
+import { Eye, EyeOff } from 'lucide';
 import './auth.css';
 
 export function Background({ src }) {
@@ -70,9 +72,10 @@ export function PasswordToggle({ visible, onClick }) {
             type="button"
             onClick={onClick}
             aria-label={visible ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+            aria-pressed={visible}
             style={{ position: 'absolute', top: '50%', right: 12, transform: 'translateY(-50%)', border: 0, background: 'transparent', color: '#9ca3af', padding: 4 }}
         >
-            <i className={`fa-regular ${visible ? 'fa-eye-slash' : 'fa-eye'}`} />
+            <MorphIcon icon={visible ? EyeOff : Eye} size={16} spring="snappy" reducedMotion="user" style={{ display: 'block' }} />
         </button>
     );
 }

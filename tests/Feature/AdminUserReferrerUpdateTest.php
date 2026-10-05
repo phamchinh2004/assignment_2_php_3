@@ -3,11 +3,14 @@
 namespace Tests\Feature;
 
 use App\Http\Controllers\Admin\StaffController;
+use App\Events\StaffLocked;
+use App\Events\UserLocked;
 use App\Models\User;
 use App\Services\AuthorizationService;
 use App\Services\PermissionRegistry;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
@@ -392,6 +395,88 @@ class AdminUserReferrerUpdateTest extends TestCase
             ->assertUnprocessable()->assertJsonValidationErrors('manager_id');
         $this->put(route('staff.update', $staff), $payload)->assertRedirect(route('staff.index'));
         $this->assertSame($admin->id, $staff->fresh()->referrer_id);
+    }
+
+    public function test_staff_status_json_updates_lock_unlock_and_activation_without_redirecting(): void
+    {
+        Event::fake([StaffLocked::class]);
+        $actor = $this->user(User::ROLE_ADMIN);
+        $staff = $this->user(User::ROLE_STAFF, ['referrer_id' => $actor->id]);
+        $this->grant($actor, ['staff_change_status']);
+
+        foreach ([['activated', 'banned', 'Khóa'], ['banned', 'activated', 'Mở khóa'], ['inactivated', 'activated', 'Kích hoạt']] as [$before, $after, $action]) {
+            $staff->forceFill(['status' => $before])->save();
+            $response = $this->actingAs($actor)->getJson(route('staff.change.status', $staff->id));
+            $response->assertOk()->assertJsonPath('success', true)
+                ->assertJsonPath('staff.id', $staff->id)->assertJsonPath('staff.status', $after);
+            $this->assertStringContainsString($action, $response->json('message'));
+            $this->assertFalse($response->headers->has('Location'));
+            $this->assertSame($after, $staff->fresh()->status);
+        }
+        Event::assertDispatched(StaffLocked::class, fn ($event) => $event->staffId === $staff->id);
+    }
+
+    public function test_staff_status_json_requires_permission_and_target_scope(): void
+    {
+        Event::fake([StaffLocked::class]);
+        $actor = $this->user(User::ROLE_ADMIN);
+        $otherAdmin = $this->user(User::ROLE_ADMIN);
+        $staff = $this->user(User::ROLE_STAFF, ['referrer_id' => $actor->id]);
+        $outside = $this->user(User::ROLE_STAFF, ['referrer_id' => $otherAdmin->id]);
+        $this->actingAs($actor)->getJson(route('staff.change.status', $staff->id))->assertForbidden();
+        $this->assertSame('activated', $staff->fresh()->status);
+
+        $this->grant($actor, ['staff_change_status']);
+        foreach ([$outside, $otherAdmin] as $target) {
+            $this->actingAs($actor)->getJson(route('staff.change.status', $target->id))->assertForbidden();
+            $this->assertSame('activated', $target->fresh()->status);
+        }
+        Event::assertNotDispatched(StaffLocked::class);
+    }
+
+    public function test_missing_staff_status_json_returns_not_found_without_redirecting(): void
+    {
+        $actor = $this->user(User::ROLE_ADMIN);
+        $this->grant($actor, ['staff_change_status']);
+        $this->actingAs($actor)->getJson(route('staff.change.status', 999999))
+            ->assertNotFound()->assertJsonPath('success', false);
+    }
+
+    public function test_staff_status_keeps_redirect_for_legacy_and_spa_navigation_requests(): void
+    {
+        Event::fake([StaffLocked::class]);
+        $actor = $this->user(User::ROLE_ADMIN);
+        $staff = $this->user(User::ROLE_STAFF, ['referrer_id' => $actor->id]);
+        $this->grant($actor, ['staff_change_status']);
+        $this->actingAs($actor)->get(route('staff.change.status', $staff->id))
+            ->assertRedirect(route('staff.index'));
+        $this->assertSame('banned', $staff->fresh()->status);
+        $this->actingAs($actor)->get(route('staff.change.status', $staff->id), [
+            'Accept' => 'application/json', 'X-React-Navigation' => '1',
+        ])->assertRedirect(route('staff.index'));
+        $this->assertSame('activated', $staff->fresh()->status);
+    }
+
+    public function test_customer_status_lock_unlock_requires_permission_and_scope(): void
+    {
+        Event::fake([UserLocked::class]);
+        $actor = $this->user(User::ROLE_STAFF);
+        $otherStaff = $this->user(User::ROLE_STAFF);
+        $member = $this->user(User::ROLE_MEMBER, ['referrer_id' => $actor->id]);
+        $outside = $this->user(User::ROLE_MEMBER, ['referrer_id' => $otherStaff->id]);
+        $this->actingAs($actor)->getJson(route('user.change.status', $member))->assertForbidden();
+        $this->assertSame('activated', $member->fresh()->status);
+        $this->grant($actor, ['customers_change_status']);
+        $actor->unsetRelation('user_manager_settings');
+        $this->actingAs($actor)->getJson(route('user.change.status', $outside))->assertForbidden();
+        $this->assertSame('activated', $outside->fresh()->status);
+        foreach ([['banned', 'Khóa'], ['activated', 'Mở khóa']] as [$status, $action]) {
+            $response = $this->actingAs($actor)->get(route('user.change.status', $member));
+            $response->assertRedirect(route('user.index'));
+            $this->assertStringContainsString($action, session('success'));
+            $this->assertSame($status, $member->fresh()->status);
+        }
+        Event::assertDispatched(UserLocked::class);
     }
 
     private function user(string $role, array $attributes = []): User

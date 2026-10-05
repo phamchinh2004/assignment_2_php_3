@@ -125,8 +125,18 @@ class StaffController extends Controller
                 $message = "Mở khóa tài khoản nhân viên thành công!";
             }
             $user->save();
+            if (request()->expectsJson() && !request()->header('X-React-Navigation')) {
+                return response()->json([
+                    'success' => true,
+                    'message' => $message,
+                    'staff' => ['id' => $user->id, 'status' => $user->status],
+                ]);
+            }
             return redirect()->route('staff.index')->with('success', $message);
         } else {
+            if (request()->expectsJson() && !request()->header('X-React-Navigation')) {
+                return response()->json(['success' => false, 'message' => 'Không tìm thấy nhân viên cần thay đổi trạng thái!'], 404);
+            }
             return redirect()->route('staff.index')->with('error', 'Không tìm thấy nhân viên cần thay đổi trạng thái!');
         }
     }

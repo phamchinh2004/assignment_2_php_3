@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 import { buildSync } from 'esbuild';
 import React from 'react';
+import { Grid } from 'antd';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { matchesOperationsSearch } from '../../resources/js/react/lib/operations.js';
 
@@ -33,7 +34,7 @@ try {
             `,
             resolveDir: root,
         },
-        bundle: true, write: false, platform: 'node', format: 'cjs', packages: 'external', jsx: 'automatic',
+        bundle: true, write: false, platform: 'node', format: 'cjs', packages: 'external', jsx: 'automatic', loader: { '.css': 'empty' },
     });
     fs.writeFileSync(output, bundle.outputFiles[0].text);
     pages = createRequire(import.meta.url)(output);
@@ -50,12 +51,14 @@ const routes = {
     destroy: '/deposit/__TRANSACTION_ID__', confirm: '/withdraw/__TRANSACTION_ID__/confirm', cancel: '/withdraw/__TRANSACTION_ID__/cancel',
 };
 
-function render(Page, config) {
+function render(Page, config, screens) {
     // LaravelForm only reads the CSRF meta element during rendering.
     globalThis.document = { querySelector: () => ({ getAttribute: () => 'test-csrf' }) };
     globalThis.window = { location: { origin: 'http://localhost', href: 'http://localhost/admin/test' } };
+    const originalBreakpoint = Grid.useBreakpoint;
+    if (screens) Grid.useBreakpoint = () => screens;
     try { return renderToStaticMarkup(React.createElement(Page, { config })); }
-    finally { delete globalThis.document; delete globalThis.window; }
+    finally { Grid.useBreakpoint = originalBreakpoint; delete globalThis.document; delete globalThis.window; }
 }
 
 test('search handles Vietnamese accents, mixed case, split fields and absent customers', () => {
@@ -68,17 +71,43 @@ test('search handles Vietnamese accents, mixed case, split fields and absent cus
 
 test('staff actions require both page permission and permission over the target account', () => {
     const config = { routes, staffs: [{ ...user, role: 'staff', status: 'activated', can_manage: true, can_manage_permissions: true }] };
-    const readOnly = render(pages.Staff, config);
-    for (const link of ['/staff/7', '/staff/create', '/staff/7/permissions', '/staff/7/edit', '/staff/7/status']) {
-        assert.equal(readOnly.includes(`href="${link}"`), false);
-    }
     const permissions = { create: true, viewDetail: true, viewPermissions: true, update: true, changeStatus: true };
-    const allowed = render(pages.Staff, { ...config, permissions });
-    for (const link of ['/staff/7', '/staff/create', '/staff/7/permissions', '/staff/7/edit', '/staff/7/status']) {
-        assert.equal(allowed.includes(`href="${link}"`), true);
+    for (const screens of [{ xl: false }, { xl: true }]) {
+        const readOnly = render(pages.Staff, config, screens);
+        for (const link of ['/staff/7', '/staff/create', '/staff/7/permissions', '/staff/7/edit', '/staff/7/status']) {
+            assert.equal(readOnly.includes(`href="${link}"`), false);
+        }
+        const allowed = render(pages.Staff, { ...config, permissions }, screens);
+        assert.equal(allowed.includes('staff-directory-table'), screens.xl);
+        assert.equal(allowed.includes('class="staff-directory-member"'), !screens.xl);
+        for (const link of ['/staff/7', '/staff/create', '/staff/7/permissions', '/staff/7/edit']) {
+            assert.equal(allowed.includes(`href="${link}"`), true);
+        }
+        assert.equal(allowed.includes('href="/staff/7/status"'), false);
+        assert.ok(allowed.includes('>Khóa</span>'));
+        const restricted = render(pages.Staff, { ...config, permissions, staffs: [{ ...config.staffs[0], can_manage: false, can_manage_permissions: false }] }, screens);
+        for (const link of ['/staff/7/permissions', '/staff/7/edit', '/staff/7/status']) assert.equal(restricted.includes(`href="${link}"`), false);
+        assert.equal(restricted.includes('>Khóa</span>'), false);
     }
-    const restricted = render(pages.Staff, { ...config, permissions, staffs: [{ ...config.staffs[0], can_manage: false, can_manage_permissions: false }] });
-    for (const link of ['/staff/7/permissions', '/staff/7/edit', '/staff/7/status']) assert.equal(restricted.includes(`href="${link}"`), false);
+});
+
+test('staff desktop and mobile lists paginate accounts and keep team revenue labels', () => {
+    const staffs = Array.from({ length: 25 }, (_, index) => ({
+        id: index + 1, full_name: `Unique member ${index + 1}`, username: `staff_${index + 1}`,
+        phone: '0901234567', role: index === 0 ? 'admin' : 'staff', status: 'activated',
+        total_deposit: index === 0 ? 1234.5 : 20,
+    }));
+    for (const screens of [{ xl: false }, { xl: true }]) {
+        const html = render(pages.Staff, { routes, staffs }, screens);
+        assert.ok(html.includes('Unique member 20'));
+        assert.equal(html.includes('Unique member 21'), false);
+        assert.ok(html.includes('1,234.50 $'));
+        assert.ok(html.includes('Gồm staff trực thuộc'));
+        assert.ok(html.includes('0901234567'));
+        const empty = render(pages.Staff, { routes, staffs: [] }, screens);
+        assert.ok(empty.includes('Đội ngũ của bạn bắt đầu từ đây'));
+        assert.equal(empty.includes('href="/staff/create"'), false);
+    }
 });
 
 test('deposit mutations and customer links respect permissions; unknown snapshots stay unknown', () => {
@@ -154,10 +183,14 @@ test('distribution recipient avatars render with either detail permission and wi
         frozenOrders: { data: [{ id: 8, user: { ...user, avatar_url: avatarUrl }, user_id: 7, status: 'pending', created_at: transaction.created_at }], total: 1 },
         statuses: [{ name: 'pending', display_name: 'Chờ xử lý' }],
     };
-    for (const viewDetail of [false, true]) {
-        const html = render(pages.Distribution, { ...config, permissions: { viewDetail } });
-        assert.ok(html.includes(`src="${avatarUrl}"`));
-        assert.equal(html.includes('>Xem chi tiết</span>'), viewDetail);
+    for (const screens of [{ xl: false }, { xl: true }]) {
+        for (const viewDetail of [false, true]) {
+            const html = render(pages.Distribution, { ...config, permissions: { viewDetail } }, screens);
+            assert.ok(html.includes(`src="${avatarUrl}"`));
+            assert.equal(html.includes('>Xem chi tiết</span>'), viewDetail);
+            assert.equal(html.includes('class="distribution-mobile-list"'), !screens.xl);
+            assert.equal(html.includes('>Thao tác</th>'), screens.xl && viewDetail);
+        }
     }
     const noAvatar = render(pages.Distribution, { ...config, frozenOrders: { data: [{ ...config.frozenOrders.data[0], user }] } });
     assert.ok(noAvatar.includes('aria-label="user"'));

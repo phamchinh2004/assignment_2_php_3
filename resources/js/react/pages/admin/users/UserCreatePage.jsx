@@ -5,6 +5,7 @@ import LaravelForm, { fieldError, oldValue } from '../../../components/LaravelFo
 import { requestJson } from '../../../lib/http';
 import { spaSubmitForm } from '../../../navigation';
 import { AdminFormActions, AdminFormSection, AdminPage, AdminPageHeader, AdminSectionCard } from '../../../components/admin/AdminUi';
+import { PasswordVisibilityIcon } from '../../../components/admin/AdminMorphIcon';
 
 const { Text } = Typography;
 
@@ -148,12 +149,12 @@ export default function UserCreatePage({ config }) {
                         <Row gutter={[16, 16]}>
                         <Col xs={24} md={12}>
                             <label className="admin-field-label" htmlFor="create-user-password">Mật khẩu</label>
-                            <Input.Password id="create-user-password" name="password" autoComplete="new-password" placeholder="Nhập mật khẩu" value={password} onChange={(event) => setPassword(event.target.value)} status={fieldError(form, 'password') ? 'error' : ''} />
+                            <Input.Password id="create-user-password" name="password" autoComplete="new-password" placeholder="Nhập mật khẩu" value={password} onChange={(event) => setPassword(event.target.value)} status={fieldError(form, 'password') ? 'error' : ''} iconRender={(visible) => <PasswordVisibilityIcon visible={visible} />} />
                             {fieldError(form, 'password') && <Text type="danger">{fieldError(form, 'password')}</Text>}
                         </Col>
                         <Col xs={24} md={12}>
                             <label className="admin-field-label" htmlFor="create-user-password-confirmation">Xác nhận mật khẩu</label>
-                            <Input.Password id="create-user-password-confirmation" name="password_confirmation" autoComplete="new-password" placeholder="Nhập lại mật khẩu" value={passwordConfirmation} onChange={(event) => setPasswordConfirmation(event.target.value)} />
+                            <Input.Password id="create-user-password-confirmation" name="password_confirmation" autoComplete="new-password" placeholder="Nhập lại mật khẩu" value={passwordConfirmation} onChange={(event) => setPasswordConfirmation(event.target.value)} iconRender={(visible) => <PasswordVisibilityIcon visible={visible} />} />
                         </Col>
                     </Row>
                     </AdminFormSection>

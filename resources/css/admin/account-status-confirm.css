@@ -1,0 +1,55 @@
+.account-status-confirm {
+    --confirm-ink: #0f172a;
+    --confirm-muted: #475569;
+    --confirm-border: #e2e8f0;
+    --confirm-soft: #f8fafc;
+    --confirm-accent: #047857;
+    --confirm-accent-soft: #ecfdf3;
+}
+
+.account-status-confirm--danger {
+    --confirm-accent: #b91c1c;
+    --confirm-accent-soft: #fef2f2;
+}
+
+.account-status-confirm .ant-modal-content {
+    padding: 28px;
+    border: 1px solid var(--confirm-border);
+    border-radius: 20px;
+    box-shadow: 0 24px 80px rgb(15 23 42 / 20%);
+}
+
+.account-status-confirm .ant-modal-header { margin-bottom: 24px; }
+.account-status-confirm__heading { display: flex; align-items: center; gap: 14px; padding-right: 16px; }
+.account-status-confirm__icon { display: grid; place-items: center; flex: 0 0 52px; height: 52px; border-radius: 16px; background: var(--confirm-accent-soft); color: var(--confirm-accent); font-size: 24px; }
+.account-status-confirm__eyebrow { display: block; margin-bottom: 4px; color: var(--confirm-muted); font-size: 12px; font-weight: 500; }
+.account-status-confirm__title { display: block; color: var(--confirm-ink); font-size: 20px; font-weight: 700; line-height: 1.35; }
+.account-status-confirm__account { display: flex; align-items: center; gap: 12px; padding: 14px; border: 1px solid var(--confirm-border); border-radius: 12px; background: var(--confirm-soft); }
+.account-status-confirm__avatar { display: grid; place-items: center; flex: 0 0 40px; height: 40px; border-radius: 50%; background: #eef2ff; color: #4338ca; font-size: 19px; }
+.account-status-confirm__account div { min-width: 0; }
+.account-status-confirm__account strong { display: block; color: var(--confirm-ink); font-size: 15px; overflow-wrap: anywhere; }
+.account-status-confirm__account div > span { display: block; margin-top: 3px; color: var(--confirm-muted); font-size: 13px; overflow-wrap: anywhere; }
+.account-status-confirm__description { margin: 18px 0 14px; color: var(--confirm-muted); font-size: 14px; line-height: 1.65; }
+.account-status-confirm__transition { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; font-size: 13px; color: var(--confirm-muted); }
+.account-status-confirm__transition > span, .account-status-confirm__transition > strong { padding: 6px 10px; border-radius: 8px; }
+.account-status-confirm__transition > span { background: var(--confirm-soft); border: 1px solid var(--confirm-border); }
+.account-status-confirm__transition > strong { color: var(--confirm-accent); background: var(--confirm-accent-soft); font-weight: 600; }
+.account-status-confirm__error { margin-top: 16px; }
+.account-status-confirm .ant-modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--confirm-border); }
+.account-status-confirm .ant-modal-footer .ant-btn { min-height: 44px; height: auto; padding: 10px 16px; margin: 0; border-radius: 10px; font-weight: 600; white-space: normal; }
+.account-status-confirm .ant-modal-close { width: 32px; height: 32px; }
+.account-status-confirm .ant-btn:focus-visible, .account-status-confirm .ant-modal-close:focus-visible { outline: 2px solid #4f46e5; outline-offset: 3px; }
+
+@media (max-width: 480px) {
+    .account-status-confirm .ant-modal-content { padding: 22px 18px; }
+    .account-status-confirm__title { font-size: 18px; }
+    .account-status-confirm .ant-modal-footer .ant-btn { flex: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .account-status-confirm-root .ant-modal,
+    .account-status-confirm-root .ant-modal-mask {
+        animation: none !important;
+        transition: none !important;
+    }
+}

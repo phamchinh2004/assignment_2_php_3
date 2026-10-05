@@ -8,10 +8,12 @@ import { build } from 'esbuild';
 const bundle = await build({
     stdin: {
         contents: `export { default as Modal } from './resources/js/react/pages/admin/users/CustomerAutoSpinModal.jsx';
-            export { default as List } from './resources/js/react/pages/admin/users/UserListPage.jsx';`,
+            export { default as List } from './resources/js/react/pages/admin/users/UserListPage.jsx';
+            export { default as StatusConfirm } from './resources/js/react/components/admin/AccountStatusConfirm.jsx';
+            export { default as StaffList } from './resources/js/react/pages/admin/staff/StaffListPage.jsx';`,
         resolveDir: process.cwd(),
     },
-    bundle: true, write: false, platform: 'node', format: 'cjs', packages: 'external', jsx: 'automatic',
+    bundle: true, write: false, platform: 'node', format: 'cjs', packages: 'external', jsx: 'automatic', loader: { '.css': 'empty' },
     plugins: [{
         name: 'controlled-http',
         setup(builder) {
@@ -56,7 +58,12 @@ function harness() {
         requestJson: async () => { throw new Error('Unexpected request'); },
         require(name) {
             if (name === 'react') return react;
-            if (name === 'antd') return new Proxy({}, { get: (_, key) => key === 'Typography' ? { Text: 'Text', Title: 'Title' } : key });
+            if (name === 'antd') return new Proxy({}, { get: (_, key) => {
+                if (key === 'Typography') return { Text: 'Text', Title: 'Title' };
+                if (key === 'Grid') return { useBreakpoint: () => ({ xl: true }) };
+                if (key === 'message') return { success() {} };
+                return key;
+            } });
             if (name === '@ant-design/icons') return new Proxy({}, { get: (_, key) => key });
             return require(name);
         },
@@ -218,6 +225,38 @@ test('the more-actions menu requires both the permission and access to this cust
     }
 });
 
+test('customer action icons follow menu state and a late close cannot close another customer menu', () => {
+    const app = harness();
+    const customers = [{ ...user, id: 1 }, { ...user, id: 2 }];
+    const props = { config: { users: customers, permissions: {}, routes: {} } };
+    const render = () => app.render(app.components.List, props);
+    const desktopMenu = (tree, customer) => {
+        const column = nodes(tree, 'Table')[0].props.columns.find((item) => item.key === 'actions');
+        return nodes(column.render(null, customer), 'Dropdown')[0];
+    };
+    const first = desktopMenu(render(), customers[0]);
+    assert.equal(first.props.open, false);
+    first.props.onOpenChange(true);
+    const opened = desktopMenu(render(), customers[0]);
+    assert.equal(opened.props.open, true);
+    assert.equal(nodes(opened, 'Button')[0].props['aria-expanded'], true);
+    const closedIcon = nodes(first, 'Button')[0].props.icon.props.icon;
+    assert.notEqual(nodes(opened, 'Button')[0].props.icon.props.icon, closedIcon);
+
+    desktopMenu(render(), customers[1]).props.onOpenChange(true);
+    first.props.onOpenChange(false);
+    assert.equal(desktopMenu(render(), customers[1]).props.open, true);
+    assert.equal(desktopMenu(render(), customers[0]).props.open, false);
+
+    // Desktop and mobile representations never open two copies of the menu.
+    const mobile = nodes(render(), 'Dropdown')[0];
+    mobile.props.onOpenChange(true);
+    assert.equal(desktopMenu(render(), customers[1]).props.open, false);
+    assert.equal(nodes(render(), 'Dropdown')[0].props.open, true);
+    nodes(render(), 'Dropdown')[0].props.onOpenChange(false, { source: 'menu' });
+    assert.equal(nodes(render(), 'Dropdown')[0].props.open, false);
+});
+
 test('closing automatic spin preserves customer filters and pagination without refreshing the page', () => {
     const app = harness();
     let refreshes = 0;
@@ -283,4 +322,117 @@ test('the dialog and its mask are above the fixed admin header, sidebar and flas
     // Modal's zIndex prop controls both rc-dialog's wrapper and mask, unlike a content-only CSS override.
     assert.ok(render().props.zIndex > Math.max(...layers));
     app.cleanup();
+});
+
+test('customer status actions distinguish locking, unlocking and first activation on desktop and mobile', () => {
+    const customers = [
+        { ...user, id: 1, status: 'activated' },
+        { ...user, id: 2, status: 'banned' },
+        { ...user, id: 3, status: 'inactivated' },
+    ];
+    const expected = ['Khóa tài khoản', 'Mở khóa tài khoản', 'Kích hoạt tài khoản'];
+    for (const allowed of [false, true]) {
+        const app = harness();
+        const props = { config: { users: customers, permissions: { changeStatus: allowed }, routes: {} } };
+        const render = () => app.render(app.components.List, props);
+        const column = nodes(render(), 'Table')[0].props.columns.find((item) => item.key === 'actions');
+        customers.forEach((customer, index) => {
+            const desktop = nodes(column.render(null, customer), 'Dropdown')[0];
+            const mobile = nodes(render(), 'Dropdown')[index];
+            for (const menu of [desktop, mobile]) {
+                const action = menu.props.menu.items.find((item) => item.key === 'status');
+                assert.equal(Boolean(action), allowed);
+                if (!allowed) continue;
+                assert.equal(action.label, expected[index]);
+                assert.equal(action.danger, customer.status === 'activated');
+                action.onClick();
+                const popup = nodes(render(), app.components.StatusConfirm)[0];
+                assert.equal(popup.props.account.id, customer.id);
+                popup.props.onCancel();
+                assert.equal(nodes(render(), app.components.StatusConfirm)[0].props.account, null);
+            }
+        });
+    }
+});
+
+test('status confirmation prevents duplicate submissions and closing during a request, and retains API errors', async () => {
+    const app = harness();
+    let calls = 0;
+    let closed = 0;
+    let reject;
+    const props = {
+        account: { ...user, status: 'activated' },
+        onCancel: () => { closed += 1; },
+        onConfirm: () => { calls += 1; return new Promise((_, failure) => { reject = failure; }); },
+    };
+    const render = () => app.render(app.components.StatusConfirm, props);
+    render();
+    app.effects();
+    const confirm = nodes(render(), 'Button').find((button) => button.props.type === 'primary');
+    const pending = confirm.props.onClick();
+    await confirm.props.onClick();
+    assert.equal(calls, 1);
+    const busy = render();
+    assert.equal(busy.props.keyboard, false);
+    assert.equal(busy.props.maskClosable, false);
+    assert.equal(busy.props.closable, false);
+    assert.equal(nodes(busy, 'Button')[0].props.disabled, true);
+    assert.equal(nodes(busy, 'Button')[1].props.loading, true);
+    busy.props.onCancel();
+    assert.equal(closed, 0);
+    reject(new Error('Bạn không có quyền thực hiện thao tác này.'));
+    await pending;
+    assert.equal(closed, 0);
+    const failed = render();
+    assert.equal(nodes(failed, 'Alert')[0].props.message, 'Bạn không có quyền thực hiện thao tác này.');
+    assert.equal(nodes(failed, 'Alert')[0].props.role, 'alert');
+    assert.equal(nodes(failed, 'Button')[1].props.loading, false);
+    props.onConfirm = async () => { calls += 1; };
+    await nodes(render(), 'Button')[1].props.onClick();
+    assert.equal(closed, 1);
+    assert.equal(calls, 2);
+    assert.ok(render().props.zIndex > 1600);
+});
+
+test('staff locking and unlocking update row actions and totals while preserving filters and pagination without navigation', async () => {
+    const app = harness();
+    let navigations = 0;
+    const requests = [];
+    app.browser({ location: { reload: () => { navigations += 1; }, assign: () => { navigations += 1; } } });
+    const props = { config: {
+        staffs: Array.from({ length: 25 }, (_, index) => ({ ...user, id: index + 1, role: 'staff', status: 'activated', can_manage: true })),
+        permissions: { changeStatus: true },
+        routes: { changeStatus: '/staff/__STAFF_ID__/status' },
+    } };
+    const render = () => app.render(app.components.StaffList, props);
+    nodes(render(), 'Input')[0].props.onChange({ target: { value: 'Clone' } });
+    nodes(render(), 'Table')[0].props.pagination.onChange(2);
+    const getAction = (staff) => {
+        const column = nodes(render(), 'Table')[0].props.columns.find((item) => item.key === 'actions');
+        const element = column.render(null, staff);
+        return nodes(element.type(element.props), 'Button').at(-1);
+    };
+    const getStaff = () => nodes(render(), 'Table')[0].props.dataSource.find((staff) => staff.id === 21);
+    for (const [status, label] of [['banned', 'Mở khóa'], ['activated', 'Khóa']]) {
+        app.http(async (url) => { requests.push(url); return { success: true, message: 'Thành công', staff: { id: 21, status } }; });
+        getAction(getStaff()).props.onClick();
+        const popup = nodes(render(), app.components.StatusConfirm)[0];
+        await popup.props.onConfirm(popup.props.account);
+        popup.props.onCancel();
+        const updated = render();
+        assert.equal(getStaff().status, status);
+        assert.equal(getAction(getStaff()).props.children, label);
+        assert.equal(getAction(getStaff()).props.href, undefined);
+        assert.equal(nodes(updated, 'Input')[0].props.value, 'Clone');
+        assert.equal(nodes(updated, 'Table')[0].props.pagination.current, 2);
+        const lockedMetric = nodes(updated, 'button').find((node) => node.key === 'banned');
+        assert.equal(nodes(lockedMetric, 'strong')[0].props.children, status === 'banned' ? 1 : 0);
+    }
+    assert.deepEqual(requests, ['/staff/21/status', '/staff/21/status']);
+    assert.equal(navigations, 0);
+    app.http(async () => { throw new Error('HTTP 403'); });
+    const popup = nodes(render(), app.components.StatusConfirm)[0];
+    await assert.rejects(popup.props.onConfirm(getStaff()), /HTTP 403/);
+    assert.equal(getStaff().status, 'activated');
+    assert.equal(navigations, 0);
 });

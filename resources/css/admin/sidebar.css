@@ -299,7 +299,7 @@ body {
     transition: transform 180ms ease, opacity 140ms ease;
 }
 
-.admin-sidebar__submenu-trigger[aria-expanded="true"] .admin-sidebar__chevron {
+.admin-sidebar__submenu-trigger[aria-expanded="true"] .admin-sidebar__chevron:not([data-morph-icon]) {
     transform: rotate(180deg);
 }
 
@@ -409,7 +409,6 @@ body.admin-sidebar-collapsed .admin-sidebar:not(.is-peek) .admin-sidebar__collap
     height: 30px;
     background: #1e293b;
     box-shadow: 0 5px 16px rgba(15, 23, 42, 0.24);
-    transform: rotate(180deg);
 }
 
 body.admin-sidebar-collapsed .admin-sidebar:not(.is-peek) .admin-sidebar__nav {

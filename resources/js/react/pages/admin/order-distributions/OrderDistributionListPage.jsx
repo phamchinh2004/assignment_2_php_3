@@ -1,108 +1,203 @@
-import { Button, Collapse, Col, Form, Input, Pagination, Row, Select, Space, Table, Tag, Typography } from 'antd';
-import { CheckCircleOutlined, ClockCircleOutlined, EyeOutlined, FilterOutlined, SearchOutlined, ShoppingOutlined, SyncOutlined } from '@ant-design/icons';
+import { Button, Collapse, Form, Grid, Input, Pagination, Select, Table, Tooltip } from 'antd';
+import {
+    ArrowRightOutlined, CheckCircleOutlined, ClockCircleOutlined, CloseCircleOutlined,
+    EyeOutlined, FilterOutlined, SearchOutlined, ShoppingOutlined, SyncOutlined,
+} from '@ant-design/icons';
 import { spaNavigate } from '../../../navigation';
-import { AdminDataCard, AdminMetricGrid, AdminPage, AdminPageHeader, AdminSectionCard } from '../../../components/admin/AdminUi';
-import { OperationsIdentity, OperationsToolbar } from '../../../components/admin/OperationsUi';
+import { AdminEmptyState, AdminPage } from '../../../components/admin/AdminUi';
+import { OperationsIdentity } from '../../../components/admin/OperationsUi';
 import { AdminDatePicker } from '../../../components/admin/AdminDatePicker';
 import { formatAdminDateTime } from '../../../../shared/datetime';
+import '../../../../../css/admin/order-distributions.css';
 
-const { Text } = Typography;
 const routeFor = (template, id) => String(template || '').replace('__FROZEN_ID__', encodeURIComponent(String(id)));
-const formatDate = (value) => formatAdminDateTime(value);
-const statusLabel = (statuses, value) => statuses.find((item) => item.name === value)?.display_name || (value === 'unknown' || !value ? 'Chưa ghi nhận' : value);
+const number = (value) => new Intl.NumberFormat('vi-VN').format(Number(value || 0));
+const defaultStatusLabels = { pending: 'Chờ xử lý', confirmed: 'Đã xác nhận', preparing: 'Đang chuẩn bị', transit: 'Đang vận chuyển', shipping: 'Đang giao hàng', delivered: 'Đã giao hàng', completed: 'Hoàn thành', cancelled: 'Đã hủy' };
+const statusLabel = (statuses, value) => statuses.find((item) => item.name === value)?.display_name
+    || (value === 'unknown' || !value ? 'Chưa ghi nhận' : defaultStatusLabels[value] || value);
+
+function DistributionStatus({ item, statuses }) {
+    const tone = item.status === 'completed' ? 'success' : item.status === 'cancelled' ? 'danger'
+        : item.status === 'pending' ? 'warning' : item.status ? 'info' : 'neutral';
+    const Icon = tone === 'success' ? CheckCircleOutlined : tone === 'danger' ? CloseCircleOutlined
+        : tone === 'info' ? SyncOutlined : ClockCircleOutlined;
+    return <span className={`distribution-status distribution-status--${tone}`}>
+        <Icon aria-hidden="true" />{statusLabel(statuses, item.status)}
+    </span>;
+}
+
+function DistributionProduct({ item }) {
+    const highValue = item.custom_price !== null && item.custom_price !== undefined;
+    return <div className="distribution-product">
+        {item.snapshot_image_url
+            ? <img src={item.snapshot_image_url} alt="" width={36} height={36} loading="lazy" />
+            : <span className="distribution-product__placeholder" aria-hidden="true"><ShoppingOutlined /></span>}
+        <div className="distribution-product__copy">
+            <strong>{item.snapshot_order_code || `Đơn #${item.id}`}</strong>
+            <span title={item.snapshot_name || undefined}>{item.snapshot_name || 'Tên sản phẩm chưa ghi nhận'}</span>
+            <div className="distribution-product__meta">#{item.id}<span>·</span>
+                <span className={highValue ? 'distribution-high-value' : ''}>{highValue ? 'Đơn giá trị cao' : 'Đơn thường'}</span>
+            </div>
+        </div>
+    </div>;
+}
+
+function DistributionAssigner({ item }) {
+    const source = item.assignment_source;
+    return <div className="distribution-assigner">
+        <strong>{item.assigned_by?.full_name || item.assigned_by?.username
+            || (source === 'spin' ? 'Hệ thống tự phân phối' : source === 'admin' ? 'Không còn thông tin' : 'Chưa ghi nhận')}</strong>
+        <span className={`distribution-source distribution-source--${source === 'admin' ? 'manual' : source === 'spin' ? 'auto' : 'unknown'}`}>
+            {source === 'admin' ? 'Giao thủ công' : source === 'spin' ? 'Người dùng tự nhận' : 'Chưa ghi nhận nguồn'}
+        </span>
+    </div>;
+}
+
+function DistributionTime({ item }) {
+    return <Tooltip trigger={['hover', 'focus', 'click']} title={`Cập nhật: ${formatAdminDateTime(item.updated_at)}`}>
+        <div className="distribution-time" tabIndex={0} aria-label={`Phân phối: ${formatAdminDateTime(item.created_at)}. Cập nhật: ${formatAdminDateTime(item.updated_at)}.`}>
+            <span>{formatAdminDateTime(item.created_at, { dateStyle: 'short' })}</span>
+            <span>{formatAdminDateTime(item.created_at, { timeStyle: 'short' })}</span>
+        </div>
+    </Tooltip>;
+}
 
 export default function OrderDistributionListPage({ config }) {
+    const screens = Grid.useBreakpoint();
     const page = config.frozenOrders || {};
     const rows = page.data || [];
     const filters = config.filters || {};
     const statuses = config.statuses || [];
     const stats = config.stats || {};
+    const currentPage = Number(page.current_page || 1);
+    const total = Number(page.total || 0);
+    const lastPage = Number(page.last_page || 1);
+    const hasFilters = Object.entries(filters).some(([key, value]) => value && key !== 'sort' && key !== 'direction')
+        || (filters.sort && filters.sort !== 'created_at') || (filters.direction && filters.direction !== 'desc');
+    const advancedOpen = ['user_id', 'order_id', 'from', 'to', 'updated_from', 'updated_to'].some((key) => filters[key])
+        || (filters.sort && filters.sort !== 'created_at') || (filters.direction && filters.direction !== 'desc');
 
-    const changeQuickStatus = (status) => {
+    const changeQuery = (key, value) => {
         const url = new URL(window.location.href);
-        if (status) url.searchParams.set('status', status); else url.searchParams.delete('status');
-        url.searchParams.delete('page');
-        spaNavigate(url.toString());
-    };
-
-    const changePage = (nextPage) => {
-        const url = new URL(window.location.href);
-        url.searchParams.set('page', nextPage);
+        if (value) url.searchParams.set(key, value); else url.searchParams.delete(key);
+        if (key !== 'page') url.searchParams.delete('page');
         spaNavigate(url.toString());
     };
 
     const openDetail = (id) => {
         const url = new URL(routeFor(config.routes.show, id), window.location.origin);
-        const current = new URL(window.location.href);
-        current.searchParams.forEach((value, key) => url.searchParams.set(key, value));
+        new URL(window.location.href).searchParams.forEach((value, key) => url.searchParams.set(key, value));
         spaNavigate(url.toString());
     };
 
     const applyFilters = (values) => {
         const url = new URL(config.routes.index, window.location.origin);
         Object.entries(values || {}).forEach(([key, value]) => {
-            if (value !== '' && value !== null && value !== undefined) {
-                url.searchParams.set(key, String(value));
-            }
+            if (value !== '' && value !== null && value !== undefined) url.searchParams.set(key, String(value));
         });
         spaNavigate(url.toString());
     };
 
+    const detailButton = (item) => config.permissions?.viewDetail
+        ? <Button size="small" className="distribution-detail-button" icon={<EyeOutlined />} onClick={() => openDetail(item.id)}>Xem chi tiết</Button>
+        : null;
+    const recipient = (item) => <OperationsIdentity avatarUrl={item.user?.avatar_url}
+        name={item.user?.full_name || item.user?.username || 'Tài khoản không còn tồn tại'} secondary={`User #${item.user_id}`} />;
     const columns = [
-        {
-            title: 'Đơn hàng',
-            width: 320,
-            render: (_, item) => <div className="operations-product">{item.snapshot_image_url ? <img src={item.snapshot_image_url} alt="" width={48} height={48} loading="lazy" /> : <span className="operations-product__placeholder" aria-hidden="true"><ShoppingOutlined /></span>}<div><Text strong>{item.snapshot_order_code || `Đơn #${item.id}`}</Text><div className="operations-product__name">{item.snapshot_name || 'Tên sản phẩm chưa ghi nhận'}</div><div className="operations-cell-note">#{item.id} · {item.custom_price !== null && item.custom_price !== undefined ? 'Đơn giá trị cao' : 'Đơn thường'}</div></div></div>,
-        },
-        { title: 'Người nhận', width: 250, render: (_, item) => <OperationsIdentity avatarUrl={item.user?.avatar_url} name={item.user?.full_name || item.user?.username || 'Tài khoản không còn tồn tại'} secondary={`User #${item.user_id}`} /> },
-        { title: 'Người phân phối', width: 220, render: (_, item) => <div><Text strong>{item.assigned_by?.full_name || item.assigned_by?.username || (item.assignment_source === 'spin' ? 'Hệ thống tự phân phối' : item.assignment_source === 'admin' ? 'Không còn thông tin' : 'Chưa ghi nhận')}</Text><div className="operations-cell-note"><Tag color={item.assignment_source==='admin'?'purple':item.assignment_source==='spin'?'blue':'default'}>{item.assignment_source === 'admin' ? 'Giao thủ công' : item.assignment_source === 'spin' ? 'Tự nhận' : 'Không rõ nguồn'}</Tag></div></div> },
-        { title: 'Trạng thái', render: (_, item) => <Tag color={item.status === 'completed' ? 'success' : item.status === 'cancelled' ? 'error' : item.status ? 'processing' : 'default'}>{statusLabel(statuses, item.status)}</Tag> },
-        { title: 'Thời gian phân phối', width: 235, render: (_,item)=><div>{formatDate(item.created_at)}<div className="operations-cell-note">Cập nhật: {formatDate(item.updated_at)}</div></div> },
-        { title: 'Thao tác', width: 160, align: 'right', render: (_, item) => config.permissions?.viewDetail ? <Button size="small" icon={<EyeOutlined />} onClick={() => openDetail(item.id)}>Xem chi tiết</Button> : <Text type="secondary">—</Text> },
+        { title: 'Đơn hàng', width: 250, render: (_, item) => <DistributionProduct item={item} /> },
+        { title: 'Người nhận', width: 180, render: (_, item) => recipient(item) },
+        { title: 'Người phân phối / Nguồn', width: 185, render: (_, item) => <DistributionAssigner item={item} /> },
+        { title: 'Trạng thái', width: 150, render: (_, item) => <DistributionStatus item={item} statuses={statuses} /> },
+        { title: 'Phân phối lúc', width: 115, render: (_, item) => <DistributionTime item={item} /> },
+        ...(config.permissions?.viewDetail ? [{ title: 'Thao tác', width: 130, align: 'right', render: (_, item) => detailButton(item) }] : []),
+    ];
+    const statusOptions = [{ value: '', label: 'Tất cả trạng thái' },
+        ...statuses.map((item) => ({ value: item.name, label: item.display_name })), { value: 'unknown', label: 'Chưa ghi nhận' }];
+    const metrics = [
+        { key: 'total', label: 'Tổng đơn phân phối', tone: 'primary', icon: ShoppingOutlined, hint: 'Trong phạm vi quản lý' },
+        { key: 'pending', label: 'Chờ xử lý', tone: 'warning', icon: ClockCircleOutlined, hint: 'Gồm đơn chưa ghi nhận trạng thái' },
+        { key: 'processing', label: 'Đang xử lý', tone: 'info', icon: SyncOutlined, hint: 'Từ xác nhận đến giao hàng' },
+        { key: 'completed', label: 'Hoàn thành', tone: 'success', icon: CheckCircleOutlined, hint: 'Đã hoàn tất xử lý' },
     ];
 
-    const statusOptions = [{ value: '', label: 'Tất cả' }, ...statuses.map((item) => ({ value: item.name, label: item.display_name })), { value: 'unknown', label: 'Chưa ghi nhận' }];
-    const assignerOptions = [{ value: '', label: 'Tất cả người phân phối' }, ...(config.assigners || []).map((user) => ({ value: String(user.id), label: user.full_name || user.username }))];
+    return <AdminPage className="admin-operations-page distribution-page">
+        <header className="distribution-header">
+            <div className="distribution-header__main">
+                <span className="distribution-header__icon" aria-hidden="true"><ShoppingOutlined /></span>
+                <div><span className="distribution-eyebrow">Vận hành · Đơn hàng</span>
+                    <h1>Phân phối đơn hàng</h1><p>Theo dõi người nhận, nguồn phân phối và tiến độ xử lý.</p>
+                </div>
+            </div>
+            <span className="distribution-timezone"><ClockCircleOutlined aria-hidden="true" />Giờ Việt Nam · UTC+7</span>
+        </header>
 
-    return <AdminPage className="admin-operations-page">
-        <AdminPageHeader eyebrow="Vận hành · Đơn hàng" icon={<ShoppingOutlined />} title="Phân phối đơn hàng" description="Theo dõi người nhận, nguồn phân phối và tiến độ xử lý của từng đơn hàng." />
+        <section className="distribution-metrics" aria-label="Tổng quan phân phối trong phạm vi quản lý">
+            {metrics.map(({ key, label, tone, icon: Icon, hint }) => <article key={key} className={`distribution-metric distribution-metric--${tone}`}>
+                <span className="distribution-metric__icon" aria-hidden="true"><Icon /></span>
+                <div><span className="distribution-metric__label">{label}</span><strong>{number(stats[key])}</strong><span className="distribution-metric__hint">{hint}</span></div>
+            </article>)}
+        </section>
 
-        <AdminMetricGrid items={[
-            {key:'total',title:'Tổng đơn phân phối',value:Number(stats.total||0),tone:'primary',icon:<ShoppingOutlined />},
-            {key:'pending',title:'Chờ xử lý',value:Number(stats.pending||0),tone:'warning',icon:<ClockCircleOutlined />},
-            {key:'processing',title:'Đang xử lý',value:Number(stats.processing||0),tone:'info',icon:<SyncOutlined />},
-            {key:'completed',title:'Hoàn thành',value:Number(stats.completed||0),tone:'success',icon:<CheckCircleOutlined />},
-        ]} />
+        <section className="distribution-list" aria-labelledby="distribution-list-title">
+            <div className="distribution-list__heading">
+                <h2 id="distribution-list-title">Danh sách phân phối <span className="distribution-result-count" role="status" aria-live="polite" aria-atomic="true">{number(total)} kết quả</span></h2>
+                <span className="distribution-list__scope">{hasFilters ? 'Đang áp dụng bộ lọc' : 'Tất cả đơn trong phạm vi quản lý'}</span>
+            </div>
 
-        <AdminSectionCard className="operations-filter-card" title={<><FilterOutlined aria-hidden="true" /> Bộ lọc đơn hàng</>} description="Tìm kiếm theo đơn, người nhận hoặc nguồn phân phối." extra={<Tag>Giờ Việt Nam · UTC+7</Tag>}>
-            <Form layout="vertical" onFinish={applyFilters} initialValues={{ ...filters, assigned_by: filters.assigned_by ? String(filters.assigned_by) : '', status: filters.status || '', source: filters.source || '', sort: filters.sort || 'created_at', direction: filters.direction || 'desc' }}>
-                <Row gutter={12}>
-                    <Col xs={24} lg={9}><Form.Item label="Tìm kiếm" name="q"><Input allowClear name="q" prefix={<SearchOutlined aria-hidden="true" />} placeholder="Mã đơn, tên sản phẩm, người nhận..." /></Form.Item></Col>
-                    <Col xs={12} lg={5}><Form.Item label="Trạng thái" name="status"><Select name="status" placeholder="Tất cả trạng thái" options={statusOptions} /></Form.Item></Col>
-                    <Col xs={12} lg={5}><Form.Item label="Nguồn" name="source"><Select name="source" placeholder="Tất cả nguồn" options={[{value:'',label:'Tất cả'},{value:'admin',label:'Admin giao'},{value:'spin',label:'Người dùng tự nhận'},{value:'unknown',label:'Chưa ghi nhận'}]} /></Form.Item></Col>
-                    <Col xs={24} lg={5}><Form.Item label="Người phân phối" name="assigned_by"><Select name="assigned_by" showSearch optionFilterProp="label" placeholder="Tất cả người phân phối" options={assignerOptions} /></Form.Item></Col>
-                </Row>
-                <Collapse className="operations-advanced-filters" ghost defaultActiveKey={['user_id','order_id','from','to'].some((key)=>filters[key]) ? ['advanced'] : []} items={[{key:'advanced',label:'Bộ lọc nâng cao · ID, ngày phân phối, sắp xếp',forceRender:true,children:<Row gutter={12}>
-                    <Col xs={12} md={4}><Form.Item label="User ID" name="user_id"><Input name="user_id" inputMode="numeric" placeholder="Nhập User ID" /></Form.Item></Col>
-                    <Col xs={12} md={4}><Form.Item label="Order ID" name="order_id"><Input name="order_id" inputMode="numeric" placeholder="Nhập Order ID" /></Form.Item></Col>
-                    <Col xs={12} md={4}><Form.Item label="Từ ngày" name="from"><AdminDatePicker /></Form.Item></Col>
-                    <Col xs={12} md={4}><Form.Item label="Đến ngày" name="to"><AdminDatePicker /></Form.Item></Col>
-                    <Col xs={12} md={4}><Form.Item label="Sắp xếp" name="sort"><Select name="sort" options={[{value:'created_at',label:'Ngày tạo'},{value:'updated_at',label:'Cập nhật'},{value:'id',label:'ID'},{value:'status',label:'Trạng thái'}]} /></Form.Item></Col>
-                    <Col xs={12} md={4}><Form.Item label="Chiều" name="direction"><Select name="direction" options={[{value:'desc',label:'Giảm dần'},{value:'asc',label:'Tăng dần'}]} /></Form.Item></Col>
-                </Row>}]} />
-                <div className="operations-filter-actions"><Space wrap><Button type="primary" htmlType="submit" icon={<FilterOutlined />}>Áp dụng bộ lọc</Button><Button href={config.routes.index}>Xóa bộ lọc</Button></Space></div>
+            <Form key={JSON.stringify(filters)} size="small" className="distribution-filters" layout="vertical" onFinish={applyFilters}
+                initialValues={{ ...filters, assigned_by: filters.assigned_by ? String(filters.assigned_by) : '', status: filters.status || '', source: filters.source || '', sort: filters.sort || 'created_at', direction: filters.direction || 'desc' }}>
+                <div className="distribution-filters__main">
+                    <Form.Item label="Tìm kiếm đơn hàng" name="q"><Input allowClear name="q" prefix={<SearchOutlined aria-hidden="true" />} placeholder="Mã đơn, sản phẩm, người nhận…" /></Form.Item>
+                    <Form.Item label="Trạng thái" name="status"><Select options={statusOptions} /></Form.Item>
+                    <Form.Item label="Nguồn phân phối" name="source"><Select options={[{ value: '', label: 'Tất cả nguồn' }, { value: 'admin', label: 'Giao thủ công' }, { value: 'spin', label: 'Người dùng tự nhận' }, { value: 'unknown', label: 'Chưa ghi nhận' }]} /></Form.Item>
+                    <Form.Item label="Người phân phối" name="assigned_by"><Select showSearch optionFilterProp="label" options={[{ value: '', label: 'Tất cả người phân phối' }, ...(config.assigners || []).map((user) => ({ value: String(user.id), label: user.full_name || user.username }))]} /></Form.Item>
+                </div>
+                <div className="distribution-filters__footer">
+                    <Collapse ghost className="distribution-advanced" defaultActiveKey={advancedOpen ? ['advanced'] : []} items={[{
+                        key: 'advanced', label: <span><FilterOutlined aria-hidden="true" /> Bộ lọc nâng cao</span>, forceRender: true,
+                        children: <div className="distribution-filters__advanced">
+                            <Form.Item label="User ID" name="user_id"><Input name="user_id" inputMode="numeric" placeholder="ID người nhận" /></Form.Item>
+                            <Form.Item label="Order ID" name="order_id"><Input name="order_id" inputMode="numeric" placeholder="ID đơn nguồn" /></Form.Item>
+                            <Form.Item label="Phân phối từ ngày" name="from"><AdminDatePicker /></Form.Item>
+                            <Form.Item label="Đến ngày" name="to"><AdminDatePicker /></Form.Item>
+                            <Form.Item label="Sắp xếp theo" name="sort"><Select options={[{ value: 'created_at', label: 'Ngày phân phối' }, { value: 'updated_at', label: 'Ngày cập nhật' }, { value: 'id', label: 'ID đơn' }, { value: 'status', label: 'Trạng thái' }]} /></Form.Item>
+                            <Form.Item label="Thứ tự" name="direction"><Select options={[{ value: 'desc', label: 'Giảm dần' }, { value: 'asc', label: 'Tăng dần' }]} /></Form.Item>
+                            {['updated_from', 'updated_to'].some((key) => filters[key]) && <>
+                                <Form.Item label="Cập nhật từ ngày" name="updated_from"><AdminDatePicker /></Form.Item>
+                                <Form.Item label="Cập nhật đến ngày" name="updated_to"><AdminDatePicker /></Form.Item>
+                            </>}
+                        </div>,
+                    }]} />
+                    <div className="distribution-filter-actions">
+                        <Button onClick={() => spaNavigate(config.routes.index)}>Xóa bộ lọc</Button>
+                        <Button type="primary" htmlType="submit" icon={<SearchOutlined />}>Tìm kiếm</Button>
+                    </div>
+                </div>
             </Form>
-        </AdminSectionCard>
 
-        <AdminDataCard
-            title="Danh sách đơn phân phối"
-            description="Xem chi tiết để đối chiếu thông tin đơn, lịch sử trạng thái và quyết toán."
-            extra={<Tag>{Number(page.total||0)} đơn phù hợp</Tag>}
-            toolbar={<OperationsToolbar value={String(filters.status || '')} onChange={changeQuickStatus} options={statusOptions.map((item)=>({value:item.value,label:item.value===''?`Tất cả (${stats.total||0})`:item.value==='pending'?`${item.label} (${stats.pending||0})`:item.value==='completed'?`${item.label} (${stats.completed||0})`:item.label}))} />}
-        >
-            <div className="operations-summary"><span>{rows.length ? `Hiển thị ${page.from || (Number(page.current_page||1)-1)*Number(page.per_page||25)+1}–${page.to || (Number(page.current_page||1)-1)*Number(page.per_page||25)+rows.length} / ${Number(page.total||0)} đơn` : 'Không có đơn phù hợp'}</span><span>Trang {Number(page.current_page||1)} / {Number(page.last_page||1)}</span></div>
-            <Table rowKey="id" dataSource={rows} columns={columns} pagination={false} scroll={{x:1380}} locale={{emptyText:'Không có đơn hàng phù hợp với bộ lọc'}} />
-            {Number(page.last_page || 1) > 1 && <div className="operations-pagination"><Pagination current={Number(page.current_page || 1)} total={Number(page.total || 0)} pageSize={Number(page.per_page || 25)} showSizeChanger={false} onChange={changePage}/></div>}
-        </AdminDataCard>
+            <div className="distribution-tabs" role="group" aria-label="Lọc nhanh trạng thái">
+                {[
+                    { value: '', label: 'Tất cả' }, { value: 'pending', label: statusLabel(statuses, 'pending') },
+                    { value: 'completed', label: statusLabel(statuses, 'completed') }, { value: 'cancelled', label: statusLabel(statuses, 'cancelled') },
+                ].map(({ value, label }) => <button key={value} type="button" aria-pressed={String(filters.status || '') === value}
+                    onClick={() => changeQuery('status', value)}>{label}</button>)}
+            </div>
+
+            {rows.length ? (screens.xl
+                ? <Table size="small" className="distribution-table" rowKey="id" dataSource={rows} columns={columns} pagination={false} scroll={{ x: config.permissions?.viewDetail ? 1010 : 880 }} />
+                : <div className="distribution-mobile-list">{rows.map((item) => <article className="distribution-order-card" key={item.id}>
+                    <div className="distribution-order-card__heading"><DistributionProduct item={item} /><DistributionStatus item={item} statuses={statuses} /></div>
+                    <div className="distribution-order-card__people"><div><span className="distribution-field-label">Người nhận</span>{recipient(item)}</div>
+                        <div><span className="distribution-field-label">Người phân phối</span><DistributionAssigner item={item} /></div></div>
+                    <div className="distribution-order-card__footer"><div><span className="distribution-field-label">Thời gian phân phối</span><DistributionTime item={item} /></div>{detailButton(item)}</div>
+                </article>)}</div>)
+                : <AdminEmptyState title="Không có đơn hàng phù hợp" description="Thử thay đổi từ khóa hoặc bộ lọc để tìm đơn hàng."
+                    action={hasFilters ? <Button onClick={() => spaNavigate(config.routes.index)} icon={<ArrowRightOutlined />}>Xem tất cả đơn phân phối</Button> : undefined} />}
+
+            <footer className="distribution-list__footer">
+                <span>{rows.length ? <>Hiển thị <strong>{number(page.from || (currentPage - 1) * Number(page.per_page || 25) + 1)}–{number(page.to || (currentPage - 1) * Number(page.per_page || 25) + rows.length)}</strong> / {number(total)} đơn</> : '0 đơn phân phối'}<span className="distribution-page-number"> · Trang {number(currentPage)} / {number(lastPage)}</span></span>
+                {lastPage > 1 && <Pagination size={screens.md ? 'small' : 'default'} current={currentPage} total={total} pageSize={Number(page.per_page || 25)} showSizeChanger={false} onChange={(next) => changeQuery('page', next)} />}
+            </footer>
+        </section>
     </AdminPage>;
 }

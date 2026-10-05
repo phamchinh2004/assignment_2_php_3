@@ -1,0 +1,286 @@
+.admin-staff-permissions .admin-page-header--modern {
+    margin-bottom: 14px !important;
+}
+
+.admin-staff-permissions .admin-page-back {
+    height: 30px;
+    margin-bottom: 6px;
+    font-size: 12px;
+}
+
+.admin-react-shell .admin-staff-permissions h1.ant-typography {
+    font-size: clamp(20px, 1.8vw, 24px);
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+}
+
+.admin-staff-permissions .admin-page-description {
+    margin-top: 4px;
+}
+
+.admin-staff-permissions .admin-page-meta {
+    gap: 8px 14px;
+    margin-top: 7px;
+    color: var(--admin-text-soft);
+    font-size: 12px;
+}
+
+.admin-staff-permissions .staff-permissions-account {
+    overflow-wrap: anywhere;
+}
+
+.admin-staff-permissions .staff-permissions-summary {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--admin-primary);
+    font-weight: 600;
+}
+
+.admin-staff-permissions .staff-permissions-panel {
+    overflow: hidden;
+    border: 1px solid var(--admin-border);
+    border-radius: var(--admin-radius);
+    background: var(--admin-surface);
+    box-shadow: var(--admin-shadow);
+}
+
+.admin-staff-permissions .staff-permissions-toolbar,
+.admin-staff-permissions .staff-permissions-bulk {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 12px 14px;
+}
+
+.admin-staff-permissions .staff-permissions-search {
+    width: min(100%, 480px);
+    min-width: 0;
+    min-height: 36px;
+    font-size: 13px;
+}
+
+.admin-staff-permissions .staff-permissions-search .ant-input-prefix {
+    margin-inline-end: 8px;
+    color: var(--admin-muted);
+}
+
+.admin-staff-permissions .staff-permissions-bulk {
+    flex-wrap: wrap;
+    padding-block: 8px;
+    border-top: 1px solid var(--admin-border-soft);
+    border-bottom: 1px solid var(--admin-border);
+    background: var(--admin-bg);
+}
+
+.admin-staff-permissions .staff-permissions-selection,
+.admin-staff-permissions .staff-permissions-bulk__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.admin-staff-permissions .staff-permissions-selection {
+    gap: 4px;
+    color: var(--admin-text-soft);
+    font-size: 12px;
+}
+
+.admin-staff-permissions .staff-permissions-selection > span {
+    margin-inline-start: 8px;
+}
+
+.admin-staff-permissions .staff-permissions-selection strong {
+    color: var(--admin-primary);
+}
+
+.admin-staff-permissions .staff-permissions-panel .ant-btn {
+    min-height: 32px;
+    padding-inline: 10px;
+    font-size: 12px;
+}
+
+.admin-staff-permissions .staff-permissions-panel .ant-checkbox-wrapper {
+    padding: 4px;
+    margin: -4px;
+}
+
+.admin-staff-permissions .staff-permissions-item__state .ant-switch-small {
+    min-height: 24px;
+}
+
+.admin-staff-permissions .staff-permissions-item__state .ant-switch-small .ant-switch-handle {
+    top: 6px;
+}
+
+.admin-staff-permissions .staff-permissions-collapse {
+    border: 0;
+    border-radius: 0;
+    background: var(--admin-surface);
+}
+
+.admin-staff-permissions .staff-permissions-collapse > .ant-collapse-item {
+    border-bottom-color: var(--admin-border);
+}
+
+.admin-staff-permissions .staff-permissions-collapse > .ant-collapse-item:last-child {
+    border-bottom: 0;
+}
+
+.admin-staff-permissions .staff-permissions-collapse > .ant-collapse-item > .ant-collapse-header {
+    align-items: center;
+    min-height: 44px;
+    padding: 10px 14px;
+}
+
+.admin-staff-permissions .staff-permissions-collapse .ant-collapse-expand-icon {
+    color: var(--admin-muted);
+}
+
+.admin-staff-permissions .staff-permissions-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.admin-staff-permissions .staff-permissions-group > strong {
+    flex: 1;
+    min-width: 0;
+    color: var(--admin-text);
+    font-size: 13px;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+}
+
+.admin-staff-permissions .staff-permissions-group__count {
+    padding: 2px 8px;
+    border-radius: 6px;
+    background: var(--admin-bg);
+    color: var(--admin-text-soft);
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.admin-staff-permissions .staff-permissions-group__count.is-complete {
+    background: var(--admin-primary-soft);
+    color: var(--admin-primary);
+}
+
+.admin-staff-permissions .staff-permissions-collapse .ant-collapse-content {
+    border-top: 1px solid var(--admin-border-soft);
+}
+
+.admin-staff-permissions .staff-permissions-collapse .ant-collapse-content-box {
+    padding: 8px 12px 12px;
+    background: var(--admin-bg);
+}
+
+.admin-staff-permissions .staff-permissions-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+}
+
+.admin-staff-permissions .staff-permissions-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    min-height: 58px;
+    padding: 8px 10px;
+    border: 1px solid var(--admin-border);
+    border-radius: 8px;
+    background: var(--admin-surface);
+    transition: border-color 150ms ease, background-color 150ms ease;
+}
+
+.admin-staff-permissions .staff-permissions-item:hover,
+.admin-staff-permissions .staff-permissions-item:focus-within {
+    border-color: var(--admin-primary);
+}
+
+.admin-staff-permissions .staff-permissions-item.is-selected {
+    border-color: var(--admin-primary);
+    background: var(--admin-primary-soft);
+}
+
+.admin-staff-permissions .staff-permissions-item__content {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.admin-staff-permissions .staff-permissions-item__content > strong {
+    color: var(--admin-text);
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+}
+
+.admin-staff-permissions .staff-permissions-item__code {
+    color: var(--admin-text-soft);
+    font-size: 12px;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+}
+
+.admin-staff-permissions .staff-permissions-item__state {
+    display: flex;
+    flex: 0 0 52px;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    color: var(--admin-text-soft);
+    font-size: 12px;
+    line-height: 1.3;
+    white-space: nowrap;
+}
+
+.admin-staff-permissions .staff-permissions-item__state.is-active {
+    color: var(--admin-primary);
+}
+
+.admin-staff-permissions .staff-permissions-empty {
+    padding: 24px 12px;
+}
+
+.admin-staff-permissions :is(.ant-btn, .ant-checkbox-input, .ant-switch, .ant-collapse-header):focus-visible {
+    outline: 2px solid var(--admin-primary);
+    outline-offset: 3px;
+}
+
+@media (max-width: 1199px) {
+    .admin-staff-permissions .staff-permissions-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 767px) {
+    .admin-staff-permissions .staff-permissions-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .admin-staff-permissions .staff-permissions-toolbar {
+        flex-wrap: wrap;
+    }
+
+    .admin-staff-permissions .staff-permissions-search {
+        width: 100%;
+    }
+
+    .admin-staff-permissions .staff-permissions-panel .ant-btn {
+        min-height: 36px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .admin-staff-permissions .staff-permissions-item {
+        transition: none;
+    }
+}

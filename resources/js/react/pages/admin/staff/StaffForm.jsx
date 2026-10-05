@@ -11,6 +11,7 @@ import {
 import { useState } from 'react';
 import LaravelForm, { fieldError, oldValue } from '../../../components/LaravelForm';
 import { AdminFormActions, AdminFormSection, AdminSectionCard } from '../../../components/admin/AdminUi';
+import { PasswordVisibilityIcon } from '../../../components/admin/AdminMorphIcon';
 
 const { Text } = Typography;
 
@@ -114,6 +115,7 @@ export default function StaffForm({ config, mode }) {
                                     minLength={6}
                                     status={passwordError ? 'error' : ''}
                                     aria-invalid={Boolean(passwordError)}
+                                    iconRender={(visible) => <PasswordVisibilityIcon visible={visible} />}
                                 />
                                 {passwordError
                                     ? <Text type="danger" className="staff-create-error">{passwordError}</Text>
@@ -275,7 +277,7 @@ export default function StaffForm({ config, mode }) {
                         help={fieldError(form, 'password') || null}
                         extra="Để trống sẽ dùng mật khẩu mặc định 123456 như luồng hiện tại."
                     >
-                        <Input.Password name="password" defaultValue={oldValue(form, 'password', '')} placeholder="Nhập tối thiểu 6 ký tự" minLength={6} />
+                        <Input.Password name="password" defaultValue={oldValue(form, 'password', '')} placeholder="Nhập tối thiểu 6 ký tự" minLength={6} iconRender={(visible) => <PasswordVisibilityIcon visible={visible} />} />
                     </Form.Item>
                 )}
                 </AdminFormSection>
