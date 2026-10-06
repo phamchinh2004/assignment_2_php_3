@@ -781,7 +781,7 @@ class ChatComponent extends Component
     public function deleteAllMessages()
     {
         if (!$this->isOwner()) {
-            return;
+            return false;
         }
 
         // $this->dispatch('app-dialog', [
@@ -795,7 +795,7 @@ class ChatComponent extends Component
                 'title' => 'Không tìm thấy đoạn chat',
                 'text' => 'Vui lòng chọn một cuộc trò chuyện trước.'
             ]);
-            return;
+            return false;
         }
 
         try {
@@ -810,11 +810,7 @@ class ChatComponent extends Component
             }
             $this->dispatch('scroll-to-bottom');
 
-            $this->dispatch('app-dialog', [
-                'type' => 'success',
-                'title' => 'Xóa thành công',
-                'text' => 'Tất cả tin nhắn đã được xóa.'
-            ]);
+            return true;
         } catch (\Throwable $e) {
             logger('Xóa tin nhắn lỗi:', ['err' => $e->getMessage()]);
             $this->dispatch('app-dialog', [
@@ -822,6 +818,7 @@ class ChatComponent extends Component
                 'title' => 'Lỗi',
                 'text' => 'Không thể xóa tin nhắn. Vui lòng thử lại.'
             ]);
+            return false;
         }
     }
 

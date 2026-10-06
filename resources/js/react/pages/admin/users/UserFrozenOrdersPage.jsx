@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Button, Checkbox, Image, Input, InputNumber, Modal, Space, Table, Tag, Typography, message } from 'antd';
+import { Alert, Button, Checkbox, Image, Input, InputNumber, Modal, Space, Table, Tag, Typography, message } from 'antd';
 import { DeleteOutlined, EditOutlined, LockOutlined, PictureOutlined, SaveOutlined } from '@ant-design/icons';
 import LaravelForm from '../../../components/LaravelForm';
 import { AdminDataCard, AdminMetricGrid, AdminPage, AdminPageHeader } from '../../../components/admin/AdminUi';
@@ -23,6 +23,9 @@ export default function UserFrozenOrdersPage({ config }) {
     const frozenIds = new Set((config.frozenOrderIds || []).map(Number));
     const spunFrozenIds = new Set(frozenOrders.filter((item) => item.spun).map((item) => Number(item.order_id)));
     const defaults = config.defaultSettings || {};
+    const flash = config.flash || {};
+    const noticeType = ['success', 'error', 'warning'].find((type) => flash[type]);
+    const [dismissedFlash, setDismissedFlash] = useState(null);
     const [selected, setSelected] = useState([]);
     const [values, setValues] = useState(() => Object.fromEntries(orders.map((order) => [
         order.id,
@@ -285,6 +288,12 @@ export default function UserFrozenOrdersPage({ config }) {
                 backLabel="Danh sách người dùng"
                 meta={<CustomerIdentity user={user} />}
             />
+
+            {noticeType && dismissedFlash !== flash && (
+                <div className="admin-react-flash">
+                    <Alert type={noticeType} message={flash[noticeType]} showIcon closable onClose={() => setDismissedFlash(flash)} />
+                </div>
+            )}
 
             <AdminMetricGrid min={3} items={[
                 {key:'spin',title:'Vị trí quay hiện tại',value:currentSpin,tone:'primary'},

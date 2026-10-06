@@ -271,7 +271,7 @@
 #chat-root .chat-read-status[data-seen-status="true"] { background: #ecfdf5; color: #047857; }
 #chat-root .chat-read-status[data-seen-status] i { color: inherit !important; }
 #chat-root .message-actions { position: absolute; top: 0; left: calc(100% + 6px); gap: 1px; padding: 2px; border: 1px solid var(--chat-border); border-radius: 9px; background: #fff; box-shadow: 0 2px 6px #0f172a08; opacity: 0; transition: opacity .15s; backdrop-filter: none; }
-#chat-root .sent-message .message-actions { left: auto; right: calc(100% + 6px); }
+#chat-root .is-own-message .message-actions { left: auto; right: calc(100% + 6px); }
 #chat-root .message-actions .btn { width: 30px; height: 30px; padding: 0; border-radius: 6px; font-size: 12px; }
 #chat-root .message-item:hover .message-actions,
 #chat-root .message-item:focus-within .message-actions { opacity: 1; }
@@ -367,7 +367,7 @@
 
 @media (min-width: 1280px) {
     #chat-root.is-context-open .chat-main.has-conversation { grid-template-columns: minmax(0, 1fr) var(--chat-context-width); }
-    #chat-root #messages-container { padding: 18px 16px 12px; }
+    #chat-root #messages-container { padding: 18px 0px 12px 16px; }
 }
 
 @media (min-width: 992px) and (max-width: 1399.98px) {
@@ -429,10 +429,10 @@
     #chat-root .message-item { margin-bottom: 14px; }
     #chat-root .message-bubble { max-width: 100%; padding: 10px 12px 8px; }
     #chat-root .message-actions,
-    #chat-root .sent-message .message-actions { position: static; justify-content: flex-end; margin-top: 6px; padding: 0; border: 0; background: transparent; box-shadow: none; opacity: 1; }
+    #chat-root .is-own-message .message-actions { position: static; justify-content: flex-end; margin-top: 6px; padding: 0; border: 0; background: transparent; box-shadow: none; opacity: 1; }
     #chat-root .message-actions .btn { width: 36px; height: 36px; }
-    #chat-root .sent-message .message-actions .btn { color: #4338ca !important; }
-    #chat-root .sent-message .message-actions .btn:hover { background: #dddfff; }
+    #chat-root .is-own-message .message-actions .btn { color: #4338ca !important; }
+    #chat-root .is-own-message .message-actions .btn:hover { background: #dddfff; }
     #chat-root .message-input { padding: 10px 12px max(8px, env(safe-area-inset-bottom)); }
     #chat-root .chat-composer { grid-template-columns: 44px 44px minmax(0, 1fr) 44px; grid-template-rows: auto 44px; padding: 6px; border-radius: 10px; }
     #chat-root .chat-composer .chat-send-button { min-width: 44px; width: 44px; height: 44px; padding: 0; }

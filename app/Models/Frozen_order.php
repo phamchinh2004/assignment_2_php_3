@@ -43,6 +43,15 @@ class Frozen_order extends Model
     protected static function booted(): void
     {
         static::saving(function (Frozen_order $frozenOrder) {
+            if ($frozenOrder->custom_price !== null
+                && $frozenOrder->isDirty(['custom_price', 'snapshot_quantity'])) {
+                $frozenOrder->snapshot_order_amount = $frozenOrder->custom_price;
+                $quantity = (int) $frozenOrder->snapshot_quantity;
+                $frozenOrder->snapshot_unit_price = $quantity > 0
+                    ? round((float) $frozenOrder->custom_price / $quantity, 6)
+                    : null;
+            }
+
             if ($frozenOrder->isDirty(['custom_price', 'snapshot_order_amount', 'commission_percentage'])) {
                 $amount = $frozenOrder->custom_price ?? $frozenOrder->snapshot_order_amount;
                 $percentage = $frozenOrder->commission_percentage;
@@ -173,6 +182,10 @@ class Frozen_order extends Model
             && $attributes['commission_percentage'] !== ''
                 ? (float) $attributes['commission_percentage']
                 : (float) ($order->commission_percentage ?? 0);
+        $quantity = (int) ($attributes['snapshot_quantity'] ?? $order->quantity);
+        $unitPrice = isset($attributes['custom_price'])
+            ? ($quantity > 0 ? round($amount / $quantity, 6) : null)
+            : $order->price;
 
         $snapshotImage = static::copySnapshotImage($order->image);
 
@@ -183,8 +196,8 @@ class Frozen_order extends Model
                 'snapshot_order_index' => $order->index,
                 'snapshot_name' => $order->name,
                 'snapshot_image' => $snapshotImage,
-                'snapshot_quantity' => $order->quantity,
-                'snapshot_unit_price' => $order->price,
+                'snapshot_quantity' => $quantity,
+                'snapshot_unit_price' => $unitPrice,
                 'snapshot_payment_method' => $order->payment_method,
                 'snapshot_is_paid' => $order->is_paid,
                 'snapshot_partner_name' => $order->partner?->name,
@@ -288,6 +301,7 @@ class Frozen_order extends Model
             || $amount < 0
             || (float) $this->commission_percentage < 0
             || abs($amount - $expectedAmount) > 0.01
+            || abs($amount - (float) $this->snapshot_unit_price * (int) $this->snapshot_quantity) > 0.01
             || abs((float) $this->snapshot_commission_amount - $expectedCommission) > 0.01) {
             return 'invalid';
         }

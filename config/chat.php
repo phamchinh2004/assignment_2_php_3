@@ -30,12 +30,12 @@ return [
 
         // Nội dung tin nhắn chào tự động (hỗ trợ đa ngôn ngữ)
         'messages' => [
-            'vi' => 'Xin chào! Cảm ơn bạn đã liên hệ với chúng tôi. Chúng tôi đã nhận được tin nhắn của bạn và sẽ phản hồi trong thời gian sớm nhất. Vui lòng chờ trong giây lát, đội ngũ hỗ trợ sẽ liên hệ với bạn ngay khi có thể.',
-            'en' => 'Hello! Thank you for contacting us. We have received your message and will respond as soon as possible. Please wait a moment, our support team will contact you as soon as we can.',
-            'es' => '¡Hola! Gracias por contactarnos. Hemos recibido tu mensaje y te responderemos lo antes posible. Por favor espera un momento, nuestro equipo de soporte se pondrá en contacto contigo lo antes posible.',
-            'ja' => 'こんにちは！お問い合わせいただきありがとうございます。メッセージを受け取りました。できるだけ早く返信いたします。しばらくお待ちください。サポートチームができるだけ早くご連絡いたします。',
-            'ko' => '안녕하세요! 문의해 주셔서 감사합니다. 메시지를 받았으며 가능한 한 빨리 답변드리겠습니다. 잠시만 기다려 주시면 지원팀이 가능한 한 빨리 연락드리겠습니다.',
-            'zh' => '您好！感谢您联系我们。我们已收到您的消息，将尽快回复。请稍等，我们的支持团队会尽快与您联系。',
+            'vi' => 'Chúng tôi đã nhận được tin nhắn của bạn. Vui lòng chờ CSKH phản hồi nhé!',
+            'en' => 'We have received your message. Please wait for a reply from our customer support team!',
+            'es' => 'Hemos recibido tu mensaje. ¡Por favor, espera la respuesta de nuestro equipo de atención al cliente!',
+            'ja' => 'メッセージを受け取りました。カスタマーサポートからの返信をお待ちください！',
+            'ko' => '메시지를 받았습니다. 고객지원팀의 답변을 기다려 주세요!',
+            'zh' => '我们已收到您的消息，请耐心等待客服回复！',
         ],
 
         // Ngôn ngữ mặc định nếu không tìm thấy ngôn ngữ của user

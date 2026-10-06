@@ -1,4 +1,5 @@
-<div id="chat-root" data-chat-conversation="{{ $conversation->id ?? '' }}" data-chat-viewer="{{ auth()->id() }}">
+<div id="chat-root" data-chat-conversation="{{ $conversation->id ?? '' }}" data-chat-viewer="{{ auth()->id() }}"
+    data-chat-wait-since="{{ $supportWait['since'] ?? '' }}" data-chat-wait-now="{{ $supportWait['now'] }}">
     <div class="floating-chat-container" wire:ignore.self x-data="{
         isOpen: @entangle('showBox'),
         isLoading: false,
@@ -81,7 +82,7 @@
 
         <!-- Hộp thoại chat -->
         <div class="floating-chat-window" wire:ignore.self x-cloak x-show="isOpen" x-transition:enter="chat-enter"
-            x-transition:leave="chat-leave" wire:init="scrollToBottom" id="box_arround">
+            x-transition:leave="chat-leave" wire:init="scrollToBottom" wire:poll.15s.visible id="box_arround">
 
             <!-- Header với gradient -->
             <div class="p-3 d-flex justify-content-between align-items-center"
@@ -92,9 +93,8 @@
                     </div>
                     <div class="ms-2">
                         <div class="fw-bold" style="font-size: 14px;">{{__('home.HoTroKhachHang')}}</div>
-                        <div class="text-start is-online" style="font-size: 11px; opacity: 0.9;">
-                            Bộ phận CSKH
-                            · {{ __('home.DangTrucTuyen') }}
+                        <div class="text-start" style="font-size: 11px; opacity: 0.9;">
+                            {{ __('chat.support_team') }}
                         </div>
                     </div>
                 </div>
@@ -406,6 +406,22 @@
                       });
                   }
               ">
+
+                <div class="chat-wait-status" data-chat-wait-status wire:ignore hidden role="status" aria-atomic="true"
+                    data-connecting-title="{{ __('chat.connecting_title') }}"
+                    data-connecting-description="{{ __('chat.connecting_description') }}"
+                    data-waiting-title="{{ __('chat.waiting_title') }}"
+                    data-waiting-description="{{ __('chat.waiting_description') }}">
+                    <span class="chat-wait-icon" aria-hidden="true">
+                        <i class="fa-solid fa-headset chat-wait-icon--connecting"></i>
+                        <i class="fa-regular fa-clock chat-wait-icon--waiting"></i>
+                    </span>
+                    <div class="chat-wait-copy">
+                        <strong data-chat-wait-title></strong>
+                        <p data-chat-wait-description></p>
+                    </div>
+                    <span class="chat-wait-dots" aria-hidden="true"><span></span><span></span><span></span></span>
+                </div>
 
                 <!-- Preview ảnh đã chọn -->
                 @if($selectedImage)
@@ -1055,4 +1071,5 @@
 
 @push('scripts')
     @vite('resources/js/chat-typing.js')
+    @vite('resources/js/chat-waiting.js')
 @endpush

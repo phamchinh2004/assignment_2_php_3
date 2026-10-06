@@ -413,6 +413,188 @@ class CustomerAutoSpinTest extends TestCase
         $this->assertDatabaseHas('status_orders', ['frozen_order_id' => $high->id, 'changed_by' => $member->id, 'notes' => 'Người dùng xác nhận đơn hàng']);
     }
 
+    public function test_high_value_snapshot_uses_custom_total_divided_by_quantity(): void
+    {
+        $member = $this->member($this->operator());
+        $order = Order::where('index', 6)->first();
+        $order->update(['quantity' => 7, 'price' => 0.68]);
+        $high = Frozen_order::snapshotFromOrder($order, [
+            'user_id' => $member->id, 'custom_price' => 2000, 'commission_percentage' => 10,
+            'spun' => false, 'assignment_source' => 'admin',
+        ])->fresh();
+
+        $this->assertEquals(285.714286, $high->snapshot_unit_price);
+        $this->assertSame(7, (int) $high->snapshot_quantity);
+        $this->assertEquals(2000, $high->snapshot_order_value);
+        $this->assertEquals(200, $high->snapshot_commission_value);
+        $this->assertSame('complete', $high->snapshot_state);
+
+        $regular = Frozen_order::snapshotFromOrder($order, ['user_id' => $member->id])->fresh();
+        $this->assertEquals(0.68, $regular->snapshot_unit_price);
+        $this->assertEquals(4.76, $regular->snapshot_order_value);
+    }
+
+    public function test_high_value_receipt_captures_quantity_once_and_returns_snapshot_price(): void
+    {
+        $member = $this->member($this->operator());
+        $order = Order::where('index', 6)->first();
+        $order->update(['quantity' => 6, 'price' => 0.68]);
+        $high = Frozen_order::snapshotFromOrder($order, [
+            'user_id' => $member->id, 'custom_price' => 2000, 'commission_percentage' => 10,
+            'spun' => false, 'status' => 'pending', 'assignment_source' => 'admin',
+        ]);
+        $order->update(['quantity' => 7]);
+
+        $response = app(\App\Services\OrderSpinService::class)->receive($member->id)->getData(true);
+        $this->assertSame(200, $response['status']);
+        $high->refresh();
+        $this->assertSame(7, (int) $high->snapshot_quantity);
+        $this->assertEquals(285.714286, $high->snapshot_unit_price);
+        $this->assertSame(7, $response['order_quantity']);
+        $this->assertEquals(285.714286, $response['unit_price']);
+        $this->assertDatabaseHas('status_orders', [
+            'frozen_order_id' => $high->id, 'changed_by' => $member->id,
+            'notes' => 'Người dùng nhận đơn hàng',
+        ]);
+
+        $order->update(['quantity' => 9, 'price' => 100]);
+        app(\App\Services\OrderSpinService::class)->receive($member->id);
+        $this->assertSame(7, (int) $high->fresh()->snapshot_quantity);
+        $this->assertEquals(285.714286, $high->fresh()->display_unit_price);
+        $this->assertSame(1, DB::table('status_orders')->where('frozen_order_id', $high->id)
+            ->where('notes', 'Người dùng nhận đơn hàng')->count());
+    }
+
+    public function test_customer_high_value_history_renders_receipt_without_changing_admin_audit(): void
+    {
+        $actor = $this->operator();
+        $actor->update(['full_name' => 'own']);
+        $member = $this->member($actor);
+        $high = Frozen_order::snapshotFromOrder(Order::where('index', 6)->first(), [
+            'user_id' => $member->id, 'custom_price' => 2000, 'commission_percentage' => 10,
+            'spun' => true, 'status' => 'pending', 'assignment_source' => 'admin',
+        ]);
+        \App\Services\OrderStatusService::changeStatus($high, 'pending', 'Quản trị viên phân phối đơn hàng', $actor->id);
+
+        $html = $this->customerOrderDetailHtml($high);
+        $this->assertStringContainsString('Người dùng nhận đơn hàng', $html);
+        $this->assertStringContainsString($member->full_name, $html);
+        $this->assertStringNotContainsString('Quản trị viên phân phối đơn hàng', $html);
+        $this->assertDoesNotMatchRegularExpression('/<\/time>\s*·\s*own\s*<\/div>/u', $html);
+        $this->assertDatabaseHas('status_orders', [
+            'frozen_order_id' => $high->id, 'changed_by' => $actor->id,
+            'notes' => 'Quản trị viên phân phối đơn hàng',
+        ]);
+
+        \App\Services\OrderStatusService::changeStatus($high, 'pending', 'Người dùng nhận đơn hàng', $member->id);
+        $history = \App\Services\OrderStatusService::getCustomerStatusHistory($high);
+        $this->assertCount(1, $history);
+        $this->assertSame($member->id, $history->first()->changed_by);
+        $this->assertSame(2, \App\Services\OrderStatusService::getStatusHistory($high->id)->count());
+
+        \App\Services\OrderStatusService::changeStatus($high, 'confirmed', 'Xác nhận bởi quản trị viên', $actor->id);
+        $history = \App\Services\OrderStatusService::getCustomerStatusHistory($high);
+        $this->assertCount(2, $history);
+        $this->assertSame('Xác nhận bởi quản trị viên', $history->last()->notes);
+        $this->assertSame($actor->id, $history->last()->changed_by);
+    }
+
+    public function test_customer_history_preserves_regular_receipts_and_hides_unreceived_assignments(): void
+    {
+        $actor = $this->operator();
+        $member = $this->member($actor);
+        $order = Order::where('index', 6)->first();
+        $regular = Frozen_order::snapshotFromOrder($order, ['user_id' => $member->id, 'spun' => true]);
+        \App\Services\OrderStatusService::changeStatus($regular, 'pending', 'Người dùng nhận đơn hàng', $member->id);
+        $history = \App\Services\OrderStatusService::getCustomerStatusHistory($regular);
+        $this->assertCount(1, $history);
+        $this->assertSame('Người dùng nhận đơn hàng', $history->first()->notes);
+        $this->assertSame($member->id, $history->first()->changed_by);
+
+        $high = Frozen_order::snapshotFromOrder($order, [
+            'user_id' => $member->id, 'custom_price' => 2000, 'spun' => false,
+        ]);
+        \App\Services\OrderStatusService::changeStatus($high, 'pending', 'Quản trị viên phân phối đơn hàng', $actor->id);
+        $this->assertCount(0, \App\Services\OrderStatusService::getCustomerStatusHistory($high));
+        $this->assertCount(1, \App\Services\OrderStatusService::getStatusHistory($high->id));
+    }
+
+    public function test_order_detail_still_rejects_another_customer(): void
+    {
+        $actor = $this->operator();
+        $member = $this->member($actor);
+        $high = Frozen_order::snapshotFromOrder(Order::where('index', 6)->first(), [
+            'user_id' => $member->id, 'custom_price' => 2000, 'spun' => true,
+        ]);
+        $otherMember = $this->member($actor);
+        $this->actingAs($otherMember)->get('/order/'.$high->id)->assertForbidden();
+    }
+
+    private function customerOrderDetailHtml(Frozen_order $order): string
+    {
+        Schema::create('order_reports', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('frozen_order_id');
+            $table->unsignedBigInteger('reported_by')->nullable();
+            $table->unsignedBigInteger('resolved_by')->nullable();
+        });
+
+        return $this->actingAs($order->user)
+            ->getJson('/order/'.$order->id, ['X-React-Navigation' => '1'])
+            ->assertOk()->assertJsonPath('page', 'user.order_detail')->json('props.html');
+    }
+
+    public function test_updating_high_value_total_synchronizes_financial_snapshot(): void
+    {
+        $member = $this->member($this->operator());
+        $order = Order::where('index', 6)->first();
+        $order->update(['quantity' => 7, 'price' => 0.68]);
+        $high = Frozen_order::snapshotFromOrder($order, [
+            'user_id' => $member->id, 'custom_price' => 2000, 'commission_percentage' => 10,
+            'spun' => false, 'assignment_source' => 'admin',
+        ]);
+        $high->update(['custom_price' => 2100]);
+        $high->refresh();
+
+        $this->assertEquals(2100, $high->snapshot_order_amount);
+        $this->assertEquals(300, $high->snapshot_unit_price);
+        $this->assertEquals(210, $high->snapshot_commission_value);
+        $this->assertSame('complete', $high->snapshot_state);
+    }
+
+    public function test_high_value_price_repair_uses_only_stored_quantity_and_preserves_history(): void
+    {
+        $member = $this->member($this->operator());
+        $order = Order::where('index', 6)->first();
+        $order->update(['quantity' => 6, 'price' => 0.68]);
+        $high = Frozen_order::snapshotFromOrder($order, [
+            'user_id' => $member->id, 'custom_price' => 2000, 'commission_percentage' => 10,
+            'spun' => true, 'status' => 'completed', 'settled_order_amount' => 2000,
+            'settled_commission_amount' => 200, 'settled_refund_amount' => 2200,
+        ]);
+        $regular = Frozen_order::snapshotFromOrder($order, ['user_id' => $member->id]);
+        $legacy = Frozen_order::create(['user_id' => $member->id, 'order_id' => $order->id, 'custom_price' => 500]);
+        DB::table('frozen_orders')->where('id', $high->id)->update(['snapshot_unit_price' => 0.68]);
+        $high->refresh();
+        $before = $high->getRawOriginal();
+        $this->assertSame('invalid', $high->snapshot_state);
+        $order->update(['quantity' => 7, 'price' => 100]);
+
+        $migration = require database_path('migrations/2026_10_06_000001_correct_high_value_snapshot_unit_prices.php');
+        $migration->up();
+        $migration->up();
+        $high->refresh();
+
+        $this->assertEquals(333.333333, $high->snapshot_unit_price);
+        $this->assertSame('complete', $high->snapshot_state);
+        $after = $high->getRawOriginal();
+        unset($before['snapshot_unit_price'], $after['snapshot_unit_price']);
+        $this->assertEquals($before, $after);
+        $this->assertEquals(0.68, $regular->fresh()->snapshot_unit_price);
+        $this->assertNull($legacy->fresh()->snapshot_unit_price);
+        $this->assertNull($legacy->fresh()->snapshot_quantity);
+    }
+
     public function test_order_received_before_scheduled_high_value_order_records_customer_in_history(): void
     {
         $actor = $this->operator();

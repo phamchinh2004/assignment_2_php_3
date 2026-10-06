@@ -628,6 +628,77 @@ class ChatReadStateTest extends TestCase
         $this->assertSame(1, DB::table('manager_settings')->where('manager_code', 'chats.view-context')->count());
     }
 
+    public function test_owner_clearing_messages_keeps_conversation_without_backend_success_notice(): void
+    {
+        Event::fake([\App\Events\ConversationCleared::class]);
+        $this->actingAs(User::findOrFail(4));
+        $component = $this->chatComponent();
+        $component->conversations = collect([$this->conversation]);
+        $component->selectedConversationId = 1;
+        $component->messages = [['id' => 10, 'message' => 'Please help']];
+
+        $this->assertTrue($component->deleteAllMessages());
+
+        $this->assertDatabaseHas('conversations', ['id' => 1]);
+        $this->assertDatabaseMissing('messages', ['conversation_id' => 1]);
+        $this->assertSame(1, $component->selectedConversationId);
+        $this->assertSame([], $component->messages);
+        $notices = collect(\Livewire\store($component)->get('dispatched'))
+            ->map(fn ($event) => $event->serialize())
+            ->where('name', 'app-dialog')->values();
+        $this->assertCount(0, $notices);
+    }
+
+    public function test_clearing_without_selection_returns_failure_and_preserves_error_notice(): void
+    {
+        $this->actingAs(User::findOrFail(4));
+        $component = $this->chatComponent();
+
+        $this->assertFalse($component->deleteAllMessages());
+        $this->assertDatabaseHas('messages', ['id' => 10]);
+        $notices = collect(\Livewire\store($component)->get('dispatched'))
+            ->map(fn ($event) => $event->serialize())
+            ->where('name', 'app-dialog')->values();
+        $this->assertCount(1, $notices);
+        $this->assertSame('error', $notices[0]['params'][0]['type']);
+    }
+
+    public function test_owner_can_delete_selected_conversation_and_its_messages(): void
+    {
+        Event::fake([\App\Events\ConversationCleared::class]);
+        $this->actingAs(User::findOrFail(4));
+        $component = $this->chatComponent();
+        $component->conversations = collect([$this->conversation]);
+        $component->selectedConversationId = 1;
+        $component->messages = [['id' => 10, 'message' => 'Please help']];
+
+        $this->assertTrue($component->deleteConversation());
+        $this->assertDatabaseMissing('conversations', ['id' => 1]);
+        $this->assertDatabaseMissing('messages', ['conversation_id' => 1]);
+        $this->assertNull($component->selectedConversationId);
+        $this->assertSame([], $component->messages);
+        Event::assertDispatched(\App\Events\ConversationCleared::class);
+    }
+
+    public function test_admin_and_staff_cannot_delete_conversations(): void
+    {
+        Event::fake([\App\Events\ConversationCleared::class]);
+        foreach ([2, 3, 5] as $viewerId) {
+            $this->actingAs(User::findOrFail($viewerId));
+            $component = $this->chatComponent();
+            $component->conversations = collect([$this->conversation]);
+            $component->selectedConversationId = 1;
+
+            $this->assertFalse($component->deleteConversation());
+            $this->assertFalse($component->deleteAllMessages());
+            $this->assertDatabaseHas('conversations', ['id' => 1]);
+            $this->assertDatabaseHas('messages', ['id' => 10]);
+            $this->assertSame(1, $component->selectedConversationId);
+            $this->assertEmpty(\Livewire\store($component)->get('dispatched', []));
+        }
+        Event::assertNotDispatched(\App\Events\ConversationCleared::class);
+    }
+
     private function chatComponent(): ChatComponent
     {
         $component = new ChatComponent;

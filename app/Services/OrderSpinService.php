@@ -73,19 +73,29 @@ class OrderSpinService
                         ]);
                     }
                     if ($query_current_spin->current_spin + 1 == $high_value_order->index) {
+                        // The customer receives the current quantity; preserve it for history
+                        // before marking the assigned high-value order as received.
+                        if (!$check_frozen->spun) {
+                            $check_frozen->snapshot_quantity = $high_value_order->quantity;
+                            $check_frozen->snapshot_order_amount = $check_frozen->custom_price;
+                            $quantity = (int) $check_frozen->snapshot_quantity;
+                            $check_frozen->snapshot_unit_price = $quantity > 0
+                                ? round((float) $check_frozen->custom_price / $quantity, 6)
+                                : null;
+                        }
                         $query_current_spin->current_spin = $query_current_spin->current_spin + 1;
                         $query_current_spin->save();
                         $check_frozen->spun = true;
                         $check_frozen->processing_started_at ??= now();
-                        if (!$check_frozen->status) {
-                            $check_frozen->status = 'pending'; // Đảm bảo có status
-                            // Tạo record status đầu tiên trong status_orders
-                            \App\Services\OrderStatusService::changeStatus(
-                                $check_frozen,
-                                'pending',
-                                'Người dùng nhận đơn hàng',
-                                $changedBy
-                            );
+                        // Assignment may already have set pending; receipt is still
+                        // a separate customer event and must be recorded once.
+                        if (!OrderStatusService::changeStatus(
+                            $check_frozen,
+                            'pending',
+                            'Người dùng nhận đơn hàng',
+                            $changedBy ?? $user->id
+                        )) {
+                            throw new \RuntimeException('Không thể lưu lịch sử nhận đơn hàng.');
                         }
                         $check_frozen->save();
 
@@ -103,6 +113,8 @@ class OrderSpinService
                             'is_new_order' => true,
                             'custom_price' => $check_frozen->custom_price,
                             'order_amount' => $check_frozen->snapshot_order_value,
+                            'order_quantity' => (int) $check_frozen->snapshot_quantity,
+                            'unit_price' => $check_frozen->display_unit_price,
                             'commission_percentage' => $check_frozen->commission_percentage,
                             'commission_amount' => $check_frozen->snapshot_commission_value,
                             'order_id' => $high_value_order->id,

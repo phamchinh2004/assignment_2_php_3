@@ -257,6 +257,8 @@ function initDistributionPage() {
             return;
         }
         const snapshotOrderAmount = finiteNumberOrNull(check_frozen.order_amount);
+        const snapshotQuantity = finiteNumberOrNull(check_frozen.order_quantity);
+        const snapshotUnitPrice = finiteNumberOrNull(check_frozen.unit_price);
         const snapshotCommissionPercentage = finiteNumberOrNull(check_frozen.commission_percentage);
         const snapshotCommissionAmount = finiteNumberOrNull(check_frozen.commission_amount);
         // Backward compatibility: accept the legacy API field from older deployments.
@@ -404,7 +406,9 @@ function initDistributionPage() {
                         ?? 0;
                     const commissionAmount = snapshotCommissionAmount
                         ?? (orderAmount * (commissionPercentage / 100));
-                    const order_details_price_formatted = format_currency(orderAmount / selectedOrder.quantity);
+                    const quantity = snapshotQuantity ?? selectedOrder.quantity;
+                    const unitPrice = snapshotUnitPrice ?? (quantity > 0 ? orderAmount / quantity : null);
+                    const order_details_price_formatted = unitPrice === null ? '—' : format_currency(unitPrice);
                     const order_details_end_value_total_price_formatted = format_currency(orderAmount);
                     const order_details_end_value_price_rose_formatted = format_currency(commissionAmount, 5, 5);
                     const order_details_end_value_total_formatted = format_currency(orderAmount + commissionAmount);
@@ -413,7 +417,7 @@ function initDistributionPage() {
                     order_details_img.src = `/storage/${selectedOrder.image}`;
                     order_details_name.innerText = selectedOrder.name;
                     order_details_price.innerText = order_details_price_formatted;
-                    order_details_quantity.innerText = "x" + selectedOrder.quantity;
+                    order_details_quantity.innerText = "x" + quantity;
                     order_details_end_value_total_price.innerText = order_details_end_value_total_price_formatted;
                     order_details_end_value_price_rose.innerText = order_details_end_value_price_rose_formatted;
                     order_details_end_value_total.innerText = order_details_end_value_total_formatted;

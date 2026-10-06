@@ -61,6 +61,35 @@ function render(Page, config, screens) {
     finally { Grid.useBreakpoint = originalBreakpoint; delete globalThis.document; delete globalThis.window; }
 }
 
+test('frozen-order results remain visible without the legacy notification function', () => {
+    const config = { user, routes: { index: '/admin/user', store: '/admin/user/frozen-order/7' } };
+    const notices = {
+        success: 'Đóng băng thành công 2 đơn hàng!',
+        warning: 'Đóng băng thành công 1 đơn hàng. Lỗi: Đơn hàng đã được đóng băng trước đó',
+        error: 'Không đóng băng được đơn hàng nào.',
+    };
+
+    for (const [type, text] of Object.entries(notices)) {
+        const html = render(pages.UserFrozen, { ...config, flash: { [type]: text } });
+        assert.ok(html.includes(text), `${type} result must be visible on the page`);
+        assert.ok(html.includes(`ant-alert-${type}`));
+        assert.ok(html.includes('role="alert"'));
+        assert.ok(html.includes('class="admin-react-flash"'), 'result must stay in the viewport when the orders table is scrolled');
+        assert.ok(html.includes('ant-alert-close-icon'), 'result can be dismissed');
+    }
+
+    assert.equal(render(pages.UserFrozen, config).includes('role="alert"'), false);
+    const updated = render(pages.UserFrozen, {
+        ...config,
+        flash: { success: notices.success },
+        frozenOrderIds: [12],
+        frozenOrders: [{ id: 31, order_id: 12, snapshot_name: 'Đơn vừa đóng băng', custom_price: 100 }],
+        routes: { ...config.routes, update: '/admin/user/7/frozen-orders/__FROZEN_ID__', destroy: '/admin/user/7/frozen-orders/__FROZEN_ID__' },
+    });
+    assert.ok(updated.includes(notices.success));
+    assert.ok(updated.includes('Đơn vừa đóng băng'));
+});
+
 test('search handles Vietnamese accents, mixed case, split fields and absent customers', () => {
     assert.equal(matchesOperationsSearch([user.full_name, user.phone, 'Staff'], 'DANG 0901'), true);
     assert.equal(matchesOperationsSearch([user.full_name, 'Staff'], 'ĐẶNG staff'), true);

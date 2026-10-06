@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CSKH — Ba chấm lượn sóng</title>
+  <style>
+    :root { color-scheme: light; --ink:#181817; --muted:#68645e; --accent:#ff6b35; --canvas:#f6f5f2; }
+    * { box-sizing:border-box; }
+    body { margin:0; padding:48px 24px; background:#efeeeb; color:var(--ink); font-family:Arial, sans-serif; }
+    main { max-width:1056px; margin:auto; }
+    h1 { margin:0 0 10px; text-align:center; font-size:clamp(24px,4vw,36px); letter-spacing:-1px; }
+    .intro { margin:0 0 36px; color:var(--muted); text-align:center; line-height:1.5; }
+    .grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:28px; }
+    .label { margin:0 0 12px; text-align:center; color:var(--muted); font-size:12px; font-weight:700; letter-spacing:1px; }
+    .chat { overflow:hidden; background:white; border:1px solid #e4e1db; border-radius:22px; box-shadow:0 16px 36px #18181712; }
+    .header { display:flex; gap:10px; align-items:center; padding:16px; background:var(--ink); color:white; }
+    .mark { display:grid; place-items:center; width:36px; height:36px; flex-shrink:0; border-radius:12px; background:white; color:var(--ink); }
+    svg { width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+    .heading { flex:1; }
+    .heading strong { display:block; font-size:14px; }
+    .heading small { display:flex; align-items:center; gap:6px; margin-top:5px; color:#d5d3cd; font-size:11px; }
+    .heading small::before { content:""; width:6px; height:6px; border-radius:50%; background:#e8b759; }
+    .close { color:#d5d3cd; font-size:22px; }
+    .conversation { display:flex; flex-direction:column; min-height:360px; padding:18px 14px 14px; background:radial-gradient(#1818170d .7px,transparent .7px) 0 0 / 14px 14px,var(--canvas); }
+    .day { margin-bottom:22px; text-align:center; color:var(--muted); font-size:11px; }
+    .message { max-width:88%; padding:10px 13px; border-radius:16px; font-size:13px; line-height:1.55; }
+    .sent { align-self:flex-end; background:var(--ink); color:white; border-bottom-right-radius:5px; }
+    .received { align-self:flex-start; margin-top:18px; background:white; border:1px solid #e7e3de; border-bottom-left-radius:5px; }
+    .meta { margin-top:5px; color:var(--muted); font-size:10px; }
+    .sent-meta { text-align:right; }
+    .wait { display:flex; gap:10px; align-items:center; margin-top:auto; padding:12px; border:1px solid #f1d9c8; border-radius:12px; background:#fffcf8; }
+    .wait-icon { display:grid; place-items:center; width:32px; height:32px; flex:0 0 32px; border-radius:10px; background:#fff0e4; color:var(--accent); }
+    .wait-text { min-width:0; flex:1; }
+    .wait-text strong { display:block; font-size:13px; line-height:1.5; }
+    .wait-text p { margin:3px 0 0; color:var(--muted); font-size:12px; line-height:1.5; }
+    .wave { display:flex; flex:0 0 26px; align-items:center; gap:4px; height:22px; color:var(--accent); }
+    .wave span { width:6px; height:6px; border-radius:50%; background:currentColor; animation:waiting-wave 1.35s ease-in-out infinite; }
+    .wave span:nth-child(2) { animation-delay:.15s; }
+    .wave span:nth-child(3) { animation-delay:.3s; }
+    @keyframes waiting-wave {
+      0%, 60%, 100% { transform:translateY(0); opacity:.5; }
+      30% { transform:translateY(-4px); opacity:1; }
+    }
+    .composer { display:flex; align-items:center; gap:10px; padding:14px; border-top:1px solid #e9e5df; }
+    .input { flex:1; min-width:0; padding:13px; color:var(--muted); border:1px solid #e3dfd9; border-radius:14px; font-size:13px; }
+    .send { display:grid; place-items:center; width:44px; height:44px; background:var(--accent); color:white; border-radius:14px; }
+    .note { margin-top:24px; color:var(--muted); text-align:center; font-size:12px; line-height:1.6; }
+    @media (max-width:760px) { body { padding:28px 16px; } .grid { grid-template-columns:1fr; gap:24px; } .conversation { min-height:320px; } }
+    @media (prefers-reduced-motion:reduce) { .wave span { animation:none; opacity:.8; } }
+  </style>
+</head>
+<body>
+  <svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden">
+    <symbol id="headset" viewBox="0 0 24 24"><path d="M4 14v-3a8 8 0 0 1 16 0v3"/><rect x="3" y="11" width="4" height="8" rx="2"/><rect x="17" y="11" width="4" height="8" rx="2"/><path d="M19 19c0 2-3 3-6 3"/></symbol>
+    <symbol id="clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="send" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></symbol>
+  </svg>
+  <main>
+    <h1>Chờ hỗ trợ · Ba chấm lượn sóng</h1>
+    <p class="intro">Bản xem trước chuyển động — gọn nhẹ, nhịp nhàng.</p>
+    <div class="grid">
+      <section aria-labelledby="state-30">
+        <h2 class="label" id="state-30">01 / SAU 30 GIÂY</h2>
+        <div class="chat">
+          <div class="header"><span class="mark"><svg aria-hidden="true"><use href="#headset"/></svg></span><div class="heading"><strong>Hỗ trợ khách hàng</strong><small>Đang tiếp nhận yêu cầu</small></div><span class="close" aria-hidden="true">×</span></div>
+          <div class="conversation">
+            <div class="day">Hôm nay</div>
+            <div class="message sent">Mình cần hỗ trợ kiểm tra đơn hàng.</div><div class="meta sent-meta">14:30</div>
+            <div class="message received">Chúng tôi đã nhận được tin nhắn của bạn. Vui lòng chờ CSKH phản hồi nhé.</div><div class="meta">Tin nhắn tự động · 14:30</div>
+            <div class="wait" role="status"><span class="wait-icon"><svg aria-hidden="true"><use href="#headset"/></svg></span><div class="wait-text"><strong>Đang kết nối với CSKH</strong><p>Bạn vẫn có thể gửi thêm tin nhắn.</p></div><span class="wave" aria-hidden="true"><span></span><span></span><span></span></span></div>
+          </div>
+          <div class="composer" aria-hidden="true"><div class="input">Nhập tin nhắn...</div><span class="send"><svg><use href="#send"/></svg></span></div>
+        </div>
+      </section>
+      <section aria-labelledby="state-60">
+        <h2 class="label" id="state-60">02 / SAU 60 GIÂY</h2>
+        <div class="chat">
+          <div class="header"><span class="mark"><svg aria-hidden="true"><use href="#headset"/></svg></span><div class="heading"><strong>Hỗ trợ khách hàng</strong><small>Đang tiếp nhận yêu cầu</small></div><span class="close" aria-hidden="true">×</span></div>
+          <div class="conversation">
+            <div class="day">Hôm nay</div>
+            <div class="message sent">Mình cần hỗ trợ kiểm tra đơn hàng.</div><div class="meta sent-meta">14:30</div>
+            <div class="message received">Chúng tôi đã nhận được tin nhắn của bạn. Vui lòng chờ CSKH phản hồi nhé.</div><div class="meta">Tin nhắn tự động · 14:30</div>
+            <div class="wait" role="status"><span class="wait-icon"><svg aria-hidden="true"><use href="#clock"/></svg></span><div class="wait-text"><strong>Cảm ơn bạn đã chờ</strong><p>CSKH chưa thể phản hồi ngay. Bạn chờ thêm nhé.</p></div><span class="wave" aria-hidden="true"><span></span><span></span><span></span></span></div>
+          </div>
+          <div class="composer" aria-hidden="true"><div class="input">Nhập tin nhắn...</div><span class="send"><svg><use href="#send"/></svg></span></div>
+        </div>
+      </section>
+    </div>
+    <p class="note">Ba chấm nhô lên lần lượt, lặp nhẹ nhàng. Khi tích hợp, thẻ tự ẩn khi nhân viên trả lời.</p>
+  </main>
+</body>
+</html>

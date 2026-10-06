@@ -237,7 +237,7 @@ class OrderController extends Controller
         ]);
 
         // Lấy lịch sử thay đổi trạng thái
-        $statusHistory = \App\Services\OrderStatusService::getStatusHistory($frozen_order->id);
+        $statusHistory = OrderStatusService::getCustomerStatusHistory($frozen_order);
 
         // Lấy tất cả các trạng thái theo thứ tự (trừ cancelled nếu đơn chưa bị hủy)
         $allStatuses = Status::active()

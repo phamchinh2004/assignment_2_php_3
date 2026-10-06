@@ -753,7 +753,7 @@
                         <i class="fas fa-check-circle"></i>
                     </div>
                     <h5 class="mb-3 fw-bold text-success">Đã xóa!</h5>
-                    <p class="text-muted mb-4">Hội thoại đã được xóa thành công</p>
+                    <p class="text-muted mb-4" id="deleteSuccessMessage">Hội thoại đã được xóa thành công</p>
                     <button type="button" class="btn btn-success-gradient px-4" data-bs-dismiss="modal">
                         <i class="fas fa-check me-2"></i>Đồng ý
                     </button>
@@ -1676,96 +1676,92 @@
 
     // Hiển thị modal xóa tin nhắn
     function confirmDeleteMessages() {
-        if (!deleteMessagesModal) {
-            deleteMessagesModal = new bootstrap.Modal(document.getElementById('deleteMessagesModal'));
-        }
+        deleteMessagesModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('deleteMessagesModal'));
         deleteMessagesModal.show();
     }
 
     // Hiển thị modal xóa hội thoại
     function confirmDeleteConversation() {
-        if (!deleteConversationModal) {
-            deleteConversationModal = new bootstrap.Modal(document.getElementById('deleteConversationModal'));
-        }
+        deleteConversationModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('deleteConversationModal'));
         deleteConversationModal.show();
     }
 
 
-    // Handle confirm delete
-    document.addEventListener('DOMContentLoaded', function () {
+    // Delegate clicks because React mounts this markup after DOMContentLoaded
+    // and Livewire/SPA navigation can replace the confirmation buttons.
+    document.addEventListener('click', function (event) {
         const chatRoot = document.getElementById('chat-root');
+        if (!chatRoot || !chatRoot.contains(event.target)) return;
 
         // Xử lý xóa tin nhắn
-        const confirmDeleteMessagesBtn = document.getElementById('confirmDeleteMessagesBtn');
-        if (confirmDeleteMessagesBtn) {
-            confirmDeleteMessagesBtn.addEventListener('click', function () {
-                // Disable button và show loading
-                confirmDeleteMessagesBtn.disabled = true;
-                confirmDeleteMessagesBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Đang xóa...';
+        const confirmDeleteMessagesBtn = event.target.closest('#confirmDeleteMessagesBtn');
+        if (confirmDeleteMessagesBtn && !confirmDeleteMessagesBtn.disabled) {
+            // Disable button và show loading
+            confirmDeleteMessagesBtn.disabled = true;
+            confirmDeleteMessagesBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Đang xóa...';
 
-                // Get Livewire component
+            // Get Livewire component
+            // Call Livewire method deleteAllMessages
+            Promise.resolve().then(() => {
                 const component = window.Livewire.find(chatRoot.getAttribute('wire:id'));
+                return component.call('deleteAllMessages');
+            }).then(deleted => {
+                // Close delete modal
+                deleteMessagesModal.hide();
 
-                // Call Livewire method deleteAllMessages
-                component.call('deleteAllMessages').then(() => {
-                    // Close delete modal
-                    deleteMessagesModal.hide();
+                confirmDeleteMessagesBtn.disabled = false;
+                confirmDeleteMessagesBtn.innerHTML = '<i class="fas fa-eraser me-2"></i>Xóa tin nhắn';
+                if (deleted !== true) return;
 
-                    // Show success modal
-                    setTimeout(() => {
-                        if (!deleteSuccessModal) {
-                            deleteSuccessModal = new bootstrap.Modal(document.getElementById('deleteSuccessModal'));
-                        }
-                        deleteSuccessModal.show();
-
-                        // Reset button
-                        confirmDeleteMessagesBtn.disabled = false;
-                        confirmDeleteMessagesBtn.innerHTML = '<i class="fas fa-eraser me-2"></i>Xóa tin nhắn';
-                    }, 300);
-                }).catch(error => {
-                    console.error('Error deleting messages:', error);
-                    confirmDeleteMessagesBtn.disabled = false;
-                    confirmDeleteMessagesBtn.innerHTML = '<i class="fas fa-eraser me-2"></i>Xóa tin nhắn';
-                    deleteMessagesModal.hide();
-                    alert('Có lỗi xảy ra khi xóa tin nhắn!');
-                });
+                setTimeout(() => {
+                    if (document.getElementById('chat-root') !== chatRoot) return;
+                    document.getElementById('deleteSuccessMessage').textContent = 'Tất cả tin nhắn đã được xóa.';
+                    deleteSuccessModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('deleteSuccessModal'));
+                    deleteSuccessModal.show();
+                }, 300);
+            }).catch(error => {
+                console.error('Error deleting messages:', error);
+                confirmDeleteMessagesBtn.disabled = false;
+                confirmDeleteMessagesBtn.innerHTML = '<i class="fas fa-eraser me-2"></i>Xóa tin nhắn';
+                deleteMessagesModal.hide();
+                alert('Có lỗi xảy ra khi xóa tin nhắn!');
             });
         }
 
         // Xử lý xóa hội thoại
-        const confirmDeleteConversationBtn = document.getElementById('confirmDeleteConversationBtn');
-        if (confirmDeleteConversationBtn) {
-            confirmDeleteConversationBtn.addEventListener('click', function () {
-                // Disable button và show loading
-                confirmDeleteConversationBtn.disabled = true;
-                confirmDeleteConversationBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Đang xóa...';
+        const confirmDeleteConversationBtn = event.target.closest('#confirmDeleteConversationBtn');
+        if (confirmDeleteConversationBtn && !confirmDeleteConversationBtn.disabled) {
+            // Disable button và show loading
+            confirmDeleteConversationBtn.disabled = true;
+            confirmDeleteConversationBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Đang xóa...';
 
-                // Get Livewire component
+            // Get Livewire component
+            // Call Livewire method deleteConversation
+            Promise.resolve().then(() => {
                 const component = window.Livewire.find(chatRoot.getAttribute('wire:id'));
+                return component.call('deleteConversation');
+            }).then(deleted => {
+                if (deleted !== true) throw new Error('Conversation deletion was rejected');
+                // Close delete modal
+                deleteConversationModal.hide();
 
-                // Call Livewire method deleteConversation
-                component.call('deleteConversation').then(() => {
-                    // Close delete modal
-                    deleteConversationModal.hide();
+                // Show success modal
+                setTimeout(() => {
+                    if (document.getElementById('chat-root') !== chatRoot) return;
+                    document.getElementById('deleteSuccessMessage').textContent = 'Hội thoại đã được xóa thành công';
+                    deleteSuccessModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('deleteSuccessModal'));
+                    deleteSuccessModal.show();
 
-                    // Show success modal
-                    setTimeout(() => {
-                        if (!deleteSuccessModal) {
-                            deleteSuccessModal = new bootstrap.Modal(document.getElementById('deleteSuccessModal'));
-                        }
-                        deleteSuccessModal.show();
-
-                        // Reset button
-                        confirmDeleteConversationBtn.disabled = false;
-                        confirmDeleteConversationBtn.innerHTML = '<i class="fas fa-trash-alt me-2"></i>Xóa hội thoại';
-                    }, 300);
-                }).catch(error => {
-                    console.error('Error deleting conversation:', error);
+                    // Reset button
                     confirmDeleteConversationBtn.disabled = false;
                     confirmDeleteConversationBtn.innerHTML = '<i class="fas fa-trash-alt me-2"></i>Xóa hội thoại';
-                    deleteConversationModal.hide();
-                    alert('Có lỗi xảy ra khi xóa hội thoại!');
-                });
+                }, 300);
+            }).catch(error => {
+                console.error('Error deleting conversation:', error);
+                confirmDeleteConversationBtn.disabled = false;
+                confirmDeleteConversationBtn.innerHTML = '<i class="fas fa-trash-alt me-2"></i>Xóa hội thoại';
+                deleteConversationModal.hide();
+                alert('Có lỗi xảy ra khi xóa hội thoại!');
             });
         }
     });

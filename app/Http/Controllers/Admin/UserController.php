@@ -653,7 +653,7 @@ class UserController extends Controller
             return redirect()->route('user.index')->with('error', 'Không tìm thấy người dùng cần thay đổi trạng thái!');
         }
     }
-    public function frozenOrderInterface(?User $user, AuthorizationService $authorization)
+    public function frozenOrderInterface(?User $user, AuthorizationService $authorization, ?array $flash = null)
     {
         if (!$user) {
             abort(404, 'Không tìm thấy người dùng này');
@@ -682,6 +682,7 @@ class UserController extends Controller
         $defaultFrozenOrderSettings = FrozenOrderSetting::query()->first() ?? FrozenOrderSetting::defaults();
 
         return $this->reactPage->admin('admin.users.frozen-orders', [
+            ...($flash === null ? [] : ['flash' => $flash]),
             'user' => [
                 'id' => $user->id,
                 'avatar_url' => get_user_avatar($user),
@@ -726,12 +727,12 @@ class UserController extends Controller
         $order_data = $request->order_data;
 
         if (empty($order_data) || !is_array($order_data)) {
-            return back()->with('error', 'Vui lòng chọn ít nhất một đơn hàng!');
+            return $this->frozenOrderResult($request, $user, $authorization, 'error', 'Vui lòng chọn ít nhất một đơn hàng!');
         }
 
         $get_progress_user = User_spin_progress::where('user_id', $user->id)->first();
         if (!$get_progress_user) {
-            return back()->with('error', 'Không tìm thấy tiến trình quay của người dùng!');
+            return $this->frozenOrderResult($request, $user, $authorization, 'error', 'Không tìm thấy tiến trình quay của người dùng!');
         }
 
         $success_count = 0;
@@ -801,12 +802,22 @@ class UserController extends Controller
         }
 
         if ($success_count > 0 && empty($error_messages)) {
-            return back()->with('success', "Đóng băng thành công {$success_count} đơn hàng!");
+            return $this->frozenOrderResult($request, $user, $authorization, 'success', "Đóng băng thành công {$success_count} đơn hàng!");
         } elseif ($success_count > 0 && !empty($error_messages)) {
-            return back()->with('warning', "Đóng băng thành công {$success_count} đơn hàng. Lỗi: " . implode(', ', $error_messages));
+            return $this->frozenOrderResult($request, $user, $authorization, 'warning', "Đóng băng thành công {$success_count} đơn hàng. Lỗi: " . implode(', ', $error_messages));
         } else {
-            return back()->with('error', 'Không đóng băng được đơn hàng nào. ' . implode(', ', $error_messages));
+            return $this->frozenOrderResult($request, $user, $authorization, 'error', 'Không đóng băng được đơn hàng nào. ' . implode(', ', $error_messages));
         }
+    }
+
+    private function frozenOrderResult(Request $request, User $user, AuthorizationService $authorization, string $type, string $message)
+    {
+        if ($request->header('X-React-Navigation') === '1') {
+            // Return the result in this response; background requests can age session flash before a redirect is followed.
+            return $this->frozenOrderInterface($user, $authorization, [$type => $message]);
+        }
+
+        return back()->with($type, $message);
     }
 
     // Hủy đóng băng đơn hàng

@@ -793,6 +793,39 @@ class ChatComponent extends Component
 
     public function render()
     {
-        return view('livewire.user.chat-component');
+        return view('livewire.user.chat-component', [
+            'supportWait' => $this->supportWaitState(),
+        ]);
+    }
+
+    private function supportWaitState(): array
+    {
+        $state = ['since' => null, 'now' => now()->getTimestampMs()];
+        $conversationId = Conversation::query()
+            ->whereKey($this->conversation?->id)
+            ->where('user_id', Auth::id())
+            ->value('id');
+
+        if (!$conversationId) {
+            return $state;
+        }
+
+        // Auto-replies use a staff sender too; only a human reply ends the wait.
+        $lastReplyId = Message::query()
+            ->where('conversation_id', $conversationId)
+            ->where(fn ($query) => $query->whereNull('kind')->orWhere('kind', '!=', 'auto_reply'))
+            ->whereHas('sender', fn ($query) => $query->whereIn('role', User::MANAGEMENT_ROLES))
+            ->max('id');
+
+        $firstUnansweredMessage = Message::query()
+            ->where('conversation_id', $conversationId)
+            ->where('sender_id', Auth::id())
+            ->when($lastReplyId, fn ($query) => $query->where('id', '>', $lastReplyId))
+            ->orderBy('id')
+            ->first(['created_at']);
+
+        $state['since'] = $firstUnansweredMessage?->created_at?->getTimestampMs();
+
+        return $state;
     }
 }

@@ -173,4 +173,33 @@ class OrderStatusService
             ->orderBy('created_at', 'asc')
             ->get();
     }
+
+    public static function getCustomerStatusHistory(Frozen_order $frozenOrder)
+    {
+        $history = self::getStatusHistory($frozenOrder->id);
+        if ($frozenOrder->custom_price === null) {
+            return $history;
+        }
+
+        $hasReceipt = $history->contains(fn (StatusOrder $event) =>
+            $event->status?->name === 'pending' && $event->notes === 'Người dùng nhận đơn hàng');
+
+        return $history->filter(function (StatusOrder $event) use ($frozenOrder, $hasReceipt) {
+            $isAssignment = $event->status?->name === 'pending'
+                && $event->notes === 'Quản trị viên phân phối đơn hàng';
+
+            return !$isAssignment || (!$hasReceipt && $frozenOrder->spun);
+        })->map(function (StatusOrder $event) use ($frozenOrder) {
+            // Adapt old assignment-only history for the customer without rewriting
+            // the administrative audit or inventing a receipt timestamp.
+            if ($event->status?->name === 'pending' && $event->notes === 'Quản trị viên phân phối đơn hàng') {
+                $event = clone $event;
+                $event->notes = 'Người dùng nhận đơn hàng';
+                $event->changed_by = $frozenOrder->user_id;
+                $event->setRelation('changedBy', $frozenOrder->user);
+            }
+
+            return $event;
+        })->values();
+    }
 }
