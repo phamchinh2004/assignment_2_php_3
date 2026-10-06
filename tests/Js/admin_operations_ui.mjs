@@ -261,6 +261,61 @@ test('distribution, report and customer action screens render the account avatar
     assert.ok(render(pages.ReportShow, { routes: commonRoutes, orderReport: report, frozenOrder: frozen, timeline: [{ status: event.status, statusOrder: event, isReached: true }] }).includes(`src="${actor.avatar_url}"`));
 });
 
+test('report resolution respects each action permission and shares the restored note between forms', () => {
+    const config = {
+        routes: { index: '/reports', confirm: '/reports/9/confirm', cancel: '/reports/9/cancel' },
+        orderReport: { id: 9, status: 'pending', reason: 'Thông tin giao hàng không hợp lệ', reporter: user },
+        frozenOrder: { id: 8, user, status: 'pending' },
+        frozenDisplay: { order_code: 'DH-009', order_amount: 120, commission_amount: 1.25, commission_percentage: 1 },
+        form: { old: { resolved_note: 'Đã đối chiếu thông tin' } },
+    };
+    for (const confirm of [false, true]) {
+        for (const cancel of [false, true]) {
+            const html = render(pages.ReportShow, { ...config, permissions: { confirm, cancel } });
+            assert.equal(html.includes('action="/reports/9/confirm"'), confirm);
+            assert.equal(html.includes('action="/reports/9/cancel"'), cancel);
+            assert.equal((html.match(/<textarea/g) || []).length, confirm || cancel ? 1 : 0);
+            assert.equal((html.match(/name="resolved_note" value="Đã đối chiếu thông tin"/g) || []).length, Number(confirm) + Number(cancel));
+            assert.equal(html.includes('Bạn chỉ có quyền xem báo cáo'), !confirm && !cancel);
+            assert.ok(html.includes('Thông tin giao hàng không hợp lệ'));
+            assert.ok(html.includes('120.00$'));
+            assert.ok(html.includes('1.25000$'));
+        }
+    }
+
+    for (const status of ['approved', 'rejected']) {
+        const html = render(pages.ReportShow, {
+            ...config, permissions: { confirm: true, cancel: true },
+            orderReport: { ...config.orderReport, status, resolver: { full_name: 'Người xử lý' }, resolved_at: '2026-10-06T02:30:00Z', resolved_note: 'Kết quả xử lý đã lưu' },
+        });
+        assert.equal(html.includes('action="/reports/9/confirm"'), false);
+        assert.equal(html.includes('action="/reports/9/cancel"'), false);
+        assert.ok(html.includes('Kết quả xử lý đã lưu'));
+        assert.ok(html.includes('Thời gian xử lý'));
+        assert.ok(html.includes('09:30:00'));
+        assert.ok(html.includes(status === 'approved' ? 'Đã hủy (đơn ảo)' : 'Đã xác nhận (đơn thật)'));
+    }
+
+    const missing = render(pages.ReportShow, { ...config, frozenOrder: null, permissions: { confirm: true, cancel: true } });
+    assert.ok(missing.includes('Không tìm thấy thông tin đơn hàng.'));
+    assert.equal(missing.includes('<form'), false);
+});
+
+test('report details preserve legacy warnings and do not display missing amounts as zero', () => {
+    const config = {
+        routes: { index: '/reports' }, orderReport: { id: 9, status: 'pending' },
+        frozenOrder: { id: 8 }, frozenDisplay: { uses_snapshot_fallback: true, unit_price: null, order_amount: null, commission_amount: null },
+    };
+    const html = render(pages.ReportShow, config);
+    assert.ok(html.includes('Đơn hàng thiếu dữ liệu lưu tại thời điểm tạo'));
+    assert.equal(html.includes('0.00$'), false);
+    assert.equal(html.includes('0.00000$'), false);
+    assert.ok(html.includes('Chưa có lịch sử thay đổi trạng thái.'));
+    const zero = render(pages.ReportShow, { ...config, frozenDisplay: { unit_price: 0, order_amount: 0, commission_amount: 0 } });
+    assert.ok(zero.includes('0.00$'));
+    assert.ok(zero.includes('0.00000$'));
+});
+
 test('statistics rankings identify customers by avatar and keep the anonymous remainder separate', () => {
     const customers = [{ ...user, avatar_url: '/storage/uploads/avatars/top.jpg', total_revenue: 200 }];
     const ranking = renderToStaticMarkup(React.createElement(pages.CustomerRevenueRanking, { customers, ranked: true }));

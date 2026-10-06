@@ -1,0 +1,82 @@
+.order-report-detail { min-width: 0; }
+
+.admin-react-shell .order-report-detail .admin-page-header { align-items: center; gap: 12px; margin-bottom: 14px; }
+.order-report-detail .admin-page-back { margin-bottom: 6px; }
+.admin-react-shell .order-report-detail .admin-page-header h1.ant-typography { margin-bottom: 0; font-size: clamp(20px, 2vw, 26px); }
+.order-report-detail .admin-page-meta { gap: 6px 16px; margin-top: 6px; color: var(--admin-text-soft); font-size: 12px; overflow-wrap: anywhere; }
+.order-report-detail .admin-page-meta strong { color: var(--admin-text); }
+.order-report-detail .ant-tag { max-width: 100%; margin-inline-end: 0; white-space: normal; overflow-wrap: anywhere; }
+.report-detail-warning { margin-bottom: 12px; }
+
+.report-detail-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 330px); align-items: start; gap: 12px; }
+.report-detail-main, .report-detail-sidebar { display: grid; min-width: 0; gap: 12px; }
+.admin-react-shell .order-report-detail .report-detail-card { min-width: 0; border-radius: var(--admin-radius-sm); }
+.admin-react-shell .order-report-detail .report-detail-card .ant-card-head { min-height: 44px; padding-inline: 16px; }
+.admin-react-shell .order-report-detail .report-detail-card .ant-card-body { padding: 16px; }
+.order-report-detail .ant-card-head-wrapper { flex-wrap: wrap; gap: 8px; padding-block: 10px; }
+.order-report-detail .ant-card-head-title, .order-report-detail .ant-card-extra { padding-block: 0; white-space: normal; }
+.report-detail-section-title { display: flex; align-items: center; gap: 8px; margin: 0; color: var(--admin-text); font-size: 14px; font-weight: 650; line-height: 1.5; }
+.report-detail-section-title > span { color: var(--admin-primary); font-size: 16px; }
+
+.report-detail-reason { padding: 12px 14px; border-left: 3px solid var(--admin-warning); border-radius: 6px; background: var(--admin-warning-soft); }
+.report-detail-reason > span, .report-detail-people > div > span, .report-detail-field > dt, .report-detail-note > span, .report-detail-note-input label { display: block; margin-bottom: 5px; color: var(--admin-text-soft); font-size: 12px; line-height: 1.5; }
+.report-detail-reason > p, .report-detail-note > p { margin: 0; color: var(--admin-text); font-size: 13px; line-height: 1.65; white-space: pre-wrap; overflow-wrap: anywhere; }
+.report-detail-people { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 14px; }
+.order-report-detail .operations-identity { gap: 8px; }
+.admin-react-shell .order-report-detail .operations-identity__avatar { width: 30px !important; height: 30px !important; line-height: 28px !important; border-radius: 8px; font-size: 14px !important; }
+.order-report-detail .operations-identity__copy > strong { font-size: 13px; }
+.order-report-detail .operations-identity__copy > span { margin-top: 0; font-size: 12px; }
+
+.report-detail-product { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.report-detail-product > .ant-image, .report-detail-product-placeholder { flex: 0 0 76px; overflow: hidden; border: 1px solid var(--admin-border); border-radius: 8px; }
+.report-detail-product .ant-image-img { height: 76px; object-fit: contain; }
+.report-detail-product-placeholder { display: grid; place-items: center; height: 76px; background: var(--admin-bg); color: var(--admin-muted); font-size: 28px; }
+.report-detail-product > div:last-child { min-width: 0; }
+.report-detail-product-code, .report-detail-product-meta { color: var(--admin-text-soft); font-size: 12px; overflow-wrap: anywhere; }
+.report-detail-product h3 { margin: 3px 0 5px; color: var(--admin-text); font-size: 15px; font-weight: 650; line-height: 1.5; overflow-wrap: anywhere; }
+
+.report-detail-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 14px 0 0; padding: 12px; border: 1px solid var(--admin-border-soft); border-radius: 8px; background: var(--admin-bg); }
+.report-detail-field { min-width: 0; }
+.report-detail-field > dd { margin: 0; color: var(--admin-text); font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }
+.report-detail-metrics dd { font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+.report-detail-metrics .report-detail-field:nth-child(3) dd { color: var(--admin-success); }
+.report-detail-metrics .report-detail-field:nth-child(4) dd { color: var(--admin-danger); }
+.report-detail-group { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--admin-border-soft); }
+.report-detail-group > h3 { margin: 0 0 12px; color: var(--admin-text); font-size: 13px; font-weight: 650; }
+.report-detail-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 20px; margin: 0; }
+.report-detail-field--wide { grid-column: 1 / -1; }
+.report-detail-payment { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.order-report-detail .report-detail-api { margin: 0; overflow-wrap: anywhere; }
+.order-report-detail .report-detail-api code { white-space: normal; word-break: break-all; }
+
+.report-detail-resolution { display: grid; gap: 14px; }
+.report-detail-hint { margin: 0; color: var(--admin-text-soft); font-size: 13px; line-height: 1.6; }
+.report-detail-note-input label { color: var(--admin-text); font-weight: 600; }
+.report-detail-note-input label > span { color: var(--admin-text-soft); font-weight: 400; }
+.report-detail-note-input textarea { font-size: 13px; }
+.report-detail-actions { display: grid; gap: 12px; }
+.report-detail-actions form + form { padding-top: 12px; border-top: 1px solid var(--admin-border-soft); }
+.report-detail-actions p { margin: 5px 0 0; color: var(--admin-text-soft); font-size: 12px; line-height: 1.5; text-align: center; }
+.report-detail-note { margin-top: 12px; padding: 10px 12px; border-radius: 6px; background: var(--admin-bg); }
+.report-detail-resolution > .report-detail-note { margin-top: 0; }
+.report-detail-fields--single { grid-template-columns: minmax(0, 1fr); }
+.order-report-detail .report-detail-history .ant-timeline { margin: 4px 0 0; }
+.order-report-detail .report-detail-history .ant-timeline-item { padding-bottom: 18px; }
+.order-report-detail .report-detail-history .ant-timeline-item:last-child { padding-bottom: 0; }
+.report-detail-event { display: grid; gap: 3px; }
+.report-detail-event > .ant-typography { font-size: 12px; line-height: 1.5; }
+.report-detail-event--upcoming > .ant-typography:first-child { color: var(--admin-text-soft); }
+.report-detail-event .operations-identity { margin-top: 3px; }
+
+@media (max-width: 991px) {
+    .report-detail-layout { grid-template-columns: minmax(0, 1fr); }
+    .report-detail-sidebar { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+}
+
+@media (max-width: 575px) {
+    .admin-react-shell .order-report-detail .admin-page-header { align-items: flex-start; flex-direction: column; }
+    .order-report-detail .admin-page-actions { justify-content: flex-start; width: auto; }
+    .report-detail-sidebar, .report-detail-people, .report-detail-fields { grid-template-columns: minmax(0, 1fr); }
+    .report-detail-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .report-detail-actions .ant-btn { min-height: 44px; }
+}
