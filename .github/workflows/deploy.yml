@@ -16,9 +16,34 @@ jobs:
 
       # 2. Prepare SSH private key
       - name: Prepare SSH key
+        env:
+          SSH_PRIVATE_KEY_B64: ${{ secrets.SSH_PRIVATE_KEY_B64 }}
         run: |
-          echo "${{ secrets.SSH_PRIVATE_KEY_B64 }}" | base64 -d > github_actions_key
+          set -euo pipefail
+          umask 077
+
+          if [ -z "${SSH_PRIVATE_KEY_B64//[[:space:]]/}" ]; then
+            echo "::error::SSH_PRIVATE_KEY_B64 is empty. Set this Actions secret to the base64-encoded SSH private key."
+            exit 1
+          fi
+
+          if [[ "$SSH_PRIVATE_KEY_B64" == *"-----BEGIN "* ]]; then
+            echo "::error::SSH_PRIVATE_KEY_B64 contains a raw key. Base64-encode the private key before saving this secret."
+            exit 1
+          fi
+
+          if ! printf '%s' "$SSH_PRIVATE_KEY_B64" | tr -d '[:space:]' | base64 --decode > github_actions_key; then
+            rm -f github_actions_key
+            echo "::error::SSH_PRIVATE_KEY_B64 is invalid base64. Encode the original private-key file again and replace the entire secret value."
+            exit 1
+          fi
+
           chmod 600 github_actions_key
+          if ! ssh-keygen -y -P '' -f github_actions_key > /dev/null 2>&1; then
+            rm -f github_actions_key
+            echo "::error::SSH_PRIVATE_KEY_B64 must decode to a valid SSH private key without a passphrase."
+            exit 1
+          fi
 
       # 3. Setup Node.js
       - name: Setup Node.js
