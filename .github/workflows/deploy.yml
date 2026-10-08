@@ -60,7 +60,7 @@ jobs:
           port: ${{ secrets.PORT }}
           key_path: github_actions_key
           source: "deploy_build/*"
-          target: "/home/orderthe/deploy_build"
+          target: "/home/tiktosho/deploy_build"
           strip_components: 1
 
       # 9. Upload public static files
@@ -72,7 +72,7 @@ jobs:
           port: ${{ secrets.PORT }}
           key_path: github_actions_key
           source: "deploy_public/*"
-          target: "/home/orderthe/deploy_public"
+          target: "/home/tiktosho/deploy_public"
           strip_components: 1
 
       # 10. Deploy Laravel
@@ -86,7 +86,7 @@ jobs:
           script: |
             set -e
 
-            cd /home/orderthe/amazon
+            cd /home/tiktosho/tiktokshop
 
             echo "=== Update Laravel source ==="
             git fetch origin main
@@ -99,35 +99,35 @@ jobs:
             php artisan migrate --force
 
             echo "=== Update public static files ==="
-            rm -f /home/orderthe/deploy_public/index.php /home/orderthe/deploy_public/.htaccess
+            rm -f /home/tiktosho/deploy_public/index.php /home/tiktosho/deploy_public/.htaccess
             preserve_dir=$(mktemp -d)
-            if [ -f /home/orderthe/public_html/index.php ]; then
-              cp -p /home/orderthe/public_html/index.php "$preserve_dir/index.php"
+            if [ -f /home/tiktosho/public_html/index.php ]; then
+              cp -p /home/tiktosho/public_html/index.php "$preserve_dir/index.php"
             fi
-            if [ -f /home/orderthe/public_html/.htaccess ]; then
-              cp -p /home/orderthe/public_html/.htaccess "$preserve_dir/.htaccess"
+            if [ -f /home/tiktosho/public_html/.htaccess ]; then
+              cp -p /home/tiktosho/public_html/.htaccess "$preserve_dir/.htaccess"
             fi
-            cp -R /home/orderthe/deploy_public/. /home/orderthe/public_html/
+            cp -R /home/tiktosho/deploy_public/. /home/tiktosho/public_html/
             if [ -f "$preserve_dir/index.php" ]; then
-              cp -p "$preserve_dir/index.php" /home/orderthe/public_html/index.php
+              cp -p "$preserve_dir/index.php" /home/tiktosho/public_html/index.php
             fi
             if [ -f "$preserve_dir/.htaccess" ]; then
-              cp -p "$preserve_dir/.htaccess" /home/orderthe/public_html/.htaccess
+              cp -p "$preserve_dir/.htaccess" /home/tiktosho/public_html/.htaccess
             fi
             rm -rf "$preserve_dir"
 
             echo "=== Link public storage ==="
-            if [ -e /home/orderthe/public_html/storage ] && [ ! -L /home/orderthe/public_html/storage ]; then
-              echo "ERROR: /home/orderthe/public_html/storage exists and is not a symlink"
+            if [ -e /home/tiktosho/public_html/storage ] && [ ! -L /home/tiktosho/public_html/storage ]; then
+              echo "ERROR: /home/tiktosho/public_html/storage exists and is not a symlink"
               exit 1
             fi
-            ln -sfn /home/orderthe/amazon/storage/app/public /home/orderthe/public_html/storage
+            ln -sfn /home/tiktosho/tiktokshop/storage/app/public /home/tiktosho/public_html/storage
 
             echo "=== Update frontend build ==="
-            rm -rf /home/orderthe/amazon/public/build
-            cp -R /home/orderthe/deploy_build /home/orderthe/amazon/public/build
-            rm -rf /home/orderthe/public_html/build
-            mv /home/orderthe/deploy_build /home/orderthe/public_html/build
+            rm -rf /home/tiktosho/tiktokshop/public/build
+            cp -R /home/tiktosho/deploy_build /home/tiktosho/tiktokshop/public/build
+            rm -rf /home/tiktosho/public_html/build
+            mv /home/tiktosho/deploy_build /home/tiktosho/public_html/build
           
             echo "=== Clear Laravel cache ==="
             php artisan optimize:clear
