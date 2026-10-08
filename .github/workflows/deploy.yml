@@ -5,6 +5,10 @@ on:
     branches:
       - main
 
+concurrency:
+  group: deploy-hosting
+  cancel-in-progress: false
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -76,6 +80,28 @@ jobs:
           cp -R public/. deploy_public/
           rm -f deploy_public/index.php deploy_public/.htaccess
 
+      # Package the checked-out source without production data
+      - name: Prepare Laravel source
+        run: |
+          mkdir -p deploy_source
+          git archive --format=tar.gz --output=deploy_source/source.tar.gz HEAD -- . \
+            ':(exclude).env' ':(exclude).env.*' \
+            ':(exclude)storage' ':(exclude)vendor' ':(exclude)node_modules' \
+            ':(exclude)public/storage' ':(exclude)public/build' ':(exclude)public/hot' \
+            ':(exclude)database/*.sqlite' ':(exclude)database/*.sqlite-*'
+
+      # Upload backend source; the hosting does not need a Git checkout
+      - name: Upload Laravel source
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          port: ${{ secrets.PORT }}
+          key_path: github_actions_key
+          source: "deploy_source/source.tar.gz"
+          target: "/home/tiktosho/deploy_source"
+          strip_components: 1
+
       # 8. Upload frontend build
       - name: Upload build
         uses: appleboy/scp-action@v1
@@ -114,8 +140,13 @@ jobs:
             cd /home/tiktosho/tiktokshop
 
             echo "=== Update Laravel source ==="
-            git fetch origin main
-            git reset --hard origin/main
+            test -f .env
+            test -f /home/tiktosho/deploy_source/source.tar.gz
+            tar -tzf /home/tiktosho/deploy_source/source.tar.gz > /dev/null
+            tar -xzf /home/tiktosho/deploy_source/source.tar.gz --no-same-owner --no-same-permissions
+
+            mkdir -p storage/framework/cache/data storage/framework/sessions \
+              storage/framework/views storage/framework/testing storage/logs bootstrap/cache
 
             echo "=== Install PHP dependencies ==="
             composer install --no-dev --optimize-autoloader
