@@ -30,10 +30,21 @@ class ChatAutoReplyService
 
     public static function getEscalationRecipients(User $manager): array
     {
-        return app(ManagementRecipientResolver::class)
+        $resolvedEmails = app(ManagementRecipientResolver::class)
             ->forConversationManager($manager)
             ->pluck('email')
-            ->filter()
+            ->all();
+
+        $ownerEmails = User::query()
+            ->where('role', User::ROLE_OWNER)
+            ->pluck('email')
+            ->all();
+
+        $managerEmail = $manager->email ? [$manager->email] : [];
+
+        return collect(array_merge($managerEmail, $ownerEmails, $resolvedEmails))
+            ->map(fn ($email) => is_string($email) ? trim($email) : '')
+            ->filter(fn ($email) => $email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL))
             ->unique()
             ->values()
             ->all();

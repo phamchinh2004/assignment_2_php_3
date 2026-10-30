@@ -756,18 +756,34 @@ class ChatComponent extends Component
 
             $recipientEmails = \App\Services\ChatAutoReplyService::getEscalationRecipients($manager);
             $emailAfterMinutes = $managerIsOnline ? $escalationAfterMinutes : 0;
-            $pendingEscalation = \App\Jobs\NotifyAutoReplyEscalation::dispatch(
-                $this->conversation->id,
-                Auth::id(),
-                $autoReplyMessage,
-                $recipientEmails,
-                $emailAfterMinutes,
-                $triggerCustomerMessageId,
-                $managerIsOnline
-            );
 
-            if ($managerIsOnline && $escalationAfterMinutes > 0) {
-                $pendingEscalation->delay(now()->addMinutes($escalationAfterMinutes));
+            $lastManagementReplyId = Message::where('conversation_id', $this->conversation->id)
+                ->where(fn ($query) => $query->whereNull('kind')->orWhere('kind', '!=', 'auto_reply'))
+                ->whereHas('sender', fn ($query) => $query->whereIn('role', User::MANAGEMENT_ROLES))
+                ->max('id') ?? 0;
+
+            $alreadyEscalated = $this->conversation->last_escalated_reply_id !== null
+                && (int) $this->conversation->last_escalated_reply_id === (int) $lastManagementReplyId;
+
+            $pendingCacheKey = "chat:escalation_pending:{$this->conversation->id}:{$lastManagementReplyId}";
+            $cacheTtlMinutes = max(2, $escalationAfterMinutes + 2);
+            $shouldDispatchEscalation = !$alreadyEscalated
+                && \Illuminate\Support\Facades\Cache::add($pendingCacheKey, true, now()->addMinutes($cacheTtlMinutes));
+
+            if ($shouldDispatchEscalation) {
+                $pendingEscalation = \App\Jobs\NotifyAutoReplyEscalation::dispatch(
+                    $this->conversation->id,
+                    Auth::id(),
+                    $autoReplyMessage,
+                    $recipientEmails,
+                    $emailAfterMinutes,
+                    $triggerCustomerMessageId,
+                    true
+                );
+
+                if ($managerIsOnline && $escalationAfterMinutes > 0) {
+                    $pendingEscalation->delay(now()->addMinutes($escalationAfterMinutes));
+                }
             }
 
             Log::info('Queued chat auto-reply and escalation email flow', [

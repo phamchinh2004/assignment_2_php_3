@@ -13,12 +13,16 @@ class Conversation extends Model
 {
     protected $fillable = [
         'user_id',
-        'staff_id'
+        'staff_id',
+        'last_escalated_reply_id',
+        'last_escalated_at',
     ];
 
     protected $casts = [
         'user_id' => 'integer',
         'staff_id' => 'integer',
+        'last_escalated_reply_id' => 'integer',
+        'last_escalated_at' => 'datetime',
     ];
 
     protected static function booted(): void
