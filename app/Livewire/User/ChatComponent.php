@@ -737,8 +737,14 @@ class ChatComponent extends Component
             }
 
             $managerIsOnline = $manager->isOnline();
-            $onlineManagerDelayMinutes = max(0, (int) config('chat.auto_reply.online_manager_delay_minutes', 1));
             $escalationAfterMinutes = max(0, (int) config('chat.auto_reply.escalation_after_minutes', 5));
+
+            // Khi nhan vien online: cho $escalationAfterMinutes phut de ho co co hoi tu tra loi
+            // truoc khi auto-reply duoc gui. Job se tu huy neu nhan vien da phan hoi trong thoi gian cho.
+            // Khi nhan vien offline: gui auto-reply ngay lap tuc.
+            $autoReplyDelay = ($managerIsOnline && $escalationAfterMinutes > 0)
+                ? $escalationAfterMinutes
+                : 0;
 
             $pendingAutoReply = \App\Jobs\SendAutoReplyMessage::dispatch(
                 $this->conversation->id,
@@ -750,8 +756,8 @@ class ChatComponent extends Component
                 $triggerCustomerMessageId
             );
 
-            if ($managerIsOnline && $onlineManagerDelayMinutes > 0) {
-                $pendingAutoReply->delay(now()->addMinutes($onlineManagerDelayMinutes));
+            if ($autoReplyDelay > 0) {
+                $pendingAutoReply->delay(now()->addMinutes($autoReplyDelay));
             }
 
             $recipientEmails = \App\Services\ChatAutoReplyService::getEscalationRecipients($manager);
@@ -792,7 +798,7 @@ class ChatComponent extends Component
                 'staff_id' => $manager->id,
                 'manager_role' => $manager->role,
                 'manager_is_online' => $managerIsOnline,
-                'auto_reply_delay_minutes' => $managerIsOnline ? $onlineManagerDelayMinutes : 0,
+                'auto_reply_delay_minutes' => $autoReplyDelay,
                 'email_delay_minutes' => $emailAfterMinutes,
                 'trigger_customer_message_id' => $triggerCustomerMessageId,
                 'recipient_count' => count($recipientEmails),
