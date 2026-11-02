@@ -103,6 +103,15 @@
         </div>
 
         @if($this->selectedConversation)
+            <!-- Nút nhảy lên tin nhắn chưa đọc (chỉ hiện khi tin chưa đọc dài hơn 1 màn hình) -->
+            @if($this->firstUnreadMessageId)
+                <div id="jump-to-unread-wrapper" class="chat-jump-unread-pill-container" data-unread-id="{{ $this->firstUnreadMessageId }}" style="display: none;">
+                    <button type="button" class="chat-jump-unread-btn shadow-sm" onclick="handleJumpToUnreadClick()" title="Nhảy lên tin nhắn đầu tiên chưa đọc">
+                        <i class="fas fa-arrow-up me-1-5" aria-hidden="true"></i>
+                        <span>Xem tin nhắn chưa đọc ({{ $this->currentChatUnreadCount }})</span>
+                    </button>
+                </div>
+            @endif
             <!-- Header chat -->
             <div wire:key="chat-header-{{ $this->selectedConversation->id }}"
                 class="chat-header" :inert="contextOpen && !wide">
@@ -348,7 +357,7 @@
                             @endphp
 
                             <div class="message-item d-flex {{ $containerClass }} {{ $isCurrentUser ? 'is-own-message' : 'is-other-message' }} {{ $isGroupedWithNewer ? 'is-grouped-with-newer' : 'is-message-group-footer' }} {{ $isGroupedWithOlder ? 'is-grouped-with-older' : 'is-message-group-start' }}"
-                                wire:key="message-{{ $message['id'] ?? $index }}">
+                                id="message-{{ $message['id'] ?? $index }}" data-message-id="{{ $message['id'] ?? '' }}" wire:key="message-{{ $message['id'] ?? $index }}">
                                 @if(!$isCurrentUser)
                                     @if($isGroupFooter)
                                         <span class="chat-message-avatar avatar-tone-{{ abs(crc32((string) $message['sender_id'])) % 6 }}" title="{{ $message['sender']['full_name'] ?? 'Người gửi' }}">
@@ -418,6 +427,14 @@
 
                                 </div>
                             </div>
+
+                            @if(!empty($this->firstUnreadMessageId) && (int) ($message['id'] ?? 0) === (int) $this->firstUnreadMessageId)
+                                <div class="chat-unread-separator my-3" id="unread-messages-separator" wire:key="unread-separator-{{ $message['id'] }}">
+                                    <span class="chat-unread-separator-badge">
+                                        <i class="fas fa-bell me-1" aria-hidden="true"></i> Tin nhắn chưa đọc
+                                    </span>
+                                </div>
+                            @endif
 
                             <div class="chat-date-separator" wire:key="date-separator-{{ $message['id'] ?? $index }}"
                                 @if(!$showDateSeparator) hidden @endif aria-label="{{ $messageDate->format('d/m/Y') }}">
@@ -1089,6 +1106,107 @@
 
             window.Echo.leave(currentChannel);
             currentChannel = null;
+        });
+
+        // Xử lý kiểm tra và nhảy lên tin nhắn chưa đọc
+        function checkUnreadMessageVisibility() {
+            const pillContainer = document.getElementById('jump-to-unread-wrapper');
+            if (!pillContainer) return;
+
+            const unreadId = pillContainer.dataset.unreadId;
+            if (!unreadId) {
+                pillContainer.style.display = 'none';
+                return;
+            }
+
+            const container = document.getElementById('messages-container');
+            if (!container) return;
+
+            const targetEl = document.getElementById('unread-messages-separator') || document.getElementById('message-' + unreadId);
+
+            // Nếu element chưa có trong DOM (do tin nhắn ở trang cũ chưa load) -> chắc chắn dài hơn 1 màn hình
+            if (!targetEl) {
+                pillContainer.style.display = 'block';
+                return;
+            }
+
+            const containerRect = container.getBoundingClientRect();
+            const targetRect = targetEl.getBoundingClientRect();
+
+            // Nếu vị trí của tin nhắn chưa đọc đầu tiên bị khuất ở phía trên vùng nhìn thấy của container
+            const isOutOfViewAbove = targetRect.bottom < (containerRect.top + 50);
+
+            if (isOutOfViewAbove) {
+                pillContainer.style.display = 'block';
+            } else {
+                pillContainer.style.display = 'none';
+            }
+        }
+
+        window.handleJumpToUnreadClick = function () {
+            const pillContainer = document.getElementById('jump-to-unread-wrapper');
+            if (!pillContainer) return;
+
+            const unreadId = pillContainer.dataset.unreadId;
+            if (!unreadId) return;
+
+            const targetEl = document.getElementById('unread-messages-separator') || document.getElementById('message-' + unreadId);
+
+            if (targetEl) {
+                targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                targetEl.classList.add('is-unread-target-highlight');
+                setTimeout(() => targetEl.classList.remove('is-unread-target-highlight'), 3000);
+                pillContainer.style.display = 'none';
+            } else {
+                const root = document.getElementById('chat-root');
+                if (root) {
+                    const component = Livewire.find(root.getAttribute('wire:id'));
+                    if (component) {
+                        component.call('jumpToFirstUnreadMessage');
+                    }
+                }
+            }
+        };
+
+        Livewire.on('scroll-to-unread', (data) => {
+            const eventData = Array.isArray(data) ? data[0] : data;
+            const messageId = eventData?.messageId;
+            setTimeout(() => {
+                const targetEl = document.getElementById('unread-messages-separator') || document.getElementById('message-' + messageId);
+                if (targetEl) {
+                    targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    targetEl.classList.add('is-unread-target-highlight');
+                    setTimeout(() => targetEl.classList.remove('is-unread-target-highlight'), 3000);
+                }
+                const pillContainer = document.getElementById('jump-to-unread-wrapper');
+                if (pillContainer) {
+                    pillContainer.style.display = 'none';
+                }
+            }, 150);
+        });
+
+        function attachUnreadScrollListener() {
+            const container = document.getElementById('messages-container');
+            if (container && !container._unreadScrollAttached) {
+                container._unreadScrollAttached = true;
+                container.addEventListener('scroll', () => {
+                    checkUnreadMessageVisibility();
+                }, { passive: true });
+            }
+        }
+
+        Livewire.on('messages-loaded', () => {
+            setTimeout(() => {
+                attachUnreadScrollListener();
+                checkUnreadMessageVisibility();
+            }, 300);
+        });
+
+        Livewire.on('conversation-selected', () => {
+            setTimeout(() => {
+                attachUnreadScrollListener();
+                checkUnreadMessageVisibility();
+            }, 350);
         });
 
         window.loadMoreMessagesAdmin = function () {

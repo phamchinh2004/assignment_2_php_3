@@ -56,6 +56,8 @@ class ChatComponent extends Component
 
     public $editingMessageId = null;
     public $editingMessageText = '';
+    public $firstUnreadMessageId = null;
+    public $currentChatUnreadCount = 0;
     protected $listeners = [
         'message-received' => 'messageReceived'
     ];
@@ -444,6 +446,8 @@ class ChatComponent extends Component
         $this->isLoading = false;
         $this->editingMessageId = null;
         $this->editingMessageText = '';
+        $this->firstUnreadMessageId = null;
+        $this->currentChatUnreadCount = 0;
     }
     public function refreshChatState()
     {
@@ -658,6 +662,80 @@ class ChatComponent extends Component
 
 
 
+    
+    /**
+     * Xác định tin nhắn chưa đọc đầu tiên và số lượng tin chưa đọc
+     */
+    private function detectFirstUnreadMessage(Conversation $conversation): void
+    {
+        $currentUserId = (int) Auth::id();
+        $staffId = (int) $conversation->staff_id;
+
+        // 1. Tìm tin nhắn chưa đọc của người xem (Owner/Admin/Staff hiện tại)
+        $firstUnread = Message::query()
+            ->where('conversation_id', $conversation->id)
+            ->unreadFor($currentUserId)
+            ->orderBy('id', 'asc')
+            ->first();
+
+        $unreadCount = Message::query()
+            ->where('conversation_id', $conversation->id)
+            ->unreadFor($currentUserId)
+            ->count();
+
+        // 2. Nếu người xem là quản lý cấp cao (Owner/Admin) xem tin nhắn của nhân viên khác,
+        // và bản thân người xem không có tin chưa đọc (đã từng mở qua),
+        // nhưng khách hàng gửi tin nhắn mà nhân viên phụ trách ($staffId) CHƯA ĐỌC:
+        if (!$firstUnread && $staffId && $staffId !== $currentUserId) {
+            $firstUnread = Message::query()
+                ->where('conversation_id', $conversation->id)
+                ->where('sender_id', $conversation->user_id)
+                ->unreadFor($staffId)
+                ->orderBy('id', 'asc')
+                ->first();
+
+            $unreadCount = Message::query()
+                ->where('conversation_id', $conversation->id)
+                ->where('sender_id', $conversation->user_id)
+                ->unreadFor($staffId)
+                ->count();
+        }
+
+        $this->firstUnreadMessageId = $firstUnread?->id;
+        $this->currentChatUnreadCount = (int) $unreadCount;
+    }
+
+    /**
+     * Nhảy lên tin nhắn chưa đọc đầu tiên
+     */
+    public function jumpToFirstUnreadMessage(): void
+    {
+        if (!$this->firstUnreadMessageId || !$this->selectedConversationId) {
+            return;
+        }
+
+        $loadedIds = collect($this->messages)->pluck('id')->all();
+        $isLoaded = in_array($this->firstUnreadMessageId, $loadedIds, true);
+
+        if (!$isLoaded) {
+            $countNewer = Message::query()
+                ->where('conversation_id', $this->selectedConversationId)
+                ->where('id', '>=', $this->firstUnreadMessageId)
+                ->count();
+
+            $pagesNeeded = max(1, (int) ceil($countNewer / $this->messagesPerPage));
+
+            for ($p = $this->currentPage + 1; $p <= $pagesNeeded; $p++) {
+                $this->currentPage = $p;
+                $this->loadMessages($p);
+            }
+        }
+
+        $this->dispatch('scroll-to-unread', [
+            'messageId' => $this->firstUnreadMessageId
+        ]);
+    }
+
     public function selectConversation($conversationId)
     {
         $conversation = Conversation::with('staff:id,role,referrer_id')->find($conversationId);
@@ -678,6 +756,7 @@ class ChatComponent extends Component
             $this->hasMoreMessages = true;
             $this->isLoading = false;
             $this->loadMessages();
+            $this->detectFirstUnreadMessage($conversation);
             $this->markMessagesAsRead($conversationId);
             $this->updateConversationUnreadCount($conversationId);
             $this->dispatch('scroll-to-bottom');
@@ -694,6 +773,7 @@ class ChatComponent extends Component
         $this->loadMessages();
         logger('📚 Loaded messages', ['count' => count($this->messages)]);
 
+        $this->detectFirstUnreadMessage($conversation);
         $this->markMessagesAsRead($conversationId);
 
         // Chỉ cập nhật unread count cho conversation này, không reload toàn bộ sidebar

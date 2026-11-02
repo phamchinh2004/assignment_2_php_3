@@ -464,3 +464,98 @@
         animation-iteration-count: infinite !important;
     }
 }
+
+
+/* ===== Unread Messages Floating Pill & Separator ===== */
+.chat-jump-unread-pill-container {
+    position: absolute;
+    top: 72px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 50;
+    pointer-events: auto;
+    animation: unreadPillFadeIn 0.25s ease-out;
+}
+
+@keyframes unreadPillFadeIn {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -10px);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
+}
+
+.chat-jump-unread-btn {
+    display: inline-flex;
+    align-items: center;
+    background: #4f46e5;
+    color: #ffffff !important;
+    border: none;
+    border-radius: 9999px;
+    padding: 7px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    box-shadow: 0 4px 14px rgba(79, 70, 229, 0.4);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.chat-jump-unread-btn:hover {
+    background: #4338ca;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(79, 70, 229, 0.5);
+    color: #ffffff !important;
+}
+
+.chat-jump-unread-btn:active {
+    transform: translateY(0);
+}
+
+.chat-unread-separator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    margin: 16px 0;
+    position: relative;
+}
+
+.chat-unread-separator::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: 1px;
+    background: #f87171;
+    z-index: 1;
+}
+
+.chat-unread-separator-badge {
+    position: relative;
+    z-index: 2;
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fca5a5;
+    padding: 3px 12px;
+    border-radius: 9999px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    box-shadow: 0 1px 3px rgba(220, 38, 38, 0.1);
+}
+
+@keyframes unreadTargetFlash {
+    0% { outline: 3px solid #f59e0b; background-color: rgba(254, 243, 199, 0.6); }
+    50% { outline: 3px solid #d97706; background-color: rgba(253, 230, 138, 0.8); }
+    100% { outline: 3px solid transparent; background-color: transparent; }
+}
+
+.is-unread-target-highlight {
+    animation: unreadTargetFlash 1.5s ease-in-out 2;
+    border-radius: 8px;
+}
