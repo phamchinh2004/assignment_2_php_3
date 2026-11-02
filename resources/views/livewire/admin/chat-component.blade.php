@@ -552,6 +552,7 @@
                 @error('editingMessageText') <div class="chat-input-error" role="alert">{{ $message }}</div> @enderror
             </div>
             <aside id="chat-context-panel" class="chat-context-panel" x-show="contextOpen" x-cloak
+                wire:key="context-panel-{{ $this->selectedConversationId }}"
                 aria-label="Thông tin khách hàng và trả lời nhanh">
                 <div class="chat-panel-resizer chat-context-resizer" data-chat-resizer="right" role="separator" tabindex="0"
                     aria-orientation="vertical" aria-label="Điều chỉnh độ rộng thông tin khách hàng"
