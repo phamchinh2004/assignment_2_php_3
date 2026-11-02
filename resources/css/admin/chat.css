@@ -468,24 +468,48 @@
 
 /* ===== Unread Messages Floating Pill & Separator ===== */
 .chat-jump-unread-pill-container {
-    position: absolute;
-    top: 72px;
-    left: 50%;
-    transform: translateX(-50%);
+    position: sticky;
+    top: 12px;
     z-index: 50;
+    display: flex;
+    justify-content: center;
     pointer-events: auto;
     animation: unreadPillFadeIn 0.25s ease-out;
+    margin-bottom: -40px;
 }
 
 @keyframes unreadPillFadeIn {
     from {
         opacity: 0;
-        transform: translate(-50%, -10px);
+        transform: translateY(-10px);
     }
     to {
         opacity: 1;
-        transform: translate(-50%, 0);
+        transform: translateY(0);
     }
+}
+
+.chat-unread-jump-header-btn {
+    background: #ef4444;
+    color: #ffffff !important;
+    border: none;
+    border-radius: 9999px;
+    padding: 4px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    box-shadow: 0 1px 3px rgba(239, 68, 68, 0.3);
+    transition: all 0.2s ease;
+}
+
+.chat-unread-jump-header-btn:hover {
+    background: #dc2626;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 6px rgba(239, 68, 68, 0.4);
+    color: #ffffff !important;
 }
 
 .chat-jump-unread-btn {

@@ -670,34 +670,42 @@ class ChatComponent extends Component
     {
         $currentUserId = (int) Auth::id();
         $staffId = (int) $conversation->staff_id;
+        $customerId = (int) $conversation->user_id;
 
-        // 1. Tìm tin nhắn chưa đọc của người xem (Owner/Admin/Staff hiện tại)
-        $firstUnread = Message::query()
-            ->where('conversation_id', $conversation->id)
-            ->unreadFor($currentUserId)
-            ->orderBy('id', 'asc')
-            ->first();
+        $firstUnread = null;
+        $unreadCount = 0;
 
-        $unreadCount = Message::query()
-            ->where('conversation_id', $conversation->id)
-            ->unreadFor($currentUserId)
-            ->count();
-
-        // 2. Nếu người xem là quản lý cấp cao (Owner/Admin) xem tin nhắn của nhân viên khác,
-        // và bản thân người xem không có tin chưa đọc (đã từng mở qua),
-        // nhưng khách hàng gửi tin nhắn mà nhân viên phụ trách ($staffId) CHƯA ĐỌC:
-        if (!$firstUnread && $staffId && $staffId !== $currentUserId) {
+        // 1. Khi Owner/Admin xem tin nhắn của nhân viên với khách hàng:
+        // Tìm các tin nhắn của khách hàng mà nhân viên phụ trách ($staffId) CHƯA ĐỌC
+        if ($staffId && $staffId !== $currentUserId) {
             $firstUnread = Message::query()
                 ->where('conversation_id', $conversation->id)
-                ->where('sender_id', $conversation->user_id)
+                ->where('sender_id', $customerId)
                 ->unreadFor($staffId)
                 ->orderBy('id', 'asc')
                 ->first();
 
             $unreadCount = Message::query()
                 ->where('conversation_id', $conversation->id)
-                ->where('sender_id', $conversation->user_id)
+                ->where('sender_id', $customerId)
                 ->unreadFor($staffId)
+                ->count();
+        }
+
+        // 2. Nếu không tìm thấy hoặc người xem là chính người phụ trách (Staff hoặc Owner phụ trách trực tiếp):
+        // Tìm tin nhắn của khách hàng mà người xem ($currentUserId) chưa đọc
+        if (!$firstUnread) {
+            $firstUnread = Message::query()
+                ->where('conversation_id', $conversation->id)
+                ->where('sender_id', $customerId)
+                ->unreadFor($currentUserId)
+                ->orderBy('id', 'asc')
+                ->first();
+
+            $unreadCount = Message::query()
+                ->where('conversation_id', $conversation->id)
+                ->where('sender_id', $customerId)
+                ->unreadFor($currentUserId)
                 ->count();
         }
 

@@ -103,15 +103,6 @@
         </div>
 
         @if($this->selectedConversation)
-            <!-- Nút nhảy lên tin nhắn chưa đọc (chỉ hiện khi tin chưa đọc dài hơn 1 màn hình) -->
-            @if($this->firstUnreadMessageId)
-                <div id="jump-to-unread-wrapper" class="chat-jump-unread-pill-container" data-unread-id="{{ $this->firstUnreadMessageId }}" style="display: none;">
-                    <button type="button" class="chat-jump-unread-btn shadow-sm" onclick="handleJumpToUnreadClick()" title="Nhảy lên tin nhắn đầu tiên chưa đọc">
-                        <i class="fas fa-arrow-up me-1-5" aria-hidden="true"></i>
-                        <span>Xem tin nhắn chưa đọc ({{ $this->currentChatUnreadCount }})</span>
-                    </button>
-                </div>
-            @endif
             <!-- Header chat -->
             <div wire:key="chat-header-{{ $this->selectedConversation->id }}"
                 class="chat-header" :inert="contextOpen && !wide">
@@ -156,6 +147,14 @@
                         $conversationNotificationMute = $this->selectedConversationNotificationMute;
                     @endphp
                     <div class="chat-header-actions d-flex gap-2">
+                        @if($this->firstUnreadMessageId)
+                            <button type="button" class="chat-unread-jump-header-btn" id="jump-to-unread-header-btn"
+                                style="display: none;" onclick="handleJumpToUnreadClick()"
+                                title="Nhảy lên tin nhắn đầu tiên chưa đọc">
+                                <i class="fas fa-arrow-up me-1" aria-hidden="true"></i>
+                                <span>Chưa đọc ({{ $this->currentChatUnreadCount }})</span>
+                            </button>
+                        @endif
                         @if(in_array(auth()->user()->role, [\App\Models\User::ROLE_ADMIN, \App\Models\User::ROLE_OWNER], true))
                             <button type="button" class="chat-dispatch-button" wire:click="openDispatchDialog({{ $this->selectedConversation->id }})"
                                 wire:loading.attr="disabled" wire:target="openDispatchDialog" aria-label="Điều phối hội thoại" title="Điều phối hội thoại">
@@ -281,6 +280,15 @@
             <div wire:key="messages-container-{{ $this->selectedConversation->id }}"
                 class="chat-message-list flex-grow-1 overflow-auto custom-scrollbar position-relative" id="messages-container"
                 aria-label="Tin nhắn trong hội thoại" :inert="contextOpen && !wide">
+
+                @if($this->firstUnreadMessageId)
+                    <div id="jump-to-unread-wrapper" class="chat-jump-unread-pill-container" data-unread-id="{{ $this->firstUnreadMessageId }}" style="display: none;">
+                        <button type="button" class="chat-jump-unread-btn shadow-sm" onclick="handleJumpToUnreadClick()" title="Nhảy lên tin nhắn đầu tiên chưa đọc">
+                            <i class="fas fa-arrow-up me-1-5" aria-hidden="true"></i>
+                            <span>Xem tin nhắn chưa đọc ({{ $this->currentChatUnreadCount }})</span>
+                        </button>
+                    </div>
+                @endif
 
                 @if (empty($messages))
                     <div class="w-100 h-100 d-flex justify-content-center align-items-center">
@@ -781,6 +789,78 @@
 <script>
     let currentChannel = null;
 
+    // Định nghĩa các hàm toàn cục để luôn luôn sẵn sàng
+    window.loadMoreMessagesAdmin = function () {
+        const root = document.getElementById('chat-root');
+        if (root && window.Livewire) {
+            const component = window.Livewire.find(root.getAttribute('wire:id'));
+            if (component) {
+                component.call('loadMoreMessages');
+            }
+        }
+    };
+
+    window.checkUnreadMessageVisibility = function () {
+        const pillWrapper = document.getElementById('jump-to-unread-wrapper');
+        const headerBtn = document.getElementById('jump-to-unread-header-btn');
+        const unreadId = pillWrapper?.dataset.unreadId;
+
+        if (!unreadId) {
+            if (pillWrapper) pillWrapper.style.display = 'none';
+            if (headerBtn) headerBtn.style.display = 'none';
+            return;
+        }
+
+        const container = document.getElementById('messages-container');
+        if (!container) return;
+
+        const targetEl = document.getElementById('unread-messages-separator') || document.getElementById('message-' + unreadId);
+
+        // Nếu tin nhắn chưa có trong DOM (do nằm ở trang cũ > 20 tin) -> chắc chắn dài hơn 1 màn hình
+        if (!targetEl) {
+            if (pillWrapper) pillWrapper.style.display = 'block';
+            if (headerBtn) headerBtn.style.display = 'inline-flex';
+            return;
+        }
+
+        const containerRect = container.getBoundingClientRect();
+        const targetRect = targetEl.getBoundingClientRect();
+
+        // Nếu vị trí của tin nhắn chưa đọc đầu tiên bị khuất ở phía trên vùng nhìn thấy của container
+        const isOutOfViewAbove = targetRect.bottom < (containerRect.top + 60);
+
+        if (isOutOfViewAbove) {
+            if (pillWrapper) pillWrapper.style.display = 'block';
+            if (headerBtn) headerBtn.style.display = 'inline-flex';
+        } else {
+            if (pillWrapper) pillWrapper.style.display = 'none';
+            if (headerBtn) headerBtn.style.display = 'none';
+        }
+    };
+
+    window.handleJumpToUnreadClick = function () {
+        const pillWrapper = document.getElementById('jump-to-unread-wrapper');
+        const unreadId = pillWrapper?.dataset.unreadId;
+        const targetEl = document.getElementById('unread-messages-separator') || (unreadId ? document.getElementById('message-' + unreadId) : null);
+
+        if (targetEl) {
+            targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            targetEl.classList.add('is-unread-target-highlight');
+            setTimeout(() => targetEl.classList.remove('is-unread-target-highlight'), 3000);
+            if (pillWrapper) pillWrapper.style.display = 'none';
+            const headerBtn = document.getElementById('jump-to-unread-header-btn');
+            if (headerBtn) headerBtn.style.display = 'none';
+        } else {
+            const root = document.getElementById('chat-root');
+            if (root && window.Livewire) {
+                const component = window.Livewire.find(root.getAttribute('wire:id'));
+                if (component) {
+                    component.call('jumpToFirstUnreadMessage');
+                }
+            }
+        }
+    };
+
     // Notification Sound Function
     function playNotificationSound() {
         try {
@@ -984,63 +1064,59 @@
 
         // Listen MessageSent event trên staff channel để update sidebar khi có tin nhắn mới
         @if($isManagementUser)
-            const staffChannel = `staff.{{ auth()->id() }}`;
-            const currentUserId = {{ auth()->id() }};
+            whenEchoReady(() => {
+                const myStaffChannel = `staff.{{ (int) auth()->id() }}`;
+                const myUserId = {{ (int) auth()->id() }};
 
-            whenEchoReady(() => window.Echo.private(staffChannel)
-                .listen('.MessageSent', (e) => {
-                    const root = document.getElementById('chat-root');
-                    const component = Livewire.find(root.getAttribute('wire:id'));
-                    const isAutoReply = e.message.kind === 'auto_reply';
+                window.Echo.private(myStaffChannel)
+                    .listen('.MessageSent', (e) => {
+                        const root = document.getElementById('chat-root');
+                        const component = root ? Livewire.find(root.getAttribute('wire:id')) : null;
+                        if (!component) return;
+                        const isAutoReply = e.message.kind === 'auto_reply';
 
-                    // Lấy selectedConversationId từ component
-                    const selectedConversationId = component.get('selectedConversationId');
+                        // Lấy selectedConversationId từ component
+                        const selectedConversationId = component.get('selectedConversationId');
 
-                    // Nếu tin nhắn thuộc conversation đang focus
-                    // staff channel đóng vai trò fallback để UI vẫn realtime ngay cả khi
-                    // conversation channel chưa kịp subscribe sau một lần React mount.
-                    if (selectedConversationId && selectedConversationId == e.message.conversation_id) {
-                        component.call('messageReceived', e.message);
-                        return;
-                    }
+                        if (selectedConversationId && selectedConversationId == e.message.conversation_id) {
+                            component.call('messageReceived', e.message);
+                            return;
+                        }
 
-                    // Tin nhắn thủ công của chính staff đã được sendMessage thêm vào UI.
-                    // Auto-reply do queue tạo dùng sender_id của staff nên vẫn phải đi qua realtime.
-                    if (e.message.sender_id === currentUserId && !isAutoReply) {
-                        // Chỉ reload sidebar, không hiển thị notification
+                        if (e.message.sender_id === myUserId && !isAutoReply) {
+                            component.call('loadConversations');
+                            @if($canManageAllChats)
+                                component.call('loadStaffUsersAlternative');
+                            @endif
+                            return;
+                        }
+
                         component.call('loadConversations');
                         @if($canManageAllChats)
                             component.call('loadStaffUsersAlternative');
                         @endif
-                                    return;
-                    }
-
-                    // Tin nhắn của người khác và conversation khác
-                    // → Reload sidebar và gọi messageReceived() để hiển thị notification
-                    component.call('loadConversations');
-                    @if($canManageAllChats)
-                        component.call('loadStaffUsersAlternative');
-                    @endif
-                    component.call('messageReceived', e.message);
-                })
-                .listen('.UserJoinChat', (e) => {
-                    // Update sidebar khi user join chat
-                    const root = document.getElementById('chat-root');
-                    const component = Livewire.find(root.getAttribute('wire:id'));
-                    component.call('loadConversations');
-                    @if($canManageAllChats)
-                        component.call('loadStaffUsersAlternative');
-                    @endif
-                            })
-                .listen('.ConversationAssigned', () => {
-                    const root = document.getElementById('chat-root');
-                    if (root) {
-                        Livewire.find(root.getAttribute('wire:id')).call('refreshChatState');
-                    }
-                })
-                .error((error) => {
-                    console.error('Staff Echo error:', error);
-                }));
+                        component.call('messageReceived', e.message);
+                    })
+                    .listen('.UserJoinChat', (e) => {
+                        const root = document.getElementById('chat-root');
+                        const component = root ? Livewire.find(root.getAttribute('wire:id')) : null;
+                        if (component) {
+                            component.call('loadConversations');
+                            @if($canManageAllChats)
+                                component.call('loadStaffUsersAlternative');
+                            @endif
+                        }
+                    })
+                    .listen('.ConversationAssigned', () => {
+                        const root = document.getElementById('chat-root');
+                        if (root) {
+                            Livewire.find(root.getAttribute('wire:id')).call('refreshChatState');
+                        }
+                    })
+                    .error((error) => {
+                        console.error('Staff Echo error:', error);
+                    });
+            });
         @endif
 
         // Join conversation channel
@@ -1108,66 +1184,6 @@
             currentChannel = null;
         });
 
-        // Xử lý kiểm tra và nhảy lên tin nhắn chưa đọc
-        function checkUnreadMessageVisibility() {
-            const pillContainer = document.getElementById('jump-to-unread-wrapper');
-            if (!pillContainer) return;
-
-            const unreadId = pillContainer.dataset.unreadId;
-            if (!unreadId) {
-                pillContainer.style.display = 'none';
-                return;
-            }
-
-            const container = document.getElementById('messages-container');
-            if (!container) return;
-
-            const targetEl = document.getElementById('unread-messages-separator') || document.getElementById('message-' + unreadId);
-
-            // Nếu element chưa có trong DOM (do tin nhắn ở trang cũ chưa load) -> chắc chắn dài hơn 1 màn hình
-            if (!targetEl) {
-                pillContainer.style.display = 'block';
-                return;
-            }
-
-            const containerRect = container.getBoundingClientRect();
-            const targetRect = targetEl.getBoundingClientRect();
-
-            // Nếu vị trí của tin nhắn chưa đọc đầu tiên bị khuất ở phía trên vùng nhìn thấy của container
-            const isOutOfViewAbove = targetRect.bottom < (containerRect.top + 50);
-
-            if (isOutOfViewAbove) {
-                pillContainer.style.display = 'block';
-            } else {
-                pillContainer.style.display = 'none';
-            }
-        }
-
-        window.handleJumpToUnreadClick = function () {
-            const pillContainer = document.getElementById('jump-to-unread-wrapper');
-            if (!pillContainer) return;
-
-            const unreadId = pillContainer.dataset.unreadId;
-            if (!unreadId) return;
-
-            const targetEl = document.getElementById('unread-messages-separator') || document.getElementById('message-' + unreadId);
-
-            if (targetEl) {
-                targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                targetEl.classList.add('is-unread-target-highlight');
-                setTimeout(() => targetEl.classList.remove('is-unread-target-highlight'), 3000);
-                pillContainer.style.display = 'none';
-            } else {
-                const root = document.getElementById('chat-root');
-                if (root) {
-                    const component = Livewire.find(root.getAttribute('wire:id'));
-                    if (component) {
-                        component.call('jumpToFirstUnreadMessage');
-                    }
-                }
-            }
-        };
-
         Livewire.on('scroll-to-unread', (data) => {
             const eventData = Array.isArray(data) ? data[0] : data;
             const messageId = eventData?.messageId;
@@ -1178,10 +1194,10 @@
                     targetEl.classList.add('is-unread-target-highlight');
                     setTimeout(() => targetEl.classList.remove('is-unread-target-highlight'), 3000);
                 }
-                const pillContainer = document.getElementById('jump-to-unread-wrapper');
-                if (pillContainer) {
-                    pillContainer.style.display = 'none';
-                }
+                const pill = document.getElementById('jump-to-unread-wrapper');
+                if (pill) pill.style.display = 'none';
+                const headerBtn = document.getElementById('jump-to-unread-header-btn');
+                if (headerBtn) headerBtn.style.display = 'none';
             }, 150);
         });
 
@@ -1190,7 +1206,7 @@
             if (container && !container._unreadScrollAttached) {
                 container._unreadScrollAttached = true;
                 container.addEventListener('scroll', () => {
-                    checkUnreadMessageVisibility();
+                    window.checkUnreadMessageVisibility();
                 }, { passive: true });
             }
         }
@@ -1198,25 +1214,16 @@
         Livewire.on('messages-loaded', () => {
             setTimeout(() => {
                 attachUnreadScrollListener();
-                checkUnreadMessageVisibility();
+                window.checkUnreadMessageVisibility();
             }, 300);
         });
 
         Livewire.on('conversation-selected', () => {
             setTimeout(() => {
                 attachUnreadScrollListener();
-                checkUnreadMessageVisibility();
+                window.checkUnreadMessageVisibility();
             }, 350);
         });
-
-        window.loadMoreMessagesAdmin = function () {
-            const container = document.getElementById('messages-container');
-            if (container) {
-                const root = document.getElementById('chat-root');
-                const component = Livewire.find(root.getAttribute('wire:id'));
-                component.call('loadMoreMessages');
-            }
-        }
     });
 
     // AdminChatPage mounts the Livewire markup after the component has already
